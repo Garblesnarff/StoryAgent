@@ -7,8 +7,7 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
-import google.generativeai as genai
-import base64
+from google.cloud import texttospeech
 import tempfile
 
 class Base(DeclarativeBase):
@@ -29,9 +28,15 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_API_KEY'))
 
-# Initialize Gemini AI client
-genai.configure(api_key=app.config['GEMINI_API_KEY'])
-model = genai.GenerativeModel('gemini-pro-vision')
+def synthesize_speech(text, output_filename):
+    client = texttospeech.TextToSpeechClient()
+    input_text = texttospeech.SynthesisInput(text=text)
+    voice = texttospeech.VoiceSelectionParams(language_code='en-US', ssml_gender=texttospeech.SsmlVoiceGender.FEMALE)
+    audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
+    response = client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
+    with open(output_filename, 'wb') as out:
+        out.write(response.audio_content)
+    return output_filename
 
 @app.route('/')
 def index():
@@ -73,19 +78,11 @@ def generate_story():
         app.logger.error(f"Error generating image: {str(e)}")
         image_url = 'https://example.com/image.jpg'  # Fallback image URL
 
-    # Generate audio using Gemini AI
+    # Generate audio using Google Cloud Text-to-Speech
     try:
-        response = model.generate_content([
-            "Generate speech for the following text:",
-            story,
-            "Return the audio as a base64 encoded string."
-        ])
-        audio_b64 = response.text
-        
-        # Save the audio to a temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-            temp_file.write(base64.b64decode(audio_b64))
-            audio_url = f"/static/temp/{os.path.basename(temp_file.name)}"
+            audio_file = synthesize_speech(story, temp_file.name)
+            audio_url = f"/static/temp/{os.path.basename(audio_file)}"
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         audio_url = 'https://example.com/audio.mp3'  # Fallback audio URL

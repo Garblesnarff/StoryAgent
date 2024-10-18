@@ -431,6 +431,21 @@ wheels = [
 ]
 
 [[package]]
+name = "google-cloud-texttospeech"
+version = "2.18.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/62/13/edb5e196272463571e8df05c7c393fa0240dda652966e0c59afcd42da7d3/google_cloud_texttospeech-2.18.0.tar.gz", hash = "sha256:8d1f7577a6f86ed48335e10814680261e2976da54888c8a1d586044ee19196f4", size = 157102 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/01/98/e9c8e448fb4e207191d6aae3a342250323c2fc9946fa3b208aa63892f305/google_cloud_texttospeech-2.18.0-py2.py3-none-any.whl", hash = "sha256:178eb686bd439c46cc1bfee2fab3960914e08655630a52e224469873152d1418", size = 161065 },
+]
+
+[[package]]
 name = "google-generativeai"
 version = "0.8.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1216,6 +1231,7 @@ dependencies = [
     { name = "email-validator" },
     { name = "flask" },
     { name = "flask-sqlalchemy" },
+    { name = "google-cloud-texttospeech" },
     { name = "google-generativeai" },
     { name = "groq" },
     { name = "psycopg2-binary" },
@@ -1228,6 +1244,7 @@ requires-dist = [
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "flask", specifier = ">=3.0.3" },
     { name = "flask-sqlalchemy", specifier = ">=3.1.1" },
+    { name = "google-cloud-texttospeech", specifier = ">=2.18.0" },
     { name = "google-generativeai", specifier = ">=0.8.3" },
     { name = "groq", specifier = ">=0.11.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
