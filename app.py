@@ -30,15 +30,14 @@ def index():
 def generate_story():
     prompt = request.form.get('prompt')
     
-    # Generate story using Groq API with mixtral-8x7b-32768 model
+    # Generate story using Groq API with llama-3.1b-instant model
     try:
         response = groq_client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.1b-instant",
             messages=[
-                {"role": "system", "content": "You are a creative storyteller. Write detailed and engaging stories."},
-                {"role": "user", "content": f"Write a detailed short story based on this prompt: {prompt}"}
+                {"role": "system", "content": "You are a creative storyteller. Write engaging stories."},
+                {"role": "user", "content": f"Write a short story based on this prompt: {prompt}"}
             ],
-            max_tokens=2000,  # Increased token limit for more detailed stories
             temperature=0.7,
         )
         story = response.choices[0].message.content
