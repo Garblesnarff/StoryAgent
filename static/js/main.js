@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             storyAudio.src = data.audio_url;
             
             storyOutput.style.display = 'block';
+            playAudioBtn.disabled = false;
         } catch (error) {
             console.error('Error:', error.message);
             alert(`An error occurred while generating the story: ${error.message}`);
@@ -40,7 +41,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     playAudioBtn.addEventListener('click', () => {
-        storyAudio.play();
+        if (storyAudio.paused) {
+            storyAudio.play().catch(error => {
+                console.error('Error playing audio:', error);
+                alert('Failed to play audio. Please try again.');
+            });
+            playAudioBtn.textContent = 'Pause Audio';
+        } else {
+            storyAudio.pause();
+            playAudioBtn.textContent = 'Play Audio';
+        }
+    });
+
+    storyAudio.addEventListener('ended', () => {
+        playAudioBtn.textContent = 'Play Audio';
     });
 
     saveStoryBtn.addEventListener('click', async () => {

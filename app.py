@@ -7,6 +7,9 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
+import google.generativeai as genai
+import base64
+import tempfile
 
 class Base(DeclarativeBase):
     pass
@@ -25,6 +28,10 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_API_KEY'))
+
+# Initialize Gemini AI client
+genai.configure(api_key=app.config['GEMINI_API_KEY'])
+model = genai.GenerativeModel('gemini-pro-vision')
 
 @app.route('/')
 def index():
@@ -66,12 +73,27 @@ def generate_story():
         app.logger.error(f"Error generating image: {str(e)}")
         image_url = 'https://example.com/image.jpg'  # Fallback image URL
 
-    # TODO: Implement text-to-speech using Gemini
+    # Generate audio using Gemini AI
+    try:
+        response = model.generate_content([
+            "Generate speech for the following text:",
+            story,
+            "Return the audio as a base64 encoded string."
+        ])
+        audio_b64 = response.text
+        
+        # Save the audio to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            temp_file.write(base64.b64decode(audio_b64))
+            audio_url = f"/static/temp/{os.path.basename(temp_file.name)}"
+    except Exception as e:
+        app.logger.error(f"Error generating audio: {str(e)}")
+        audio_url = 'https://example.com/audio.mp3'  # Fallback audio URL
 
     return jsonify({
         'story': story,
         'image_url': image_url,
-        'audio_url': 'https://example.com/audio.mp3'  # Placeholder
+        'audio_url': audio_url
     })
 
 @app.route('/save_story', methods=['POST'])
