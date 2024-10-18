@@ -44,6 +44,51 @@ def generate_audio_for_scene(scene_content):
     
     return f"/static/audio/{filename}"
 
+def create_log_line(prompt):
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are a creative storyteller. Create a Blake Snyder's Log Line based on the given prompt."},
+                {"role": "user", "content": f"Create a Blake Snyder's Log Line for this prompt: {prompt}"}
+            ],
+            temperature=0.7,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        app.logger.error(f"Error creating log line: {str(e)}")
+        raise
+
+def expand_synopsis(log_line):
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are a creative storyteller. Expand the given log line into a full synopsis."},
+                {"role": "user", "content": f"Expand this log line into a full synopsis: {log_line}"}
+            ],
+            temperature=0.7,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        app.logger.error(f"Error expanding synopsis: {str(e)}")
+        raise
+
+def develop_story_structure(synopsis):
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are a creative storyteller. Develop a 5-act story structure from the given synopsis, with at least 3 chapters per act and at least 3 scenes per chapter."},
+                {"role": "user", "content": f"Develop a 5-act story structure from this synopsis, with at least 3 chapters per act and at least 3 scenes per chapter: {synopsis}"}
+            ],
+            temperature=0.7,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        app.logger.error(f"Error developing story structure: {str(e)}")
+        raise
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -52,13 +97,22 @@ def index():
 def generate_story():
     prompt = request.form.get('prompt')
     
-    # Generate story using Groq API with llama-3.1-8b-instant model
     try:
+        # Step 1: Create a Blake Snyder's Log Line
+        log_line = create_log_line(prompt)
+        
+        # Step 2: Expand the Log Line into a full synopsis
+        synopsis = expand_synopsis(log_line)
+        
+        # Step 3: Develop a 5-act story structure
+        story_structure = develop_story_structure(synopsis)
+        
+        # Generate a short story based on the structure
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": "You are a creative storyteller. Write engaging stories."},
-                {"role": "user", "content": f"Write a short story based on this prompt: {prompt}"}
+                {"role": "system", "content": "You are a creative storyteller. Write an engaging short story based on the given story structure."},
+                {"role": "user", "content": f"Write a short story based on this story structure: {story_structure}"}
             ],
             temperature=0.7,
         )
