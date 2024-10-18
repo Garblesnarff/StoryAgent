@@ -1,10 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
     const storyOutput = document.getElementById('story-output');
-    const storyContent = document.getElementById('story-content');
-    const storyImage = document.getElementById('story-image');
-    const storyAudio = document.getElementById('story-audio');
-    const playAudioBtn = document.getElementById('play-audio');
+    const paragraphCards = document.getElementById('paragraph-cards');
     const saveStoryBtn = document.getElementById('save-story');
 
     storyForm.addEventListener('submit', async (e) => {
@@ -24,41 +21,46 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
-            if (!data.story || !data.image_url || !data.audio_url) {
-                throw new Error('Incomplete data received from server');
+            if (!data.paragraphs || !Array.isArray(data.paragraphs)) {
+                throw new Error('Invalid data received from server');
             }
             
-            storyContent.textContent = data.story;
-            storyImage.src = data.image_url;
-            storyAudio.src = data.audio_url;
+            // Clear previous content
+            paragraphCards.innerHTML = '';
+            
+            // Create a card for each paragraph
+            data.paragraphs.forEach((paragraph, index) => {
+                const card = document.createElement('div');
+                card.className = 'col';
+                card.innerHTML = `
+                    <div class="card h-100">
+                        <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
+                        <div class="card-body">
+                            <p class="card-text">${paragraph.text}</p>
+                        </div>
+                        <div class="card-footer">
+                            <audio controls src="${paragraph.audio_url}"></audio>
+                        </div>
+                    </div>
+                `;
+                paragraphCards.appendChild(card);
+            });
             
             storyOutput.style.display = 'block';
-            playAudioBtn.disabled = false;
         } catch (error) {
             console.error('Error:', error.message);
             alert(`An error occurred while generating the story: ${error.message}`);
         }
     });
 
-    playAudioBtn.addEventListener('click', () => {
-        if (storyAudio.paused) {
-            storyAudio.play().catch(error => {
-                console.error('Error playing audio:', error);
-                alert('Failed to play audio. Please try again.');
-            });
-            playAudioBtn.textContent = 'Pause Audio';
-        } else {
-            storyAudio.pause();
-            playAudioBtn.textContent = 'Play Audio';
-        }
-    });
-
-    storyAudio.addEventListener('ended', () => {
-        playAudioBtn.textContent = 'Play Audio';
-    });
-
     saveStoryBtn.addEventListener('click', async () => {
         try {
+            const paragraphs = Array.from(paragraphCards.children).map(card => ({
+                text: card.querySelector('.card-text').textContent,
+                image_url: card.querySelector('.card-img-top').src,
+                audio_url: card.querySelector('audio').src
+            }));
+
             const response = await fetch('/save_story', {
                 method: 'POST',
                 headers: {
@@ -66,9 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     prompt: document.getElementById('prompt').value,
-                    story: storyContent.textContent,
-                    image_url: storyImage.src,
-                    audio_url: storyAudio.src
+                    paragraphs: paragraphs
                 })
             });
             
