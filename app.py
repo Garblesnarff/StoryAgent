@@ -5,6 +5,7 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.security import generate_password_hash, check_password_hash
 import urllib.parse
 from config import Config
+import groq
 
 class Base(DeclarativeBase):
     pass
@@ -18,6 +19,9 @@ with app.app_context():
     import models
     db.create_all()
 
+# Initialize Groq client
+groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -25,14 +29,30 @@ def index():
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     prompt = request.form.get('prompt')
-    # TODO: Implement story generation logic using Groq/Gemini API
+    
+    # Generate story using Groq API with mixtral-8x7b-32768 model
+    try:
+        response = groq_client.chat.completions.create(
+            model="mixtral-8x7b-32768",
+            messages=[
+                {"role": "system", "content": "You are a creative storyteller. Write detailed and engaging stories."},
+                {"role": "user", "content": f"Write a detailed short story based on this prompt: {prompt}"}
+            ],
+            max_tokens=2000,  # Increased token limit for more detailed stories
+            temperature=0.7,
+        )
+        story = response.choices[0].message.content
+    except Exception as e:
+        app.logger.error(f"Error generating story: {str(e)}")
+        return jsonify({'error': 'Failed to generate story'}), 500
+
     # TODO: Implement image generation using Together.ai
     # TODO: Implement text-to-speech using Gemini
-    # For now, return a dummy response
+
     return jsonify({
-        'story': 'Once upon a time...',
-        'image_url': 'https://example.com/image.jpg',
-        'audio_url': 'https://example.com/audio.mp3'
+        'story': story,
+        'image_url': 'https://example.com/image.jpg',  # Placeholder
+        'audio_url': 'https://example.com/audio.mp3'  # Placeholder
     })
 
 @app.route('/save_story', methods=['POST'])
