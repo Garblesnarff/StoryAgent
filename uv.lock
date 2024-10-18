@@ -597,6 +597,19 @@ wheels = [
 ]
 
 [[package]]
+name = "gtts"
+version = "2.5.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/10/808aff49b155a10ba035ffabc79bfa4d907161c9206de65e2cee4d0879fa/gtts-2.5.3.tar.gz", hash = "sha256:d9f873c2f3a397c77c7a8c5dc128fc35fbed59f3e240cef0bff6c80d8cc12106", size = 24015 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/f9/7f0e837880282ffad7598ae4b80b29c2cdc5f5e75a58602c66518d245afb/gTTS-2.5.3-py3-none-any.whl", hash = "sha256:ca5d962f7bf57238500d83c61cf3de76b0aa78b18658f3db5c0396e604caa0f5", size = 29180 },
+]
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1234,6 +1247,7 @@ dependencies = [
     { name = "google-cloud-texttospeech" },
     { name = "google-generativeai" },
     { name = "groq" },
+    { name = "gtts" },
     { name = "psycopg2-binary" },
     { name = "supabase" },
     { name = "together" },
@@ -1247,6 +1261,7 @@ requires-dist = [
     { name = "google-cloud-texttospeech", specifier = ">=2.18.0" },
     { name = "google-generativeai", specifier = ">=0.8.3" },
     { name = "groq", specifier = ">=0.11.0" },
+    { name = "gtts", specifier = ">=2.5.3" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "supabase", specifier = ">=2.9.0" },
     { name = "together", specifier = ">=1.3.2" },

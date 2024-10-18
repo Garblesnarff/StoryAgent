@@ -13,4 +13,5 @@ dependencies = [
     "together>=1.3.2",
     "supabase>=2.9.0",
     "google-cloud-texttospeech>=2.18.0",
+    "gtts>=2.5.3",
 ]

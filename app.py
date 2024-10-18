@@ -7,7 +7,8 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
-from google.cloud import texttospeech
+from gtts import gTTS
+import time
 import tempfile
 
 class Base(DeclarativeBase):
@@ -28,15 +29,20 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_API_KEY'))
 
-def synthesize_speech(text, output_filename):
-    client = texttospeech.TextToSpeechClient()
-    input_text = texttospeech.SynthesisInput(text=text)
-    voice = texttospeech.VoiceSelectionParams(language_code='en-US', ssml_gender=texttospeech.SsmlVoiceGender.FEMALE)
-    audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
-    response = client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
-    with open(output_filename, 'wb') as out:
-        out.write(response.audio_content)
-    return output_filename
+def generate_audio_for_scene(scene_content):
+    # Ensure the audio directory exists
+    audio_dir = os.path.join('static', 'audio')
+    os.makedirs(audio_dir, exist_ok=True)
+    
+    # Generate audio using gTTS
+    tts = gTTS(text=scene_content, lang='en')
+    
+    # Save the audio file
+    filename = f"scene_audio_{int(time.time())}.mp3"
+    filepath = os.path.join(audio_dir, filename)
+    tts.save(filepath)
+    
+    return f"/static/audio/{filename}"
 
 @app.route('/')
 def index():
@@ -78,11 +84,9 @@ def generate_story():
         app.logger.error(f"Error generating image: {str(e)}")
         image_url = 'https://example.com/image.jpg'  # Fallback image URL
 
-    # Generate audio using Google Cloud Text-to-Speech
+    # Generate audio using gTTS
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-            audio_file = synthesize_speech(story, temp_file.name)
-            audio_url = f"/static/temp/{os.path.basename(audio_file)}"
+        audio_url = generate_audio_for_scene(story)
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         audio_url = 'https://example.com/audio.mp3'  # Fallback audio URL
