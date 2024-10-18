@@ -10,14 +10,16 @@
     <button type="submit" class="btn btn-primary">Generate Story</button>
 </form>
 
-<div id="story-output" class="mt-4" style="display: none;">
-    <h2>Generated Story</h2>
-    <div id="story-content" class="mb-3"></div>
-    <img id="story-image" class="img-fluid mb-3" alt="Story Image">
-    <div class="mb-3">
-        <button id="play-audio" class="btn btn-secondary">Play Audio</button>
-        <audio id="story-audio" style="display: none;"></audio>
+<div id='story-output' class='mt-4 card' style='display: none;'>
+  <div class='card-body'>
+    <h2 class='card-title'>Generated Story</h2>
+    <div id='story-content' class='card-text mb-3'></div>
+    <img id='story-image' class='card-img-top mb-3' alt='Story Image'>
+    <div class='mb-3'>
+      <button id='play-audio' class='btn btn-secondary'>Play Audio</button>
+      <audio id='story-audio' style='display: none;'></audio>
     </div>
-    <button id="save-story" class="btn btn-success">Save Story</button>
+    <button id='save-story' class='btn btn-success'>Save Story</button>
+  </div>
 </div>
 {% endblock %}

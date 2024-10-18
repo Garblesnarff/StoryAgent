@@ -74,23 +74,7 @@ def generate_story():
 
         # Generate image using Together.ai
         app.logger.info("Generating image using Together.ai")
-        image_url = None
-        try:
-            image_response = together_client.images.generate(
-                prompt=f'An image representing the story: {prompt}',
-                model='stabilityai/stable-diffusion-xl-base-1.0',
-                width=1024,
-                height=768,
-                steps=30,
-                seed=42,
-                n=1
-            )
-            image_b64 = image_response.data[0].b64_json
-            image_url = f'data:image/png;base64,{image_b64}'
-            app.logger.info('Image generated successfully')
-        except Exception as img_error:
-            app.logger.error(f'Error generating image: {str(img_error)}')
-            image_url = None
+        image_url = generate_image_with_together(prompt)
 
         # Generate audio using gTTS
         app.logger.info("Generating audio using gTTS")
@@ -155,6 +139,25 @@ def generate_story_with_together(prompt):
     except Exception as e:
         app.logger.error(f"Error generating story with Together AI: {str(e)}")
         raise ValueError("Failed to generate story with both Groq and Together AI")
+
+def generate_image_with_together(prompt):
+    try:
+        image_response = together_client.images.generate(
+            prompt=f'An image representing the story: {prompt}',
+            model='stabilityai/stable-diffusion-xl-base-1.0',
+            width=1024,
+            height=768,
+            steps=30,
+            seed=42,
+            n=1
+        )
+        image_b64 = image_response.data[0].b64_json
+        image_url = f'data:image/png;base64,{image_b64}'
+        app.logger.info('Image generated successfully')
+        return image_url
+    except Exception as img_error:
+        app.logger.error(f'Error generating image: {str(img_error)}')
+        return None
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -1,1 +1,30 @@
-/* Add any custom styles here if needed */
+/* Custom styles for the story output card */
+.card {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-secondary);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    color: var(--bs-info);
+}
+
+#story-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+}
+
+#story-content {
+    white-space: pre-wrap;
+}
+
+.btn-secondary {
+    background-color: var(--bs-secondary);
+    border-color: var(--bs-secondary);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-secondary);
+}
