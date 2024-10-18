@@ -18,10 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error('Failed to generate story');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate story');
             }
             
             const data = await response.json();
+            
+            if (!data.story || !data.image_url || !data.audio_url) {
+                throw new Error('Incomplete data received from server');
+            }
             
             storyContent.textContent = data.story;
             storyImage.src = data.image_url;
@@ -29,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             storyOutput.style.display = 'block';
         } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred while generating the story. Please try again.');
+            console.error('Error:', error.message);
+            alert(`An error occurred while generating the story: ${error.message}`);
         }
     });
 
@@ -54,13 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error('Failed to save story');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save story');
             }
             
             alert('Story saved successfully!');
         } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred while saving the story. Please try again.');
+            console.error('Error:', error.message);
+            alert(`An error occurred while saving the story: ${error.message}`);
         }
     });
 });
