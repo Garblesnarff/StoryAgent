@@ -1,16 +1,15 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.security import generate_password_hash, check_password_hash
+import urllib.parse
 from config import Config
+import groq
+from together import Together
 from gtts import gTTS
 import time
 import tempfile
-import logging
-import base64
-from together import Together
-from groq import Groq
 
 class Base(DeclarativeBase):
     pass
@@ -20,34 +19,30 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-
 with app.app_context():
     import models
     db.create_all()
 
+# Initialize Groq client
+groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
+
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_API_KEY'))
 
-# Initialize Groq client
-groq_client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
-
 def generate_audio_for_scene(scene_content):
-    try:
-        audio_dir = os.path.join('static', 'audio')
-        os.makedirs(audio_dir, exist_ok=True)
-        
-        tts = gTTS(text=scene_content, lang='en')
-        
-        filename = f"scene_audio_{int(time.time())}.mp3"
-        filepath = os.path.join(audio_dir, filename)
-        tts.save(filepath)
-        
-        return f"/static/audio/{filename}"
-    except Exception as audio_error:
-        app.logger.error(f"Error generating audio: {str(audio_error)}")
-        return None
+    # Ensure the audio directory exists
+    audio_dir = os.path.join('static', 'audio')
+    os.makedirs(audio_dir, exist_ok=True)
+    
+    # Generate audio using gTTS
+    tts = gTTS(text=scene_content, lang='en')
+    
+    # Save the audio file
+    filename = f"scene_audio_{int(time.time())}.mp3"
+    filepath = os.path.join(audio_dir, filename)
+    tts.save(filepath)
+    
+    return f"/static/audio/{filename}"
 
 @app.route('/')
 def index():
@@ -57,108 +52,55 @@ def index():
 def generate_story():
     prompt = request.form.get('prompt')
     
-    if not prompt:
-        return jsonify({'error': 'No prompt provided'}), 400
-
+    # Generate story using Groq API with llama-3.1-8b-instant model
     try:
-        # Check if all required API keys are available
-        required_keys = ['TOGETHER_API_KEY', 'GROQ_API_KEY']
-        missing_keys = [key for key in required_keys if not os.environ.get(key)]
-        if missing_keys:
-            raise ValueError(f"Missing required API keys: {', '.join(missing_keys)}")
-
-        # Generate story using GROQ API with fallback to Together AI
-        app.logger.info(f"Generating story for prompt: {prompt}")
-        story = generate_story_with_groq(prompt)
-        app.logger.info("Story generated successfully")
-
-        # Generate image using Together.ai
-        app.logger.info("Generating image using Together.ai")
-        image_url = generate_image_with_together(prompt)
-
-        # Generate audio using gTTS
-        app.logger.info("Generating audio using gTTS")
-        audio_url = generate_audio_for_scene(story)
-        if audio_url:
-            app.logger.info("Audio generated successfully")
-        else:
-            app.logger.warning("Audio generation failed")
-
-        return jsonify({
-            'story': story,
-            'image_url': image_url,
-            'audio_url': audio_url
-        })
-
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are a creative storyteller. Write engaging stories."},
+                {"role": "user", "content": f"Write a short story based on this prompt: {prompt}"}
+            ],
+            temperature=0.7,
+        )
+        story = response.choices[0].message.content
     except Exception as e:
         app.logger.error(f"Error generating story: {str(e)}")
-        return jsonify({'error': f'Failed to generate story: {str(e)}'}), 500
+        return jsonify({'error': 'Failed to generate story'}), 500
+
+    # Generate image using Together.ai
+    try:
+        image_response = together_client.images.generate(
+            prompt=f"An image representing the story: {prompt}",
+            model="black-forest-labs/FLUX.1-schnell-Free",
+            width=1024,
+            height=768,
+            steps=4,
+            n=1,
+            response_format="b64_json"
+        )
+        image_b64 = image_response.data[0].b64_json
+        image_url = f"data:image/png;base64,{image_b64}"
+    except Exception as e:
+        app.logger.error(f"Error generating image: {str(e)}")
+        image_url = 'https://example.com/image.jpg'  # Fallback image URL
+
+    # Generate audio using gTTS
+    try:
+        audio_url = generate_audio_for_scene(story)
+    except Exception as e:
+        app.logger.error(f"Error generating audio: {str(e)}")
+        audio_url = 'https://example.com/audio.mp3'  # Fallback audio URL
+
+    return jsonify({
+        'story': story,
+        'image_url': image_url,
+        'audio_url': audio_url
+    })
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
     # TODO: Implement story saving logic using Supabase
     return jsonify({'success': True})
-
-def generate_story_with_groq(prompt):
-    try:
-        app.logger.info("Attempting to generate story with Groq API")
-        chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a creative story writer. Generate a short story based on the given prompt."
-                },
-                {
-                    "role": "user",
-                    "content": f"Write a short story based on this prompt: {prompt}"
-                }
-            ],
-            model="mixtral-8x7b-32768",
-            max_tokens=1000
-        )
-        
-        return chat_completion.choices[0].message.content
-    except Exception as e:
-        app.logger.error(f"Error generating story with Groq: {str(e)}")
-        app.logger.info("Falling back to Together AI for story generation")
-        return generate_story_with_together(prompt)
-
-def generate_story_with_together(prompt):
-    try:
-        response = together_client.complete(
-            prompt=f"Write a short story based on this prompt: {prompt}",
-            model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-            max_tokens=1000,
-            temperature=0.7,
-            top_p=0.7,
-            top_k=50,
-            repetition_penalty=1,
-            stop=["<human>", "<assistant>"]
-        )
-        return response['output']['text'].strip()
-    except Exception as e:
-        app.logger.error(f"Error generating story with Together AI: {str(e)}")
-        raise ValueError("Failed to generate story with both Groq and Together AI")
-
-def generate_image_with_together(prompt):
-    try:
-        app.logger.info(f"Generating image for prompt: {prompt}")
-        image_response = together_client.images.generate(
-            prompt=f'An image representing the story: {prompt}',
-            model='stabilityai/stable-diffusion-xl-base-1.0',
-            width=1024,
-            height=768,
-            steps=30,
-            seed=42,
-            n=1
-        )
-        image_b64 = image_response.data[0].b64_json
-        app.logger.info('Image generated successfully')
-        app.logger.info(f'Image base64 (truncated): {image_b64[:50]}...')
-        return image_b64
-    except Exception as img_error:
-        app.logger.error(f'Error generating image: {str(img_error)}')
-        return None
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
