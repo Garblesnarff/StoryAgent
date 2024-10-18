@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import urllib.parse
 from config import Config
 import groq
-import together
+from together import Together
 
 class Base(DeclarativeBase):
     pass
@@ -24,7 +24,7 @@ with app.app_context():
 groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 
 # Initialize Together AI client
-together.api_key = app.config['TOGETHER_AI_API_KEY']
+together_client = Together(api_key=os.environ.get('TOGETHER_API_KEY'))
 
 @app.route('/')
 def index():
@@ -51,15 +51,17 @@ def generate_story():
 
     # Generate image using Together.ai
     try:
-        image_response = together.Image.create(
+        image_response = together_client.images.generate(
             prompt=f"An image representing the story: {prompt}",
-            model="stable-diffusion-xl-1024-v1-0",
+            model="black-forest-labs/FLUX.1-schnell-Free",
             width=1024,
-            height=1024,
-            steps=50,
-            seed=42
+            height=768,
+            steps=4,
+            n=1,
+            response_format="b64_json"
         )
-        image_url = image_response['output']['image']
+        image_b64 = image_response.data[0].b64_json
+        image_url = f"data:image/png;base64,{image_b64}"
     except Exception as e:
         app.logger.error(f"Error generating image: {str(e)}")
         image_url = 'https://example.com/image.jpg'  # Fallback image URL
