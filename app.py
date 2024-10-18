@@ -34,10 +34,10 @@ def index():
 def generate_story():
     prompt = request.form.get('prompt')
     
-    # Generate story using Groq API with llama-3.1b-instant model
+    # Generate story using Groq API with llama-3.1-8b-instant model
     try:
         response = groq_client.chat.completions.create(
-            model="llama-3.1b-instant",
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "You are a creative storyteller. Write engaging stories."},
                 {"role": "user", "content": f"Write a short story based on this prompt: {prompt}"}
