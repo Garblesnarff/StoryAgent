@@ -5,11 +5,11 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.security import generate_password_hash, check_password_hash
 import urllib.parse
 from config import Config
-import groq
-from together import Together
 from gtts import gTTS
 import time
 import tempfile
+from story_generator import generate_book_spec, generate_outline, generate_scene
+from together import Together
 
 class Base(DeclarativeBase):
     pass
@@ -22,9 +22,6 @@ db.init_app(app)
 with app.app_context():
     import models
     db.create_all()
-
-# Initialize Groq client
-groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_API_KEY'))
@@ -52,20 +49,19 @@ def index():
 def generate_story():
     prompt = request.form.get('prompt')
     
-    # Generate story using Groq API with llama-3.1-8b-instant model
     try:
-        response = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a creative storyteller. Write engaging stories."},
-                {"role": "user", "content": f"Write a short story based on this prompt: {prompt}"}
-            ],
-            temperature=0.7,
-        )
-        story = response.choices[0].message.content
+        # Generate book specification
+        book_spec = generate_book_spec(prompt)
+        
+        # Generate story outline
+        outline = generate_outline(book_spec)
+        
+        # Generate the first scene
+        scene = generate_scene(book_spec, outline, 1, 1, 1)
+        story = "\n\n".join(scene)
     except Exception as e:
         app.logger.error(f"Error generating story: {str(e)}")
-        return jsonify({'error': 'Failed to generate story'}), 500
+        return jsonify({'error': f'Failed to generate story: {str(e)}'}), 500
 
     # Generate image using Together.ai
     try:
@@ -82,14 +78,14 @@ def generate_story():
         image_url = f"data:image/png;base64,{image_b64}"
     except Exception as e:
         app.logger.error(f"Error generating image: {str(e)}")
-        image_url = 'https://example.com/image.jpg'  # Fallback image URL
+        return jsonify({'error': f'Failed to generate image: {str(e)}'}), 500
 
     # Generate audio using gTTS
     try:
         audio_url = generate_audio_for_scene(story)
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
-        audio_url = 'https://example.com/audio.mp3'  # Fallback audio URL
+        return jsonify({'error': f'Failed to generate audio: {str(e)}'}), 500
 
     return jsonify({
         'story': story,

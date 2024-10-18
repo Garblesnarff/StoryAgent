@@ -1,0 +1,33 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.71:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.71 - - [18/Oct/2024 03:55:24] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.71 - - [18/Oct/2024 03:55:24] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.71 - - [18/Oct/2024 03:55:24] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:root:Generating book specification for topic: medieval creature horror
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:Book specification generated successfully
+INFO:root:Generating story outline
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:Story outline generated successfully
+INFO:root:Generating scene for Act 1, Chapter 1, Scene 1
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 1 of 3. Reason: Remote end closed connection without response
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 2 of 3. Reason: Remote end closed connection without response
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 3 of 3. Reason: Remote end closed connection without response
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 1 of 5. Reason: [Errno -2] Name or service not known
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 2 of 5. Reason: [Errno -2] Name or service not known
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 3 of 5. Reason: [Errno -2] Name or service not known
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 4 of 5. Reason: [Errno -2] Name or service not known
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 5 of 5. Reason: [Errno -2] Name or service not known
+WARNING:google.auth._default:No project ID could be determined. Consider running `gcloud config set project` or setting the GOOGLE_CLOUD_PROJECT environment variable
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 1 of 5. Reason: HTTPConnectionPool(host='metadata.google.internal', port=80): Max retries exceeded with url: /computeMetadata/v1/universe/universe_domain (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x7f42de6f2b90>: Failed to resolve 'metadata.google.internal' ([Errno -2] Name or service not known)"))
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 2 of 5. Reason: HTTPConnectionPool(host='metadata.google.internal', port=80): Max retries exceeded with url: /computeMetadata/v1/universe/universe_domain (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x7f42df1d4d90>: Failed to resolve 'metadata.google.internal' ([Errno -2] Name or service not known)"))
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 3 of 5. Reason: HTTPConnectionPool(host='metadata.google.internal', port=80): Max retries exceeded with url: /computeMetadata/v1/universe/universe_domain (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x7f42de6f40d0>: Failed to resolve 'metadata.google.internal' ([Errno -2] Name or service not known)"))
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 4 of 5. Reason: HTTPConnectionPool(host='metadata.google.internal', port=80): Max retries exceeded with url: /computeMetadata/v1/universe/universe_domain (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x7f42de6f54d0>: Failed to resolve 'metadata.google.internal' ([Errno -2] Name or service not known)"))
+WARNING:google.auth.compute_engine._metadata:Compute Engine Metadata server unavailable on attempt 5 of 5. Reason: HTTPConnectionPool(host='metadata.google.internal', port=80): Max retries exceeded with url: /computeMetadata/v1/universe/universe_domain (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x7f42de6f6a90>: Failed to resolve 'metadata.google.internal' ([Errno -2] Name or service not known)"))
+ERROR:app:Error generating story: Failed to retrieve http://metadata.google.internal/computeMetadata/v1/universe/universe_domain from the Google Compute Engine metadata service. Compute Engine Metadata server unavailable
+INFO:werkzeug:172.31.196.71 - - [18/Oct/2024 04:06:39] "POST /generate_story HTTP/1.1" 500 -
