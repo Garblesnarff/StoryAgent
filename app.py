@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -61,16 +61,22 @@ def generate_story():
             raise ValueError(f"Missing required API keys: {', '.join(missing_keys)}")
 
         # Generate book specification
+        app.logger.info(f"Generating book specification for topic: {prompt}")
         book_spec = generate_book_spec(prompt)
+        app.logger.info("Book specification generated successfully")
         
         # Generate story outline
+        app.logger.info("Generating story outline")
         outline = generate_outline(book_spec)
+        app.logger.info("Story outline generated successfully")
         
         # Generate the first scene
+        app.logger.info("Generating scene for Act 1, Chapter 1, Scene 1")
         scene = generate_scene(book_spec, outline, 1, 1, 1)
         story = "\n\n".join(scene)
 
         # Generate image using Together.ai
+        app.logger.info("Generating image using Together.ai")
         image_response = together_client.images.generate(
             prompt=f"An image representing the story: {prompt}",
             model="black-forest-labs/FLUX.1-schnell-Free",
@@ -82,9 +88,12 @@ def generate_story():
         )
         image_b64 = image_response.data[0].b64_json
         image_url = f"data:image/png;base64,{image_b64}"
+        app.logger.info("Image generated successfully")
 
         # Generate audio using gTTS
+        app.logger.info("Generating audio using gTTS")
         audio_url = generate_audio_for_scene(story)
+        app.logger.info("Audio generated successfully")
 
         return jsonify({
             'story': story,
