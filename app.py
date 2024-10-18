@@ -142,6 +142,7 @@ def generate_story_with_together(prompt):
 
 def generate_image_with_together(prompt):
     try:
+        app.logger.info(f"Generating image for prompt: {prompt}")
         image_response = together_client.images.generate(
             prompt=f'An image representing the story: {prompt}',
             model='stabilityai/stable-diffusion-xl-base-1.0',
@@ -152,9 +153,9 @@ def generate_image_with_together(prompt):
             n=1
         )
         image_b64 = image_response.data[0].b64_json
-        image_url = f'data:image/png;base64,{image_b64}'
         app.logger.info('Image generated successfully')
-        return image_url
+        app.logger.info(f'Image base64 (truncated): {image_b64[:50]}...')
+        return image_b64
     except Exception as img_error:
         app.logger.error(f'Error generating image: {str(img_error)}')
         return None

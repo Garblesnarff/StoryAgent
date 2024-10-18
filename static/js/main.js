@@ -31,14 +31,22 @@ document.addEventListener('DOMContentLoaded', () => {
             storyContent.textContent = data.story;
             
             // Update image handling
-            storyImage.onload = function() {
-                storyImage.style.display = 'block';
-            };
-            storyImage.onerror = function() {
-                console.error('Error loading image');
+            if (data.image_url) {
+                console.log('Received image data (truncated):', data.image_url.substring(0, 50) + '...');
+                const imageUrl = `data:image/png;base64,${data.image_url}`;
+                storyImage.onload = function() {
+                    console.log('Image loaded successfully');
+                    storyImage.style.display = 'block';
+                };
+                storyImage.onerror = function(error) {
+                    console.error('Error loading image:', error);
+                    storyImage.style.display = 'none';
+                };
+                storyImage.src = imageUrl;
+            } else {
+                console.error('No image data received');
                 storyImage.style.display = 'none';
-            };
-            storyImage.src = data.image_url;
+            }
             
             storyAudio.src = data.audio_url;
             
