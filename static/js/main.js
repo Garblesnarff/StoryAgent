@@ -29,7 +29,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             storyContent.textContent = data.story;
+            
+            // Update image handling
+            storyImage.onload = function() {
+                storyImage.style.display = 'block';
+            };
+            storyImage.onerror = function() {
+                console.error('Error loading image');
+                storyImage.style.display = 'none';
+            };
             storyImage.src = data.image_url;
+            
             storyAudio.src = data.audio_url;
             
             storyOutput.style.display = 'block';
