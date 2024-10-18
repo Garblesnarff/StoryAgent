@@ -77,19 +77,20 @@ def generate_story():
         image_url = None
         try:
             image_response = together_client.images.generate(
-                prompt=f"An image representing the story: {prompt}",
-                model="stabilityai/stable-diffusion-xl-base-1.0",
+                prompt=f'An image representing the story: {prompt}',
+                model='stabilityai/stable-diffusion-xl-base-1.0',
                 width=1024,
                 height=768,
                 steps=30,
                 seed=42,
                 n=1
             )
-            image_b64 = image_response.image
-            image_url = f"data:image/png;base64,{image_b64}"
-            app.logger.info("Image generated successfully")
+            image_b64 = image_response.data[0].b64_json
+            image_url = f'data:image/png;base64,{image_b64}'
+            app.logger.info('Image generated successfully')
         except Exception as img_error:
-            app.logger.error(f"Error generating image: {str(img_error)}")
+            app.logger.error(f'Error generating image: {str(img_error)}')
+            image_url = None
 
         # Generate audio using gTTS
         app.logger.info("Generating audio using gTTS")
