@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import urllib.parse
 from config import Config
 import groq
+import together
 
 class Base(DeclarativeBase):
     pass
@@ -21,6 +22,9 @@ with app.app_context():
 
 # Initialize Groq client
 groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
+
+# Initialize Together AI client
+together.api_key = app.config['TOGETHER_AI_API_KEY']
 
 @app.route('/')
 def index():
@@ -45,12 +49,26 @@ def generate_story():
         app.logger.error(f"Error generating story: {str(e)}")
         return jsonify({'error': 'Failed to generate story'}), 500
 
-    # TODO: Implement image generation using Together.ai
+    # Generate image using Together.ai
+    try:
+        image_response = together.Image.create(
+            prompt=f"An image representing the story: {prompt}",
+            model="stable-diffusion-xl-1024-v1-0",
+            width=1024,
+            height=1024,
+            steps=50,
+            seed=42
+        )
+        image_url = image_response['output']['image']
+    except Exception as e:
+        app.logger.error(f"Error generating image: {str(e)}")
+        image_url = 'https://example.com/image.jpg'  # Fallback image URL
+
     # TODO: Implement text-to-speech using Gemini
 
     return jsonify({
         'story': story,
-        'image_url': 'https://example.com/image.jpg',  # Placeholder
+        'image_url': image_url,
         'audio_url': 'https://example.com/audio.mp3'  # Placeholder
     })
 
