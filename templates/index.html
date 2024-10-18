@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Generate Your Story</h1>
+<form id="story-form">
+    <div class="mb-3">
+        <label for="prompt" class="form-label">Story Prompt</label>
+        <textarea class="form-control" id="prompt" name="prompt" rows="3" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Story</button>
+</form>
+
+<div id="story-output" class="mt-4" style="display: none;">
+    <h2>Generated Story</h2>
+    <div id="story-content" class="mb-3"></div>
+    <img id="story-image" class="img-fluid mb-3" alt="Story Image">
+    <div class="mb-3">
+        <button id="play-audio" class="btn btn-secondary">Play Audio</button>
+        <audio id="story-audio" style="display: none;"></audio>
+    </div>
+    <button id="save-story" class="btn btn-success">Save Story</button>
+</div>
+{% endblock %}
