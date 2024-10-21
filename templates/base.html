@@ -21,7 +21,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        const socket = io();
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
