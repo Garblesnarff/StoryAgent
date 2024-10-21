@@ -36,16 +36,20 @@ def log_message(message):
     socketio.emit('log_message', {'message': message})
 
 def generate_audio_for_paragraph(paragraph):
-    audio_dir = os.path.join('static', 'audio')
-    os.makedirs(audio_dir, exist_ok=True)
-    
-    tts = gTTS(text=paragraph, lang='en')
-    
-    filename = f"paragraph_audio_{int(time.time())}.mp3"
-    filepath = os.path.join(audio_dir, filename)
-    tts.save(filepath)
-    
-    return f"/static/audio/{filename}"
+    try:
+        audio_dir = os.path.join('static', 'audio')
+        os.makedirs(audio_dir, exist_ok=True)
+        
+        tts = gTTS(text=paragraph, lang='en')
+        
+        filename = f"paragraph_audio_{int(time.time())}.mp3"
+        filepath = os.path.join(audio_dir, filename)
+        tts.save(filepath)
+        
+        return f"/static/audio/{filename}"
+    except Exception as e:
+        log_message(f"Error generating audio: {str(e)}")
+        return None
 
 def generate_image_for_paragraph(paragraph):
     try:
@@ -62,7 +66,7 @@ def generate_image_for_paragraph(paragraph):
         return f"data:image/png;base64,{image_b64}"
     except Exception as e:
         log_message(f"Error generating image: {str(e)}")
-        return 'https://example.com/fallback-image.jpg'  # Fallback image URL
+        return None
 
 @app.route('/')
 def index():
@@ -102,23 +106,29 @@ def generate_story():
                 
                 log_message(f"Generating image for paragraph {index + 1}")
                 image_url = generate_image_for_paragraph(paragraph)
-                log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
+                if image_url:
+                    log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
+                else:
+                    log_message(f"Failed to generate image for paragraph {index + 1}")
                 
                 log_message(f"Generating audio for paragraph {index + 1}")
                 audio_url = generate_audio_for_paragraph(paragraph)
-                log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
+                if audio_url:
+                    log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
+                else:
+                    log_message(f"Failed to generate audio for paragraph {index + 1}")
                 
                 processed_paragraphs.append({
                     'text': paragraph,
-                    'image_url': image_url,
-                    'audio_url': audio_url
+                    'image_url': image_url or 'https://example.com/fallback-image.jpg',
+                    'audio_url': audio_url or ''
                 })
 
         log_message(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
         return jsonify({'paragraphs': processed_paragraphs})
     except Exception as e:
         log_message(f"Error generating story: {str(e)}")
-        return jsonify({'error': 'Failed to generate story'}), 500
+        return jsonify({'error': 'Failed to generate story', 'message': str(e)}), 500
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
