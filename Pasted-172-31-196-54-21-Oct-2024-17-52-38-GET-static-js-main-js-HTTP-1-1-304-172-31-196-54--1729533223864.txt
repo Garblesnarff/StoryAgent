@@ -1,0 +1,26 @@
+172.31.196.54 - - [21/Oct/2024 17:52:38] "GET /static/js/main.js HTTP/1.1" 304 -
+172.31.196.54 - - [21/Oct/2024 17:52:38] "GET /socket.io/?EIO=4&transport=polling&t=PAmDPzh HTTP/1.1" 200 -
+172.31.196.54 - - [21/Oct/2024 17:52:38] "POST /socket.io/?EIO=4&transport=polling&t=PAmDQ00&sid=n17H5_FEWCD-4HG-AAAI HTTP/1.1" 200 -
+172.31.196.54 - - [21/Oct/2024 17:52:38] "GET /socket.io/?EIO=4&transport=polling&t=PAmDQ02&sid=n17H5_FEWCD-4HG-AAAI HTTP/1.1" 200 -
+172.31.196.54 - - [21/Oct/2024 17:52:39] "GET /socket.io/?EIO=4&transport=polling&t=PAmDQ28&sid=n17H5_FEWCD-4HG-AAAI HTTP/1.1" 200 -
+[2024-10-21 17:53:13,925] ERROR in app: Exception on /generate_story [POST]
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 939, in ensure_sync
+    return self.async_to_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 960, in async_to_sync
+    raise RuntimeError(
+RuntimeError: Install Flask with the 'async' extra in order to use async views.
+172.31.196.54 - - [21/Oct/2024 17:53:13] "POST /generate_story HTTP/1.1" 500 -

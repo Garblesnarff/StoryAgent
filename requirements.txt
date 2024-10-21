@@ -1,0 +1,8 @@
+flask[async]
+flask-sqlalchemy
+flask-socketio
+python-dotenv
+groq
+together
+hume
+hypercorn

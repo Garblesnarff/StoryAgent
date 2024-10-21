@@ -1,4 +1,5 @@
 import os
+import asyncio
 from flask import Flask, render_template, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -10,7 +11,6 @@ from together import Together
 import time
 import tempfile
 from flask_socketio import SocketIO, emit
-import asyncio
 from dotenv import load_dotenv
 from hume.client import AsyncHumeClient
 from hume.empathic_voice.chat.socket_client import ChatConnectOptions
@@ -122,8 +122,8 @@ async def generate_story():
     
     try:
         app.logger.debug('Starting story generation')
-        log_message("Starting story generation process")
-        log_message(f"Received prompt: {prompt[:50]}...")  # Log first 50 characters of prompt
+        log_message('Starting story generation process')
+        log_message(f'Received prompt: {prompt[:50]}...')
         
         log_message("Calling Groq API to generate story")
         # Generate the first scene of the first chapter
@@ -191,4 +191,8 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    from hypercorn.asyncio import serve
+    from hypercorn.config import Config
+    config = Config()
+    config.bind = ['0.0.0.0:5000']
+    asyncio.run(serve(app, config))
