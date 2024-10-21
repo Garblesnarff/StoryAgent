@@ -10,6 +10,13 @@
     <button type="submit" class="btn btn-primary">Generate Story</button>
 </form>
 
+<div id="progress-container" class="mt-4 mb-4" style="display: none;">
+    <h3>Generation Progress</h3>
+    <div class="progress">
+        <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+    </div>
+</div>
+
 <div id="log-output" class="mt-4 mb-4">
     <h3>Generation Progress</h3>
     <div id="log-content" class="border p-3 bg-dark text-light" style="height: 200px; overflow-y: auto;"></div>

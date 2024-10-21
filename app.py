@@ -31,9 +31,12 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 
-def log_message(message):
+def log_message(message, progress=None, total=None):
     app.logger.info(message)
-    socketio.emit('log_message', {'message': message})
+    data = {'message': message}
+    if progress is not None and total is not None:
+        data['progress'] = {'current': progress, 'total': total}
+    socketio.emit('log_message', data)
 
 def generate_audio_for_paragraph(paragraph):
     try:
@@ -96,26 +99,30 @@ def generate_story():
         log_message("Splitting scene into paragraphs")
         # Split the scene into paragraphs
         paragraphs = scene.split('\n\n')
-        log_message(f"Split scene into {len(paragraphs)} paragraphs")
+        total_paragraphs = len(paragraphs)
+        log_message(f"Split scene into {total_paragraphs} paragraphs")
+
+        # Emit the total number of paragraphs
+        socketio.emit('total_paragraphs', {'total': total_paragraphs})
 
         # Process each paragraph
         for index, paragraph in enumerate(paragraphs):
             if paragraph.strip():  # Ignore empty paragraphs
-                log_message(f"Processing paragraph {index + 1}. First few words: {' '.join(paragraph.split()[:5])}...")
+                log_message(f"Processing paragraph {index + 1} of {total_paragraphs}. First few words: {' '.join(paragraph.split()[:5])}...", progress=index + 1, total=total_paragraphs)
                 
-                log_message(f"Generating image for paragraph {index + 1}")
+                log_message(f"Generating image for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
                 image_url = generate_image_for_paragraph(paragraph)
                 if image_url:
-                    log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
+                    log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...", progress=index + 1, total=total_paragraphs)
                 else:
-                    log_message(f"Failed to generate image for paragraph {index + 1}")
+                    log_message(f"Failed to generate image for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
                 
-                log_message(f"Generating audio for paragraph {index + 1}")
+                log_message(f"Generating audio for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
                 audio_url = generate_audio_for_paragraph(paragraph)
                 if audio_url:
-                    log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
+                    log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}", progress=index + 1, total=total_paragraphs)
                 else:
-                    log_message(f"Failed to generate audio for paragraph {index + 1}")
+                    log_message(f"Failed to generate audio for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
                 
                 # Emit the paragraph data to the client
                 socketio.emit('new_paragraph', {
@@ -124,7 +131,7 @@ def generate_story():
                     'audio_url': audio_url or ''
                 })
 
-        log_message(f"Story generation process complete. Processed {len(paragraphs)} paragraphs.")
+        log_message(f"Story generation process complete. Processed {total_paragraphs} paragraphs.")
         return jsonify({'success': True})
     except Exception as e:
         log_message(f"Error generating story: {str(e)}")

@@ -4,15 +4,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const paragraphCards = document.getElementById('paragraph-cards');
     const saveStoryBtn = document.getElementById('save-story');
     const logContent = document.getElementById('log-content');
+    const progressBar = document.getElementById('progress-bar');
+    const progressContainer = document.getElementById('progress-container');
 
     let socket = io();
 
     socket.on('log_message', function(data) {
         addLogMessage(data.message);
+        if (data.progress) {
+            updateProgressBar(data.progress.current, data.progress.total);
+        }
     });
 
     socket.on('new_paragraph', function(data) {
         addParagraphCard(data);
+    });
+
+    socket.on('total_paragraphs', function(data) {
+        initializeProgressBar(data.total);
     });
 
     function addLogMessage(message) {
@@ -20,6 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
         logEntry.textContent = message;
         logContent.appendChild(logEntry);
         logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    function initializeProgressBar(total) {
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0);
+        progressBar.setAttribute('aria-valuemax', total);
+        progressContainer.style.display = 'block';
+    }
+
+    function updateProgressBar(current, total) {
+        const percentage = (current / total) * 100;
+        progressBar.style.width = `${percentage}%`;
+        progressBar.setAttribute('aria-valuenow', current);
+        progressBar.textContent = `${current} / ${total}`;
     }
 
     function addParagraphCard(paragraph) {
@@ -58,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             logContent.innerHTML = '';
             paragraphCards.innerHTML = '';
             storyOutput.style.display = 'none';
+            progressContainer.style.display = 'none';
             
             const response = await fetch('/generate_story', {
                 method: 'POST',
