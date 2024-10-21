@@ -6,3 +6,5 @@ groq
 together
 hume
 hypercorn
+sqlalchemy
+werkzeug

@@ -57,25 +57,31 @@ class WebSocketInterface:
         self.audio_file_path = None
 
     def on_open(self):
-        print('WebSocket connection opened.')
+        app.logger.info('WebSocket connection opened.')
     
     def on_message(self, data):
-        print('Received audio data.')
+        app.logger.info('Received audio data.')
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         filename = f'paragraph_audio_{int(time.time())}.wav'
         self.audio_file_path = os.path.join(audio_dir, filename)
         with open(self.audio_file_path, 'wb') as audio_file:
             audio_file.write(base64.b64decode(data['audio']))
+        app.logger.info(f'Audio file saved at: {self.audio_file_path}')
 
     def on_close(self):
-        print('WebSocket connection closed.')
+        app.logger.info('WebSocket connection closed.')
     
     def on_error(self, error):
-        print(f'Error encountered: {error}')
+        app.logger.error(f'Error encountered: {error}')
 
 async def generate_audio_for_paragraph(paragraph):
     try:
+        app.logger.info(f"Starting audio generation for paragraph: {paragraph[:50]}...")
+        app.logger.info(f"Using HUME_API_KEY: {'*' * len(HUME_API_KEY)}")
+        app.logger.info(f"Using HUME_SECRET_KEY: {'*' * len(HUME_SECRET_KEY)}")
+        app.logger.info(f"Using HUME_CONFIG_ID: {HUME_CONFIG_ID}")
+
         client = AsyncHumeClient(api_key=HUME_API_KEY)
         options = ChatConnectOptions(config_id=HUME_CONFIG_ID, secret_key=HUME_SECRET_KEY)
         websocket_interface = WebSocketInterface()
@@ -89,12 +95,20 @@ async def generate_audio_for_paragraph(paragraph):
         ) as socket:
             user_input = UserInput(text=paragraph)
             await socket.send_user_input(user_input)
-        
-        if websocket_interface.audio_file_path:
-            return f"/static/audio/{os.path.basename(websocket_interface.audio_file_path)}"
-        else:
-            app.logger.error("Audio file path is None after generation attempt")
-            return ""
+            
+            # Wait for the audio file to be generated
+            timeout = 30  # Timeout in seconds
+            start_time = time.time()
+            while not websocket_interface.audio_file_path and time.time() - start_time < timeout:
+                await asyncio.sleep(1)
+            
+            if websocket_interface.audio_file_path:
+                app.logger.info(f"Audio file generated successfully: {websocket_interface.audio_file_path}")
+                return f"/static/audio/{os.path.basename(websocket_interface.audio_file_path)}"
+            else:
+                app.logger.error("Audio file path is None after generation attempt")
+                return ""
+
     except ApiError as e:
         app.logger.error(f"Hume API error occurred: {e}")
         return ""
@@ -198,4 +212,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8080, debug=True)
