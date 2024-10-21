@@ -90,10 +90,17 @@ async def generate_audio_for_paragraph(paragraph):
             user_input = UserInput(text=paragraph)
             await socket.send_user_input(user_input)
         
-        return f"/static/audio/{os.path.basename(websocket_interface.audio_file_path)}"
+        if websocket_interface.audio_file_path:
+            return f"/static/audio/{os.path.basename(websocket_interface.audio_file_path)}"
+        else:
+            app.logger.error("Audio file path is None after generation attempt")
+            return ""
     except ApiError as e:
-        log_message(f"API error occurred: {e}")
-        return None
+        app.logger.error(f"Hume API error occurred: {e}")
+        return ""
+    except Exception as e:
+        app.logger.error(f"Unexpected error in audio generation: {e}")
+        return ""
 
 def generate_image_for_paragraph(paragraph):
     try:
@@ -109,7 +116,7 @@ def generate_image_for_paragraph(paragraph):
         image_b64 = image_response.data[0].b64_json
         return f"data:image/png;base64,{image_b64}"
     except Exception as e:
-        log_message(f"Error generating image: {str(e)}")
+        app.logger.error(f"Error generating image: {str(e)}")
         return None
 
 @app.route('/')
@@ -191,8 +198,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
-    config = Config()
-    config.bind = ['0.0.0.0:5000']
-    asyncio.run(serve(app, config))
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
