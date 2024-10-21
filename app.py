@@ -99,7 +99,6 @@ def generate_story():
         log_message(f"Split scene into {len(paragraphs)} paragraphs")
 
         # Process each paragraph
-        processed_paragraphs = []
         for index, paragraph in enumerate(paragraphs):
             if paragraph.strip():  # Ignore empty paragraphs
                 log_message(f"Processing paragraph {index + 1}. First few words: {' '.join(paragraph.split()[:5])}...")
@@ -118,14 +117,15 @@ def generate_story():
                 else:
                     log_message(f"Failed to generate audio for paragraph {index + 1}")
                 
-                processed_paragraphs.append({
+                # Emit the paragraph data to the client
+                socketio.emit('new_paragraph', {
                     'text': paragraph,
                     'image_url': image_url or 'https://example.com/fallback-image.jpg',
                     'audio_url': audio_url or ''
                 })
 
-        log_message(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
-        return jsonify({'paragraphs': processed_paragraphs})
+        log_message(f"Story generation process complete. Processed {len(paragraphs)} paragraphs.")
+        return jsonify({'success': True})
     except Exception as e:
         log_message(f"Error generating story: {str(e)}")
         return jsonify({'error': 'Failed to generate story', 'message': str(e)}), 500

@@ -11,11 +11,33 @@ document.addEventListener('DOMContentLoaded', () => {
         addLogMessage(data.message);
     });
 
+    socket.on('new_paragraph', function(data) {
+        addParagraphCard(data);
+    });
+
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
         logContent.appendChild(logEntry);
         logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    function addParagraphCard(paragraph) {
+        const card = document.createElement('div');
+        card.className = 'col';
+        card.innerHTML = `
+            <div class="card h-100">
+                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
+                <div class="card-body">
+                    <p class="card-text">${paragraph.text}</p>
+                </div>
+                <div class="card-footer">
+                    <audio controls src="${paragraph.audio_url}"></audio>
+                </div>
+            </div>
+        `;
+        paragraphCards.appendChild(card);
+        storyOutput.style.display = 'block';
     }
 
     storyForm.addEventListener('submit', async (e) => {
@@ -24,6 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             logContent.innerHTML = '';
+            paragraphCards.innerHTML = '';
+            storyOutput.style.display = 'none';
             
             const response = await fetch('/generate_story', {
                 method: 'POST',
@@ -37,32 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
-            if (!data.paragraphs || !Array.isArray(data.paragraphs)) {
+            if (!data.success) {
                 throw new Error('Invalid data received from server');
             }
             
-            // Clear previous content
-            paragraphCards.innerHTML = '';
-            
-            // Create a card for each paragraph
-            data.paragraphs.forEach((paragraph, index) => {
-                const card = document.createElement('div');
-                card.className = 'col';
-                card.innerHTML = `
-                    <div class="card h-100">
-                        <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
-                        <div class="card-body">
-                            <p class="card-text">${paragraph.text}</p>
-                        </div>
-                        <div class="card-footer">
-                            <audio controls src="${paragraph.audio_url}"></audio>
-                        </div>
-                    </div>
-                `;
-                paragraphCards.appendChild(card);
-            });
-            
-            storyOutput.style.display = 'block';
+            // The paragraphs will be added by the socket.on('new_paragraph') listener
         } catch (error) {
             console.error('Error:', error.message);
             addLogMessage(`Error: ${error.message}`);
