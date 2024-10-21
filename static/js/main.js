@@ -38,6 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         paragraphCards.appendChild(card);
         storyOutput.style.display = 'block';
+        setupAudioHover();
+    }
+
+    function setupAudioHover() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            const audio = card.querySelector('audio');
+            card.addEventListener('mouseenter', () => audio.play());
+            card.addEventListener('mouseleave', () => audio.pause());
+        });
     }
 
     storyForm.addEventListener('submit', async (e) => {
@@ -103,4 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`An error occurred while saving the story: ${error.message}`);
         }
     });
+
+    // Initial setup for any existing cards
+    setupAudioHover();
 });

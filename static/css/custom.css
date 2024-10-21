@@ -1,1 +1,11 @@
-/* Add any custom styles here if needed */
+/* Add a noticeable border to the story cards */
+.card {
+    border: 2px solid var(--bs-primary);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
