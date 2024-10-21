@@ -3,12 +3,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
     const paragraphCards = document.getElementById('paragraph-cards');
     const saveStoryBtn = document.getElementById('save-story');
+    const logContent = document.getElementById('log-content');
+
+    function addLogMessage(message) {
+        const logEntry = document.createElement('div');
+        logEntry.textContent = message;
+        logContent.appendChild(logEntry);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
 
     storyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(storyForm);
         
         try {
+            logContent.innerHTML = '';
+            addLogMessage('Starting story generation process...');
+
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -30,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Create a card for each paragraph
             data.paragraphs.forEach((paragraph, index) => {
+                addLogMessage(`Processing paragraph ${index + 1}...`);
                 const card = document.createElement('div');
                 card.className = 'col';
                 card.innerHTML = `
@@ -46,9 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 paragraphCards.appendChild(card);
             });
             
+            addLogMessage('Story generation process complete.');
             storyOutput.style.display = 'block';
         } catch (error) {
             console.error('Error:', error.message);
+            addLogMessage(`Error: ${error.message}`);
             alert(`An error occurred while generating the story: ${error.message}`);
         }
     });

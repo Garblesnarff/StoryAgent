@@ -67,6 +67,9 @@ def generate_story():
     prompt = request.form.get('prompt')
     
     try:
+        app.logger.info("Starting story generation process")
+        
+        app.logger.info("Calling LLM to generate story")
         # Generate the first scene of the first chapter
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -77,22 +80,30 @@ def generate_story():
             temperature=0.7,
         )
         scene = response.choices[0].message.content
+        app.logger.info("Story generated successfully")
 
         # Split the scene into paragraphs
         paragraphs = scene.split('\n\n')
 
         # Process each paragraph
         processed_paragraphs = []
-        for paragraph in paragraphs:
+        for index, paragraph in enumerate(paragraphs):
             if paragraph.strip():  # Ignore empty paragraphs
+                app.logger.info(f"Starting image generation for paragraph {index + 1}")
                 image_url = generate_image_for_paragraph(paragraph)
+                app.logger.info(f"Image generated for paragraph {index + 1}")
+                
+                app.logger.info(f"Starting audio generation for paragraph {index + 1}")
                 audio_url = generate_audio_for_paragraph(paragraph)
+                app.logger.info(f"Audio generated for paragraph {index + 1}")
+                
                 processed_paragraphs.append({
                     'text': paragraph,
                     'image_url': image_url,
                     'audio_url': audio_url
                 })
 
+        app.logger.info("Story generation process complete")
         return jsonify({'paragraphs': processed_paragraphs})
     except Exception as e:
         app.logger.error(f"Error generating story: {str(e)}")
