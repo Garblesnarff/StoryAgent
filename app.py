@@ -119,32 +119,29 @@ def index():
 @app.route('/generate_story', methods=['POST'])
 async def generate_story():
     prompt = request.form.get('prompt')
-    genre = request.form.get('genre')
-    length = request.form.get('length')
-    regenerate = request.form.get('regenerate', 'false').lower() == 'true'
     
     try:
         log_message("Starting story generation process")
-        log_message(f"Received prompt: {prompt[:50]}...")
-        log_message(f"Genre: {genre}, Length: {length}")
+        log_message(f"Received prompt: {prompt[:50]}...")  # Log first 50 characters of prompt
         
         log_message("Calling Groq API to generate story")
-        # Generate the story based on prompt, genre, and length
+        # Generate the first scene of the first chapter
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": f"You are a creative storyteller. Write a {genre} story that is {length} based on the given prompt."},
-                {"role": "user", "content": f"Write a {genre} story that is {length} based on this prompt: {prompt}"}
+                {"role": "system", "content": "You are a creative storyteller. Write the first scene of the first chapter based on the given prompt."},
+                {"role": "user", "content": f"Write the first scene of a story based on this prompt: {prompt}"}
             ],
             temperature=0.7,
         )
-        story = response.choices[0].message.content
-        log_message(f"Received response from Groq API. Generated {len(story.split())} words.")
+        scene = response.choices[0].message.content
+        log_message(f"Received response from Groq API. Generated {len(scene.split())} words.")
 
-        log_message("Splitting story into paragraphs")
-        paragraphs = story.split('\n\n')
+        log_message("Splitting scene into paragraphs")
+        # Split the scene into paragraphs
+        paragraphs = scene.split('\n\n')
         total_paragraphs = len(paragraphs)
-        log_message(f"Split story into {total_paragraphs} paragraphs")
+        log_message(f"Split scene into {total_paragraphs} paragraphs")
 
         # Emit the total number of paragraphs
         socketio.emit('total_paragraphs', {'total': total_paragraphs})
