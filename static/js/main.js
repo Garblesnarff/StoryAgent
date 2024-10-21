@@ -9,10 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const socket = io();
 
-    socket.on('connect', () => {
-        console.log('Connected to server');
-    });
-
     socket.on('log_message', function(data) {
         addLogMessage(data.message);
         if (data.progress) {
