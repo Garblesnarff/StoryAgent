@@ -69,7 +69,7 @@ def generate_story():
     try:
         app.logger.info("Starting story generation process")
         
-        app.logger.info("Calling LLM to generate story")
+        app.logger.info("Calling Groq API to generate story")
         # Generate the first scene of the first chapter
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -80,22 +80,26 @@ def generate_story():
             temperature=0.7,
         )
         scene = response.choices[0].message.content
-        app.logger.info("Story generated successfully")
+        app.logger.info(f"Received response from Groq API. Generated {len(scene.split())} words.")
 
+        app.logger.info("Splitting scene into paragraphs")
         # Split the scene into paragraphs
         paragraphs = scene.split('\n\n')
+        app.logger.info(f"Split scene into {len(paragraphs)} paragraphs")
 
         # Process each paragraph
         processed_paragraphs = []
         for index, paragraph in enumerate(paragraphs):
             if paragraph.strip():  # Ignore empty paragraphs
-                app.logger.info(f"Starting image generation for paragraph {index + 1}")
-                image_url = generate_image_for_paragraph(paragraph)
-                app.logger.info(f"Image generated for paragraph {index + 1}")
+                app.logger.info(f"Processing paragraph {index + 1}. First few words: {' '.join(paragraph.split()[:5])}...")
                 
-                app.logger.info(f"Starting audio generation for paragraph {index + 1}")
+                app.logger.info(f"Generating image for paragraph {index + 1}")
+                image_url = generate_image_for_paragraph(paragraph)
+                app.logger.info(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
+                
+                app.logger.info(f"Generating audio for paragraph {index + 1}")
                 audio_url = generate_audio_for_paragraph(paragraph)
-                app.logger.info(f"Audio generated for paragraph {index + 1}")
+                app.logger.info(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
                 
                 processed_paragraphs.append({
                     'text': paragraph,
@@ -103,7 +107,7 @@ def generate_story():
                     'audio_url': audio_url
                 })
 
-        app.logger.info("Story generation process complete")
+        app.logger.info(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
         return jsonify({'paragraphs': processed_paragraphs})
     except Exception as e:
         app.logger.error(f"Error generating story: {str(e)}")
