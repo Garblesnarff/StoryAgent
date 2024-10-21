@@ -7,10 +7,19 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
-from gtts import gTTS
 import time
 import tempfile
 from flask_socketio import SocketIO, emit
+import asyncio
+from dotenv import load_dotenv
+from hume.client import AsyncHumeClient
+from hume.empathic_voice.chat.socket_client import ChatConnectOptions
+from hume.empathic_voice.types import UserInput
+from hume.core.api_error import ApiError
+import base64
+
+# Load environment variables
+load_dotenv()
 
 class Base(DeclarativeBase):
     pass
@@ -31,6 +40,11 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 
+# Initialize Hume.ai client
+HUME_API_KEY = os.environ.get('HUME_API_KEY')
+HUME_SECRET_KEY = os.environ.get('HUME_SECRET_KEY')
+HUME_CONFIG_ID = os.environ.get('HUME_CONFIG_ID')
+
 def log_message(message, progress=None, total=None):
     app.logger.info(message)
     data = {'message': message}
@@ -38,20 +52,47 @@ def log_message(message, progress=None, total=None):
         data['progress'] = {'current': progress, 'total': total}
     socketio.emit('log_message', data)
 
-def generate_audio_for_paragraph(paragraph):
-    try:
+class WebSocketInterface:
+    def __init__(self):
+        self.audio_file_path = None
+
+    def on_open(self):
+        print('WebSocket connection opened.')
+    
+    def on_message(self, data):
+        print('Received audio data.')
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
+        filename = f'paragraph_audio_{int(time.time())}.wav'
+        self.audio_file_path = os.path.join(audio_dir, filename)
+        with open(self.audio_file_path, 'wb') as audio_file:
+            audio_file.write(base64.b64decode(data['audio']))
+
+    def on_close(self):
+        print('WebSocket connection closed.')
+    
+    def on_error(self, error):
+        print(f'Error encountered: {error}')
+
+async def generate_audio_for_paragraph(paragraph):
+    try:
+        client = AsyncHumeClient(api_key=HUME_API_KEY)
+        options = ChatConnectOptions(config_id=HUME_CONFIG_ID, secret_key=HUME_SECRET_KEY)
+        websocket_interface = WebSocketInterface()
+
+        async with client.empathic_voice.chat.connect_with_callbacks(
+            options=options,
+            on_open=websocket_interface.on_open,
+            on_message=websocket_interface.on_message,
+            on_close=websocket_interface.on_close,
+            on_error=websocket_interface.on_error
+        ) as socket:
+            user_input = UserInput(text=paragraph)
+            await socket.send_user_input(user_input)
         
-        tts = gTTS(text=paragraph, lang='en')
-        
-        filename = f"paragraph_audio_{int(time.time())}.mp3"
-        filepath = os.path.join(audio_dir, filename)
-        tts.save(filepath)
-        
-        return f"/static/audio/{filename}"
-    except Exception as e:
-        log_message(f"Error generating audio: {str(e)}")
+        return f"/static/audio/{os.path.basename(websocket_interface.audio_file_path)}"
+    except ApiError as e:
+        log_message(f"API error occurred: {e}")
         return None
 
 def generate_image_for_paragraph(paragraph):
@@ -76,7 +117,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/generate_story', methods=['POST'])
-def generate_story():
+async def generate_story():
     prompt = request.form.get('prompt')
     
     try:
@@ -118,7 +159,7 @@ def generate_story():
                     log_message(f"Failed to generate image for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
                 
                 log_message(f"Generating audio for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
-                audio_url = generate_audio_for_paragraph(paragraph)
+                audio_url = await generate_audio_for_paragraph(paragraph)
                 if audio_url:
                     log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}", progress=index + 1, total=total_paragraphs)
                 else:

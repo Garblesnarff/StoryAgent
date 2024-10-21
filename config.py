@@ -13,3 +13,6 @@ class Config:
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
     SUPABASE_URL = os.environ.get('SUPABASE_URL')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+    HUME_API_KEY = os.environ.get('HUME_API_KEY')
+    HUME_SECRET_KEY = os.environ.get('HUME_SECRET_KEY')
+    HUME_CONFIG_ID = os.environ.get('HUME_CONFIG_ID')

@@ -7,7 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
 
-    let socket = io();
+    const socket = io();
+
+    socket.on('connect', () => {
+        console.log('Connected to server');
+    });
 
     socket.on('log_message', function(data) {
         addLogMessage(data.message);
@@ -61,16 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         paragraphCards.appendChild(card);
         storyOutput.style.display = 'block';
-        setupAudioHover();
-    }
-
-    function setupAudioHover() {
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-            const audio = card.querySelector('audio');
-            card.addEventListener('mouseenter', () => audio.play());
-            card.addEventListener('mouseleave', () => audio.pause());
-        });
     }
 
     storyForm.addEventListener('submit', async (e) => {
@@ -137,7 +131,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`An error occurred while saving the story: ${error.message}`);
         }
     });
-
-    // Initial setup for any existing cards
-    setupAudioHover();
 });
