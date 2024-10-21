@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
     const paragraphCards = document.getElementById('paragraph-cards');
     const saveStoryBtn = document.getElementById('save-story');
+    const regenerateStoryBtn = document.getElementById('regenerate-story');
     const logContent = document.getElementById('log-content');
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
@@ -57,6 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
                 <div class="card-body">
                     <p class="card-text">${paragraph.text}</p>
+                    <textarea class="form-control mt-2 edit-paragraph" style="display: none;">${paragraph.text}</textarea>
+                    <button class="btn btn-primary btn-sm mt-2 edit-btn">Edit</button>
+                    <button class="btn btn-success btn-sm mt-2 save-btn" style="display: none;">Save</button>
+                    <button class="btn btn-danger btn-sm mt-2 cancel-btn" style="display: none;">Cancel</button>
                 </div>
                 <div class="card-footer">
                     <audio controls src="${paragraph.audio_url}"></audio>
@@ -65,6 +70,38 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         paragraphCards.appendChild(card);
         storyOutput.style.display = 'block';
+
+        const editBtn = card.querySelector('.edit-btn');
+        const saveBtn = card.querySelector('.save-btn');
+        const cancelBtn = card.querySelector('.cancel-btn');
+        const textArea = card.querySelector('.edit-paragraph');
+        const paragraphText = card.querySelector('.card-text');
+
+        editBtn.addEventListener('click', () => {
+            textArea.style.display = 'block';
+            saveBtn.style.display = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+            editBtn.style.display = 'none';
+            paragraphText.style.display = 'none';
+        });
+
+        saveBtn.addEventListener('click', () => {
+            paragraphText.textContent = textArea.value;
+            textArea.style.display = 'none';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            editBtn.style.display = 'inline-block';
+            paragraphText.style.display = 'block';
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            textArea.value = paragraphText.textContent;
+            textArea.style.display = 'none';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            editBtn.style.display = 'inline-block';
+            paragraphText.style.display = 'block';
+        });
     }
 
     storyForm.addEventListener('submit', async (e) => {
@@ -131,6 +168,40 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error:', error.message);
             alert(`An error occurred while saving the story: ${error.message}`);
+        }
+    });
+
+    regenerateStoryBtn.addEventListener('click', async () => {
+        try {
+            const formData = new FormData(storyForm);
+            formData.append('regenerate', 'true');
+
+            logContent.innerHTML = '';
+            paragraphCards.innerHTML = '';
+            storyOutput.style.display = 'none';
+            progressContainer.style.display = 'none';
+
+            const response = await fetch('/generate_story', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to regenerate story');
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error('Invalid data received from server');
+            }
+
+            // The paragraphs will be added by the socket.on('new_paragraph') listener
+        } catch (error) {
+            console.error('Error:', error.message);
+            addLogMessage(`Error: ${error.message}`);
+            alert(`An error occurred while regenerating the story: ${error.message}`);
         }
     });
 });

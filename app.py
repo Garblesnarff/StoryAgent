@@ -121,6 +121,7 @@ async def generate_story():
     prompt = request.form.get('prompt')
     genre = request.form.get('genre')
     length = request.form.get('length')
+    regenerate = request.form.get('regenerate', 'false').lower() == 'true'
     
     try:
         log_message("Starting story generation process")
