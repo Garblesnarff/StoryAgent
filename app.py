@@ -10,6 +10,7 @@ from together import Together
 from gtts import gTTS
 import time
 import tempfile
+from flask_socketio import SocketIO, emit
 
 class Base(DeclarativeBase):
     pass
@@ -18,6 +19,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
+socketio = SocketIO(app)
 
 with app.app_context():
     import models
@@ -28,6 +30,10 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
+
+def log_message(message):
+    app.logger.info(message)
+    socketio.emit('log_message', {'message': message})
 
 def generate_audio_for_paragraph(paragraph):
     audio_dir = os.path.join('static', 'audio')
@@ -55,7 +61,7 @@ def generate_image_for_paragraph(paragraph):
         image_b64 = image_response.data[0].b64_json
         return f"data:image/png;base64,{image_b64}"
     except Exception as e:
-        app.logger.error(f"Error generating image: {str(e)}")
+        log_message(f"Error generating image: {str(e)}")
         return 'https://example.com/fallback-image.jpg'  # Fallback image URL
 
 @app.route('/')
@@ -67,9 +73,10 @@ def generate_story():
     prompt = request.form.get('prompt')
     
     try:
-        app.logger.info("Starting story generation process")
+        log_message("Starting story generation process")
+        log_message(f"Received prompt: {prompt[:50]}...")  # Log first 50 characters of prompt
         
-        app.logger.info("Calling Groq API to generate story")
+        log_message("Calling Groq API to generate story")
         # Generate the first scene of the first chapter
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -80,26 +87,26 @@ def generate_story():
             temperature=0.7,
         )
         scene = response.choices[0].message.content
-        app.logger.info(f"Received response from Groq API. Generated {len(scene.split())} words.")
+        log_message(f"Received response from Groq API. Generated {len(scene.split())} words.")
 
-        app.logger.info("Splitting scene into paragraphs")
+        log_message("Splitting scene into paragraphs")
         # Split the scene into paragraphs
         paragraphs = scene.split('\n\n')
-        app.logger.info(f"Split scene into {len(paragraphs)} paragraphs")
+        log_message(f"Split scene into {len(paragraphs)} paragraphs")
 
         # Process each paragraph
         processed_paragraphs = []
         for index, paragraph in enumerate(paragraphs):
             if paragraph.strip():  # Ignore empty paragraphs
-                app.logger.info(f"Processing paragraph {index + 1}. First few words: {' '.join(paragraph.split()[:5])}...")
+                log_message(f"Processing paragraph {index + 1}. First few words: {' '.join(paragraph.split()[:5])}...")
                 
-                app.logger.info(f"Generating image for paragraph {index + 1}")
+                log_message(f"Generating image for paragraph {index + 1}")
                 image_url = generate_image_for_paragraph(paragraph)
-                app.logger.info(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
+                log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
                 
-                app.logger.info(f"Generating audio for paragraph {index + 1}")
+                log_message(f"Generating audio for paragraph {index + 1}")
                 audio_url = generate_audio_for_paragraph(paragraph)
-                app.logger.info(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
+                log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
                 
                 processed_paragraphs.append({
                     'text': paragraph,
@@ -107,10 +114,10 @@ def generate_story():
                     'audio_url': audio_url
                 })
 
-        app.logger.info(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
+        log_message(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
         return jsonify({'paragraphs': processed_paragraphs})
     except Exception as e:
-        app.logger.error(f"Error generating story: {str(e)}")
+        log_message(f"Error generating story: {str(e)}")
         return jsonify({'error': 'Failed to generate story'}), 500
 
 @app.route('/save_story', methods=['POST'])
@@ -119,4 +126,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)

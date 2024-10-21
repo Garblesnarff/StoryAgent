@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveStoryBtn = document.getElementById('save-story');
     const logContent = document.getElementById('log-content');
 
+    let socket = io();
+
+    socket.on('log_message', function(data) {
+        addLogMessage(data.message);
+    });
+
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -18,8 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             logContent.innerHTML = '';
-            addLogMessage('Starting story generation process...');
-
+            
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -41,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Create a card for each paragraph
             data.paragraphs.forEach((paragraph, index) => {
-                addLogMessage(`Processing paragraph ${index + 1}...`);
                 const card = document.createElement('div');
                 card.className = 'col';
                 card.innerHTML = `
@@ -58,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 paragraphCards.appendChild(card);
             });
             
-            addLogMessage('Story generation process complete.');
             storyOutput.style.display = 'block';
         } catch (error) {
             console.error('Error:', error.message);
