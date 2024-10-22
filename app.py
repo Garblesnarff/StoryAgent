@@ -42,7 +42,7 @@ def generate_audio_for_paragraph(paragraph):
         
         return f"/static/audio/{filename}"
     except Exception as e:
-        print(f"Error generating audio: {str(e)}")
+        app.logger.error(f"Error generating audio: {str(e)}")
         return None
 
 def generate_image_for_paragraph(paragraph):
@@ -59,7 +59,7 @@ def generate_image_for_paragraph(paragraph):
         image_b64 = image_response.data[0].b64_json
         return f"data:image/png;base64,{image_b64}"
     except Exception as e:
-        print(f"Error generating image: {str(e)}")
+        app.logger.error(f"Error generating image: {str(e)}")
         return None
 
 @app.route('/')
@@ -73,12 +73,15 @@ def generate_story():
     length = request.form.get('length')
     
     try:
+        app.logger.info(f"Generating story with prompt: '{prompt}', genre: {genre}, length: {length}")
+        
         # Adjust the system message based on genre and length
         system_message = f"You are a creative storyteller specializing in {genre} stories. Write a {length} story based on the given prompt."
         
         # Adjust the number of paragraphs based on the selected length
         num_paragraphs = 1 if length == 'short' else (3 if length == 'medium' else 6)
         
+        app.logger.info("Calling Groq API to generate story")
         # Generate the story
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -89,24 +92,37 @@ def generate_story():
             temperature=0.7,
         )
         story = response.choices[0].message.content
+        app.logger.info(f"Received response from Groq API. Generated {len(story.split())} words.")
 
+        app.logger.info("Splitting story into paragraphs")
         # Split the story into paragraphs
         paragraphs = story.split('\n\n')[:num_paragraphs]  # Limit to the requested number of paragraphs
+        app.logger.info(f"Split story into {len(paragraphs)} paragraphs")
 
         # Process each paragraph
         processed_paragraphs = []
-        for paragraph in paragraphs:
+        for index, paragraph in enumerate(paragraphs, 1):
             if paragraph.strip():  # Ignore empty paragraphs
+                app.logger.info(f"Processing paragraph {index}. First few words: {' '.join(paragraph.split()[:5])}...")
+                
+                app.logger.info(f"Generating image for paragraph {index}")
                 image_url = generate_image_for_paragraph(paragraph)
+                app.logger.info(f"Image generated for paragraph {index}. URL: {image_url[:50]}...")
+                
+                app.logger.info(f"Generating audio for paragraph {index}")
                 audio_url = generate_audio_for_paragraph(paragraph)
+                app.logger.info(f"Audio generated for paragraph {index}. File: {os.path.basename(audio_url)}")
+                
                 processed_paragraphs.append({
                     'text': paragraph,
                     'image_url': image_url or 'https://example.com/fallback-image.jpg',
                     'audio_url': audio_url or ''
                 })
 
+        app.logger.info(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
         return jsonify({'success': True, 'paragraphs': processed_paragraphs})
     except Exception as e:
+        app.logger.error(f"Error generating story: {str(e)}")
         return jsonify({'error': 'Failed to generate story', 'message': str(e)}), 500
 
 @app.route('/save_story', methods=['POST'])
