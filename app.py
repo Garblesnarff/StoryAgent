@@ -1,6 +1,4 @@
 import os
-import eventlet
-eventlet.monkey_patch()
 from flask import Flask, render_template, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -12,7 +10,7 @@ from together import Together
 from gtts import gTTS
 import time
 import tempfile
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 
 class Base(DeclarativeBase):
     pass
@@ -21,7 +19,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
-socketio = SocketIO(app, async_mode='eventlet')
+socketio = SocketIO(app)
 
 with app.app_context():
     import models
@@ -33,12 +31,9 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 
-def log_message(message, progress=None, total=None):
+def log_message(message):
     app.logger.info(message)
-    data = {'message': message}
-    if progress is not None and total is not None:
-        data['progress'] = {'current': progress, 'total': total}
-    socketio.emit('log_message', data)
+    socketio.emit('log_message', {'message': message})
 
 def generate_audio_for_paragraph(paragraph):
     try:
@@ -101,30 +96,26 @@ def generate_story():
         log_message("Splitting scene into paragraphs")
         # Split the scene into paragraphs
         paragraphs = scene.split('\n\n')
-        total_paragraphs = len(paragraphs)
-        log_message(f"Split scene into {total_paragraphs} paragraphs")
-
-        # Emit the total number of paragraphs
-        socketio.emit('total_paragraphs', {'total': total_paragraphs})
+        log_message(f"Split scene into {len(paragraphs)} paragraphs")
 
         # Process each paragraph
         for index, paragraph in enumerate(paragraphs):
             if paragraph.strip():  # Ignore empty paragraphs
-                log_message(f"Processing paragraph {index + 1} of {total_paragraphs}. First few words: {' '.join(paragraph.split()[:5])}...", progress=index + 1, total=total_paragraphs)
+                log_message(f"Processing paragraph {index + 1}. First few words: {' '.join(paragraph.split()[:5])}...")
                 
-                log_message(f"Generating image for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
+                log_message(f"Generating image for paragraph {index + 1}")
                 image_url = generate_image_for_paragraph(paragraph)
                 if image_url:
-                    log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...", progress=index + 1, total=total_paragraphs)
+                    log_message(f"Image generated for paragraph {index + 1}. URL: {image_url[:50]}...")
                 else:
-                    log_message(f"Failed to generate image for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
+                    log_message(f"Failed to generate image for paragraph {index + 1}")
                 
-                log_message(f"Generating audio for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
+                log_message(f"Generating audio for paragraph {index + 1}")
                 audio_url = generate_audio_for_paragraph(paragraph)
                 if audio_url:
-                    log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}", progress=index + 1, total=total_paragraphs)
+                    log_message(f"Audio generated for paragraph {index + 1}. File: {os.path.basename(audio_url)}")
                 else:
-                    log_message(f"Failed to generate audio for paragraph {index + 1}", progress=index + 1, total=total_paragraphs)
+                    log_message(f"Failed to generate audio for paragraph {index + 1}")
                 
                 # Emit the paragraph data to the client
                 socketio.emit('new_paragraph', {
@@ -133,7 +124,7 @@ def generate_story():
                     'audio_url': audio_url or ''
                 })
 
-        log_message(f"Story generation process complete. Processed {total_paragraphs} paragraphs.")
+        log_message(f"Story generation process complete. Processed {len(paragraphs)} paragraphs.")
         return jsonify({'success': True})
     except Exception as e:
         log_message(f"Error generating story: {str(e)}")
@@ -145,4 +136,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000)
