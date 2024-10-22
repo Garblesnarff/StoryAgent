@@ -12,7 +12,7 @@ from together import Together
 from gtts import gTTS
 import time
 import tempfile
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 
 class Base(DeclarativeBase):
     pass
@@ -21,7 +21,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='eventlet')
 
 with app.app_context():
     import models
