@@ -69,8 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             addLogMessage("Story generated successfully!");
             
-            data.paragraphs.forEach(paragraph => {
+            data.paragraphs.forEach((paragraph, index) => {
+                addLogMessage(`Processing paragraph ${index + 1}...`);
                 addParagraphCard(paragraph);
+                addLogMessage(`Paragraph ${index + 1} processed.`);
             });
         } catch (error) {
             console.error('Error:', error.message);

@@ -10,6 +10,8 @@ from together import Together
 from gtts import gTTS
 import time
 import tempfile
+from collections import deque
+from datetime import datetime, timedelta
 
 class Base(DeclarativeBase):
     pass
@@ -29,8 +31,13 @@ groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
 # Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 
+# Rate limiting for image generation
+image_generation_queue = deque(maxlen=6)
+IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
+
 def generate_audio_for_paragraph(paragraph):
     try:
+        app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         
@@ -40,6 +47,7 @@ def generate_audio_for_paragraph(paragraph):
         filepath = os.path.join(audio_dir, filename)
         tts.save(filepath)
         
+        app.logger.info(f"Audio generated successfully: {filename}")
         return f"/static/audio/{filename}"
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
@@ -47,6 +55,18 @@ def generate_audio_for_paragraph(paragraph):
 
 def generate_image_for_paragraph(paragraph):
     try:
+        app.logger.info(f"Attempting to generate image for paragraph: {paragraph[:50]}...")
+        
+        # Check rate limit
+        current_time = datetime.now()
+        while image_generation_queue and current_time - image_generation_queue[0] > timedelta(seconds=IMAGE_RATE_LIMIT):
+            image_generation_queue.popleft()
+        
+        if len(image_generation_queue) >= 6:
+            wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
+            app.logger.info(f"Rate limit reached. Waiting for {wait_time:.2f} seconds...")
+            time.sleep(wait_time)
+        
         image_response = together_client.images.generate(
             prompt=f"An image representing: {paragraph[:100]}",  # Use first 100 characters as prompt
             model="black-forest-labs/FLUX.1-schnell-Free",
@@ -57,6 +77,11 @@ def generate_image_for_paragraph(paragraph):
             response_format="b64_json"
         )
         image_b64 = image_response.data[0].b64_json
+        
+        # Add timestamp to queue
+        image_generation_queue.append(datetime.now())
+        
+        app.logger.info("Image generated successfully")
         return f"data:image/png;base64,{image_b64}"
     except Exception as e:
         app.logger.error(f"Error generating image: {str(e)}")
