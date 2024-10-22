@@ -10,7 +10,6 @@ from together import Together
 from gtts import gTTS
 import time
 import tempfile
-from flask_socketio import SocketIO
 
 class Base(DeclarativeBase):
     pass
@@ -19,7 +18,6 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
-socketio = SocketIO(app)
 
 with app.app_context():
     import models
@@ -108,13 +106,5 @@ def save_story():
     # TODO: Implement story saving logic using Supabase
     return jsonify({'success': True})
 
-@socketio.on('connect')
-def handle_connect():
-    print('Client connected')
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
-
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
