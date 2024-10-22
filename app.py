@@ -69,21 +69,29 @@ def index():
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     prompt = request.form.get('prompt')
+    genre = request.form.get('genre')
+    length = request.form.get('length')
     
     try:
-        # Generate the first scene of the first chapter
+        # Adjust the system message based on genre and length
+        system_message = f"You are a creative storyteller specializing in {genre} stories. Write a {length} story based on the given prompt."
+        
+        # Adjust the number of paragraphs based on the selected length
+        num_paragraphs = 1 if length == 'short' else (3 if length == 'medium' else 6)
+        
+        # Generate the story
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": "You are a creative storyteller. Write the first scene of the first chapter based on the given prompt."},
-                {"role": "user", "content": f"Write the first scene of a story based on this prompt: {prompt}"}
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": f"Write a {genre} story with {num_paragraphs} paragraphs based on this prompt: {prompt}"}
             ],
             temperature=0.7,
         )
-        scene = response.choices[0].message.content
+        story = response.choices[0].message.content
 
-        # Split the scene into paragraphs
-        paragraphs = scene.split('\n\n')
+        # Split the story into paragraphs
+        paragraphs = story.split('\n\n')[:num_paragraphs]  # Limit to the requested number of paragraphs
 
         # Process each paragraph
         processed_paragraphs = []

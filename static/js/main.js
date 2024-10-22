@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     prompt: document.getElementById('prompt').value,
+                    genre: document.getElementById('genre').value,
+                    length: document.getElementById('length').value,
                     paragraphs: paragraphs
                 })
             });

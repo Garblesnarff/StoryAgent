@@ -7,6 +7,26 @@
         <label for="prompt" class="form-label">Story Prompt</label>
         <textarea class="form-control" id="prompt" name="prompt" rows="3" required></textarea>
     </div>
+    <div class="mb-3">
+        <label for="genre" class="form-label">Genre</label>
+        <select class="form-select" id="genre" name="genre" required>
+            <option value="">Choose a genre</option>
+            <option value="fantasy">Fantasy</option>
+            <option value="sci-fi">Science Fiction</option>
+            <option value="mystery">Mystery</option>
+            <option value="romance">Romance</option>
+            <option value="horror">Horror</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="length" class="form-label">Story Length</label>
+        <select class="form-select" id="length" name="length" required>
+            <option value="">Choose a length</option>
+            <option value="short">Short (1-2 paragraphs)</option>
+            <option value="medium">Medium (3-5 paragraphs)</option>
+            <option value="long">Long (6-8 paragraphs)</option>
+        </select>
+    </div>
     <button type="submit" class="btn btn-primary">Generate Story</button>
 </form>
 
