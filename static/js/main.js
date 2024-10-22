@@ -5,16 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveStoryBtn = document.getElementById('save-story');
     const logContent = document.getElementById('log-content');
 
-    let socket = io();
-
-    socket.on('log_message', function(data) {
-        addLogMessage(data.message);
-    });
-
-    socket.on('new_paragraph', function(data) {
-        addParagraphCard(data);
-    });
-
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -59,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
             paragraphCards.innerHTML = '';
             storyOutput.style.display = 'none';
             
+            addLogMessage("Generating story...");
+            
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -75,7 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Invalid data received from server');
             }
             
-            // The paragraphs will be added by the socket.on('new_paragraph') listener
+            addLogMessage("Story generated successfully!");
+            
+            data.paragraphs.forEach(paragraph => {
+                addParagraphCard(paragraph);
+            });
         } catch (error) {
             console.error('Error:', error.message);
             addLogMessage(`Error: ${error.message}`);

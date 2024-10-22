@@ -14,6 +14,5 @@ dependencies = [
     "supabase>=2.9.0",
     "google-cloud-texttospeech>=2.18.0",
     "gtts>=2.5.3",
-    "flask-socketio>=5.4.1",
     "eventlet>=0.37.0",
 ]
