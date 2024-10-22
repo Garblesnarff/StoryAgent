@@ -15,6 +15,4 @@ dependencies = [
     "google-cloud-texttospeech>=2.18.0",
     "gtts>=2.5.3",
     "flask-socketio>=5.4.1",
-    "python-dotenv>=1.0.1",
-    "hume>=0.7.2",
 ]

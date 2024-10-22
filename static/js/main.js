@@ -7,37 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
 
-    const socket = io('/', { 
-        path: '/socket.io',
-        transports: ['websocket', 'polling'],
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
-    });
-
-    socket.on('connect', () => {
-        console.log('Connected to Socket.IO server');
-        addLogMessage('Connected to server');
-    });
-
-    socket.on('connect_error', (error) => {
-        console.error('Socket.IO connection error:', error);
-        addLogMessage('Error: Unable to connect to the server. Retrying...');
-    });
-
-    socket.on('disconnect', (reason) => {
-        console.log('Disconnected from Socket.IO server:', reason);
-        addLogMessage('Disconnected from server. Attempting to reconnect...');
-    });
-
-    socket.on('reconnect', (attemptNumber) => {
-        console.log('Reconnected to Socket.IO server after', attemptNumber, 'attempts');
-        addLogMessage('Reconnected to server');
-    });
-
-    socket.on('reconnect_failed', () => {
-        console.error('Failed to reconnect to Socket.IO server');
-        addLogMessage('Error: Failed to reconnect to the server. Please refresh the page.');
-    });
+    let socket = io();
 
     socket.on('log_message', function(data) {
         addLogMessage(data.message);
@@ -84,15 +54,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-body">
                     <p class="card-text">${paragraph.text}</p>
                 </div>
-                ${paragraph.audio_url ? `
                 <div class="card-footer">
                     <audio controls src="${paragraph.audio_url}"></audio>
                 </div>
-                ` : ''}
             </div>
         `;
         paragraphCards.appendChild(card);
         storyOutput.style.display = 'block';
+        setupAudioHover();
+    }
+
+    function setupAudioHover() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            const audio = card.querySelector('audio');
+            card.addEventListener('mouseenter', () => audio.play());
+            card.addEventListener('mouseleave', () => audio.pause());
+        });
     }
 
     storyForm.addEventListener('submit', async (e) => {
@@ -112,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to generate story');
+                throw new Error(errorData.error || 'Failed to generate story');
             }
             
             const data = await response.json();
@@ -134,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const paragraphs = Array.from(paragraphCards.children).map(card => ({
                 text: card.querySelector('.card-text').textContent,
                 image_url: card.querySelector('.card-img-top').src,
-                audio_url: card.querySelector('audio')?.src || ''
+                audio_url: card.querySelector('audio').src
             }));
 
             const response = await fetch('/save_story', {
@@ -150,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to save story');
+                throw new Error(errorData.error || 'Failed to save story');
             }
             
             alert('Story saved successfully!');
@@ -159,4 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`An error occurred while saving the story: ${error.message}`);
         }
     });
+
+    // Initial setup for any existing cards
+    setupAudioHover();
 });
