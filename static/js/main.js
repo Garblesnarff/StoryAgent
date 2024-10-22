@@ -6,23 +6,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const logContent = document.getElementById('log-content');
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
+    const connectionStatus = document.getElementById('connection-status');
 
-    let socket = io();
+    let socket;
+    let isConnected = false;
 
-    socket.on('log_message', function(data) {
-        addLogMessage(data.message);
-        if (data.progress) {
-            updateProgressBar(data.progress.current, data.progress.total);
-        }
-    });
+    function initializeSocket() {
+        socket = io({
+            reconnectionAttempts: 5,
+            timeout: 10000,
+        });
 
-    socket.on('new_paragraph', function(data) {
-        addParagraphCard(data);
-    });
+        socket.on('connect', () => {
+            console.log('Connected to Socket.IO server');
+            isConnected = true;
+            updateConnectionStatus('Connected', 'text-success');
+        });
 
-    socket.on('total_paragraphs', function(data) {
-        initializeProgressBar(data.total);
-    });
+        socket.on('disconnect', (reason) => {
+            console.log('Disconnected from Socket.IO server:', reason);
+            isConnected = false;
+            updateConnectionStatus('Disconnected', 'text-danger');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket.IO connection error:', error);
+            updateConnectionStatus('Connection Error', 'text-warning');
+        });
+
+        socket.on('log_message', function(data) {
+            addLogMessage(data.message);
+            if (data.progress) {
+                updateProgressBar(data.progress.current, data.progress.total);
+            }
+        });
+
+        socket.on('new_paragraph', function(data) {
+            addParagraphCard(data);
+        });
+
+        socket.on('total_paragraphs', function(data) {
+            initializeProgressBar(data.total);
+        });
+    }
+
+    function updateConnectionStatus(status, className) {
+        connectionStatus.textContent = status;
+        connectionStatus.className = className;
+    }
 
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
@@ -138,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial setup for any existing cards
+    // Initial setup
+    initializeSocket();
     setupAudioHover();
 });
