@@ -6,54 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const logContent = document.getElementById('log-content');
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
-    const connectionStatus = document.getElementById('connection-status');
-
-    let socket;
-    let isConnected = false;
-
-    function initializeSocket() {
-        socket = io({
-            reconnectionAttempts: 5,
-            timeout: 10000,
-        });
-
-        socket.on('connect', () => {
-            console.log('Connected to Socket.IO server');
-            isConnected = true;
-            updateConnectionStatus('Connected', 'text-success');
-        });
-
-        socket.on('disconnect', (reason) => {
-            console.log('Disconnected from Socket.IO server:', reason);
-            isConnected = false;
-            updateConnectionStatus('Disconnected', 'text-danger');
-        });
-
-        socket.on('connect_error', (error) => {
-            console.error('Socket.IO connection error:', error);
-            updateConnectionStatus('Connection Error', 'text-warning');
-        });
-
-        socket.on('log_message', function(data) {
-            addLogMessage(data.message);
-            if (data.progress) {
-                updateProgressBar(data.progress.current, data.progress.total);
-            }
-        });
-
-        socket.on('new_paragraph', function(data) {
-            addParagraphCard(data);
-        });
-
-        socket.on('total_paragraphs', function(data) {
-            initializeProgressBar(data.total);
-        });
-    }
-
-    function updateConnectionStatus(status, className) {
-        connectionStatus.textContent = status;
-        connectionStatus.className = className;
-    }
 
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
@@ -114,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             storyOutput.style.display = 'none';
             progressContainer.style.display = 'none';
             
+            addLogMessage("Starting story generation process...");
+            
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -130,7 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Invalid data received from server');
             }
             
-            // The paragraphs will be added by the socket.on('new_paragraph') listener
+            initializeProgressBar(data.paragraphs.length);
+            
+            data.paragraphs.forEach((paragraph, index) => {
+                addParagraphCard(paragraph);
+                updateProgressBar(index + 1, data.paragraphs.length);
+                addLogMessage(`Generated paragraph ${index + 1} of ${data.paragraphs.length}`);
+            });
+            
+            addLogMessage("Story generation complete!");
         } catch (error) {
             console.error('Error:', error.message);
             addLogMessage(`Error: ${error.message}`);
@@ -169,7 +131,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial setup
-    initializeSocket();
     setupAudioHover();
 });
