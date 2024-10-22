@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveStoryBtn = document.getElementById('save-story');
     const logContent = document.getElementById('log-content');
 
+    // Initialize Socket.IO
+    const socket = io();
+
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -67,18 +70,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Invalid data received from server');
             }
             
-            addLogMessage("Story generated successfully!");
-            
-            data.paragraphs.forEach((paragraph, index) => {
-                addLogMessage(`Processing paragraph ${index + 1}...`);
-                addParagraphCard(paragraph);
-                addLogMessage(`Paragraph ${index + 1} processed.`);
-            });
+            addLogMessage("Story generation started. Waiting for paragraphs...");
         } catch (error) {
             console.error('Error:', error.message);
             addLogMessage(`Error: ${error.message}`);
             alert(`An error occurred while generating the story: ${error.message}`);
         }
+    });
+
+    // Listen for real-time updates
+    socket.on('paragraph_processed', (paragraph) => {
+        addLogMessage(`Received paragraph: ${paragraph.text.substring(0, 50)}...`);
+        addParagraphCard(paragraph);
     });
 
     saveStoryBtn.addEventListener('click', async () => {
@@ -97,8 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     prompt: document.getElementById('prompt').value,
                     genre: document.getElementById('genre').value,
-                    length: document.getElementById('length').value,
-                    paragraphs: paragraphs
+                    mood: document.getElementById('mood').value,
+                    target_audience: document.getElementById('target_audience').value,
+                    paragraphs: document.getElementById('paragraphs').value,
+                    story_paragraphs: paragraphs
                 })
             });
             

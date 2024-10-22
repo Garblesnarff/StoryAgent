@@ -12,6 +12,7 @@ import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
+from flask_socketio import SocketIO, emit
 
 class Base(DeclarativeBase):
     pass
@@ -20,6 +21,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
+socketio = SocketIO(app)
 
 with app.app_context():
     import models
@@ -95,16 +97,15 @@ def index():
 def generate_story():
     prompt = request.form.get('prompt')
     genre = request.form.get('genre')
-    length = request.form.get('length')
+    mood = request.form.get('mood')
+    target_audience = request.form.get('target_audience')
+    paragraphs = int(request.form.get('paragraphs', 5))
     
     try:
-        app.logger.info(f"Generating story with prompt: '{prompt}', genre: {genre}, length: {length}")
+        app.logger.info(f"Generating story with prompt: '{prompt}', genre: {genre}, mood: {mood}, target audience: {target_audience}, paragraphs: {paragraphs}")
         
-        # Adjust the system message based on genre and length
-        system_message = f"You are a creative storyteller specializing in {genre} stories. Write a {length} story based on the given prompt."
-        
-        # Adjust the number of paragraphs based on the selected length
-        num_paragraphs = 1 if length == 'short' else (3 if length == 'medium' else 6)
+        # Adjust the system message based on the new parameters
+        system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
         
         app.logger.info("Calling Groq API to generate story")
         # Generate the story
@@ -112,7 +113,7 @@ def generate_story():
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": f"Write a {genre} story with {num_paragraphs} paragraphs based on this prompt: {prompt}"}
+                {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
             ],
             temperature=0.7,
         )
@@ -121,12 +122,11 @@ def generate_story():
 
         app.logger.info("Splitting story into paragraphs")
         # Split the story into paragraphs
-        paragraphs = story.split('\n\n')[:num_paragraphs]  # Limit to the requested number of paragraphs
-        app.logger.info(f"Split story into {len(paragraphs)} paragraphs")
+        story_paragraphs = story.split('\n\n')[:paragraphs]  # Limit to the requested number of paragraphs
+        app.logger.info(f"Split story into {len(story_paragraphs)} paragraphs")
 
         # Process each paragraph
-        processed_paragraphs = []
-        for index, paragraph in enumerate(paragraphs, 1):
+        for index, paragraph in enumerate(story_paragraphs, 1):
             if paragraph.strip():  # Ignore empty paragraphs
                 app.logger.info(f"Processing paragraph {index}. First few words: {' '.join(paragraph.split()[:5])}...")
                 
@@ -138,14 +138,15 @@ def generate_story():
                 audio_url = generate_audio_for_paragraph(paragraph)
                 app.logger.info(f"Audio generated for paragraph {index}. File: {os.path.basename(audio_url)}")
                 
-                processed_paragraphs.append({
+                # Emit the processed paragraph to the client
+                socketio.emit('paragraph_processed', {
                     'text': paragraph,
                     'image_url': image_url or 'https://example.com/fallback-image.jpg',
                     'audio_url': audio_url or ''
                 })
 
-        app.logger.info(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
-        return jsonify({'success': True, 'paragraphs': processed_paragraphs})
+        app.logger.info(f"Story generation process complete. Processed {len(story_paragraphs)} paragraphs.")
+        return jsonify({'success': True})
     except Exception as e:
         app.logger.error(f"Error generating story: {str(e)}")
         return jsonify({'error': 'Failed to generate story', 'message': str(e)}), 500
@@ -156,4 +157,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)

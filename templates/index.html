@@ -19,13 +19,28 @@
         </select>
     </div>
     <div class="mb-3">
-        <label for="length" class="form-label">Story Length</label>
-        <select class="form-select" id="length" name="length" required>
-            <option value="">Choose a length</option>
-            <option value="short">Short (1-2 paragraphs)</option>
-            <option value="medium">Medium (3-5 paragraphs)</option>
-            <option value="long">Long (6-8 paragraphs)</option>
+        <label for="mood" class="form-label">Mood</label>
+        <select class="form-select" id="mood" name="mood" required>
+            <option value="">Choose a mood</option>
+            <option value="happy">Happy</option>
+            <option value="sad">Sad</option>
+            <option value="suspenseful">Suspenseful</option>
+            <option value="mysterious">Mysterious</option>
+            <option value="romantic">Romantic</option>
         </select>
+    </div>
+    <div class="mb-3">
+        <label for="target_audience" class="form-label">Target Audience</label>
+        <select class="form-select" id="target_audience" name="target_audience" required>
+            <option value="">Choose a target audience</option>
+            <option value="children">Children</option>
+            <option value="young_adult">Young Adult</option>
+            <option value="adult">Adult</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="paragraphs" class="form-label">Number of Paragraphs</label>
+        <input type="number" class="form-control" id="paragraphs" name="paragraphs" min="1" max="10" value="5" required>
     </div>
     <button type="submit" class="btn btn-primary">Generate Story</button>
 </form>
