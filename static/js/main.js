@@ -7,6 +7,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
 
+    let socket = io();
+
+    socket.on('log_message', function(data) {
+        addLogMessage(data.message);
+        if (data.progress) {
+            updateProgressBar(data.progress.current, data.progress.total);
+        }
+    });
+
+    socket.on('new_paragraph', function(data) {
+        addParagraphCard(data);
+    });
+
+    socket.on('total_paragraphs', function(data) {
+        initializeProgressBar(data.total);
+    });
+
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -66,8 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
             storyOutput.style.display = 'none';
             progressContainer.style.display = 'none';
             
-            addLogMessage("Starting story generation process...");
-            
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -84,15 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Invalid data received from server');
             }
             
-            initializeProgressBar(data.paragraphs.length);
-            
-            data.paragraphs.forEach((paragraph, index) => {
-                addParagraphCard(paragraph);
-                updateProgressBar(index + 1, data.paragraphs.length);
-                addLogMessage(`Generated paragraph ${index + 1} of ${data.paragraphs.length}`);
-            });
-            
-            addLogMessage("Story generation complete!");
+            // The paragraphs will be added by the socket.on('new_paragraph') listener
         } catch (error) {
             console.error('Error:', error.message);
             addLogMessage(`Error: ${error.message}`);
@@ -131,5 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Initial setup for any existing cards
     setupAudioHover();
 });

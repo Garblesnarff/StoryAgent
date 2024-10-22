@@ -283,19 +283,6 @@ wheels = [
 ]
 
 [[package]]
-name = "eventlet"
-version = "0.37.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dnspython" },
-    { name = "greenlet" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/54/8c/d68a786f212bdf362ac91ab248ae94aaf413aeecfd652a08ced9a3d63427/eventlet-0.37.0.tar.gz", hash = "sha256:fa49bf5a549cdbaa06919679979ea022ac8f8f3cf0499f26849a1cd8e64c30b1", size = 558617 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/1e/6590b481bd698ad281f1ee601283421ff167274c15ba73ae80385617ddec/eventlet-0.37.0-py3-none-any.whl", hash = "sha256:801ac231401e41f33a799457c78fdbfabc1c2f28bf9346d4ec4188e9aebc2067", size = 361621 },
-]
-
-[[package]]
 name = "filelock"
 version = "3.16.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1302,7 +1289,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "email-validator" },
-    { name = "eventlet" },
     { name = "flask" },
     { name = "flask-socketio" },
     { name = "flask-sqlalchemy" },
@@ -1318,7 +1304,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "email-validator", specifier = ">=2.2.0" },
-    { name = "eventlet", specifier = ">=0.37.0" },
     { name = "flask", specifier = ">=3.0.3" },
     { name = "flask-socketio", specifier = ">=5.4.1" },
     { name = "flask-sqlalchemy", specifier = ">=3.1.1" },
