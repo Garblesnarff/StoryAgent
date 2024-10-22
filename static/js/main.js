@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logContent = document.getElementById('log-content');
 
     // Initialize Socket.IO
-    const socket = io();
+    const socket = io.connect(window.location.origin);
 
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
