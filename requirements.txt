@@ -1,4 +1,4 @@
-flask[async]
+Flask[async]
 flask-sqlalchemy
 flask-socketio
 python-dotenv
@@ -8,3 +8,4 @@ hume
 hypercorn
 sqlalchemy
 werkzeug
+eventlet
