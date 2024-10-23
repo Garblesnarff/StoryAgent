@@ -22,4 +22,5 @@ dependencies = [
     "numpy>=2.1.2",
     "pyaudio>=0.2.14",
     "hume>=0.7.2",
+    "python-dotenv>=1.0.1",
 ]
