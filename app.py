@@ -47,8 +47,38 @@ hume_client = AsyncHumeClient(api_key=os.environ.get('HUME_API_KEY'))
 image_generation_queue = deque(maxlen=6)
 IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 
+class WebSocketInterface:
+    def __init__(self):
+        self.socket = None
+        self.audio_data = None
+        self.error = None
+
+    def set_socket(self, socket):
+        self.socket = socket
+
+    async def on_open(self):
+        print("WebSocket opened")
+
+    async def on_message(self, data: SubscribeEvent):
+        try:
+            if isinstance(data, AudioOutput):
+                self.audio_data = data.audio_bytes
+        except Exception as e:
+            self.error = str(e)
+            app.logger.error(f"Error in WebSocket on_message: {str(e)}")
+
+    async def on_close(self):
+        print("WebSocket closed")
+
+    async def on_error(self, error: Exception):
+        self.error = str(error)
+        print(f"WebSocket error: {error}")
+
 async def generate_audio_with_evi(text):
     try:
+        # Initialize WebSocket interface
+        websocket_interface = WebSocketInterface()
+        
         # Initialize Hume client with proper configuration
         options = ChatConnectOptions(
             config_id=os.environ.get('HUME_CONFIG_ID'),
@@ -63,27 +93,42 @@ async def generate_audio_with_evi(text):
             }
         )
 
-        # Create WebSocket connection
-        async with hume_client.connect() as socket:
-            # Send text to generate audio
-            response = await socket.send_text(text)
+        # Create WebSocket connection with proper method
+        async with hume_client.empathic_voice.chat.connect_with_callbacks(
+            options=options,
+            on_open=websocket_interface.on_open,
+            on_message=websocket_interface.on_message,
+            on_close=websocket_interface.on_close,
+            on_error=websocket_interface.on_error
+        ) as socket:
+            websocket_interface.set_socket(socket)
             
-            if response and hasattr(response, 'audio'):
-                # Create output directory if it doesn't exist
-                timestamp = int(time.time())
-                output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-                # Write audio data with proper WAV headers
-                with wave.open(output_path, 'wb') as wav_file:
-                    wav_file.setnchannels(1)  # Mono audio
-                    wav_file.setsampwidth(2)  # 16-bit audio
-                    wav_file.setframerate(44100)  # Standard sample rate
-                    wav_file.writeframes(response.audio)
-
-                return f'/static/audio/paragraph_audio_{timestamp}.wav'
-            else:
+            # Send text to generate audio
+            await socket.empathic_voice.chat.send_text(text)
+            
+            # Wait for audio response
+            start_time = time.time()
+            while not websocket_interface.audio_data and (time.time() - start_time) < 30:
+                if websocket_interface.error:
+                    raise Exception(websocket_interface.error)
+                await asyncio.sleep(0.1)
+                
+            if not websocket_interface.audio_data:
                 raise Exception("No audio data received")
+            
+            # Create output directory if it doesn't exist
+            timestamp = int(time.time())
+            output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+            # Write audio data with proper WAV headers
+            with wave.open(output_path, 'wb') as wav_file:
+                wav_file.setnchannels(1)  # Mono audio
+                wav_file.setsampwidth(2)  # 16-bit audio
+                wav_file.setframerate(44100)  # Standard sample rate
+                wav_file.writeframes(websocket_interface.audio_data)
+
+            return f'/static/audio/paragraph_audio_{timestamp}.wav'
 
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
