@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,6 +20,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
+socketio = SocketIO(app)
 db.init_app(app)
 
 with app.app_context():
@@ -91,6 +93,67 @@ def generate_image_for_paragraph(paragraph):
 def index():
     return render_template('index.html')
 
+@app.route('/update_paragraph', methods=['POST'])
+def update_paragraph():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        # Generate new image and audio
+        image_url = generate_image_for_paragraph(text)
+        audio_url = generate_audio_for_paragraph(text)
+        
+        return jsonify({
+            'success': True,
+            'text': text,
+            'image_url': image_url,
+            'audio_url': audio_url
+        })
+    except Exception as e:
+        app.logger.error(f"Error updating paragraph: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/regenerate_image', methods=['POST'])
+def regenerate_image():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        image_url = generate_image_for_paragraph(text)
+        
+        return jsonify({
+            'success': True,
+            'image_url': image_url
+        })
+    except Exception as e:
+        app.logger.error(f"Error regenerating image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/regenerate_audio', methods=['POST'])
+def regenerate_audio():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        audio_url = generate_audio_for_paragraph(text)
+        
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+    except Exception as e:
+        app.logger.error(f"Error regenerating audio: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     prompt = request.form.get('prompt')
@@ -158,4 +221,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)
