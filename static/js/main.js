@@ -5,9 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveStoryBtn = document.getElementById('save-story');
     const logContent = document.getElementById('log-content');
 
-    // Initialize Socket.IO
-    const socket = io.connect(window.location.origin);
-
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -70,18 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Invalid data received from server');
             }
             
-            addLogMessage("Story generation started. Waiting for paragraphs...");
+            // Display all paragraphs
+            data.paragraphs.forEach(paragraph => {
+                addLogMessage(`Processing paragraph: ${paragraph.text.substring(0, 50)}...`);
+                addParagraphCard(paragraph);
+            });
+            
+            addLogMessage("Story generation complete!");
         } catch (error) {
             console.error('Error:', error.message);
             addLogMessage(`Error: ${error.message}`);
             alert(`An error occurred while generating the story: ${error.message}`);
         }
-    });
-
-    // Listen for real-time updates
-    socket.on('paragraph_processed', (paragraph) => {
-        addLogMessage(`Received paragraph: ${paragraph.text.substring(0, 50)}...`);
-        addParagraphCard(paragraph);
     });
 
     saveStoryBtn.addEventListener('click', async () => {
