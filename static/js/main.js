@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const logContent = document.getElementById('log-content');
     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
     let currentEditingCard = null;
+    let currentPage = 0;
+    let totalPages = 0;
 
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
@@ -14,10 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
-    function addParagraphCard(paragraph, index) {
-        const card = document.createElement('div');
-        card.className = 'col';
-        card.innerHTML = `
+    function createPageElement(paragraph, index, isCenter = false) {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = `book-page ${isCenter ? 'center' : index % 2 === 0 ? 'left' : 'right'}`;
+        pageDiv.dataset.index = index;
+        
+        pageDiv.innerHTML = `
             <div class="card h-100">
                 <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
                 <div class="card-body">
@@ -29,10 +33,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
-        paragraphCards.appendChild(card);
+        return pageDiv;
+    }
+
+    function addParagraphCard(paragraph, index) {
+        // Remove existing page if it exists
+        const existingPage = paragraphCards.querySelector(`[data-index="${index}"]`);
+        if (existingPage) {
+            existingPage.remove();
+        }
+
+        const totalParagraphs = document.querySelectorAll('.book-page').length;
+        const isCenter = totalParagraphs === 0 || (totalParagraphs % 2 === 0 && index === totalParagraphs);
+        
+        const pageElement = createPageElement(paragraph, index, isCenter);
+        paragraphCards.appendChild(pageElement);
+        
+        updateNavigation();
         storyOutput.style.display = 'block';
         setupAudioHover();
     }
+
+    function updateNavigation() {
+        const pages = document.querySelectorAll('.book-page');
+        totalPages = Math.ceil(pages.length / 2);
+        const prevButton = document.querySelector('.book-nav.prev');
+        const nextButton = document.querySelector('.book-nav.next');
+
+        // Show/hide navigation buttons
+        prevButton.style.display = currentPage > 0 ? 'block' : 'none';
+        nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
+
+        // Update page visibility
+        pages.forEach((page, index) => {
+            const pageNumber = Math.floor(index / 2);
+            if (pageNumber === currentPage) {
+                page.style.display = 'block';
+                page.classList.remove('flipped');
+            } else if (pageNumber < currentPage) {
+                page.style.display = 'block';
+                page.classList.add('flipped');
+            } else {
+                page.style.display = 'none';
+                page.classList.remove('flipped');
+            }
+        });
+    }
+
+    // Navigation event listeners
+    document.querySelector('.book-nav.prev').addEventListener('click', () => {
+        if (currentPage > 0) {
+            currentPage--;
+            updateNavigation();
+        }
+    });
+
+    document.querySelector('.book-nav.next').addEventListener('click', () => {
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            updateNavigation();
+        }
+    });
 
     function setupAudioHover() {
         const cards = document.querySelectorAll('.card');
@@ -169,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             logContent.innerHTML = '';
             paragraphCards.innerHTML = '';
             storyOutput.style.display = 'none';
+            currentPage = 0;
             
             const response = await fetch('/generate_story', {
                 method: 'POST',
@@ -210,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 
                             case 'complete':
                                 addLogMessage(data.message);
+                                updateNavigation();
                                 break;
                         }
                     } catch (parseError) {
@@ -229,10 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     saveStoryBtn.addEventListener('click', async () => {
         try {
-            const paragraphs = Array.from(paragraphCards.children).map(card => ({
-                text: card.querySelector('.card-text').textContent,
-                image_url: card.querySelector('.card-img-top').src,
-                audio_url: card.querySelector('audio').src
+            const paragraphs = Array.from(document.querySelectorAll('.book-page')).map(page => ({
+                text: page.querySelector('.card-text').textContent,
+                image_url: page.querySelector('.card-img-top').src,
+                audio_url: page.querySelector('audio').src
             }));
 
             const response = await fetch('/save_story', {
