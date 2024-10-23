@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 0;
     let totalPages = 0;
 
+    // Hide save button by default
+    document.getElementById('save-story').style.display = 'none';
+
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -56,11 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const prevButton = document.querySelector('.book-nav.prev');
         const nextButton = document.querySelector('.book-nav.next');
 
-        // Show/hide navigation buttons
         prevButton.style.display = currentPage > 0 ? 'block' : 'none';
         nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
 
-        // Update page visibility and positions
         pages.forEach((page, index) => {
             page.classList.remove('active', 'next', 'prev', 'turning', 'turning-forward', 'turning-backward');
             
@@ -79,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Navigation event listeners
     document.querySelector('.book-nav.next').addEventListener('click', () => {
         if (currentPage < totalPages - 1) {
             const pages = document.querySelectorAll('.book-page');
@@ -126,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Handle edit button clicks
     paragraphCards.addEventListener('click', async (e) => {
         if (e.target.classList.contains('edit-paragraph')) {
             const index = e.target.dataset.index;
@@ -139,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle paragraph edit save
     document.getElementById('saveParagraphEdit').addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
@@ -181,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Regenerate image button
     document.getElementById('regenerateImage').addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
@@ -210,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Regenerate audio button
     document.getElementById('regenerateAudio').addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
@@ -239,13 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Form submission handler
     storyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         logContent.innerHTML = '';
         paragraphCards.innerHTML = '';
         currentPage = 0;
         storyOutput.style.display = 'none';
+        document.getElementById('save-story').style.display = 'none'; // Hide save button
         
         const formData = new FormData(storyForm);
         
@@ -286,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'complete':
                                 addLogMessage(data.message);
                                 storyOutput.style.display = 'block';
+                                document.getElementById('save-story').style.display = 'block'; // Show save button
                                 break;
                         }
                     } catch (parseError) {
