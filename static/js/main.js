@@ -117,6 +117,177 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Rest of the code remains the same...
-    // (Keep all the existing event handlers for editing, regenerating images/audio, and form submission)
+    // Handle edit button clicks
+    paragraphCards.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('edit-paragraph')) {
+            const index = e.target.dataset.index;
+            const card = e.target.closest('.card');
+            currentEditingCard = card;
+            
+            const paragraphText = card.querySelector('.card-text').textContent;
+            document.getElementById('editParagraphText').value = paragraphText;
+            editModal.show();
+        }
+    });
+
+    // Handle paragraph edit save
+    document.getElementById('saveParagraphEdit').addEventListener('click', async () => {
+        if (!currentEditingCard) return;
+
+        const newText = document.getElementById('editParagraphText').value;
+        const paragraphElement = currentEditingCard.querySelector('.card-text');
+        
+        try {
+            addLogMessage('Updating paragraph...');
+            const response = await fetch('/update_paragraph', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: newText
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update paragraph');
+            }
+
+            const data = await response.json();
+            paragraphElement.textContent = newText;
+
+            if (data.image_url) {
+                currentEditingCard.querySelector('.card-img-top').src = data.image_url;
+            }
+            if (data.audio_url) {
+                currentEditingCard.querySelector('audio').src = data.audio_url;
+            }
+
+            editModal.hide();
+            addLogMessage('Paragraph updated successfully!');
+        } catch (error) {
+            console.error('Error:', error);
+            addLogMessage(`Error updating paragraph: ${error.message}`);
+            alert('Failed to update paragraph. Please try again.');
+        }
+    });
+
+    // Regenerate image button
+    document.getElementById('regenerateImage').addEventListener('click', async () => {
+        if (!currentEditingCard) return;
+
+        try {
+            addLogMessage('Regenerating image...');
+            const text = document.getElementById('editParagraphText').value;
+            const response = await fetch('/regenerate_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to regenerate image');
+            }
+
+            const data = await response.json();
+            currentEditingCard.querySelector('.card-img-top').src = data.image_url;
+            addLogMessage('Image regenerated successfully!');
+        } catch (error) {
+            console.error('Error:', error);
+            addLogMessage(`Error regenerating image: ${error.message}`);
+            alert('Failed to regenerate image. Please try again.');
+        }
+    });
+
+    // Regenerate audio button
+    document.getElementById('regenerateAudio').addEventListener('click', async () => {
+        if (!currentEditingCard) return;
+
+        try {
+            addLogMessage('Regenerating audio...');
+            const text = document.getElementById('editParagraphText').value;
+            const response = await fetch('/regenerate_audio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to regenerate audio');
+            }
+
+            const data = await response.json();
+            currentEditingCard.querySelector('audio').src = data.audio_url;
+            addLogMessage('Audio regenerated successfully!');
+        } catch (error) {
+            console.error('Error:', error);
+            addLogMessage(`Error regenerating audio: ${error.message}`);
+            alert('Failed to regenerate audio. Please try again.');
+        }
+    });
+
+    // Form submission handler
+    storyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();  // Prevent form submission
+        logContent.innerHTML = '';  // Clear previous logs
+        paragraphCards.innerHTML = '';  // Clear previous story
+        currentPage = 0;
+        
+        const formData = new FormData(storyForm);
+        
+        try {
+            const response = await fetch('/generate_story', {
+                method: 'POST',
+                body: formData
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let buffer = '';
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                
+                // Process all complete lines
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        // Process the message immediately
+                        switch (data.type) {
+                            case 'log':
+                                addLogMessage(data.message);
+                                break;
+                            case 'paragraph':
+                                addParagraphCard(data.data, data.data.index);
+                                break;
+                            case 'error':
+                                addLogMessage('Error: ' + data.message);
+                                break;
+                            case 'complete':
+                                addLogMessage(data.message);
+                                break;
+                        }
+                    } catch (parseError) {
+                        console.warn('Skipping incomplete JSON chunk');
+                    }
+                }
+                
+                // Keep the last incomplete line in the buffer
+                buffer = lines[lines.length - 1];
+            }
+        } catch (error) {
+            addLogMessage('Error: ' + error.message);
+        }
+    });
 });
