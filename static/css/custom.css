@@ -7,10 +7,12 @@
     justify-content: center;
     align-items: center;
     position: relative;
+    padding: 40px;
 }
 
 .book-pages {
     width: 100%;
+    max-width: 1200px;
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
@@ -18,26 +20,25 @@
 
 .book-page {
     position: absolute;
-    width: calc(50% - 20px);
+    width: 45%;
     height: 800px;
     transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
-    transform-origin: left center;
+    transform-origin: center left;
     backface-visibility: hidden;
 }
 
 .book-page.center {
-    width: calc(100% - 40px);
-    max-width: 800px;
-    left: 50%;
-    transform: translateX(-50%);
+    width: 90%;
+    left: 5%;
+    transform: none;
 }
 
 .book-page.left {
-    left: 0;
+    left: 5%;
 }
 
 .book-page.right {
-    right: 0;
+    left: 50%;
 }
 
 .book-page.flipped {
@@ -79,6 +80,7 @@
 /* Card modifications for book layout */
 .card {
     height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     margin: 0;
