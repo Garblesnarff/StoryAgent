@@ -236,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.innerHTML = '';  // Clear previous logs
         paragraphCards.innerHTML = '';  // Clear previous story
         currentPage = 0;
+        storyOutput.style.display = 'none';
         
         const formData = new FormData(storyForm);
         
@@ -256,34 +257,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 buffer += decoder.decode(value, {stream: true});
                 const lines = buffer.split('\n');
                 
-                // Process all complete lines
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
                     
                     try {
                         const data = JSON.parse(line);
-                        // Process the message immediately
                         switch (data.type) {
                             case 'log':
                                 addLogMessage(data.message);
                                 break;
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
+                                setupAudioHover();
                                 break;
                             case 'error':
                                 addLogMessage('Error: ' + data.message);
                                 break;
                             case 'complete':
                                 addLogMessage(data.message);
+                                storyOutput.style.display = 'block';
                                 break;
                         }
                     } catch (parseError) {
-                        console.warn('Skipping incomplete JSON chunk');
+                        console.error('Error parsing message:', line);
                     }
                 }
-                
-                // Keep the last incomplete line in the buffer
                 buffer = lines[lines.length - 1];
             }
         } catch (error) {
