@@ -47,33 +47,9 @@ hume_client = AsyncHumeClient(api_key=os.environ.get('HUME_API_KEY'))
 image_generation_queue = deque(maxlen=6)
 IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 
-class WebSocketInterface:
-    def __init__(self):
-        self.socket = None
-        self.received_data = None
-        self.is_connected = False
-        self.error = None
-
-    def set_socket(self, socket: ChatWebsocketConnection):
-        self.socket = socket
-        self.is_connected = True
-
-    async def on_message(self, data: AudioOutput):
-        try:
-            audio_data = getattr(data, 'audio_bytes', None)
-            if audio_data:
-                # Write audio data to temp file
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
-                    tmp.write(audio_data)
-                    tmp.flush()
-                    self.received_data = tmp.name
-        except Exception as e:
-            self.error = str(e)
-            app.logger.error(f"Error in WebSocket on_message: {str(e)}")
-
 async def generate_audio_with_evi(text):
     try:
-        websocket_interface = WebSocketInterface()
+        # Initialize Hume client with proper configuration
         options = ChatConnectOptions(
             config_id=os.environ.get('HUME_CONFIG_ID'),
             secret_key=os.environ.get('HUME_SECRET_KEY'),
@@ -87,40 +63,27 @@ async def generate_audio_with_evi(text):
             }
         )
 
-        # Use empathic_voice.chat.connect() instead of connect_with_callbacks
-        async with hume_client.empathic_voice.chat.connect(options=options) as socket:
-            websocket_interface.set_socket(socket)
+        # Create WebSocket connection
+        async with hume_client.connect() as socket:
+            # Send text to generate audio
+            response = await socket.send_text(text)
+            
+            if response and hasattr(response, 'audio'):
+                # Create output directory if it doesn't exist
+                timestamp = int(time.time())
+                output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-            # Wait for connection
-            start_time = time.time()
-            while not websocket_interface.is_connected and (time.time() - start_time) < 10:
-                await asyncio.sleep(0.1)
+                # Write audio data with proper WAV headers
+                with wave.open(output_path, 'wb') as wav_file:
+                    wav_file.setnchannels(1)  # Mono audio
+                    wav_file.setsampwidth(2)  # 16-bit audio
+                    wav_file.setframerate(44100)  # Standard sample rate
+                    wav_file.writeframes(response.audio)
 
-            # Send text and wait for audio response
-            await socket.empathic_voice.chat.send_text(text)
-
-            start_time = time.time()
-            while not websocket_interface.received_data and (time.time() - start_time) < 30:
-                if websocket_interface.error:
-                    raise Exception(websocket_interface.error)
-                await asyncio.sleep(0.1)
-
-            if not websocket_interface.received_data:
-                raise Exception("No audio response received")
-
-            # Save audio with proper WAV format
-            timestamp = int(time.time())
-            output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-            # Convert audio data and save with WAV headers
-            shutil.copy(websocket_interface.received_data, output_path)
-
-            # Clean up temp file
-            os.remove(websocket_interface.received_data)
-
-            # Return relative path for frontend
-            return f'/static/audio/paragraph_audio_{timestamp}.wav'
+                return f'/static/audio/paragraph_audio_{timestamp}.wav'
+            else:
+                raise Exception("No audio data received")
 
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
