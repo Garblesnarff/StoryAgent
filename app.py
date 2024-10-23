@@ -7,24 +7,13 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
+from gtts import gTTS
 import time
 import tempfile
-import shutil
 from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
-import base64
-import asyncio
-import wave
-from dotenv import load_dotenv
-from hume import AsyncHumeClient
-from hume.empathic_voice.chat.socket_client import ChatConnectOptions, ChatWebsocketConnection
-from hume.empathic_voice.chat.types import SubscribeEvent
-from hume.empathic_voice.types import AudioOutput
-
-# Load environment variables
-load_dotenv()
 
 class Base(DeclarativeBase):
     pass
@@ -38,114 +27,15 @@ with app.app_context():
     import models
     db.create_all()
 
-# Initialize API clients
+# Initialize Groq client
 groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
+
+# Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
-hume_client = AsyncHumeClient(api_key=os.environ.get('HUME_API_KEY'))
 
 # Rate limiting for image generation
 image_generation_queue = deque(maxlen=6)
 IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
-
-class WebSocketInterface:
-    def __init__(self):
-        self.socket = None
-        self.audio_data = None
-        self.error = None
-
-    def set_socket(self, socket):
-        self.socket = socket
-
-    async def on_open(self):
-        print("WebSocket opened")
-
-    async def on_message(self, data: SubscribeEvent):
-        try:
-            if isinstance(data, AudioOutput):
-                self.audio_data = data.audio_bytes
-        except Exception as e:
-            self.error = str(e)
-            app.logger.error(f"Error in WebSocket on_message: {str(e)}")
-
-    async def on_close(self):
-        print("WebSocket closed")
-
-    async def on_error(self, error: Exception):
-        self.error = str(error)
-        print(f"WebSocket error: {error}")
-
-async def generate_audio_with_evi(text):
-    try:
-        # Initialize WebSocket interface
-        websocket_interface = WebSocketInterface()
-        
-        # Initialize Hume client with proper configuration
-        options = ChatConnectOptions(
-            config_id=os.environ.get('HUME_CONFIG_ID'),
-            secret_key=os.environ.get('HUME_SECRET_KEY'),
-            config={
-                "evi_version": "2",
-                "name": "EVI 2 config",
-                "voice": {
-                    "provider": "HUME_AI",
-                    "name": "DACHER"
-                }
-            }
-        )
-
-        # Create WebSocket connection with proper method
-        async with hume_client.empathic_voice.chat.connect_with_callbacks(
-            options=options,
-            on_open=websocket_interface.on_open,
-            on_message=websocket_interface.on_message,
-            on_close=websocket_interface.on_close,
-            on_error=websocket_interface.on_error
-        ) as socket:
-            websocket_interface.set_socket(socket)
-            
-            # Send text to generate audio
-            await socket.empathic_voice.chat.send_text(text)
-            
-            # Wait for audio response
-            start_time = time.time()
-            while not websocket_interface.audio_data and (time.time() - start_time) < 30:
-                if websocket_interface.error:
-                    raise Exception(websocket_interface.error)
-                await asyncio.sleep(0.1)
-                
-            if not websocket_interface.audio_data:
-                raise Exception("No audio data received")
-            
-            # Create output directory if it doesn't exist
-            timestamp = int(time.time())
-            output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-            # Write audio data with proper WAV headers
-            with wave.open(output_path, 'wb') as wav_file:
-                wav_file.setnchannels(1)  # Mono audio
-                wav_file.setsampwidth(2)  # 16-bit audio
-                wav_file.setframerate(44100)  # Standard sample rate
-                wav_file.writeframes(websocket_interface.audio_data)
-
-            return f'/static/audio/paragraph_audio_{timestamp}.wav'
-
-    except Exception as e:
-        app.logger.error(f"Error generating audio: {str(e)}")
-        return None
-
-def generate_audio_for_paragraph(paragraph):
-    try:
-        # Create a new event loop for each request
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(generate_audio_with_evi(paragraph))
-        finally:
-            loop.close()
-    except Exception as e:
-        app.logger.error(f"Error in generate_audio_for_paragraph: {str(e)}")
-        return None
 
 def send_json_message(message_type, message_data):
     """Helper function to ensure consistent JSON message formatting"""
@@ -153,6 +43,24 @@ def send_json_message(message_type, message_data):
         'type': message_type,
         'message' if isinstance(message_data, str) else 'data': message_data
     }) + '\n'
+
+def generate_audio_for_paragraph(paragraph):
+    try:
+        app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
+        audio_dir = os.path.join('static', 'audio')
+        os.makedirs(audio_dir, exist_ok=True)
+        
+        tts = gTTS(text=paragraph, lang='en')
+        
+        filename = f"paragraph_audio_{int(time.time())}.mp3"
+        filepath = os.path.join(audio_dir, filename)
+        tts.save(filepath)
+        
+        app.logger.info(f"Audio generated successfully: {filename}")
+        return f"/static/audio/{filename}"
+    except Exception as e:
+        app.logger.error(f"Error generating audio: {str(e)}")
+        return None
 
 def generate_image_for_paragraph(paragraph):
     try:
