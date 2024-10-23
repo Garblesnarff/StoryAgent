@@ -228,10 +228,9 @@ audio {
 
 /* Save button */
 #save-story {
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    z-index: 1000;
+    position: static;  /* Change from fixed to static */
+    display: block;    /* Ensure block display */
+    margin: 2rem auto; /* Add margin for spacing */
     padding: 15px 30px;
     border-radius: 30px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
