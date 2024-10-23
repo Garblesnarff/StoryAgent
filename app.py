@@ -13,6 +13,7 @@ import tempfile
 from collections import deque
 from datetime import datetime, timedelta
 import json
+import sys
 
 class Base(DeclarativeBase):
     pass
@@ -35,6 +36,13 @@ together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 # Rate limiting for image generation
 image_generation_queue = deque(maxlen=6)
 IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
+
+def send_json_message(message_type, message_data):
+    """Helper function to ensure consistent JSON message formatting"""
+    return json.dumps({
+        'type': message_type,
+        'message' if isinstance(message_data, str) else 'data': message_data
+    }) + '\n'
 
 def generate_audio_for_paragraph(paragraph):
     try:
@@ -168,18 +176,12 @@ def generate_story():
             target_audience = request.form.get('target_audience')
             paragraphs = int(request.form.get('paragraphs', 5))
             
-            yield json.dumps({
-                'type': 'log',
-                'message': "Starting story generation..."
-            }) + '\n'
+            yield send_json_message('log', "Starting story generation...")
             
             # Adjust the system message based on the parameters
             system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
             
-            yield json.dumps({
-                'type': 'log',
-                'message': f"Generating story text using Groq API with prompt: '{prompt}'"
-            }) + '\n'
+            yield send_json_message('log', f"Generating story text using Groq API with prompt: '{prompt}'")
             
             # Generate the story
             response = groq_client.chat.completions.create(
@@ -195,93 +197,62 @@ def generate_story():
                 raise Exception("No response from story generation API")
                 
             story = response.choices[0].message.content
-            yield json.dumps({
-                'type': 'log',
-                'message': f"Story text generated successfully ({len(story.split())} words)"
-            }) + '\n'
+            if not story:
+                raise Exception("Empty response from story generation API")
+                
+            yield send_json_message('log', f"Story text generated successfully ({len(story.split())} words)")
 
             # Split the story into paragraphs
             story_paragraphs = [p for p in story.split('\n\n') if p.strip()][:paragraphs]
             total_paragraphs = len(story_paragraphs)
             
-            yield json.dumps({
-                'type': 'log',
-                'message': f"Processing {total_paragraphs} paragraphs..."
-            }) + '\n'
+            yield send_json_message('log', f"Processing {total_paragraphs} paragraphs...")
             
             # Process each paragraph and stream results
             for index, paragraph in enumerate(story_paragraphs, 1):
                 if not paragraph.strip():
                     continue
                     
-                yield json.dumps({
-                    'type': 'log',
-                    'message': f"Processing paragraph {index}/{total_paragraphs} ({(index/total_paragraphs*100):.0f}% complete)"
-                }) + '\n'
+                progress = (index/total_paragraphs*100)
+                yield send_json_message('log', f"Processing paragraph {index}/{total_paragraphs} ({progress:.0f}% complete)")
                 
                 # Generate image
-                yield json.dumps({
-                    'type': 'log',
-                    'message': f"Generating image for paragraph {index}..."
-                }) + '\n'
+                yield send_json_message('log', f"Generating image for paragraph {index}...")
                 
                 # Check rate limit before generating image
                 current_time = datetime.now()
                 if image_generation_queue and len(image_generation_queue) >= 6:
                     wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
                     if wait_time > 0:
-                        yield json.dumps({
-                            'type': 'log',
-                            'message': f"Waiting for rate limit ({wait_time:.0f} seconds)..."
-                        }) + '\n'
+                        yield send_json_message('log', f"Waiting for rate limit ({wait_time:.0f} seconds)...")
+                        time.sleep(wait_time)
                 
                 image_url = generate_image_for_paragraph(paragraph)
-                
-                yield json.dumps({
-                    'type': 'log',
-                    'message': f"Image generated for paragraph {index}"
-                }) + '\n'
+                yield send_json_message('log', f"Image generated for paragraph {index}")
                 
                 # Generate audio
-                yield json.dumps({
-                    'type': 'log',
-                    'message': f"Generating audio for paragraph {index}..."
-                }) + '\n'
-                
+                yield send_json_message('log', f"Generating audio for paragraph {index}...")
                 audio_url = generate_audio_for_paragraph(paragraph)
-                
-                yield json.dumps({
-                    'type': 'log',
-                    'message': f"Audio generated for paragraph {index}"
-                }) + '\n'
+                yield send_json_message('log', f"Audio generated for paragraph {index}")
                 
                 # Send paragraph data
-                yield json.dumps({
-                    'type': 'paragraph',
-                    'data': {
-                        'text': paragraph,
-                        'image_url': image_url or 'https://example.com/fallback-image.jpg',
-                        'audio_url': audio_url or '',
-                        'index': index - 1
-                    }
-                }) + '\n'
-                
-                yield json.dumps({
-                    'type': 'log',
-                    'message': f"Paragraph {index} complete"
-                }) + '\n'
+                paragraph_data = {
+                    'text': paragraph,
+                    'image_url': image_url or 'https://example.com/fallback-image.jpg',
+                    'audio_url': audio_url or '',
+                    'index': index - 1
+                }
+                yield send_json_message('paragraph', paragraph_data)
+                yield send_json_message('log', f"Paragraph {index} complete")
 
-            yield json.dumps({
-                'type': 'complete',
-                'message': "Story generation complete!"
-            }) + '\n'
+                # Ensure stream is flushed
+                sys.stdout.flush()
+                
+            yield send_json_message('complete', "Story generation complete!")
             
         except Exception as e:
             app.logger.error(f"Error generating story: {str(e)}")
-            yield json.dumps({
-                'type': 'error',
-                'message': str(e)
-            }) + '\n'
+            yield send_json_message('error', str(e))
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 

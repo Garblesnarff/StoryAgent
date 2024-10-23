@@ -31,14 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         paragraphCards.appendChild(card);
         storyOutput.style.display = 'block';
+        setupAudioHover();
     }
 
     function setupAudioHover() {
         const cards = document.querySelectorAll('.card');
         cards.forEach(card => {
             const audio = card.querySelector('audio');
-            card.addEventListener('mouseenter', () => audio.play());
-            card.addEventListener('mouseleave', () => audio.pause());
+            if (audio) {
+                card.addEventListener('mouseenter', () => audio.play());
+                card.addEventListener('mouseleave', () => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+            }
         });
     }
 
@@ -171,16 +177,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 
-                const text = decoder.decode(value);
-                const lines = text.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
                 
-                for (const line of lines) {
-                    if (!line.trim()) continue;
+                // Process all complete lines
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
                     
                     try {
                         const data = JSON.parse(line);
@@ -192,11 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
-                                setupAudioHover();
-                                break;
-                                
-                            case 'rate_limit':
-                                addLogMessage(data.message);
                                 break;
                                 
                             case 'error':
@@ -209,9 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                         }
                     } catch (parseError) {
-                        console.error('Error parsing message:', parseError);
+                        console.warn('Skipping incomplete JSON chunk:', parseError);
                     }
                 }
+                
+                // Keep the last incomplete line in the buffer
+                buffer = lines[lines.length - 1];
             }
         } catch (error) {
             console.error('Error:', error);
@@ -247,13 +254,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Failed to save story');
             }
             
+            addLogMessage('Story saved successfully!');
             alert('Story saved successfully!');
         } catch (error) {
             console.error('Error:', error);
+            addLogMessage(`Error saving story: ${error.message}`);
             alert(`An error occurred while saving the story: ${error.message}`);
         }
     });
-
-    // Initial setup for any existing cards
-    setupAudioHover();
 });
