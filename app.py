@@ -52,6 +52,7 @@ class WebSocketInterface:
         self.audio_data = None
         self.is_connected = False
         self.error = None
+        self.received_data = None
         
     def set_socket(self, socket: ChatWebsocketConnection):
         self.socket = socket
@@ -63,17 +64,20 @@ class WebSocketInterface:
     async def on_message(self, data: SubscribeEvent):
         try:
             if isinstance(data, AudioOutput):
-                # Convert audio data to WAV format and save to temp file
+                # Get audio data from the event
+                audio_data = data.audio if hasattr(data, 'audio') else getattr(data, 'audio_bytes', None)
+                if not audio_data:
+                    raise ValueError("No audio data found in the message")
+                
+                # Write audio data to temp file with WAV format
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
-                    if hasattr(data, 'audio_bytes'):
-                        audio_data = data.audio_bytes
-                    else:
-                        audio_data = data.audio
                     tmp.write(audio_data)
                     tmp.flush()
+                    self.received_data = tmp.name
                     return tmp.name
         except Exception as e:
             self.error = str(e)
+            app.logger.error(f"Error in WebSocket on_message: {str(e)}")
             
     async def on_close(self):
         self.is_connected = False
@@ -102,31 +106,32 @@ async def generate_audio_with_evi(text):
             # Wait for connection
             start_time = time.time()
             while not websocket_interface.is_connected and (time.time() - start_time) < 10:
+                if websocket_interface.error:
+                    raise Exception(websocket_interface.error)
                 await asyncio.sleep(0.1)
                 
             if not websocket_interface.is_connected:
                 raise Exception("Failed to establish WebSocket connection")
             
             # Send text to be converted to speech
-            await socket.chat.send_text(text)
+            await socket.empathic_voice.chat.send_text(text)
+            app.logger.info("Sent text for conversion")
             
             # Wait for audio response
             start_time = time.time()
-            audio_file = None
-            while not audio_file and (time.time() - start_time) < 30:
+            while not websocket_interface.received_data and (time.time() - start_time) < 30:
                 if websocket_interface.error:
                     raise Exception(websocket_interface.error)
-                audio_file = await websocket_interface.on_message(data)
                 await asyncio.sleep(0.1)
                 
-            if not audio_file:
+            if not websocket_interface.received_data:
                 raise Exception("No audio response received")
             
             # Move audio file to static directory
             timestamp = int(time.time())
             output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            shutil.move(audio_file, output_path)
+            shutil.move(websocket_interface.received_data, output_path)
             
             return f'/static/audio/paragraph_audio_{timestamp}.wav'
             
