@@ -1,6 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify
-from flask_socketio import SocketIO
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,6 +12,7 @@ import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
+import json
 
 class Base(DeclarativeBase):
     pass
@@ -20,7 +20,6 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object(Config)
-socketio = SocketIO(app)
 db.init_app(app)
 
 with app.app_context():
@@ -67,6 +66,10 @@ def generate_image_for_paragraph(paragraph):
         if len(image_generation_queue) >= 6:
             wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
             app.logger.info(f"Rate limit reached. Waiting for {wait_time:.2f} seconds...")
+            yield json.dumps({
+                'type': 'rate_limit',
+                'message': f'Waiting for image generation slot ({wait_time:.0f} seconds)...'
+            }) + '\n'
             time.sleep(wait_time)
         
         image_response = together_client.images.generate(
@@ -78,13 +81,18 @@ def generate_image_for_paragraph(paragraph):
             n=1,
             response_format="b64_json"
         )
-        image_b64 = image_response.data[0].b64_json
         
-        # Add timestamp to queue
-        image_generation_queue.append(datetime.now())
-        
-        app.logger.info("Image generated successfully")
-        return f"data:image/png;base64,{image_b64}"
+        if image_response and hasattr(image_response, 'data') and image_response.data:
+            image_b64 = image_response.data[0].b64_json
+            
+            # Add timestamp to queue
+            image_generation_queue.append(datetime.now())
+            
+            app.logger.info("Image generated successfully")
+            return f"data:image/png;base64,{image_b64}"
+        else:
+            app.logger.error("No image data received from API")
+            return None
     except Exception as e:
         app.logger.error(f"Error generating image: {str(e)}")
         return None
@@ -156,64 +164,96 @@ def regenerate_audio():
 
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
-    prompt = request.form.get('prompt')
-    genre = request.form.get('genre')
-    mood = request.form.get('mood')
-    target_audience = request.form.get('target_audience')
-    paragraphs = int(request.form.get('paragraphs', 5))
-    
-    try:
-        app.logger.info(f"Generating story with prompt: '{prompt}', genre: {genre}, mood: {mood}, target audience: {target_audience}, paragraphs: {paragraphs}")
-        
-        # Adjust the system message based on the parameters
-        system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
-        
-        app.logger.info("Calling Groq API to generate story")
-        # Generate the story
-        response = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
-            ],
-            temperature=0.7,
-        )
-        story = response.choices[0].message.content
-        app.logger.info(f"Received response from Groq API. Generated {len(story.split())} words.")
-
-        app.logger.info("Splitting story into paragraphs")
-        # Split the story into paragraphs
-        story_paragraphs = story.split('\n\n')[:paragraphs]  # Limit to the requested number of paragraphs
-        app.logger.info(f"Split story into {len(story_paragraphs)} paragraphs")
-
-        # Process each paragraph and collect results
-        processed_paragraphs = []
-        for index, paragraph in enumerate(story_paragraphs, 1):
-            if paragraph.strip():  # Ignore empty paragraphs
-                app.logger.info(f"Processing paragraph {index}. First few words: {' '.join(paragraph.split()[:5])}...")
+    def generate():
+        try:
+            prompt = request.form.get('prompt')
+            genre = request.form.get('genre')
+            mood = request.form.get('mood')
+            target_audience = request.form.get('target_audience')
+            paragraphs = int(request.form.get('paragraphs', 5))
+            
+            yield json.dumps({
+                'type': 'log',
+                'message': f"Starting story generation with prompt: '{prompt}'"
+            }) + '\n'
+            
+            # Adjust the system message based on the parameters
+            system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
+            
+            yield json.dumps({
+                'type': 'log',
+                'message': "Generating story text..."
+            }) + '\n'
+            
+            # Generate the story
+            response = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
+                ],
+                temperature=0.7,
+            )
+            
+            if not response or not response.choices:
+                raise Exception("No response from story generation API")
                 
-                app.logger.info(f"Generating image for paragraph {index}")
+            story = response.choices[0].message.content
+            yield json.dumps({
+                'type': 'log',
+                'message': f"Story text generated ({len(story.split())} words)"
+            }) + '\n'
+
+            # Split the story into paragraphs
+            story_paragraphs = story.split('\n\n')[:paragraphs]
+            
+            # Process each paragraph and stream results
+            for index, paragraph in enumerate(story_paragraphs, 1):
+                if not paragraph.strip():
+                    continue
+                    
+                yield json.dumps({
+                    'type': 'log',
+                    'message': f"Processing paragraph {index}/{len(story_paragraphs)}"
+                }) + '\n'
+                
+                yield json.dumps({
+                    'type': 'log',
+                    'message': f"Generating image for paragraph {index}..."
+                }) + '\n'
+                
                 image_url = generate_image_for_paragraph(paragraph)
-                app.logger.info(f"Image generated for paragraph {index}. URL: {image_url[:50]}...")
                 
-                app.logger.info(f"Generating audio for paragraph {index}")
+                yield json.dumps({
+                    'type': 'log',
+                    'message': f"Generating audio for paragraph {index}..."
+                }) + '\n'
+                
                 audio_url = generate_audio_for_paragraph(paragraph)
-                app.logger.info(f"Audio generated for paragraph {index}. File: {os.path.basename(audio_url)}")
                 
-                processed_paragraphs.append({
-                    'text': paragraph,
-                    'image_url': image_url or 'https://example.com/fallback-image.jpg',
-                    'audio_url': audio_url or ''
-                })
+                yield json.dumps({
+                    'type': 'paragraph',
+                    'data': {
+                        'text': paragraph,
+                        'image_url': image_url or 'https://example.com/fallback-image.jpg',
+                        'audio_url': audio_url or '',
+                        'index': index - 1
+                    }
+                }) + '\n'
 
-        app.logger.info(f"Story generation process complete. Processed {len(processed_paragraphs)} paragraphs.")
-        return jsonify({
-            'success': True,
-            'paragraphs': processed_paragraphs
-        })
-    except Exception as e:
-        app.logger.error(f"Error generating story: {str(e)}")
-        return jsonify({'error': 'Failed to generate story', 'message': str(e)}), 500
+            yield json.dumps({
+                'type': 'complete',
+                'message': "Story generation complete!"
+            }) + '\n'
+            
+        except Exception as e:
+            app.logger.error(f"Error generating story: {str(e)}")
+            yield json.dumps({
+                'type': 'error',
+                'message': str(e)
+            }) + '\n'
+
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
@@ -221,4 +261,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)

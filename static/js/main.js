@@ -7,17 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
     let currentEditingCard = null;
 
-    // Connect to Socket.IO
-    const socket = io();
-
-    socket.on('connect', () => {
-        console.log('Connected to server');
-    });
-
-    socket.on('generation_progress', (data) => {
-        addLogMessage(data.message);
-    });
-
     function addLogMessage(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
@@ -42,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         paragraphCards.appendChild(card);
         storyOutput.style.display = 'block';
-        setupAudioHover();
     }
 
     function setupAudioHover() {
@@ -75,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const paragraphElement = currentEditingCard.querySelector('.card-text');
         
         try {
+            addLogMessage('Updating paragraph...');
             const response = await fetch('/update_paragraph', {
                 method: 'POST',
                 headers: {
@@ -113,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentEditingCard) return;
 
         try {
+            addLogMessage('Regenerating image...');
             const text = document.getElementById('editParagraphText').value;
             const response = await fetch('/regenerate_image', {
                 method: 'POST',
@@ -141,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentEditingCard) return;
 
         try {
+            addLogMessage('Regenerating audio...');
             const text = document.getElementById('editParagraphText').value;
             const response = await fetch('/regenerate_audio', {
                 method: 'POST',
@@ -173,35 +164,59 @@ document.addEventListener('DOMContentLoaded', () => {
             paragraphCards.innerHTML = '';
             storyOutput.style.display = 'none';
             
-            addLogMessage("Generating story...");
-            
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
             });
             
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to generate story');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const text = decoder.decode(value);
+                const lines = text.split('\n');
+                
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        
+                        switch (data.type) {
+                            case 'log':
+                                addLogMessage(data.message);
+                                break;
+                                
+                            case 'paragraph':
+                                addParagraphCard(data.data, data.data.index);
+                                setupAudioHover();
+                                break;
+                                
+                            case 'rate_limit':
+                                addLogMessage(data.message);
+                                break;
+                                
+                            case 'error':
+                                addLogMessage(`Error: ${data.message}`);
+                                alert(`An error occurred: ${data.message}`);
+                                break;
+                                
+                            case 'complete':
+                                addLogMessage(data.message);
+                                break;
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing message:', parseError);
+                    }
+                }
             }
-            
-            const data = await response.json();
-            
-            if (!data.success) {
-                throw new Error('Invalid data received from server');
-            }
-            
-            // Display all paragraphs
-            data.paragraphs.forEach((paragraph, index) => {
-                addLogMessage(`Processing paragraph: ${paragraph.text.substring(0, 50)}...`);
-                addParagraphCard(paragraph, index);
-            });
-            
-            addLogMessage("Story generation complete!");
         } catch (error) {
-            console.error('Error:', error.message);
+            console.error('Error:', error);
             addLogMessage(`Error: ${error.message}`);
-            alert(`An error occurred while generating the story: ${error.message}`);
+            alert(`An error occurred: ${error.message}`);
         }
     });
 
@@ -229,13 +244,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save story');
+                throw new Error('Failed to save story');
             }
             
             alert('Story saved successfully!');
         } catch (error) {
-            console.error('Error:', error.message);
+            console.error('Error:', error);
             alert(`An error occurred while saving the story: ${error.message}`);
         }
     });
