@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
     const storyOutput = document.getElementById('story-output');
     const paragraphCards = document.getElementById('paragraph-cards');
-    const saveStoryBtn = document.getElementById('save-story');
     const logContent = document.getElementById('log-content');
     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
     let currentEditingCard = null;
@@ -34,9 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-footer">
                     <audio controls src="${paragraph.audio_url}"></audio>
                 </div>
+                <div class="progress-indicator"></div>
             </div>
         `;
         return pageDiv;
+    }
+
+    function updateProgress(currentIndex, totalParagraphs) {
+        const cards = document.querySelectorAll('.book-page');
+        cards.forEach((card, index) => {
+            const indicator = card.querySelector('.progress-indicator');
+            if (indicator && index === currentIndex) {
+                const progress = ((index + 1) / totalParagraphs) * 100;
+                indicator.style.background = `conic-gradient(var(--apple-accent) ${progress}%, transparent ${progress}%)`;
+            }
+        });
     }
 
     function addParagraphCard(paragraph, index) {
@@ -255,6 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const decoder = new TextDecoder();
             
             let buffer = '';
+            let totalParagraphs = parseInt(formData.get('paragraphs'));
+            
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
@@ -274,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
+                                updateProgress(data.data.index, totalParagraphs);
                                 setupAudioHover();
                                 break;
                             case 'error':
