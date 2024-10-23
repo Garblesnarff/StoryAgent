@@ -66,10 +66,6 @@ def generate_image_for_paragraph(paragraph):
         if len(image_generation_queue) >= 6:
             wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
             app.logger.info(f"Rate limit reached. Waiting for {wait_time:.2f} seconds...")
-            yield json.dumps({
-                'type': 'rate_limit',
-                'message': f'Waiting for image generation slot ({wait_time:.0f} seconds)...'
-            }) + '\n'
             time.sleep(wait_time)
         
         image_response = together_client.images.generate(
@@ -174,7 +170,7 @@ def generate_story():
             
             yield json.dumps({
                 'type': 'log',
-                'message': f"Starting story generation with prompt: '{prompt}'"
+                'message': "Starting story generation..."
             }) + '\n'
             
             # Adjust the system message based on the parameters
@@ -182,7 +178,7 @@ def generate_story():
             
             yield json.dumps({
                 'type': 'log',
-                'message': "Generating story text..."
+                'message': f"Generating story text using Groq API with prompt: '{prompt}'"
             }) + '\n'
             
             # Generate the story
@@ -201,11 +197,17 @@ def generate_story():
             story = response.choices[0].message.content
             yield json.dumps({
                 'type': 'log',
-                'message': f"Story text generated ({len(story.split())} words)"
+                'message': f"Story text generated successfully ({len(story.split())} words)"
             }) + '\n'
 
             # Split the story into paragraphs
-            story_paragraphs = story.split('\n\n')[:paragraphs]
+            story_paragraphs = [p for p in story.split('\n\n') if p.strip()][:paragraphs]
+            total_paragraphs = len(story_paragraphs)
+            
+            yield json.dumps({
+                'type': 'log',
+                'message': f"Processing {total_paragraphs} paragraphs..."
+            }) + '\n'
             
             # Process each paragraph and stream results
             for index, paragraph in enumerate(story_paragraphs, 1):
@@ -214,16 +216,33 @@ def generate_story():
                     
                 yield json.dumps({
                     'type': 'log',
-                    'message': f"Processing paragraph {index}/{len(story_paragraphs)}"
+                    'message': f"Processing paragraph {index}/{total_paragraphs} ({(index/total_paragraphs*100):.0f}% complete)"
                 }) + '\n'
                 
+                # Generate image
                 yield json.dumps({
                     'type': 'log',
                     'message': f"Generating image for paragraph {index}..."
                 }) + '\n'
                 
+                # Check rate limit before generating image
+                current_time = datetime.now()
+                if image_generation_queue and len(image_generation_queue) >= 6:
+                    wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
+                    if wait_time > 0:
+                        yield json.dumps({
+                            'type': 'log',
+                            'message': f"Waiting for rate limit ({wait_time:.0f} seconds)..."
+                        }) + '\n'
+                
                 image_url = generate_image_for_paragraph(paragraph)
                 
+                yield json.dumps({
+                    'type': 'log',
+                    'message': f"Image generated for paragraph {index}"
+                }) + '\n'
+                
+                # Generate audio
                 yield json.dumps({
                     'type': 'log',
                     'message': f"Generating audio for paragraph {index}..."
@@ -232,6 +251,12 @@ def generate_story():
                 audio_url = generate_audio_for_paragraph(paragraph)
                 
                 yield json.dumps({
+                    'type': 'log',
+                    'message': f"Audio generated for paragraph {index}"
+                }) + '\n'
+                
+                # Send paragraph data
+                yield json.dumps({
                     'type': 'paragraph',
                     'data': {
                         'text': paragraph,
@@ -239,6 +264,11 @@ def generate_story():
                         'audio_url': audio_url or '',
                         'index': index - 1
                     }
+                }) + '\n'
+                
+                yield json.dumps({
+                    'type': 'log',
+                    'message': f"Paragraph {index} complete"
                 }) + '\n'
 
             yield json.dumps({
