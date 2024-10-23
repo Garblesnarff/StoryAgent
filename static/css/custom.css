@@ -77,7 +77,6 @@ body {
     align-items: center;
     position: relative;
     padding: 40px;
-    margin-bottom: 4rem;  /* Add space below container */
 }
 
 .book-pages {
@@ -229,9 +228,22 @@ audio {
 
 /* Save button */
 #save-story {
-    position: relative;
-    z-index: 1000;  /* Ensure button appears above cards */
-    margin-top: 2rem;  /* Add space above button */
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 1000;
+    padding: 15px 30px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    background: var(--apple-accent);
+    border: none;
+    color: var(--apple-text);
+}
+
+#save-story:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Smooth animations */
