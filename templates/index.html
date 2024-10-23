@@ -1,70 +1,78 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="mb-4">Generate Your Story</h1>
-<form id="story-form">
-    <div class="mb-3">
-        <label for="prompt" class="form-label">Story Prompt</label>
-        <textarea class="form-control" id="prompt" name="prompt" rows="3" required></textarea>
-    </div>
-    <div class="mb-3">
-        <label for="genre" class="form-label">Genre</label>
-        <select class="form-select" id="genre" name="genre" required>
-            <option value="">Choose a genre</option>
-            <option value="fantasy">Fantasy</option>
-            <option value="sci-fi">Science Fiction</option>
-            <option value="mystery">Mystery</option>
-            <option value="romance">Romance</option>
-            <option value="horror">Horror</option>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="mood" class="form-label">Mood</label>
-        <select class="form-select" id="mood" name="mood" required>
-            <option value="">Choose a mood</option>
-            <option value="happy">Happy</option>
-            <option value="sad">Sad</option>
-            <option value="suspenseful">Suspenseful</option>
-            <option value="mysterious">Mysterious</option>
-            <option value="romantic">Romantic</option>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="target_audience" class="form-label">Target Audience</label>
-        <select class="form-select" id="target_audience" name="target_audience" required>
-            <option value="">Choose a target audience</option>
-            <option value="children">Children</option>
-            <option value="young_adult">Young Adult</option>
-            <option value="adult">Adult</option>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="paragraphs" class="form-label">Number of Paragraphs</label>
-        <input type="number" class="form-control" id="paragraphs" name="paragraphs" min="1" max="10" value="5" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Generate Story</button>
-</form>
+<div class="content-wrapper">
+    <h1 class="display-4 mb-5 text-center">Generate Your Story</h1>
+    <form id="story-form" class="mb-5">
+        <div class="mb-4">
+            <label for="prompt" class="form-label h5">Story Prompt</label>
+            <textarea class="form-control" id="prompt" name="prompt" rows="3" required placeholder="Enter your story idea here..."></textarea>
+        </div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <label for="genre" class="form-label h5">Genre</label>
+                <select class="form-select" id="genre" name="genre" required>
+                    <option value="">Choose a genre</option>
+                    <option value="fantasy">Fantasy</option>
+                    <option value="sci-fi">Science Fiction</option>
+                    <option value="mystery">Mystery</option>
+                    <option value="romance">Romance</option>
+                    <option value="horror">Horror</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="mood" class="form-label h5">Mood</label>
+                <select class="form-select" id="mood" name="mood" required>
+                    <option value="">Choose a mood</option>
+                    <option value="happy">Happy</option>
+                    <option value="sad">Sad</option>
+                    <option value="suspenseful">Suspenseful</option>
+                    <option value="mysterious">Mysterious</option>
+                    <option value="romantic">Romantic</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="target_audience" class="form-label h5">Target Audience</label>
+                <select class="form-select" id="target_audience" name="target_audience" required>
+                    <option value="">Choose a target audience</option>
+                    <option value="children">Children</option>
+                    <option value="young_adult">Young Adult</option>
+                    <option value="adult">Adult</option>
+                </select>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="paragraphs" class="form-label h5">Number of Paragraphs</label>
+            <input type="number" class="form-control" id="paragraphs" name="paragraphs" min="1" max="10" value="5" required>
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">Generate Story</button>
+        </div>
+    </form>
 
-<div id="log-output" class="mt-4 mb-4">
-    <h3>Generation Progress</h3>
-    <div id="log-content" class="border p-3 bg-dark text-light" style="height: 200px; overflow-y: auto;"></div>
-</div>
-
-<div id="story-output" class="mt-4" style="display: none;">
-    <h2>Generated Story</h2>
-    <div class="book-container">
-        <button class="book-nav prev" style="display: none;">
-            <svg viewBox="0 0 24 24">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-            </svg>
-        </button>
-        <div class="book-pages" id="paragraph-cards"></div>
-        <button class="book-nav next" style="display: none;">
-            <svg viewBox="0 0 24 24">
-                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-            </svg>
-        </button>
+    <div id="log-output" class="mt-5 mb-5">
+        <h3 class="h4 mb-3">Generation Progress</h3>
+        <div id="log-content" class="border p-3" style="height: 200px; overflow-y: auto;"></div>
     </div>
-    <button id="save-story" class="btn btn-success mt-3">Save Story</button>
+
+    <div id="story-output" class="mt-5" style="display: none;">
+        <h2 class="h3 mb-4">Generated Story</h2>
+        <div class="book-container">
+            <button class="book-nav prev" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <div class="book-pages" id="paragraph-cards"></div>
+            <button class="book-nav next" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="text-center mt-4">
+            <button id="save-story" class="btn btn-success btn-lg">Save Story</button>
+        </div>
+    </div>
 </div>
 {% endblock %}
