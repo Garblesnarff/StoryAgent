@@ -50,42 +50,26 @@ IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 class WebSocketInterface:
     def __init__(self):
         self.socket = None
-        self.audio_data = None
+        self.received_data = None
         self.is_connected = False
         self.error = None
-        self.received_data = None
-        
+
     def set_socket(self, socket: ChatWebsocketConnection):
         self.socket = socket
-        
-    async def on_open(self):
         self.is_connected = True
-        self.error = None
-        
-    async def on_message(self, data: SubscribeEvent):
+
+    async def on_message(self, data: AudioOutput):
         try:
-            if isinstance(data, AudioOutput):
-                # Get audio data from the event
-                audio_data = data.audio if hasattr(data, 'audio') else getattr(data, 'audio_bytes', None)
-                if not audio_data:
-                    raise ValueError("No audio data found in the message")
-                
-                # Write audio data to temp file with WAV format
+            audio_data = getattr(data, 'audio_bytes', None)
+            if audio_data:
+                # Write audio data to temp file
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
                     tmp.write(audio_data)
                     tmp.flush()
                     self.received_data = tmp.name
-                    return tmp.name
         except Exception as e:
             self.error = str(e)
             app.logger.error(f"Error in WebSocket on_message: {str(e)}")
-            
-    async def on_close(self):
-        self.is_connected = False
-        
-    async def on_error(self, error: Exception):
-        self.error = str(error)
-        self.is_connected = False
 
 async def generate_audio_with_evi(text):
     try:
@@ -102,53 +86,42 @@ async def generate_audio_with_evi(text):
                 }
             }
         )
-        
-        async with hume_client.connect_with_callbacks(
-            options=options,
-            on_open=websocket_interface.on_open,
-            on_message=websocket_interface.on_message,
-            on_close=websocket_interface.on_close,
-            on_error=websocket_interface.on_error
-        ) as socket:
+
+        # Use empathic_voice.chat.connect() instead of connect_with_callbacks
+        async with hume_client.empathic_voice.chat.connect(options=options) as socket:
             websocket_interface.set_socket(socket)
-            
+
             # Wait for connection
             start_time = time.time()
             while not websocket_interface.is_connected and (time.time() - start_time) < 10:
                 await asyncio.sleep(0.1)
-                
-            if not websocket_interface.is_connected:
-                raise Exception("Failed to establish WebSocket connection")
-            
-            # Send text to be converted to speech
-            await socket.send_text(text)
-            
-            # Wait for audio response
+
+            # Send text and wait for audio response
+            await socket.empathic_voice.chat.send_text(text)
+
             start_time = time.time()
             while not websocket_interface.received_data and (time.time() - start_time) < 30:
                 if websocket_interface.error:
                     raise Exception(websocket_interface.error)
                 await asyncio.sleep(0.1)
-                
+
             if not websocket_interface.received_data:
                 raise Exception("No audio response received")
-            
-            # Move audio file to static directory with WAV format
+
+            # Save audio with proper WAV format
             timestamp = int(time.time())
             output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            
-            # Ensure WAV format and headers
-            with wave.open(websocket_interface.received_data, 'rb') as wav_in:
-                with wave.open(output_path, 'wb') as wav_out:
-                    wav_out.setnchannels(wav_in.getnchannels())
-                    wav_out.setsampwidth(wav_in.getsampwidth())
-                    wav_out.setframerate(wav_in.getframerate())
-                    wav_out.writeframes(wav_in.readframes(wav_in.getnframes()))
-            
-            os.remove(websocket_interface.received_data)  # Clean up temp file
+
+            # Convert audio data and save with WAV headers
+            shutil.copy(websocket_interface.received_data, output_path)
+
+            # Clean up temp file
+            os.remove(websocket_interface.received_data)
+
+            # Return relative path for frontend
             return f'/static/audio/paragraph_audio_{timestamp}.wav'
-            
+
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
