@@ -16,6 +16,7 @@ import json
 import sys
 import base64
 import asyncio
+import wave
 from dotenv import load_dotenv
 from hume import AsyncHumeClient
 from hume.empathic_voice.chat.socket_client import ChatConnectOptions, ChatWebsocketConnection
@@ -91,10 +92,18 @@ async def generate_audio_with_evi(text):
         websocket_interface = WebSocketInterface()
         options = ChatConnectOptions(
             config_id=os.environ.get('HUME_CONFIG_ID'),
-            secret_key=os.environ.get('HUME_SECRET_KEY')
+            secret_key=os.environ.get('HUME_SECRET_KEY'),
+            config={
+                "evi_version": "2",
+                "name": "EVI 2 config",
+                "voice": {
+                    "provider": "HUME_AI",
+                    "name": "DACHER"
+                }
+            }
         )
         
-        async with hume_client.empathic_voice.chat.connect_with_callbacks(
+        async with hume_client.connect_with_callbacks(
             options=options,
             on_open=websocket_interface.on_open,
             on_message=websocket_interface.on_message,
@@ -106,16 +115,13 @@ async def generate_audio_with_evi(text):
             # Wait for connection
             start_time = time.time()
             while not websocket_interface.is_connected and (time.time() - start_time) < 10:
-                if websocket_interface.error:
-                    raise Exception(websocket_interface.error)
                 await asyncio.sleep(0.1)
                 
             if not websocket_interface.is_connected:
                 raise Exception("Failed to establish WebSocket connection")
             
             # Send text to be converted to speech
-            await socket.empathic_voice.chat.send_text(text)
-            app.logger.info("Sent text for conversion")
+            await socket.send_text(text)
             
             # Wait for audio response
             start_time = time.time()
@@ -127,12 +133,20 @@ async def generate_audio_with_evi(text):
             if not websocket_interface.received_data:
                 raise Exception("No audio response received")
             
-            # Move audio file to static directory
+            # Move audio file to static directory with WAV format
             timestamp = int(time.time())
             output_path = f'static/audio/paragraph_audio_{timestamp}.wav'
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            shutil.move(websocket_interface.received_data, output_path)
             
+            # Ensure WAV format and headers
+            with wave.open(websocket_interface.received_data, 'rb') as wav_in:
+                with wave.open(output_path, 'wb') as wav_out:
+                    wav_out.setnchannels(wav_in.getnchannels())
+                    wav_out.setsampwidth(wav_in.getsampwidth())
+                    wav_out.setframerate(wav_in.getframerate())
+                    wav_out.writeframes(wav_in.readframes(wav_in.getnframes()))
+            
+            os.remove(websocket_interface.received_data)  # Clean up temp file
             return f'/static/audio/paragraph_audio_{timestamp}.wav'
             
     except Exception as e:
