@@ -12,7 +12,7 @@
 
 .book-pages {
     width: 100%;
-    max-width: 1200px;
+    max-width: 800px;
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
@@ -20,29 +20,41 @@
 
 .book-page {
     position: absolute;
-    width: 45%;
+    width: 100%;
     height: 800px;
     transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
-    transform-origin: center left;
+    transform-origin: center;
     backface-visibility: hidden;
+    left: 0;
 }
 
-.book-page.center {
-    width: 90%;
-    left: 5%;
-    transform: none;
+.book-page.active {
+    transform: rotateY(0deg);
+    z-index: 2;
 }
 
-.book-page.left {
-    left: 5%;
+.book-page.next {
+    transform: rotateY(0deg);
+    opacity: 0;
+    z-index: 1;
 }
 
-.book-page.right {
-    left: 50%;
-}
-
-.book-page.flipped {
+.book-page.prev {
     transform: rotateY(-180deg);
+    z-index: 1;
+}
+
+.book-page.turning {
+    transition: transform 0.8s, opacity 0.8s;
+}
+
+.book-page.turning-forward {
+    transform: rotateY(-180deg);
+}
+
+.book-page.turning-backward {
+    transform: rotateY(0deg);
+    opacity: 1;
 }
 
 /* Navigation arrows */

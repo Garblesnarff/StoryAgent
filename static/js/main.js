@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
-    function createPageElement(paragraph, index, isCenter = false) {
+    function createPageElement(paragraph, index) {
         const pageDiv = document.createElement('div');
-        pageDiv.className = `book-page ${isCenter ? 'center' : index % 2 === 0 ? 'left' : 'right'}`;
+        pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
         pageDiv.innerHTML = `
@@ -37,14 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addParagraphCard(paragraph, index) {
-        // Remove existing page if it exists
         const existingPage = paragraphCards.querySelector(`[data-index="${index}"]`);
         if (existingPage) {
             existingPage.remove();
         }
 
-        const isCenter = index === 0;
-        const pageElement = createPageElement(paragraph, index, isCenter);
+        const pageElement = createPageElement(paragraph, index);
         paragraphCards.appendChild(pageElement);
         
         updateNavigation();
@@ -54,52 +52,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateNavigation() {
         const pages = document.querySelectorAll('.book-page');
-        totalPages = Math.ceil((pages.length - 1) / 2); // Subtract 1 for center page
+        totalPages = pages.length;
         const prevButton = document.querySelector('.book-nav.prev');
         const nextButton = document.querySelector('.book-nav.next');
 
         // Show/hide navigation buttons
         prevButton.style.display = currentPage > 0 ? 'block' : 'none';
-        nextButton.style.display = currentPage < totalPages ? 'block' : 'none';
+        nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
 
         // Update page visibility and positions
         pages.forEach((page, index) => {
-            if (index === 0) {
-                // Handle center page
-                page.style.display = currentPage === 0 ? 'block' : 'none';
-                if (currentPage > 0) {
-                    page.classList.add('flipped');
-                } else {
-                    page.classList.remove('flipped');
-                }
+            page.classList.remove('active', 'next', 'prev', 'turning', 'turning-forward', 'turning-backward');
+            
+            if (index === currentPage) {
+                page.classList.add('active');
+                page.style.display = 'block';
+            } else if (index === currentPage + 1) {
+                page.classList.add('next');
+                page.style.display = 'block';
+            } else if (index === currentPage - 1) {
+                page.classList.add('prev');
+                page.style.display = 'block';
             } else {
-                const pageNumber = Math.floor((index - 1) / 2);
-                if (pageNumber === currentPage) {
-                    page.style.display = 'block';
-                    page.classList.remove('flipped');
-                } else if (pageNumber < currentPage) {
-                    page.style.display = 'block';
-                    page.classList.add('flipped');
-                } else {
-                    page.style.display = 'none';
-                    page.classList.remove('flipped');
-                }
+                page.style.display = 'none';
             }
         });
     }
 
     // Navigation event listeners
-    document.querySelector('.book-nav.prev').addEventListener('click', () => {
-        if (currentPage > 0) {
-            currentPage--;
-            updateNavigation();
+    document.querySelector('.book-nav.next').addEventListener('click', () => {
+        if (currentPage < totalPages - 1) {
+            const pages = document.querySelectorAll('.book-page');
+            const currentPageEl = pages[currentPage];
+            const nextPageEl = pages[currentPage + 1];
+            
+            currentPageEl.classList.add('turning', 'turning-forward');
+            nextPageEl.classList.add('turning', 'turning-backward');
+            
+            setTimeout(() => {
+                currentPage++;
+                updateNavigation();
+            }, 800);
         }
     });
 
-    document.querySelector('.book-nav.next').addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            updateNavigation();
+    document.querySelector('.book-nav.prev').addEventListener('click', () => {
+        if (currentPage > 0) {
+            const pages = document.querySelectorAll('.book-page');
+            const currentPageEl = pages[currentPage];
+            const prevPageEl = pages[currentPage - 1];
+            
+            currentPageEl.classList.add('turning', 'turning-backward');
+            prevPageEl.classList.add('turning', 'turning-forward');
+            
+            setTimeout(() => {
+                currentPage--;
+                updateNavigation();
+            }, 800);
         }
     });
 
@@ -232,9 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Form submission handler
     storyForm.addEventListener('submit', async (e) => {
-        e.preventDefault();  // Prevent form submission
-        logContent.innerHTML = '';  // Clear previous logs
-        paragraphCards.innerHTML = '';  // Clear previous story
+        e.preventDefault();
+        logContent.innerHTML = '';
+        paragraphCards.innerHTML = '';
         currentPage = 0;
         storyOutput.style.display = 'none';
         
