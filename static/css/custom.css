@@ -1,49 +1,43 @@
 /* Book container styles */
 .book-container {
-    perspective: 1000px;
+    perspective: 2000px;
     width: 100%;
+    min-height: 800px;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    min-height: 800px;  /* Increased minimum height */
 }
 
 .book-pages {
-    position: relative;
     width: 100%;
-    max-width: 1200px;
     height: 100%;
+    position: relative;
     transform-style: preserve-3d;
 }
 
 .book-page {
     position: absolute;
-    width: 100%;  /* Make pages full width */
-    max-width: 600px;  /* Add max-width for better readability */
-    height: 800px;  /* Set fixed height */
-    margin: 0 20px;  /* Add margin between pages */
-    transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+    width: calc(50% - 20px);
+    height: 800px;
+    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
     transform-origin: left center;
     backface-visibility: hidden;
-    transform-style: preserve-3d;
-}
-
-.book-page.right {
-    left: 50%;
-    margin-left: 20px;
-    transform-origin: left center;
-}
-
-.book-page.left {
-    right: 50%;
-    margin-right: 20px;
-    transform-origin: right center;
 }
 
 .book-page.center {
+    width: calc(100% - 40px);
+    max-width: 800px;
     left: 50%;
     transform: translateX(-50%);
+}
+
+.book-page.left {
+    left: 0;
+}
+
+.book-page.right {
+    right: 0;
 }
 
 .book-page.flipped {
@@ -84,8 +78,7 @@
 
 /* Card modifications for book layout */
 .card {
-    height: 100%;  /* Make cards full height */
-    width: 100%;   /* Make cards full width */
+    height: 100%;
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -95,12 +88,12 @@
 }
 
 .card-img-top {
-    height: 400px;  /* Increase image height */
+    height: 400px;
     object-fit: cover;
 }
 
 .card-body {
-    flex: 1;  /* Allow body to grow */
+    flex: 1;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
