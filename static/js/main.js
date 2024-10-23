@@ -70,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const prevButton = document.querySelector('.book-nav.prev');
         const nextButton = document.querySelector('.book-nav.next');
 
+        if (!prevButton || !nextButton) return;
+
         prevButton.style.display = currentPage > 0 ? 'block' : 'none';
         nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
 
@@ -91,69 +93,95 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.querySelector('.book-nav.next').addEventListener('click', () => {
-        if (currentPage < totalPages - 1) {
-            const pages = document.querySelectorAll('.book-page');
-            const currentPageEl = pages[currentPage];
-            const nextPageEl = pages[currentPage + 1];
-            
-            currentPageEl.classList.add('turning', 'turning-forward');
-            nextPageEl.classList.add('turning', 'turning-backward');
-            
-            setTimeout(() => {
-                currentPage++;
-                updateNavigation();
-            }, 800);
-        }
-    });
+    // Navigation event handlers
+    const nextButton = document.querySelector('.book-nav.next');
+    const prevButton = document.querySelector('.book-nav.prev');
 
-    document.querySelector('.book-nav.prev').addEventListener('click', () => {
-        if (currentPage > 0) {
-            const pages = document.querySelectorAll('.book-page');
-            const currentPageEl = pages[currentPage];
-            const prevPageEl = pages[currentPage - 1];
-            
-            currentPageEl.classList.add('turning', 'turning-backward');
-            prevPageEl.classList.add('turning', 'turning-forward');
-            
-            setTimeout(() => {
-                currentPage--;
-                updateNavigation();
-            }, 800);
-        }
-    });
+    if (nextButton) {
+        nextButton.addEventListener('click', () => {
+            if (currentPage < totalPages - 1) {
+                const pages = document.querySelectorAll('.book-page');
+                const currentPageEl = pages[currentPage];
+                const nextPageEl = pages[currentPage + 1];
+                
+                if (currentPageEl && nextPageEl) {
+                    currentPageEl.classList.add('turning', 'turning-forward');
+                    nextPageEl.classList.add('turning', 'turning-backward');
+                    
+                    setTimeout(() => {
+                        currentPage++;
+                        updateNavigation();
+                    }, 800);
+                }
+            }
+        });
+    }
+
+    if (prevButton) {
+        prevButton.addEventListener('click', () => {
+            if (currentPage > 0) {
+                const pages = document.querySelectorAll('.book-page');
+                const currentPageEl = pages[currentPage];
+                const prevPageEl = pages[currentPage - 1];
+                
+                if (currentPageEl && prevPageEl) {
+                    currentPageEl.classList.add('turning', 'turning-backward');
+                    prevPageEl.classList.add('turning', 'turning-forward');
+                    
+                    setTimeout(() => {
+                        currentPage--;
+                        updateNavigation();
+                    }, 800);
+                }
+            }
+        });
+    }
 
     function setupAudioHover() {
         const cards = document.querySelectorAll('.card');
         cards.forEach(card => {
             const audio = card.querySelector('audio');
             if (audio) {
-                card.addEventListener('mouseenter', () => audio.play());
+                card.addEventListener('mouseenter', () => {
+                    try {
+                        audio.play().catch(err => console.log('Audio autoplay prevented'));
+                    } catch (err) {
+                        console.log('Audio playback error:', err);
+                    }
+                });
                 card.addEventListener('mouseleave', () => {
-                    audio.pause();
-                    audio.currentTime = 0;
+                    try {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    } catch (err) {
+                        console.log('Audio pause error:', err);
+                    }
                 });
             }
         });
     }
 
+    // Edit paragraph functionality
     paragraphCards.addEventListener('click', async (e) => {
         if (e.target.classList.contains('edit-paragraph')) {
             const index = e.target.dataset.index;
             const card = e.target.closest('.card');
-            currentEditingCard = card;
+            if (!card) return;
             
-            const paragraphText = card.querySelector('.card-text').textContent;
+            currentEditingCard = card;
+            const paragraphText = card.querySelector('.card-text')?.textContent || '';
             document.getElementById('editParagraphText').value = paragraphText;
             editModal.show();
         }
     });
 
-    document.getElementById('saveParagraphEdit').addEventListener('click', async () => {
+    // Save edited paragraph
+    document.getElementById('saveParagraphEdit')?.addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
         const newText = document.getElementById('editParagraphText').value;
         const paragraphElement = currentEditingCard.querySelector('.card-text');
+        if (!paragraphElement) return;
         
         try {
             addLogMessage('Updating paragraph...');
@@ -175,10 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
             paragraphElement.textContent = newText;
 
             if (data.image_url) {
-                currentEditingCard.querySelector('.card-img-top').src = data.image_url;
+                const imgElement = currentEditingCard.querySelector('.card-img-top');
+                if (imgElement) imgElement.src = data.image_url;
             }
             if (data.audio_url) {
-                currentEditingCard.querySelector('audio').src = data.audio_url;
+                const audioElement = currentEditingCard.querySelector('audio');
+                if (audioElement) audioElement.src = data.audio_url;
             }
 
             editModal.hide();
@@ -190,7 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('regenerateImage').addEventListener('click', async () => {
+    // Regenerate image
+    document.getElementById('regenerateImage')?.addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
         try {
@@ -209,8 +240,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            currentEditingCard.querySelector('.card-img-top').src = data.image_url;
-            addLogMessage('Image regenerated successfully!');
+            const imgElement = currentEditingCard.querySelector('.card-img-top');
+            if (imgElement && data.image_url) {
+                imgElement.src = data.image_url;
+                addLogMessage('Image regenerated successfully!');
+            }
         } catch (error) {
             console.error('Error:', error);
             addLogMessage(`Error regenerating image: ${error.message}`);
@@ -218,7 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('regenerateAudio').addEventListener('click', async () => {
+    // Regenerate audio
+    document.getElementById('regenerateAudio')?.addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
         try {
@@ -237,8 +272,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            currentEditingCard.querySelector('audio').src = data.audio_url;
-            addLogMessage('Audio regenerated successfully!');
+            const audioElement = currentEditingCard.querySelector('audio');
+            if (audioElement && data.audio_url) {
+                audioElement.src = data.audio_url;
+                addLogMessage('Audio regenerated successfully!');
+            }
         } catch (error) {
             console.error('Error:', error);
             addLogMessage(`Error regenerating audio: ${error.message}`);
@@ -246,13 +284,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    storyForm.addEventListener('submit', async (e) => {
+    // Story generation form submission
+    storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         logContent.innerHTML = '';
         paragraphCards.innerHTML = '';
         currentPage = 0;
         storyOutput.style.display = 'none';
-        document.getElementById('save-story').style.display = 'none'; // Hide save button
+        document.getElementById('save-story').style.display = 'none';
         
         const formData = new FormData(storyForm);
         
@@ -261,6 +300,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: formData
             });
+
+            if (!response.ok) {
+                throw new Error('Story generation failed');
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -296,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'complete':
                                 addLogMessage(data.message);
                                 storyOutput.style.display = 'block';
-                                document.getElementById('save-story').style.display = 'block'; // Show save button
+                                document.getElementById('save-story').style.display = 'block';
                                 break;
                         }
                     } catch (parseError) {
@@ -306,7 +349,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 buffer = lines[lines.length - 1];
             }
         } catch (error) {
+            console.error('Error:', error);
             addLogMessage('Error: ' + error.message);
+        }
+    });
+
+    // Save story functionality
+    document.getElementById('save-story')?.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/save_story', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save story');
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Story saved successfully!');
+            } else {
+                throw new Error('Failed to save story');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to save story. Please try again.');
         }
     });
 });
