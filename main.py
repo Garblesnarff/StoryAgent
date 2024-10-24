@@ -1,10 +1,10 @@
-from quart import Quart
-from hypercorn.config import Config
-from hypercorn.asyncio import serve
-import asyncio
+import eventlet
+eventlet.monkey_patch()
+
 from app import app
+from flask_socketio import SocketIO
+
+socketio = SocketIO(app)
 
 if __name__ == "__main__":
-    config = Config()
-    config.bind = ["0.0.0.0:5000"]
-    asyncio.run(serve(app, config))
+    socketio.run(app, host="0.0.0.0", port=5000, debug=False)
