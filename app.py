@@ -77,7 +77,7 @@ async def generate_audio_for_paragraph(paragraph):
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
 
-def generate_image_for_paragraph(paragraph):
+async def generate_image_for_paragraph(paragraph):
     try:
         app.logger.info(f"Attempting to generate image for paragraph: {paragraph[:50]}...")
         
@@ -89,10 +89,10 @@ def generate_image_for_paragraph(paragraph):
         if len(image_generation_queue) >= 6:
             wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
             app.logger.info(f"Rate limit reached. Waiting for {wait_time:.2f} seconds...")
-            time.sleep(wait_time)
+            await asyncio.sleep(wait_time)
         
-        image_response = together_client.images.generate(
-            prompt=f"An image representing: {paragraph[:100]}",  # Use first 100 characters as prompt
+        image_response = await together_client.images.generate(
+            prompt=f"An image representing: {paragraph[:100]}",
             model="black-forest-labs/FLUX.1-schnell-Free",
             width=512,
             height=512,
@@ -130,8 +130,9 @@ async def update_paragraph():
             return jsonify({'error': 'No text provided'}), 400
             
         # Generate new image and audio
-        image_url = generate_image_for_paragraph(text)
-        audio_url = await generate_audio_for_paragraph(text)
+        async with app.app_context():
+            image_url = await generate_image_for_paragraph(text)
+            audio_url = await generate_audio_for_paragraph(text)
         
         return jsonify({
             'success': True,
@@ -151,8 +152,9 @@ async def regenerate_image():
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
-            
-        image_url = generate_image_for_paragraph(text)
+        
+        async with app.app_context():    
+            image_url = await generate_image_for_paragraph(text)
         
         return jsonify({
             'success': True,
@@ -170,8 +172,9 @@ async def regenerate_audio():
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
-            
-        audio_url = await generate_audio_for_paragraph(text)
+        
+        async with app.app_context():
+            audio_url = await generate_audio_for_paragraph(text)
         
         return jsonify({
             'success': True,
@@ -185,29 +188,31 @@ async def regenerate_audio():
 async def generate_story():
     async def generate():
         try:
-            form = await request.form
-            prompt = form.get('prompt')
-            genre = form.get('genre')
-            mood = form.get('mood')
-            target_audience = form.get('target_audience')
-            paragraphs = int(form.get('paragraphs', 5))
+            # Get request data outside the generator
+            form_data = await request.form
+            prompt = form_data.get('prompt')
+            genre = form_data.get('genre')
+            mood = form_data.get('mood')
+            target_audience = form_data.get('target_audience')
+            paragraphs = int(form_data.get('paragraphs', 5))
             
+            # Now we can yield messages
             yield send_json_message('log', "Starting story generation...")
             
-            # Adjust the system message based on the parameters
             system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
             
             yield send_json_message('log', f"Generating story text using Groq API with prompt: '{prompt}'")
             
-            # Generate the story
-            response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
-                ],
-                temperature=0.7,
-            )
+            async with app.app_context():
+                # Generate the story
+                response = await groq_client.chat.completions.acreate(
+                    model="llama-3.1-8b-instant",
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
+                    ],
+                    temperature=0.7,
+                )
             
             if not response or not response.choices:
                 raise Exception("No response from story generation API")
@@ -232,15 +237,16 @@ async def generate_story():
                 progress = (index/total_paragraphs*100)
                 yield send_json_message('log', f"Processing paragraph {index}/{total_paragraphs} ({progress:.0f}% complete)")
                 
-                # Generate image
-                yield send_json_message('log', f"Generating image for paragraph {index}...")
-                image_url = generate_image_for_paragraph(paragraph)
-                yield send_json_message('log', f"Image generated for paragraph {index}")
-                
-                # Generate audio
-                yield send_json_message('log', f"Generating audio for paragraph {index}...")
-                audio_url = await generate_audio_for_paragraph(paragraph)
-                yield send_json_message('log', f"Audio generated for paragraph {index}")
+                async with app.app_context():
+                    # Generate image
+                    yield send_json_message('log', f"Generating image for paragraph {index}...")
+                    image_url = await generate_image_for_paragraph(paragraph)
+                    yield send_json_message('log', f"Image generated for paragraph {index}")
+                    
+                    # Generate audio
+                    yield send_json_message('log', f"Generating audio for paragraph {index}...")
+                    audio_url = await generate_audio_for_paragraph(paragraph)
+                    yield send_json_message('log', f"Audio generated for paragraph {index}")
                 
                 # Send paragraph data
                 paragraph_data = {
