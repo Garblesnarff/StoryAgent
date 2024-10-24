@@ -7,13 +7,13 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
-from gtts import gTTS
 import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
+import requests
 
 class Base(DeclarativeBase):
     pass
@@ -37,6 +37,11 @@ together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 image_generation_queue = deque(maxlen=6)
 IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 
+# Hume API configuration
+HUME_API_URL = 'https://api.hume.ai/v1/evi-2/narrate'
+HUME_API_KEY = os.environ.get('HUME_API_KEY')
+HUME_CONFIG_ID = os.environ.get('HUME_CONFIG_ID')
+
 def send_json_message(message_type, message_data):
     """Helper function to ensure consistent JSON message formatting"""
     return json.dumps({
@@ -49,12 +54,35 @@ def generate_audio_for_paragraph(paragraph):
         app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
+
+        # Prepare the request to Hume's EVI-2 API
+        headers = {
+            'Authorization': f'Bearer {HUME_API_KEY}',
+            'Content-Type': 'application/json'
+        }
         
-        tts = gTTS(text=paragraph, lang='en')
+        payload = {
+            'text': paragraph,
+            'config_id': HUME_CONFIG_ID
+        }
+
+        # Make request to Hume API
+        response = requests.post(HUME_API_URL, headers=headers, json=payload)
         
+        if response.status_code != 200:
+            app.logger.error(f"Hume API error: {response.text}")
+            return None
+
+        # Get the audio content from the response
+        audio_content = response.content
+        
+        # Generate unique filename
         filename = f"paragraph_audio_{int(time.time())}.mp3"
         filepath = os.path.join(audio_dir, filename)
-        tts.save(filepath)
+        
+        # Save the audio file
+        with open(filepath, 'wb') as f:
+            f.write(audio_content)
         
         app.logger.info(f"Audio generated successfully: {filename}")
         return f"/static/audio/{filename}"
