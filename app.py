@@ -51,7 +51,8 @@ def generate_audio_for_paragraph(paragraph):
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         
-        HUME_API_URL = "https://api.hume.ai/v0/batch/jobs"
+        # Configure Hume API request
+        HUME_API_URL = "https://api.hume.ai/v0/batch/synthesize/audio"
         headers = {
             "Authorization": f"Bearer {os.environ.get('HUME_API_KEY')}",
             "Content-Type": "application/json"
@@ -59,23 +60,14 @@ def generate_audio_for_paragraph(paragraph):
         
         # Create job request
         data = {
-            "models": {
-                "prosody": {
-                    "granularity": "utterance",
-                    "identify_speakers": False
-                }
-            },
-            "transcription": {
-                "language": {
-                    "code": "en"
-                }
-            },
             "text": paragraph,
-            "synthesis": {
-                "model": "evi-2",
-                "speaking_rate": 1.0,
-                "voice_style": "natural",
-                "output_format": "mp3"
+            "model": {
+                "name": "evi-2",
+                "configs": {
+                    "output_format": "mp3",
+                    "voice_style": "natural",
+                    "speaking_rate": 1.0
+                }
             }
         }
         
@@ -97,7 +89,7 @@ def generate_audio_for_paragraph(paragraph):
             
             if status_data['status'] == 'completed':
                 # Get the audio URL from the completed job
-                audio_url = status_data['results']['synthesis']['url']
+                audio_url = status_data['artifacts'][0]['url']
                 
                 # Download the audio file
                 audio_response = requests.get(audio_url)
@@ -120,11 +112,6 @@ def generate_audio_for_paragraph(paragraph):
             
         raise Exception("Job timed out")
             
-    except requests.exceptions.RequestException as e:
-        app.logger.error(f"Hume API request error: {str(e)}")
-        if hasattr(e.response, 'text'):
-            app.logger.error(f"Response text: {e.response.text}")
-        return None
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
