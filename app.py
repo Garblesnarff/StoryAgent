@@ -49,26 +49,26 @@ async def generate_audio_for_paragraph(paragraph):
             return None
 
         # Initialize Hume client
-        client = HumeClient(
-            api_key=app.config['HUME_API_KEY'],
-            secret_key=app.config['HUME_SECRET_KEY']
-        )
-
+        client = HumeClient(api_key=app.config['HUME_API_KEY'])
+        
         # Send text for narration
-        response = await client.empathic_voice.process_text(paragraph)
-        if response and hasattr(response, 'audio'):
-            # Save audio file
-            audio_dir = os.path.join('static', 'audio')
-            os.makedirs(audio_dir, exist_ok=True)
-            
-            filename = f"paragraph_audio_{int(time.time())}.wav"
-            filepath = os.path.join(audio_dir, filename)
-            
-            with open(filepath, 'wb') as f:
-                f.write(response.audio)
-            
-            app.logger.info(f"Audio generated successfully: {filename}")
-            return f"/static/audio/{filename}"
+        socket = await client.empathic_voice.chat.connect()
+        await socket.send_user_input(paragraph)
+        
+        async for response in socket.receive():
+            if response.type == 'audio_output':
+                # Save audio file
+                audio_dir = os.path.join('static', 'audio')
+                os.makedirs(audio_dir, exist_ok=True)
+                
+                filename = f"paragraph_audio_{int(time.time())}.wav"
+                filepath = os.path.join(audio_dir, filename)
+                
+                with open(filepath, 'wb') as f:
+                    f.write(response.audio)
+                
+                app.logger.info(f"Audio generated successfully: {filename}")
+                return f"/static/audio/{filename}"
         
         app.logger.error("No audio response received")
         return None
