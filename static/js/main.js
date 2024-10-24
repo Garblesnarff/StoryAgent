@@ -161,6 +161,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Story generation form submission
+    storyForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        logContent.innerHTML = '';
+        paragraphCards.innerHTML = '';
+        currentPage = 0;
+        storyOutput.style.display = 'none';
+        document.getElementById('save-story').style.display = 'none';
+        
+        const formData = new FormData(storyForm);
+        
+        try {
+            const response = await fetch('/generate_story', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let buffer = '';
+            let totalParagraphs = parseInt(formData.get('paragraphs'));
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        switch (data.type) {
+                            case 'log':
+                                addLogMessage(data.message);
+                                break;
+                            case 'paragraph':
+                                addParagraphCard(data.data, data.data.index);
+                                updateProgress(data.data.index, totalParagraphs);
+                                setupAudioHover();
+                                break;
+                            case 'error':
+                                addLogMessage('Error: ' + data.message);
+                                throw new Error(data.message);
+                                break;
+                            case 'complete':
+                                addLogMessage(data.message);
+                                storyOutput.style.display = 'block';
+                                document.getElementById('save-story').style.display = 'block';
+                                break;
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing message:', parseError);
+                        addLogMessage('Error: Failed to parse server response');
+                    }
+                }
+                buffer = lines[lines.length - 1];
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            addLogMessage('Error: ' + error.message);
+            alert('Story generation failed. Please try again.');
+        }
+    });
+
     // Edit paragraph functionality
     paragraphCards.addEventListener('click', async (e) => {
         if (e.target.classList.contains('edit-paragraph')) {
@@ -281,102 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             addLogMessage(`Error regenerating audio: ${error.message}`);
             alert('Failed to regenerate audio. Please try again.');
-        }
-    });
-
-    // Story generation form submission
-    storyForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        logContent.innerHTML = '';
-        paragraphCards.innerHTML = '';
-        currentPage = 0;
-        storyOutput.style.display = 'none';
-        document.getElementById('save-story').style.display = 'none';
-        
-        const formData = new FormData(storyForm);
-        
-        try {
-            const response = await fetch('/generate_story', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error('Story generation failed');
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            let buffer = '';
-            let totalParagraphs = parseInt(formData.get('paragraphs'));
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-                
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'log':
-                                addLogMessage(data.message);
-                                break;
-                            case 'paragraph':
-                                addParagraphCard(data.data, data.data.index);
-                                updateProgress(data.data.index, totalParagraphs);
-                                setupAudioHover();
-                                break;
-                            case 'error':
-                                addLogMessage('Error: ' + data.message);
-                                break;
-                            case 'complete':
-                                addLogMessage(data.message);
-                                storyOutput.style.display = 'block';
-                                document.getElementById('save-story').style.display = 'block';
-                                break;
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing message:', line);
-                    }
-                }
-                buffer = lines[lines.length - 1];
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            addLogMessage('Error: ' + error.message);
-        }
-    });
-
-    // Save story functionality
-    document.getElementById('save-story')?.addEventListener('click', async () => {
-        try {
-            const response = await fetch('/save_story', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to save story');
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                alert('Story saved successfully!');
-            } else {
-                throw new Error('Failed to save story');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to save story. Please try again.');
         }
     });
 });

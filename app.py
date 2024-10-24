@@ -62,7 +62,9 @@ def generate_audio_for_paragraph(paragraph):
             "model": "evi-2",
             "text": paragraph,
             "output_format": "mp3",
-            "quality": "high"
+            "quality": "high",
+            "voice_style": "natural",
+            "speaking_rate": 1.0
         }
         
         response = requests.post(HUME_API_URL, headers=headers, json=data)
@@ -194,10 +196,27 @@ def generate_story():
     def generate():
         try:
             prompt = request.form.get('prompt')
+            if not prompt:
+                raise ValueError("Story prompt is required")
+
             genre = request.form.get('genre')
+            if not genre:
+                raise ValueError("Genre selection is required")
+
             mood = request.form.get('mood')
+            if not mood:
+                raise ValueError("Mood selection is required")
+
             target_audience = request.form.get('target_audience')
-            paragraphs = int(request.form.get('paragraphs', 5))
+            if not target_audience:
+                raise ValueError("Target audience selection is required")
+
+            try:
+                paragraphs = int(request.form.get('paragraphs', 5))
+                if paragraphs < 1 or paragraphs > 10:
+                    raise ValueError("Number of paragraphs must be between 1 and 10")
+            except ValueError:
+                raise ValueError("Invalid number of paragraphs")
             
             yield send_json_message('log', "Starting story generation...")
             
@@ -273,9 +292,12 @@ def generate_story():
                 
             yield send_json_message('complete', "Story generation complete!")
             
+        except ValueError as e:
+            app.logger.error(f"Validation error: {str(e)}")
+            yield send_json_message('error', str(e))
         except Exception as e:
             app.logger.error(f"Error generating story: {str(e)}")
-            yield send_json_message('error', str(e))
+            yield send_json_message('error', f"An error occurred while generating the story: {str(e)}")
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
@@ -285,4 +307,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=False)
