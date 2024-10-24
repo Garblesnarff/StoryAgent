@@ -7,14 +7,13 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
+from gtts import gTTS
 import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
-import requests
-import base64
 
 class Base(DeclarativeBase):
     pass
@@ -51,67 +50,14 @@ def generate_audio_for_paragraph(paragraph):
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         
-        # Configure Hume API request
-        HUME_API_URL = "https://api.hume.ai/v0/batch/synthesize/audio"
-        headers = {
-            "Authorization": f"Bearer {os.environ.get('HUME_API_KEY')}",
-            "Content-Type": "application/json"
-        }
+        tts = gTTS(text=paragraph, lang='en')
         
-        # Create job request
-        data = {
-            "text": paragraph,
-            "model": {
-                "name": "evi-2",
-                "configs": {
-                    "output_format": "mp3",
-                    "voice_style": "natural",
-                    "speaking_rate": 1.0
-                }
-            }
-        }
+        filename = f"paragraph_audio_{int(time.time())}.mp3"
+        filepath = os.path.join(audio_dir, filename)
+        tts.save(filepath)
         
-        # Submit job
-        response = requests.post(HUME_API_URL, headers=headers, json=data)
-        response.raise_for_status()
-        job_data = response.json()
-        job_id = job_data['job_id']
-        
-        # Poll for job completion
-        status_url = f"{HUME_API_URL}/{job_id}"
-        max_attempts = 30
-        attempt = 0
-        
-        while attempt < max_attempts:
-            status_response = requests.get(status_url, headers=headers)
-            status_response.raise_for_status()
-            status_data = status_response.json()
-            
-            if status_data['status'] == 'completed':
-                # Get the audio URL from the completed job
-                audio_url = status_data['artifacts'][0]['url']
-                
-                # Download the audio file
-                audio_response = requests.get(audio_url)
-                audio_response.raise_for_status()
-                
-                filename = f"paragraph_audio_{int(time.time())}.mp3"
-                filepath = os.path.join(audio_dir, filename)
-                
-                with open(filepath, 'wb') as f:
-                    f.write(audio_response.content)
-                
-                app.logger.info(f"Audio generated successfully: {filename}")
-                return f"/static/audio/{filename}"
-                
-            elif status_data['status'] == 'failed':
-                raise Exception(f"Job failed: {status_data.get('error', 'Unknown error')}")
-                
-            time.sleep(2)
-            attempt += 1
-            
-        raise Exception("Job timed out")
-            
+        app.logger.info(f"Audio generated successfully: {filename}")
+        return f"/static/audio/{filename}"
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
@@ -225,27 +171,10 @@ def generate_story():
     def generate():
         try:
             prompt = request.form.get('prompt')
-            if not prompt:
-                raise ValueError("Story prompt is required")
-
             genre = request.form.get('genre')
-            if not genre:
-                raise ValueError("Genre selection is required")
-
             mood = request.form.get('mood')
-            if not mood:
-                raise ValueError("Mood selection is required")
-
             target_audience = request.form.get('target_audience')
-            if not target_audience:
-                raise ValueError("Target audience selection is required")
-
-            try:
-                paragraphs = int(request.form.get('paragraphs', 5))
-                if paragraphs < 1 or paragraphs > 10:
-                    raise ValueError("Number of paragraphs must be between 1 and 10")
-            except ValueError:
-                raise ValueError("Invalid number of paragraphs")
+            paragraphs = int(request.form.get('paragraphs', 5))
             
             yield send_json_message('log', "Starting story generation...")
             
@@ -321,12 +250,9 @@ def generate_story():
                 
             yield send_json_message('complete', "Story generation complete!")
             
-        except ValueError as e:
-            app.logger.error(f"Validation error: {str(e)}")
-            yield send_json_message('error', str(e))
         except Exception as e:
             app.logger.error(f"Error generating story: {str(e)}")
-            yield send_json_message('error', f"An error occurred while generating the story: {str(e)}")
+            yield send_json_message('error', str(e))
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
@@ -336,4 +262,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000)
