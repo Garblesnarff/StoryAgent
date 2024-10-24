@@ -16,6 +16,20 @@ wheels = [
 ]
 
 [[package]]
+name = "aioflask"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flask" },
+    { name = "greenletio" },
+    { name = "uvicorn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9d/07/ac0afe199fde1764927ce68f254e9fe3c174c4bb689f74b8a40974c5b4cc/aioflask-0.4.0.tar.gz", hash = "sha256:96403709fff88351c606667fce1a5a66bdef2d634a04b358713c8304216db68f", size = 12634 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b6/fc/961dc7419b4095eedb87116dc7b4c4542cd5fa14403dc8b85ef3956d9383/aioflask-0.4.0-py3-none-any.whl", hash = "sha256:9f0c2327f973a853a37b1506039e74bc532d58a009427e66bc37bf1e7bffbff2", size = 14559 },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -575,6 +589,18 @@ wheels = [
 ]
 
 [[package]]
+name = "greenletio"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "greenlet" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7e/be/bab6b8bacbc0ed8089deb38bc6dc947a67f7ca5be009dd5bbf4333e1a782/greenletio-0.11.0.tar.gz", hash = "sha256:5751773f859ee7c5a8745569af04b27532e2b8bdb170eb224193bebc32f38136", size = 29448 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/13/abbe5bf28eac052c17b6f1dbcd0daf5b6ce26e8f862ef6eacff636b7b77d/greenletio-0.11.0-py3-none-any.whl", hash = "sha256:314f6ac301aacca1c94f8d9ec9d509d98381643e7949cb33af9a14bfa0417b2e", size = 15193 },
+]
+
+[[package]]
 name = "groq"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -746,6 +772,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8e/76/592acaacf822bdc2353013330b49179048a8cce2f08467525ccb487d8195/hume-0.7.2.tar.gz", hash = "sha256:e27dd28daa7a8baee61ac1e50d032d996ec991e08dfd8f16cd7ebae15dac0cf2", size = 118905 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b8/ce/e1a79438780788497cf31817f9f6bbb0894f69568904d3f4df83827a785b/hume-0.7.2-py3-none-any.whl", hash = "sha256:4f40beca3df94edfc0d955b4d1d49598713ac5357c1610bfed03479ae5b6346d", size = 290556 },
+]
+
+[[package]]
+name = "hypercorn"
+version = "0.17.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "h11" },
+    { name = "h2" },
+    { name = "priority" },
+    { name = "wsproto" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7e/3a/df6c27642e0dcb7aff688ca4be982f0fb5d89f2afd3096dc75347c16140f/hypercorn-0.17.3.tar.gz", hash = "sha256:1b37802ee3ac52d2d85270700d565787ab16cf19e1462ccfa9f089ca17574165", size = 44409 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0e/3b/dfa13a8d96aa24e40ea74a975a9906cfdc2ab2f4e3b498862a57052f04eb/hypercorn-0.17.3-py3-none-any.whl", hash = "sha256:059215dec34537f9d40a69258d323f56344805efb462959e727152b0aa504547", size = 61742 },
 ]
 
 [[package]]
@@ -1022,6 +1063,15 @@ wheels = [
 ]
 
 [[package]]
+name = "priority"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/3c/eb7c35f4dcede96fca1842dac5f4f5d15511aa4b52f3a961219e68ae9204/priority-2.0.0.tar.gz", hash = "sha256:c965d54f1b8d0d0b19479db3924c7c36cf672dbf2aec92d43fbdaf4492ba18c0", size = 24792 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/5f/82c8074f7e84978129347c2c6ec8b6c59f3584ff1a20bc3c940a3e061790/priority-2.0.0-py3-none-any.whl", hash = "sha256:6f8eefce5f3ad59baf2c080a664037bb4725cd0a790d53d59ab4059288faf6aa", size = 8946 },
+]
+
+[[package]]
 name = "propcache"
 version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1263,6 +1313,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyhumps"
+version = "3.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/83/fa6f8fb7accb21f39e8f2b6a18f76f6d90626bdb0a5e5448e5cc9b8ab014/pyhumps-3.8.0.tar.gz", hash = "sha256:498026258f7ee1a8e447c2e28526c0bea9407f9a59c03260aee4bd6c04d681a3", size = 9018 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/11/a1938340ecb32d71e47ad4914843775011e6e9da59ba1229f181fef3119e/pyhumps-3.8.0-py3-none-any.whl", hash = "sha256:060e1954d9069f428232a1adda165db0b9d8dfdce1d265d36df7fbff540acfd6", size = 6095 },
+]
+
+[[package]]
 name = "pyparsing"
 version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1309,6 +1368,39 @@ wheels = [
 ]
 
 [[package]]
+name = "quart"
+version = "0.19.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "blinker" },
+    { name = "click" },
+    { name = "flask" },
+    { name = "hypercorn" },
+    { name = "itsdangerous" },
+    { name = "jinja2" },
+    { name = "markupsafe" },
+    { name = "werkzeug" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/e4/00266057395015fdb779560b50b6dd395ee17c4a8a792b633865d3469456/quart-0.19.6.tar.gz", hash = "sha256:89ddda6da24300a5ea4f21e4582d5e89bc8ea678e724e0b747767143401e4558", size = 65544 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/76/b81441d54f5d7d063479fd794fbf5bfd261e1136006e750093e3721311b4/quart-0.19.6-py3-none-any.whl", hash = "sha256:f9092310f4eb120903da692a5e4354f05d48c28ca7ec3054d3d94dd862412c58", size = 78185 },
+]
+
+[[package]]
+name = "quart-schema"
+version = "0.20.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyhumps" },
+    { name = "quart" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/34/72f2dec4fc199cce27110581a1380c78e9fb697d98e70e50a46ad0c39344/quart_schema-0.20.0.tar.gz", hash = "sha256:9e2ec72f4b781e81f6e298d0a8a873f299b0c8dd81d14ade31e24d3d9483233c", size = 17663 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/91/90eb1c1c4e0b8733de3d17411bac8063fc4387585d748bc2deaec27a4b81/quart_schema-0.20.0-py3-none-any.whl", hash = "sha256:03d4ba12e1e37d81fe580db0f40e0ca11edf30099ad661fd5a97ead7c89eb644", size = 19878 },
+]
+
+[[package]]
 name = "realtime"
 version = "2.0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1328,6 +1420,7 @@ name = "repl-nix-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "aioflask" },
     { name = "email-validator" },
     { name = "eventlet" },
     { name = "flask" },
@@ -1338,9 +1431,12 @@ dependencies = [
     { name = "groq" },
     { name = "gtts" },
     { name = "hume" },
+    { name = "hypercorn" },
     { name = "psycopg2-binary" },
     { name = "python-engineio" },
     { name = "python-socketio" },
+    { name = "quart" },
+    { name = "quart-schema" },
     { name = "requests" },
     { name = "supabase" },
     { name = "together" },
@@ -1348,6 +1444,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aioflask", specifier = ">=0.4.0" },
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "eventlet", specifier = ">=0.37.0" },
     { name = "flask", specifier = ">=3.0.3" },
@@ -1358,9 +1455,12 @@ requires-dist = [
     { name = "groq", specifier = ">=0.11.0" },
     { name = "gtts", specifier = ">=2.5.3" },
     { name = "hume", specifier = ">=0.4.0" },
+    { name = "hypercorn", specifier = ">=0.17.3" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "python-engineio", specifier = ">=4.10.1" },
     { name = "python-socketio", specifier = ">=5.11.4" },
+    { name = "quart", specifier = ">=0.19.6" },
+    { name = "quart-schema", specifier = ">=0.20.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "supabase", specifier = ">=2.9.0" },
     { name = "together", specifier = ">=1.3.2" },
@@ -1620,6 +1720,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ed/63/22ba4ebfe7430b76388e7cd448d5478814d3032121827c12a2cc287e2260/urllib3-2.2.3.tar.gz", hash = "sha256:e7d814a81dad81e6caf2ec9fdedb284ecc9c73076b62654547cc64ccdcae26e9", size = 300677 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ce/d9/5f4c13cecde62396b0d3fe530a50ccea91e7dfc1ccf0e09c228841bb5ba8/urllib3-2.2.3-py3-none-any.whl", hash = "sha256:ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac", size = 126338 },
+]
+
+[[package]]
+name = "uvicorn"
+version = "0.32.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "h11" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e0/fc/1d785078eefd6945f3e5bab5c076e4230698046231eb0f3747bc5c8fa992/uvicorn-0.32.0.tar.gz", hash = "sha256:f78b36b143c16f54ccdb8190d0a26b5f1901fe5a3c777e1ab29f26391af8551e", size = 77564 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/14/78bd0e95dd2444b6caacbca2b730671d4295ccb628ef58b81bee903629df/uvicorn-0.32.0-py3-none-any.whl", hash = "sha256:60b8f3a5ac027dcd31448f411ced12b5ef452c646f76f02f8cc3f25d8d26fd82", size = 63723 },
 ]
 
 [[package]]

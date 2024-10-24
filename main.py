@@ -1,10 +1,9 @@
-import eventlet
-eventlet.monkey_patch()
-
 from app import app
-from flask_socketio import SocketIO
-
-socketio = SocketIO(app)
+import asyncio
+from hypercorn.config import Config
+from hypercorn.asyncio import serve
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000, debug=False)
+    config = Config()
+    config.bind = ["0.0.0.0:5000"]
+    asyncio.run(serve(app, config))

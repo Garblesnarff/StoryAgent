@@ -1,8 +1,8 @@
 import os
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from werkzeug.security import generate_password_hash, check_password_hash
+from quart import Quart, render_template, request, jsonify, Response
+from quart_schema import QuartSchema
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 import urllib.parse
 from config import Config
 import groq
@@ -13,25 +13,20 @@ from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
-import requests
 import base64
+import asyncio
+from hume import HumeClient
+import contextlib
 
 class Base(DeclarativeBase):
     pass
 
-db = SQLAlchemy(model_class=Base)
-app = Flask(__name__)
+app = Quart(__name__)
 app.config.from_object(Config)
-db.init_app(app)
+QuartSchema(app)
 
-with app.app_context():
-    import models
-    db.create_all()
-
-# Initialize Groq client
+# Initialize clients
 groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
-
-# Initialize Together AI client
 together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 
 # Rate limiting for image generation
@@ -45,60 +40,39 @@ def send_json_message(message_type, message_data):
         'message' if isinstance(message_data, str) else 'data': message_data
     }) + '\n'
 
-def generate_audio_for_paragraph(paragraph):
+async def generate_audio_for_paragraph(paragraph):
     try:
         app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
         
         if not app.config.get('HUME_API_KEY') or not app.config.get('HUME_SECRET_KEY'):
             app.logger.error("Hume AI API key or secret key not configured")
             return None
-        
-        # Set up Hume AI request
-        url = 'https://api.hume.ai/v1/evi-2/narrate'
-        headers = {
-            'Authorization': f'Bearer {app.config["HUME_API_KEY"]}',
-            'X-Hume-Secret': app.config["HUME_SECRET_KEY"],
-            'Content-Type': 'application/json'
-        }
-        
-        payload = {
-            'text': paragraph,
-            'config_id': app.config['HUME_CONFIG_ID'],
-            'timeoutInSeconds': 30
-        }
-        
-        # Make API request with timeout
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
-        
-        if response.status_code == 200:
-            audio_data = response.json()
-            if not audio_data or 'audio' not in audio_data:
-                app.logger.error("No audio data in response")
-                return None
-            
+
+        # Initialize Hume client
+        client = HumeClient(
+            api_key=app.config['HUME_API_KEY'],
+            secret_key=app.config['HUME_SECRET_KEY']
+        )
+
+        # Send text for narration
+        response = await client.empathic_voice.process_text(paragraph)
+        if response and hasattr(response, 'audio'):
             # Save audio file
             audio_dir = os.path.join('static', 'audio')
             os.makedirs(audio_dir, exist_ok=True)
             
-            filename = f"paragraph_audio_{int(time.time())}.mp3"
+            filename = f"paragraph_audio_{int(time.time())}.wav"
             filepath = os.path.join(audio_dir, filename)
             
             with open(filepath, 'wb') as f:
-                f.write(base64.b64decode(audio_data['audio']))
+                f.write(response.audio)
             
             app.logger.info(f"Audio generated successfully: {filename}")
             return f"/static/audio/{filename}"
-        else:
-            error_message = response.text if response.text else f"Status code: {response.status_code}"
-            app.logger.error(f"Hume AI API error: {error_message}")
-            return None
+        
+        app.logger.error("No audio response received")
+        return None
             
-    except requests.Timeout:
-        app.logger.error("Timeout while connecting to Hume AI API")
-        return None
-    except requests.RequestException as e:
-        app.logger.error(f"Network error with Hume AI API: {str(e)}")
-        return None
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
@@ -143,13 +117,13 @@ def generate_image_for_paragraph(paragraph):
         return None
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+async def index():
+    return await render_template('index.html')
 
 @app.route('/update_paragraph', methods=['POST'])
-def update_paragraph():
+async def update_paragraph():
     try:
-        data = request.get_json()
+        data = await request.get_json()
         text = data.get('text')
         
         if not text:
@@ -157,7 +131,7 @@ def update_paragraph():
             
         # Generate new image and audio
         image_url = generate_image_for_paragraph(text)
-        audio_url = generate_audio_for_paragraph(text)
+        audio_url = await generate_audio_for_paragraph(text)
         
         return jsonify({
             'success': True,
@@ -170,9 +144,9 @@ def update_paragraph():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/regenerate_image', methods=['POST'])
-def regenerate_image():
+async def regenerate_image():
     try:
-        data = request.get_json()
+        data = await request.get_json()
         text = data.get('text')
         
         if not text:
@@ -189,15 +163,15 @@ def regenerate_image():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/regenerate_audio', methods=['POST'])
-def regenerate_audio():
+async def regenerate_audio():
     try:
-        data = request.get_json()
+        data = await request.get_json()
         text = data.get('text')
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
             
-        audio_url = generate_audio_for_paragraph(text)
+        audio_url = await generate_audio_for_paragraph(text)
         
         return jsonify({
             'success': True,
@@ -208,14 +182,15 @@ def regenerate_audio():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/generate_story', methods=['POST'])
-def generate_story():
-    def generate():
+async def generate_story():
+    async def generate():
         try:
-            prompt = request.form.get('prompt')
-            genre = request.form.get('genre')
-            mood = request.form.get('mood')
-            target_audience = request.form.get('target_audience')
-            paragraphs = int(request.form.get('paragraphs', 5))
+            form = await request.form
+            prompt = form.get('prompt')
+            genre = form.get('genre')
+            mood = form.get('mood')
+            target_audience = form.get('target_audience')
+            paragraphs = int(form.get('paragraphs', 5))
             
             yield send_json_message('log', "Starting story generation...")
             
@@ -259,21 +234,12 @@ def generate_story():
                 
                 # Generate image
                 yield send_json_message('log', f"Generating image for paragraph {index}...")
-                
-                # Check rate limit before generating image
-                current_time = datetime.now()
-                if image_generation_queue and len(image_generation_queue) >= 6:
-                    wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
-                    if wait_time > 0:
-                        yield send_json_message('log', f"Waiting for rate limit ({wait_time:.0f} seconds)...")
-                        time.sleep(wait_time)
-                
                 image_url = generate_image_for_paragraph(paragraph)
                 yield send_json_message('log', f"Image generated for paragraph {index}")
                 
                 # Generate audio
                 yield send_json_message('log', f"Generating audio for paragraph {index}...")
-                audio_url = generate_audio_for_paragraph(paragraph)
+                audio_url = await generate_audio_for_paragraph(paragraph)
                 yield send_json_message('log', f"Audio generated for paragraph {index}")
                 
                 # Send paragraph data
@@ -285,9 +251,6 @@ def generate_story():
                 }
                 yield send_json_message('paragraph', paragraph_data)
                 yield send_json_message('log', f"Paragraph {index} complete")
-
-                # Ensure stream is flushed
-                sys.stdout.flush()
                 
             yield send_json_message('complete', "Story generation complete!")
             
@@ -295,11 +258,15 @@ def generate_story():
             app.logger.error(f"Error generating story: {str(e)}")
             yield send_json_message('error', str(e))
 
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+    return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/save_story', methods=['POST'])
-def save_story():
+async def save_story():
     return jsonify({'success': True})
+
+@app.before_serving
+async def startup():
+    pass
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
