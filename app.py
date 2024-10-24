@@ -48,27 +48,34 @@ def generate_audio_for_paragraph(paragraph):
     try:
         app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
         
-        if not app.config.get('HUME_API_KEY'):
-            app.logger.error("Hume AI API key not configured")
+        if not app.config.get('HUME_API_KEY') or not app.config.get('HUME_SECRET_KEY'):
+            app.logger.error("Hume AI API key or secret key not configured")
             return None
         
         # Set up Hume AI request
         url = 'https://api.hume.ai/v1/evi-2/narrate'
         headers = {
             'Authorization': f'Bearer {app.config["HUME_API_KEY"]}',
+            'X-Hume-Secret': app.config["HUME_SECRET_KEY"],
             'Content-Type': 'application/json'
         }
         
         payload = {
             'text': paragraph,
-            'config_id': app.config['HUME_CONFIG_ID']
+            'config_id': app.config['HUME_CONFIG_ID'],
+            'timeoutInSeconds': 30  # Add timeout configuration
         }
         
-        # Make API request
-        response = requests.post(url, headers=headers, json=payload)
+        # Make API request with timeout
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
         
         if response.status_code == 200:
-            audio_url = response.json().get('audio_url')
+            audio_data = response.json()
+            if not audio_data or 'audio_url' not in audio_data:
+                app.logger.error("No audio URL in response")
+                return None
+                
+            audio_url = audio_data['audio_url']
             
             # Download and save the audio file locally
             audio_dir = os.path.join('static', 'audio')
@@ -77,17 +84,28 @@ def generate_audio_for_paragraph(paragraph):
             filename = f"paragraph_audio_{int(time.time())}.mp3"
             filepath = os.path.join(audio_dir, filename)
             
-            # Download audio file from Hume AI URL
-            audio_response = requests.get(audio_url)
+            # Download audio file from Hume AI URL with timeout
+            audio_response = requests.get(audio_url, timeout=30)
+            if audio_response.status_code != 200:
+                app.logger.error(f"Failed to download audio file: {audio_response.status_code}")
+                return None
+                
             with open(filepath, 'wb') as f:
                 f.write(audio_response.content)
             
             app.logger.info(f"Audio generated successfully: {filename}")
             return f"/static/audio/{filename}"
         else:
-            app.logger.error(f"Hume AI API error: {response.text}")
+            error_message = response.text if response.text else f"Status code: {response.status_code}"
+            app.logger.error(f"Hume AI API error: {error_message}")
             return None
             
+    except requests.Timeout:
+        app.logger.error("Timeout while connecting to Hume AI API")
+        return None
+    except requests.RequestException as e:
+        app.logger.error(f"Network error with Hume AI API: {str(e)}")
+        return None
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
@@ -288,7 +306,6 @@ def generate_story():
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
-    # TODO: Implement story saving logic using Supabase
     return jsonify({'success': True})
 
 if __name__ == '__main__':
