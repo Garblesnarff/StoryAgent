@@ -61,28 +61,35 @@ def generate_audio_for_paragraph(paragraph):
             'Content-Type': 'application/json'
         }
         
+        # Define the payload with proper parameters
         payload = {
             'text': paragraph,
             'config_id': HUME_CONFIG_ID
         }
 
-        # Make request to Hume API
+        # Make request to Hume API with proper error handling
+        app.logger.info("Sending request to Hume API...")
         response = requests.post(HUME_API_URL, headers=headers, json=payload)
         
         if response.status_code != 200:
-            app.logger.error(f"Hume API error: {response.text}")
+            app.logger.error(f"Hume API error: {response.status_code} - {response.text}")
             return None
 
         # Extract the audio URL from the response
-        audio_url = response.json().get('audio_url')
+        response_data = response.json()
+        app.logger.info(f"Hume API response: {response_data}")
+        audio_url = response_data.get('audio_url')
+        
         if not audio_url:
             app.logger.error("No audio URL in response")
+            app.logger.error(f"Full response: {response_data}")
             return None
 
         # Download the audio file from the URL
+        app.logger.info(f"Downloading audio from {audio_url}")
         audio_response = requests.get(audio_url)
         if audio_response.status_code != 200:
-            app.logger.error("Failed to download audio file")
+            app.logger.error(f"Failed to download audio: {audio_response.status_code}")
             return None
             
         # Generate unique filename and save
@@ -97,6 +104,7 @@ def generate_audio_for_paragraph(paragraph):
 
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
+        app.logger.exception("Full traceback:")
         return None
 
 def generate_image_for_paragraph(paragraph):
