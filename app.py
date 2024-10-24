@@ -51,38 +51,80 @@ def generate_audio_for_paragraph(paragraph):
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         
-        # Configure Hume API request
-        HUME_API_URL = "https://api.hume.ai/v0/synthesize/voice"
+        HUME_API_URL = "https://api.hume.ai/v0/batch/jobs"
         headers = {
             "Authorization": f"Bearer {os.environ.get('HUME_API_KEY')}",
             "Content-Type": "application/json"
         }
         
+        # Create job request
         data = {
-            "model": "evi-2",
+            "models": {
+                "prosody": {
+                    "granularity": "utterance",
+                    "identify_speakers": False
+                }
+            },
+            "transcription": {
+                "language": {
+                    "code": "en"
+                }
+            },
             "text": paragraph,
-            "output_format": "mp3",
-            "quality": "high",
-            "voice_style": "natural",
-            "speaking_rate": 1.0
+            "synthesis": {
+                "model": "evi-2",
+                "speaking_rate": 1.0,
+                "voice_style": "natural",
+                "output_format": "mp3"
+            }
         }
         
+        # Submit job
         response = requests.post(HUME_API_URL, headers=headers, json=data)
+        response.raise_for_status()
+        job_data = response.json()
+        job_id = job_data['job_id']
         
-        if response.status_code == 200:
-            audio_data = response.content
-            filename = f"paragraph_audio_{int(time.time())}.mp3"
-            filepath = os.path.join(audio_dir, filename)
+        # Poll for job completion
+        status_url = f"{HUME_API_URL}/{job_id}"
+        max_attempts = 30
+        attempt = 0
+        
+        while attempt < max_attempts:
+            status_response = requests.get(status_url, headers=headers)
+            status_response.raise_for_status()
+            status_data = status_response.json()
             
-            with open(filepath, 'wb') as f:
-                f.write(audio_data)
+            if status_data['status'] == 'completed':
+                # Get the audio URL from the completed job
+                audio_url = status_data['results']['synthesis']['url']
+                
+                # Download the audio file
+                audio_response = requests.get(audio_url)
+                audio_response.raise_for_status()
+                
+                filename = f"paragraph_audio_{int(time.time())}.mp3"
+                filepath = os.path.join(audio_dir, filename)
+                
+                with open(filepath, 'wb') as f:
+                    f.write(audio_response.content)
+                
+                app.logger.info(f"Audio generated successfully: {filename}")
+                return f"/static/audio/{filename}"
+                
+            elif status_data['status'] == 'failed':
+                raise Exception(f"Job failed: {status_data.get('error', 'Unknown error')}")
+                
+            time.sleep(2)
+            attempt += 1
             
-            app.logger.info(f"Audio generated successfully: {filename}")
-            return f"/static/audio/{filename}"
-        else:
-            app.logger.error(f"Error from Hume API: {response.text}")
-            return None
+        raise Exception("Job timed out")
             
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Hume API request error: {str(e)}")
+        if hasattr(e.response, 'text'):
+            app.logger.error(f"Response text: {e.response.text}")
+        return None
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
