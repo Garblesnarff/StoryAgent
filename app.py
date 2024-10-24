@@ -7,13 +7,14 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
-from gtts import gTTS
 import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
+import requests
+import base64
 
 class Base(DeclarativeBase):
     pass
@@ -50,14 +51,36 @@ def generate_audio_for_paragraph(paragraph):
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         
-        tts = gTTS(text=paragraph, lang='en')
+        # Configure Hume API request
+        HUME_API_URL = "https://api.hume.ai/v0/synthesize/voice"
+        headers = {
+            "Authorization": f"Bearer {os.environ.get('HUME_API_KEY')}",
+            "Content-Type": "application/json"
+        }
         
-        filename = f"paragraph_audio_{int(time.time())}.mp3"
-        filepath = os.path.join(audio_dir, filename)
-        tts.save(filepath)
+        data = {
+            "model": "evi-2",
+            "text": paragraph,
+            "output_format": "mp3",
+            "quality": "high"
+        }
         
-        app.logger.info(f"Audio generated successfully: {filename}")
-        return f"/static/audio/{filename}"
+        response = requests.post(HUME_API_URL, headers=headers, json=data)
+        
+        if response.status_code == 200:
+            audio_data = response.content
+            filename = f"paragraph_audio_{int(time.time())}.mp3"
+            filepath = os.path.join(audio_dir, filename)
+            
+            with open(filepath, 'wb') as f:
+                f.write(audio_data)
+            
+            app.logger.info(f"Audio generated successfully: {filename}")
+            return f"/static/audio/{filename}"
+        else:
+            app.logger.error(f"Error from Hume API: {response.text}")
+            return None
+            
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
