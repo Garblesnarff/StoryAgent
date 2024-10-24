@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import json
 import sys
 import requests
+import base64
 
 class Base(DeclarativeBase):
     pass
@@ -63,7 +64,7 @@ def generate_audio_for_paragraph(paragraph):
         payload = {
             'text': paragraph,
             'config_id': app.config['HUME_CONFIG_ID'],
-            'timeoutInSeconds': 30  # Add timeout configuration
+            'timeoutInSeconds': 30
         }
         
         # Make API request with timeout
@@ -71,27 +72,19 @@ def generate_audio_for_paragraph(paragraph):
         
         if response.status_code == 200:
             audio_data = response.json()
-            if not audio_data or 'audio_url' not in audio_data:
-                app.logger.error("No audio URL in response")
+            if not audio_data or 'audio' not in audio_data:
+                app.logger.error("No audio data in response")
                 return None
-                
-            audio_url = audio_data['audio_url']
             
-            # Download and save the audio file locally
+            # Save audio file
             audio_dir = os.path.join('static', 'audio')
             os.makedirs(audio_dir, exist_ok=True)
             
             filename = f"paragraph_audio_{int(time.time())}.mp3"
             filepath = os.path.join(audio_dir, filename)
             
-            # Download audio file from Hume AI URL with timeout
-            audio_response = requests.get(audio_url, timeout=30)
-            if audio_response.status_code != 200:
-                app.logger.error(f"Failed to download audio file: {audio_response.status_code}")
-                return None
-                
             with open(filepath, 'wb') as f:
-                f.write(audio_response.content)
+                f.write(base64.b64decode(audio_data['audio']))
             
             app.logger.info(f"Audio generated successfully: {filename}")
             return f"/static/audio/{filename}"
