@@ -7,13 +7,13 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
-from gtts import gTTS
 import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
+import requests
 
 class Base(DeclarativeBase):
     pass
@@ -47,17 +47,47 @@ def send_json_message(message_type, message_data):
 def generate_audio_for_paragraph(paragraph):
     try:
         app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
-        audio_dir = os.path.join('static', 'audio')
-        os.makedirs(audio_dir, exist_ok=True)
         
-        tts = gTTS(text=paragraph, lang='en')
+        if not app.config.get('HUME_API_KEY'):
+            app.logger.error("Hume AI API key not configured")
+            return None
         
-        filename = f"paragraph_audio_{int(time.time())}.mp3"
-        filepath = os.path.join(audio_dir, filename)
-        tts.save(filepath)
+        # Set up Hume AI request
+        url = 'https://api.hume.ai/v1/evi-2/narrate'
+        headers = {
+            'Authorization': f'Bearer {app.config["HUME_API_KEY"]}',
+            'Content-Type': 'application/json'
+        }
         
-        app.logger.info(f"Audio generated successfully: {filename}")
-        return f"/static/audio/{filename}"
+        payload = {
+            'text': paragraph,
+            'config_id': app.config['HUME_CONFIG_ID']
+        }
+        
+        # Make API request
+        response = requests.post(url, headers=headers, json=payload)
+        
+        if response.status_code == 200:
+            audio_url = response.json().get('audio_url')
+            
+            # Download and save the audio file locally
+            audio_dir = os.path.join('static', 'audio')
+            os.makedirs(audio_dir, exist_ok=True)
+            
+            filename = f"paragraph_audio_{int(time.time())}.mp3"
+            filepath = os.path.join(audio_dir, filename)
+            
+            # Download audio file from Hume AI URL
+            audio_response = requests.get(audio_url)
+            with open(filepath, 'wb') as f:
+                f.write(audio_response.content)
+            
+            app.logger.info(f"Audio generated successfully: {filename}")
+            return f"/static/audio/{filename}"
+        else:
+            app.logger.error(f"Hume AI API error: {response.text}")
+            return None
+            
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
