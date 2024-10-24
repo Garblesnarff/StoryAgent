@@ -55,7 +55,7 @@ def generate_audio_for_paragraph(paragraph):
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
 
-        # Prepare the request to Hume's EVI-2 API
+        # Set up the Hume API request
         headers = {
             'Authorization': f'Bearer {HUME_API_KEY}',
             'Content-Type': 'application/json'
@@ -73,19 +73,28 @@ def generate_audio_for_paragraph(paragraph):
             app.logger.error(f"Hume API error: {response.text}")
             return None
 
-        # Get the audio content from the response
-        audio_content = response.content
-        
-        # Generate unique filename
+        # Extract the audio URL from the response
+        audio_url = response.json().get('audio_url')
+        if not audio_url:
+            app.logger.error("No audio URL in response")
+            return None
+
+        # Download the audio file from the URL
+        audio_response = requests.get(audio_url)
+        if audio_response.status_code != 200:
+            app.logger.error("Failed to download audio file")
+            return None
+            
+        # Generate unique filename and save
         filename = f"paragraph_audio_{int(time.time())}.mp3"
         filepath = os.path.join(audio_dir, filename)
         
-        # Save the audio file
         with open(filepath, 'wb') as f:
-            f.write(audio_content)
+            f.write(audio_response.content)
         
         app.logger.info(f"Audio generated successfully: {filename}")
         return f"/static/audio/{filename}"
+
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
         return None
