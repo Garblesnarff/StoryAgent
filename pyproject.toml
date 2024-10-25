@@ -18,5 +18,4 @@ dependencies = [
     "flask-socketio>=5.4.1",
     "python-socketio>=5.11.4",
     "python-engineio>=4.10.1",
-    "requests>=2.32.3",
 ]

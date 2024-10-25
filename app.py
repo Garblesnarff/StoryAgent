@@ -7,13 +7,13 @@ import urllib.parse
 from config import Config
 import groq
 from together import Together
+from gtts import gTTS
 import time
 import tempfile
 from collections import deque
 from datetime import datetime, timedelta
 import json
 import sys
-import requests
 
 class Base(DeclarativeBase):
     pass
@@ -37,11 +37,6 @@ together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
 image_generation_queue = deque(maxlen=6)
 IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 
-# Hume API configuration
-HUME_API_URL = 'https://api.hume.ai/v1/evi-2/narrate'
-HUME_API_KEY = os.environ.get('HUME_API_KEY')
-HUME_CONFIG_ID = os.environ.get('HUME_CONFIG_ID')
-
 def send_json_message(message_type, message_data):
     """Helper function to ensure consistent JSON message formatting"""
     return json.dumps({
@@ -54,57 +49,17 @@ def generate_audio_for_paragraph(paragraph):
         app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
         audio_dir = os.path.join('static', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
-
-        # Set up the Hume API request
-        headers = {
-            'Authorization': f'Bearer {HUME_API_KEY}',
-            'Content-Type': 'application/json'
-        }
         
-        # Define the payload with proper parameters
-        payload = {
-            'text': paragraph,
-            'config_id': HUME_CONFIG_ID
-        }
-
-        # Make request to Hume API with proper error handling
-        app.logger.info("Sending request to Hume API...")
-        response = requests.post(HUME_API_URL, headers=headers, json=payload)
+        tts = gTTS(text=paragraph, lang='en')
         
-        if response.status_code != 200:
-            app.logger.error(f"Hume API error: {response.status_code} - {response.text}")
-            return None
-
-        # Extract the audio URL from the response
-        response_data = response.json()
-        app.logger.info(f"Hume API response: {response_data}")
-        audio_url = response_data.get('audio_url')
-        
-        if not audio_url:
-            app.logger.error("No audio URL in response")
-            app.logger.error(f"Full response: {response_data}")
-            return None
-
-        # Download the audio file from the URL
-        app.logger.info(f"Downloading audio from {audio_url}")
-        audio_response = requests.get(audio_url)
-        if audio_response.status_code != 200:
-            app.logger.error(f"Failed to download audio: {audio_response.status_code}")
-            return None
-            
-        # Generate unique filename and save
         filename = f"paragraph_audio_{int(time.time())}.mp3"
         filepath = os.path.join(audio_dir, filename)
-        
-        with open(filepath, 'wb') as f:
-            f.write(audio_response.content)
+        tts.save(filepath)
         
         app.logger.info(f"Audio generated successfully: {filename}")
         return f"/static/audio/{filename}"
-
     except Exception as e:
         app.logger.error(f"Error generating audio: {str(e)}")
-        app.logger.exception("Full traceback:")
         return None
 
 def generate_image_for_paragraph(paragraph):
