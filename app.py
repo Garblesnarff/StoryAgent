@@ -2,40 +2,31 @@ import os
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from werkzeug.security import generate_password_hash, check_password_hash
-import urllib.parse
-from config import Config
-import groq
-from together import Together
-from gtts import gTTS
-import time
-import tempfile
-from collections import deque
-from datetime import datetime, timedelta
 import json
 import sys
+
+from services.image_generator import ImageGenerator
+from services.text_generator import TextGenerator
+from services.audio_generator import AudioGenerator
+from services.regeneration_service import RegenerationService
 
 class Base(DeclarativeBase):
     pass
 
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
-app.config.from_object(Config)
+app.config.from_object('config.Config')
 db.init_app(app)
 
 with app.app_context():
     import models
     db.create_all()
 
-# Initialize Groq client
-groq_client = groq.Groq(api_key=app.config['GROQ_API_KEY'])
-
-# Initialize Together AI client
-together_client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
-
-# Rate limiting for image generation
-image_generation_queue = deque(maxlen=6)
-IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
+# Initialize services
+image_service = ImageGenerator()
+text_service = TextGenerator()
+audio_service = AudioGenerator()
+regeneration_service = RegenerationService(image_service, audio_service)
 
 def send_json_message(message_type, message_data):
     """Helper function to ensure consistent JSON message formatting"""
@@ -43,63 +34,6 @@ def send_json_message(message_type, message_data):
         'type': message_type,
         'message' if isinstance(message_data, str) else 'data': message_data
     }) + '\n'
-
-def generate_audio_for_paragraph(paragraph):
-    try:
-        app.logger.info(f"Generating audio for paragraph: {paragraph[:50]}...")
-        audio_dir = os.path.join('static', 'audio')
-        os.makedirs(audio_dir, exist_ok=True)
-        
-        tts = gTTS(text=paragraph, lang='en')
-        
-        filename = f"paragraph_audio_{int(time.time())}.mp3"
-        filepath = os.path.join(audio_dir, filename)
-        tts.save(filepath)
-        
-        app.logger.info(f"Audio generated successfully: {filename}")
-        return f"/static/audio/{filename}"
-    except Exception as e:
-        app.logger.error(f"Error generating audio: {str(e)}")
-        return None
-
-def generate_image_for_paragraph(paragraph):
-    try:
-        app.logger.info(f"Attempting to generate image for paragraph: {paragraph[:50]}...")
-        
-        # Check rate limit
-        current_time = datetime.now()
-        while image_generation_queue and current_time - image_generation_queue[0] > timedelta(seconds=IMAGE_RATE_LIMIT):
-            image_generation_queue.popleft()
-        
-        if len(image_generation_queue) >= 6:
-            wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
-            app.logger.info(f"Rate limit reached. Waiting for {wait_time:.2f} seconds...")
-            time.sleep(wait_time)
-        
-        image_response = together_client.images.generate(
-            prompt=f"An image representing: {paragraph[:100]}",  # Use first 100 characters as prompt
-            model="black-forest-labs/FLUX.1-schnell-Free",
-            width=512,
-            height=512,
-            steps=4,
-            n=1,
-            response_format="b64_json"
-        )
-        
-        if image_response and hasattr(image_response, 'data') and image_response.data:
-            image_b64 = image_response.data[0].b64_json
-            
-            # Add timestamp to queue
-            image_generation_queue.append(datetime.now())
-            
-            app.logger.info("Image generated successfully")
-            return f"data:image/png;base64,{image_b64}"
-        else:
-            app.logger.error("No image data received from API")
-            return None
-    except Exception as e:
-        app.logger.error(f"Error generating image: {str(e)}")
-        return None
 
 @app.route('/')
 def index():
@@ -115,8 +49,8 @@ def update_paragraph():
             return jsonify({'error': 'No text provided'}), 400
             
         # Generate new image and audio
-        image_url = generate_image_for_paragraph(text)
-        audio_url = generate_audio_for_paragraph(text)
+        image_url = image_service.generate_image(text)
+        audio_url = audio_service.generate_audio(text)
         
         return jsonify({
             'success': True,
@@ -137,7 +71,7 @@ def regenerate_image():
         if not text:
             return jsonify({'error': 'No text provided'}), 400
             
-        image_url = generate_image_for_paragraph(text)
+        image_url = regeneration_service.regenerate_image(text)
         
         return jsonify({
             'success': True,
@@ -156,7 +90,7 @@ def regenerate_audio():
         if not text:
             return jsonify({'error': 'No text provided'}), 400
             
-        audio_url = generate_audio_for_paragraph(text)
+        audio_url = regeneration_service.regenerate_audio(text)
         
         return jsonify({
             'success': True,
@@ -178,35 +112,15 @@ def generate_story():
             
             yield send_json_message('log', "Starting story generation...")
             
-            # Adjust the system message based on the parameters
-            system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
-            
-            yield send_json_message('log', f"Generating story text using Groq API with prompt: '{prompt}'")
-            
             # Generate the story
-            response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
-                ],
-                temperature=0.7,
-            )
+            story_paragraphs = text_service.generate_story(
+                prompt, genre, mood, target_audience, paragraphs)
             
-            if not response or not response.choices:
-                raise Exception("No response from story generation API")
-                
-            story = response.choices[0].message.content
-            if not story:
-                raise Exception("Empty response from story generation API")
-                
-            yield send_json_message('log', f"Story text generated successfully ({len(story.split())} words)")
-
-            # Split the story into paragraphs
-            story_paragraphs = [p for p in story.split('\n\n') if p.strip()][:paragraphs]
+            if not story_paragraphs:
+                raise Exception("Failed to generate story")
+            
             total_paragraphs = len(story_paragraphs)
-            
-            yield send_json_message('log', f"Processing {total_paragraphs} paragraphs...")
+            yield send_json_message('log', f"Story text generated successfully ({sum(len(p.split()) for p in story_paragraphs)} words)")
             
             # Process each paragraph and stream results
             for index, paragraph in enumerate(story_paragraphs, 1):
@@ -218,21 +132,12 @@ def generate_story():
                 
                 # Generate image
                 yield send_json_message('log', f"Generating image for paragraph {index}...")
-                
-                # Check rate limit before generating image
-                current_time = datetime.now()
-                if image_generation_queue and len(image_generation_queue) >= 6:
-                    wait_time = (image_generation_queue[0] + timedelta(seconds=IMAGE_RATE_LIMIT) - current_time).total_seconds()
-                    if wait_time > 0:
-                        yield send_json_message('log', f"Waiting for rate limit ({wait_time:.0f} seconds)...")
-                        time.sleep(wait_time)
-                
-                image_url = generate_image_for_paragraph(paragraph)
+                image_url = image_service.generate_image(paragraph)
                 yield send_json_message('log', f"Image generated for paragraph {index}")
                 
                 # Generate audio
                 yield send_json_message('log', f"Generating audio for paragraph {index}...")
-                audio_url = generate_audio_for_paragraph(paragraph)
+                audio_url = audio_service.generate_audio(paragraph)
                 yield send_json_message('log', f"Audio generated for paragraph {index}")
                 
                 # Send paragraph data
@@ -244,7 +149,7 @@ def generate_story():
                 }
                 yield send_json_message('paragraph', paragraph_data)
                 yield send_json_message('log', f"Paragraph {index} complete")
-
+                
                 # Ensure stream is flushed
                 sys.stdout.flush()
                 
