@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const paragraphCards = document.getElementById('paragraph-cards');
     const logContent = document.getElementById('log-content');
     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    const socket = io();
     let currentEditingCard = null;
     let currentPage = 0;
     let totalPages = 0;
@@ -295,37 +294,64 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('save-story').style.display = 'none';
         
         const formData = new FormData(storyForm);
-        const data = {
-            prompt: formData.get('prompt'),
-            genre: formData.get('genre'),
-            mood: formData.get('mood'),
-            target_audience: formData.get('target_audience'),
-            paragraphs: formData.get('paragraphs')
-        };
         
-        // Emit the event to generate story
-        socket.emit('generate_story', data);
-    });
+        try {
+            const response = await fetch('/generate_story', {
+                method: 'POST',
+                body: formData
+            });
 
-    // Socket event listeners
-    socket.on('log', (data) => {
-        addLogMessage(data.message);
-    });
+            if (!response.ok) {
+                throw new Error('Story generation failed');
+            }
 
-    socket.on('paragraph', (data) => {
-        addParagraphCard(data.data, data.data.index);
-        updateProgress(data.data.index, parseInt(data.data.index) + 1);
-    });
-
-    socket.on('complete', (data) => {
-        addLogMessage(data.message);
-        storyOutput.style.display = 'block';
-        document.getElementById('save-story').style.display = 'block';
-    });
-
-    socket.on('error', (data) => {
-        console.error('Error:', data);
-        addLogMessage('Error: ' + data.message);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let buffer = '';
+            let totalParagraphs = parseInt(formData.get('paragraphs'));
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        switch (data.type) {
+                            case 'log':
+                                addLogMessage(data.message);
+                                break;
+                            case 'paragraph':
+                                addParagraphCard(data.data, data.data.index);
+                                updateProgress(data.data.index, totalParagraphs);
+                                setupAudioHover();
+                                break;
+                            case 'error':
+                                addLogMessage('Error: ' + data.message);
+                                break;
+                            case 'complete':
+                                addLogMessage(data.message);
+                                storyOutput.style.display = 'block';
+                                document.getElementById('save-story').style.display = 'block';
+                                break;
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing message:', line);
+                    }
+                }
+                buffer = lines[lines.length - 1];
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            addLogMessage('Error: ' + error.message);
+        }
     });
 
     // Save story functionality
