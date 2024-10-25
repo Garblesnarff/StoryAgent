@@ -7,11 +7,12 @@ class HumeAudioGenerator:
     def __init__(self):
         self.audio_dir = os.path.join('static', 'audio')
         os.makedirs(self.audio_dir, exist_ok=True)
-        self.client = HumeStreamClient(api_key=os.environ.get('HUME_API_KEY', ''))
+        self.client = HumeStreamClient(
+            api_key=os.environ.get('HUME_API_KEY')
+        )
     
     def generate_audio(self, text):
         try:
-            # Run async code in sync context
             return asyncio.run(self._generate_audio_async(text))
         except Exception as e:
             print(f"Error generating audio with Hume: {str(e)}")
@@ -19,10 +20,12 @@ class HumeAudioGenerator:
 
     async def _generate_audio_async(self, text):
         try:
-            configs = [{"voice": {"language": "en"}}]
-            async with self.client.connect(configs) as socket:
+            # Configure voice settings
+            config = {"voice": {"language": "en"}}
+            
+            async with self.client.connect([config]) as socket:
                 # Generate speech
-                result = await socket.voice.generate_speech(text)
+                result = await socket.voice.synthesize(text)
                 
                 # Save audio file
                 filename = f"paragraph_audio_{int(time.time())}.wav"
