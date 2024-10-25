@@ -1,13 +1,14 @@
 import os
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 import json
 import sys
 
 from services.image_generator import ImageGenerator
 from services.text_generator import TextGenerator
-from services.audio_generator import AudioGenerator
+from services.hume_audio_generator import HumeAudioGenerator
 from services.regeneration_service import RegenerationService
 
 class Base(DeclarativeBase):
@@ -17,6 +18,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 db.init_app(app)
+socketio = SocketIO(app)
 
 with app.app_context():
     import models
@@ -25,7 +27,7 @@ with app.app_context():
 # Initialize services
 image_service = ImageGenerator()
 text_service = TextGenerator()
-audio_service = AudioGenerator()
+audio_service = HumeAudioGenerator()
 regeneration_service = RegenerationService(image_service, audio_service)
 
 def send_json_message(message_type, message_data):
@@ -167,4 +169,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
