@@ -23,8 +23,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Story generation failed');
             }
 
-            // Redirect to review page
-            window.location.href = '/review';
+            // Process the response stream
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            let buffer = '';
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.type === 'complete') {
+                            // Only redirect after story generation is complete
+                            window.location.href = '/review';
+                            return;
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing message:', line);
+                    }
+                }
+                buffer = lines[lines.length - 1];
+            }
         } catch (error) {
             console.error('Error:', error);
             alert('Failed to generate story. Please try again.');
@@ -64,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="card-text">${paragraph.text}</p>
                 </div>
                 <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}"></audio>
+                    <audio controls src="${paragraph.audio_url}" preload="none"></audio>
                 </div>
             </div>
         `;
@@ -165,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bring to Life button
         bringToLifeBtn?.addEventListener('click', async () => {
             bringToLifeBtn.disabled = true;
-            paragraphsContainer.innerHTML = '';
             
             try {
                 const response = await fetch('/bring_to_life', {
@@ -176,8 +202,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Failed to generate media');
                 }
 
-                // Redirect to display page
-                window.location.href = '/display';
+                // Process the response stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                let buffer = '';
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, {stream: true});
+                    const lines = buffer.split('\n');
+
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.type === 'complete') {
+                                // Only redirect after media generation is complete
+                                window.location.href = '/display';
+                                return;
+                            } else if (data.type === 'log') {
+                                addLogMessage(data.message);
+                            }
+                        } catch (parseError) {
+                            console.error('Error parsing message:', line);
+                        }
+                    }
+                    buffer = lines[lines.length - 1];
+                }
             } catch (error) {
                 console.error('Error:', error);
                 bringToLifeBtn.disabled = false;
@@ -204,7 +259,21 @@ document.addEventListener('DOMContentLoaded', () => {
             nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
 
             pages.forEach((page, index) => {
-                page.style.display = index === currentPage ? 'block' : 'none';
+                if (index === currentPage) {
+                    page.style.display = 'block';
+                    // Pause all other audio elements
+                    pages.forEach((otherPage, otherIndex) => {
+                        if (otherIndex !== currentPage) {
+                            const audio = otherPage.querySelector('audio');
+                            if (audio) {
+                                audio.pause();
+                                audio.currentTime = 0;
+                            }
+                        }
+                    });
+                } else {
+                    page.style.display = 'none';
+                }
             });
         }
 
@@ -274,6 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const pageElement = createDisplayPageCard(data.data, data.data.index);
                                 paragraphCards.appendChild(pageElement);
                                 updateNavigation();
+                                break;
+                            case 'log':
+                                console.log('Media generation:', data.message);
                                 break;
                         }
                     } catch (parseError) {
