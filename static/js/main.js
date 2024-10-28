@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
+        // Add a data attribute to store whether audio is playing
+        pageDiv.dataset.audioPlaying = 'false';
+        
         pageDiv.innerHTML = `
             <div class="card h-100">
                 <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
@@ -31,7 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn btn-primary edit-paragraph" data-index="${index}">Edit</button>
                 </div>
                 <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}"></audio>
+                    <div class="audio-controls">
+                        <audio src="${paragraph.audio_url}" preload="none"></audio>
+                        <button class="btn btn-secondary btn-sm toggle-audio">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="play-icon" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="pause-icon d-none" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M5 6.25a1.25 1.25 0 1 1 2.5 0v3.5a1.25 1.25 0 1 1-2.5 0v-3.5zm3.5 0a1.25 1.25 0 1 1 2.5 0v3.5a1.25 1.25 0 1 1-2.5 0v-3.5z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="progress-indicator"></div>
             </div>
@@ -61,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateNavigation();
         storyOutput.style.display = 'block';
-        setupAudioHover();
+        setupAudioControls();
     }
 
     function updateNavigation() {
@@ -93,6 +108,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Audio control functions
+    function stopAllAudio() {
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0;
+        });
+        document.querySelectorAll('.toggle-audio').forEach(button => {
+            button.querySelector('.play-icon').classList.remove('d-none');
+            button.querySelector('.pause-icon').classList.add('d-none');
+        });
+    }
+
+    function setupAudioControls() {
+        document.querySelectorAll('.toggle-audio').forEach(button => {
+            const audio = button.parentElement.querySelector('audio');
+            const playIcon = button.querySelector('.play-icon');
+            const pauseIcon = button.querySelector('.pause-icon');
+
+            button.addEventListener('click', () => {
+                if (audio.paused) {
+                    stopAllAudio(); // Stop any other playing audio
+                    audio.play().then(() => {
+                        playIcon.classList.add('d-none');
+                        pauseIcon.classList.remove('d-none');
+                    }).catch(err => {
+                        console.error('Error playing audio:', err);
+                    });
+                } else {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    playIcon.classList.remove('d-none');
+                    pauseIcon.classList.add('d-none');
+                }
+            });
+
+            // Reset button state when audio ends
+            audio.addEventListener('ended', () => {
+                playIcon.classList.remove('d-none');
+                pauseIcon.classList.add('d-none');
+            });
+        });
+    }
+
     // Navigation event handlers
     const nextButton = document.querySelector('.book-nav.next');
     const prevButton = document.querySelector('.book-nav.prev');
@@ -100,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nextButton) {
         nextButton.addEventListener('click', () => {
             if (currentPage < totalPages - 1) {
+                stopAllAudio();
                 const pages = document.querySelectorAll('.book-page');
                 const currentPageEl = pages[currentPage];
                 const nextPageEl = pages[currentPage + 1];
@@ -120,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (prevButton) {
         prevButton.addEventListener('click', () => {
             if (currentPage > 0) {
+                stopAllAudio();
                 const pages = document.querySelectorAll('.book-page');
                 const currentPageEl = pages[currentPage];
                 const prevPageEl = pages[currentPage - 1];
@@ -133,30 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         updateNavigation();
                     }, 800);
                 }
-            }
-        });
-    }
-
-    function setupAudioHover() {
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-            const audio = card.querySelector('audio');
-            if (audio) {
-                card.addEventListener('mouseenter', () => {
-                    try {
-                        audio.play().catch(err => console.log('Audio autoplay prevented'));
-                    } catch (err) {
-                        console.log('Audio playback error:', err);
-                    }
-                });
-                card.addEventListener('mouseleave', () => {
-                    try {
-                        audio.pause();
-                        audio.currentTime = 0;
-                    } catch (err) {
-                        console.log('Audio pause error:', err);
-                    }
-                });
             }
         });
     }
@@ -331,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
                                 updateProgress(data.data.index, totalParagraphs);
-                                setupAudioHover();
                                 break;
                             case 'error':
                                 addLogMessage('Error: ' + data.message);

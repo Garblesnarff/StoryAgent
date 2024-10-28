@@ -137,6 +137,35 @@ body {
     padding: 1rem 2rem;
 }
 
+/* Audio controls */
+.audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.toggle-audio {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--apple-glass);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.toggle-audio:hover {
+    background: var(--apple-accent);
+}
+
+.toggle-audio svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* Form styling */
 .form-control, .form-select {
     background: var(--apple-card-bg);
