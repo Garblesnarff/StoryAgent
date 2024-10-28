@@ -18,20 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
-    function createPageElement(sentence, index) {
+    function createPageElement(paragraph, index) {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
         pageDiv.innerHTML = `
             <div class="card h-100">
-                <img src="${sentence.image_url}" class="card-img-top" alt="Sentence image">
+                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
                 <div class="card-body">
-                    <p class="card-text">${sentence.text}</p>
+                    <p class="card-text">${paragraph.text}</p>
                     <button class="btn btn-primary edit-paragraph" data-index="${index}">Edit</button>
                 </div>
                 <div class="card-footer">
-                    <audio controls src="${sentence.audio_url}"></audio>
+                    <audio controls src="${paragraph.audio_url}"></audio>
                 </div>
                 <div class="progress-indicator"></div>
             </div>
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateNavigation();
         storyOutput.style.display = 'block';
-        setupAudioHandlers();
+        setupAudioHover();
     }
 
     function updateNavigation() {
@@ -137,43 +137,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function setupAudioHandlers() {
+    function setupAudioHover() {
         const cards = document.querySelectorAll('.card');
         cards.forEach(card => {
             const audio = card.querySelector('audio');
             if (audio) {
-                audio.addEventListener('loadeddata', () => {
-                    // Audio is loaded and ready to play
-                    audio.volume = 0.5; // Set default volume
-                });
-                
-                audio.addEventListener('error', (e) => {
-                    console.log('Audio loading error:', e);
-                });
-
                 card.addEventListener('mouseenter', () => {
-                    if (audio.readyState >= 2) { // Check if audio is loaded enough to play
-                        try {
-                            const playPromise = audio.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(err => {
-                                    console.log('Error playing audio:', err);
-                                });
-                            }
-                        } catch (err) {
-                            console.log('Error playing audio:', err);
-                        }
+                    try {
+                        audio.play().catch(err => console.log('Audio autoplay prevented'));
+                    } catch (err) {
+                        console.log('Audio playback error:', err);
                     }
                 });
-
                 card.addEventListener('mouseleave', () => {
                     try {
-                        if (!audio.paused) {
-                            audio.pause();
-                            audio.currentTime = 0;
-                        }
+                        audio.pause();
+                        audio.currentTime = 0;
                     } catch (err) {
-                        console.log('Error pausing audio:', err);
+                        console.log('Audio pause error:', err);
                     }
                 });
             }
@@ -203,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!paragraphElement) return;
         
         try {
-            addLogMessage('Updating sentence...');
+            addLogMessage('Updating paragraph...');
             const response = await fetch('/update_paragraph', {
                 method: 'POST',
                 headers: {
@@ -215,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update sentence');
+                throw new Error('Failed to update paragraph');
             }
 
             const data = await response.json();
@@ -231,11 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             editModal.hide();
-            addLogMessage('Sentence updated successfully!');
+            addLogMessage('Paragraph updated successfully!');
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage(`Error updating sentence: ${error.message}`);
-            alert('Failed to update sentence. Please try again.');
+            addLogMessage(`Error updating paragraph: ${error.message}`);
+            alert('Failed to update paragraph. Please try again.');
         }
     });
 
@@ -328,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const decoder = new TextDecoder();
             
             let buffer = '';
-            let totalSentences = parseInt(formData.get('paragraphs'));
+            let totalParagraphs = parseInt(formData.get('paragraphs'));
             
             while (true) {
                 const {done, value} = await reader.read();
@@ -349,8 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
-                                updateProgress(data.data.index, totalSentences);
-                                setupAudioHandlers();
+                                updateProgress(data.data.index, totalParagraphs);
+                                setupAudioHover();
                                 break;
                             case 'error':
                                 addLogMessage('Error: ' + data.message);
