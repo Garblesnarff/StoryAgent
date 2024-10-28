@@ -7,7 +7,6 @@ import time
 from datetime import datetime
 import logging
 import wave
-import io
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -47,59 +46,55 @@ class HumeAudioGenerator:
             await self._connect()
             logger.info("Connected successfully")
             
-            sentences = text.split('. ')
-            full_text = '. '.join(sentences)
-            logger.info(f"Processing text: {len(full_text)} characters")
-            
+            # Send the full text for narration
             message = {
                 "type": "user_input",
-                "text": full_text,
+                "text": text,
                 "mode": "narrate"
             }
             
-            logger.info("Sending narration request...")
+            logger.info(f"Sending narration request for text ({len(text)} chars)...")
             await self.ws.send(json.dumps(message))
             
-            audio_chunks = []
-            audio_data = bytearray()
+            # Initialize audio data collection
+            all_audio_data = bytearray()
+            chunk_count = 0
             
+            # Collect all audio chunks
             while True:
                 response = await self.ws.recv()
                 response_data = json.loads(response)
                 
                 if response_data["type"] == "audio_output":
                     chunk = base64.b64decode(response_data["data"])
-                    audio_chunks.append(chunk)
-                    audio_data.extend(chunk)
-                    logger.info(f"Received audio chunk {len(audio_chunks)} ({len(chunk)} bytes)")
+                    all_audio_data.extend(chunk)
+                    chunk_count += 1
+                    logger.info(f"Received audio chunk {chunk_count} ({len(chunk)} bytes)")
                 
                 elif response_data["type"] == "assistant_end":
-                    logger.info("Audio generation complete")
+                    logger.info(f"Audio generation complete - received {chunk_count} chunks")
                     break
                 
                 elif response_data["type"] == "error":
                     error_msg = response_data.get('message', 'Unknown error')
                     logger.error(f"Error from EVI: {error_msg}")
-                    break
+                    return None
             
-            if audio_chunks:
+            if all_audio_data:
                 filename = f"paragraph_audio_{int(time.time())}.wav"
                 filepath = os.path.join(self.audio_dir, filename)
                 
                 # Create WAV file with proper headers
                 with wave.open(filepath, 'wb') as wav_file:
-                    # Set WAV parameters (typical for speech audio)
                     wav_file.setnchannels(1)  # Mono
                     wav_file.setsampwidth(2)  # 16-bit
                     wav_file.setframerate(24000)  # 24kHz sample rate
-                    
-                    # Write combined audio data
-                    wav_file.writeframes(audio_data)
+                    wav_file.writeframes(all_audio_data)
                 
-                logger.info(f"Saved complete audio file {filename} ({len(audio_data)} bytes)")
+                logger.info(f"Saved complete audio file {filename} ({len(all_audio_data)} bytes)")
                 return f"/static/audio/{filename}"
             
-            logger.warning("No audio chunks received")
+            logger.warning("No audio data received")
             return None
             
         except Exception as e:
