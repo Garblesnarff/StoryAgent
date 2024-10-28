@@ -36,16 +36,14 @@ class HumeAudioGenerator:
 
     async def _generate_audio_async(self, text):
         try:
-            # Connect to websocket
             await self._connect()
             
             # Split long text into sentences if needed
             sentences = text.split('. ')
-            full_text = '. '.join(sentences)  # Rejoin with periods to maintain proper sentence structure
+            full_text = '. '.join(sentences)
             
             logger.info(f"Processing text length: {len(full_text)} characters")
             
-            # Send narration request with complete text
             message = {
                 "type": "user_input",
                 "text": full_text,
@@ -53,22 +51,19 @@ class HumeAudioGenerator:
             }
             await self.ws.send(json.dumps(message))
             
-            # Handle response and save audio
-            filename = None
+            # Collect all audio chunks
+            audio_chunks = []
+            chunk_count = 0
+            
             while True:
                 response = await self.ws.recv()
                 response_data = json.loads(response)
                 
                 if response_data["type"] == "audio_output":
+                    chunk_count += 1
                     audio_bytes = base64.b64decode(response_data["data"])
-                    filename = f"paragraph_audio_{int(time.time())}.wav"
-                    filepath = os.path.join(self.audio_dir, filename)
-                    
-                    # Log the amount of text being processed
-                    print(f"Processing text length: {len(full_text)} characters")
-                    
-                    with open(filepath, 'wb') as f:
-                        f.write(audio_bytes)
+                    audio_chunks.append(audio_bytes)
+                    logger.info(f"Received audio chunk {chunk_count}")
                 
                 elif response_data["type"] == "assistant_end":
                     break
@@ -77,10 +72,19 @@ class HumeAudioGenerator:
                     logger.error(f"Error from EVI: {response_data.get('message', 'Unknown error')}")
                     break
             
-            await self.ws.close()
-            
-            if filename:
+            if audio_chunks:
+                # Combine all audio chunks
+                filename = f"paragraph_audio_{int(time.time())}.wav"
+                filepath = os.path.join(self.audio_dir, filename)
+                
+                # Write combined audio file
+                with open(filepath, 'wb') as f:
+                    for chunk in audio_chunks:
+                        f.write(chunk)
+                
+                logger.info(f"Saved combined audio file with {len(audio_chunks)} chunks")
                 return f"/static/audio/{filename}"
+            
             return None
             
         except Exception as e:
@@ -88,6 +92,9 @@ class HumeAudioGenerator:
             if hasattr(self, 'ws'):
                 await self.ws.close()
             return None
+        finally:
+            if hasattr(self, 'ws'):
+                await self.ws.close()
 
     def generate_audio(self, text):
         try:
