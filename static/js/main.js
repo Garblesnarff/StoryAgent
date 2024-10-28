@@ -22,10 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
-        
-        // Add a data attribute to store whether audio is playing
-        pageDiv.dataset.audioPlaying = 'false';
-        
         pageDiv.innerHTML = `
             <div class="card h-100">
                 <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
@@ -36,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-footer">
                     <div class="audio-controls">
                         <audio src="${paragraph.audio_url}" preload="none"></audio>
-                        <button class="btn btn-secondary btn-sm toggle-audio">
+                        <button class="btn btn-secondary btn-sm toggle-audio" data-loading="false">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="play-icon" viewBox="0 0 16 16">
                                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                                 <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
@@ -108,15 +104,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Audio control functions
-    function stopAllAudio() {
-        document.querySelectorAll('audio').forEach(audio => {
-            audio.pause();
-            audio.currentTime = 0;
-        });
+    // Updated stopAllAudio function to handle async operations
+    async function stopAllAudio() {
+        const audioElements = document.querySelectorAll('audio');
+        await Promise.all(Array.from(audioElements).map(async (audio) => {
+            try {
+                await audio.pause();
+                audio.currentTime = 0;
+            } catch (err) {
+                console.error('Error stopping audio:', err);
+            }
+        }));
+        
         document.querySelectorAll('.toggle-audio').forEach(button => {
             button.querySelector('.play-icon').classList.remove('d-none');
             button.querySelector('.pause-icon').classList.add('d-none');
+            button.dataset.loading = 'false';
         });
     }
 
@@ -126,25 +129,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const playIcon = button.querySelector('.play-icon');
             const pauseIcon = button.querySelector('.pause-icon');
 
-            button.addEventListener('click', () => {
-                if (audio.paused) {
-                    stopAllAudio(); // Stop any other playing audio
-                    audio.play().then(() => {
+            button.addEventListener('click', async () => {
+                if (button.dataset.loading === 'true') return;
+                button.dataset.loading = 'true';
+                
+                try {
+                    if (audio.paused) {
+                        await stopAllAudio(); // Stop any other playing audio
+                        await audio.play();
                         playIcon.classList.add('d-none');
                         pauseIcon.classList.remove('d-none');
-                    }).catch(err => {
-                        console.error('Error playing audio:', err);
-                    });
-                } else {
-                    audio.pause();
-                    audio.currentTime = 0;
-                    playIcon.classList.remove('d-none');
-                    pauseIcon.classList.add('d-none');
+                    } else {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        playIcon.classList.remove('d-none');
+                        pauseIcon.classList.add('d-none');
+                    }
+                } catch (err) {
+                    console.error('Error playing audio:', err);
+                } finally {
+                    button.dataset.loading = 'false';
                 }
             });
 
             // Reset button state when audio ends
             audio.addEventListener('ended', () => {
+                playIcon.classList.remove('d-none');
+                pauseIcon.classList.add('d-none');
+                button.dataset.loading = 'false';
+            });
+
+            // Handle audio loading errors
+            audio.addEventListener('error', (e) => {
+                console.error('Audio loading error:', e);
+                button.dataset.loading = 'false';
                 playIcon.classList.remove('d-none');
                 pauseIcon.classList.add('d-none');
             });
@@ -156,9 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevButton = document.querySelector('.book-nav.prev');
 
     if (nextButton) {
-        nextButton.addEventListener('click', () => {
+        nextButton.addEventListener('click', async () => {
             if (currentPage < totalPages - 1) {
-                stopAllAudio();
+                await stopAllAudio();
                 const pages = document.querySelectorAll('.book-page');
                 const currentPageEl = pages[currentPage];
                 const nextPageEl = pages[currentPage + 1];
@@ -177,9 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (prevButton) {
-        prevButton.addEventListener('click', () => {
+        prevButton.addEventListener('click', async () => {
             if (currentPage > 0) {
-                stopAllAudio();
+                await stopAllAudio();
                 const pages = document.querySelectorAll('.book-page');
                 const currentPageEl = pages[currentPage];
                 const prevPageEl = pages[currentPage - 1];
@@ -244,7 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (data.audio_url) {
                 const audioElement = currentEditingCard.querySelector('audio');
-                if (audioElement) audioElement.src = data.audio_url;
+                if (audioElement) {
+                    audioElement.src = data.audio_url;
+                    // Reset the loading state of the audio button
+                    const toggleButton = currentEditingCard.querySelector('.toggle-audio');
+                    if (toggleButton) {
+                        toggleButton.dataset.loading = 'false';
+                    }
+                }
             }
 
             editModal.hide();
@@ -311,6 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const audioElement = currentEditingCard.querySelector('audio');
             if (audioElement && data.audio_url) {
                 audioElement.src = data.audio_url;
+                // Reset the loading state of the audio button
+                const toggleButton = currentEditingCard.querySelector('.toggle-audio');
+                if (toggleButton) {
+                    toggleButton.dataset.loading = 'false';
+                }
                 addLogMessage('Audio regenerated successfully!');
             }
         } catch (error) {
