@@ -5,11 +5,16 @@ from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 import json
 import sys
+import logging
 
 from services.image_generator import ImageGenerator
 from services.text_generator import TextGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from services.regeneration_service import RegenerationService
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Base(DeclarativeBase):
     pass
@@ -44,16 +49,20 @@ def index():
 @app.route('/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:
+        logger.info("Received paragraph update request")
         data = request.get_json()
         text = data.get('text')
         
         if not text:
+            logger.warning("No text provided in update request")
             return jsonify({'error': 'No text provided'}), 400
             
+        logger.info("Generating new image and audio for updated paragraph")
         # Generate new image and audio
         image_url = image_service.generate_image(text)
         audio_url = audio_service.generate_audio(text)
         
+        logger.info("Successfully updated paragraph with new content")
         return jsonify({
             'success': True,
             'text': text,
@@ -61,57 +70,68 @@ def update_paragraph():
             'audio_url': audio_url
         })
     except Exception as e:
-        app.logger.error(f"Error updating paragraph: {str(e)}")
+        logger.error(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/regenerate_image', methods=['POST'])
 def regenerate_image():
     try:
+        logger.info("Received image regeneration request")
         data = request.get_json()
         text = data.get('text')
         
         if not text:
+            logger.warning("No text provided for image regeneration")
             return jsonify({'error': 'No text provided'}), 400
             
         image_url = regeneration_service.regenerate_image(text)
+        logger.info("Successfully regenerated image")
         
         return jsonify({
             'success': True,
             'image_url': image_url
         })
     except Exception as e:
-        app.logger.error(f"Error regenerating image: {str(e)}")
+        logger.error(f"Error regenerating image: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/regenerate_audio', methods=['POST'])
 def regenerate_audio():
     try:
+        logger.info("Received audio regeneration request")
         data = request.get_json()
         text = data.get('text')
         
         if not text:
+            logger.warning("No text provided for audio regeneration")
             return jsonify({'error': 'No text provided'}), 400
             
         audio_url = regeneration_service.regenerate_audio(text)
+        logger.info("Successfully regenerated audio")
         
         return jsonify({
             'success': True,
             'audio_url': audio_url
         })
     except Exception as e:
-        app.logger.error(f"Error regenerating audio: {str(e)}")
+        logger.error(f"Error regenerating audio: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     def generate():
         try:
+            # Log initial parameters received
+            yield send_json_message('log', "Initializing story generation...")
+            yield send_json_message('log', "Processing story parameters...")
+            
             prompt = request.form.get('prompt')
             genre = request.form.get('genre')
             mood = request.form.get('mood')
             target_audience = request.form.get('target_audience')
             paragraphs = int(request.form.get('paragraphs', 5))
             
+            yield send_json_message('log', f"Creating {paragraphs} paragraph story in {genre} genre...")
             yield send_json_message('log', "Starting story generation...")
             
             # Generate the story
@@ -122,7 +142,8 @@ def generate_story():
                 raise Exception("Failed to generate story")
             
             total_paragraphs = len(story_paragraphs)
-            yield send_json_message('log', f"Story text generated successfully ({sum(len(p.split()) for p in story_paragraphs)} words)")
+            total_words = sum(len(p.split()) for p in story_paragraphs)
+            yield send_json_message('log', f"Story text generated successfully ({total_words} words)")
             
             # Process each paragraph and stream results
             for index, paragraph in enumerate(story_paragraphs, 1):
@@ -156,9 +177,10 @@ def generate_story():
                 sys.stdout.flush()
                 
             yield send_json_message('complete', "Story generation complete!")
+            logger.info("Story generation completed successfully")
             
         except Exception as e:
-            app.logger.error(f"Error generating story: {str(e)}")
+            logger.error(f"Error generating story: {str(e)}")
             yield send_json_message('error', str(e))
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
