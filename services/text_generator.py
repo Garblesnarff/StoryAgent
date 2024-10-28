@@ -9,8 +9,10 @@ class TextGenerator:
     
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
         try:
-            # Adjust the system message based on the parameters
-            system_message = f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story based on the given prompt."
+            # Adjust the system message based on the parameters and include sentence structure guidance
+            system_message = f"""You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. 
+            Create coherent, well-structured sentences that can stand alone with proper context. Each sentence should be complete and meaningful on its own 
+            while maintaining flow with surrounding content."""
             
             # Generate the story using Groq API
             response = self.client.chat.completions.create(

@@ -121,40 +121,49 @@ def generate_story():
             if not story_paragraphs:
                 raise Exception("Failed to generate story")
             
-            total_paragraphs = len(story_paragraphs)
-            yield send_json_message('log', f"Story text generated successfully ({sum(len(p.split()) for p in story_paragraphs)} words)")
+            total_sentences = 0
+            # Count total sentences for progress tracking
+            for paragraph in story_paragraphs:
+                sentences = [s.strip() for s in paragraph.split('.') if s.strip()]
+                total_sentences += len(sentences)
             
-            # Process each paragraph and stream results
-            for index, paragraph in enumerate(story_paragraphs, 1):
-                if not paragraph.strip():
-                    continue
+            yield send_json_message('log', f"Story generated with {total_sentences} sentences")
+            
+            current_sentence = 0
+            # Process each paragraph into sentences
+            for paragraph in story_paragraphs:
+                sentences = [s.strip() for s in paragraph.split('.') if s.strip()]
+                
+                for sentence in sentences:
+                    current_sentence += 1
+                    progress = (current_sentence/total_sentences*100)
                     
-                progress = (index/total_paragraphs*100)
-                yield send_json_message('log', f"Processing paragraph {index}/{total_paragraphs} ({progress:.0f}% complete)")
-                
-                # Generate image
-                yield send_json_message('log', f"Generating image for paragraph {index}...")
-                image_url = image_service.generate_image(paragraph)
-                yield send_json_message('log', f"Image generated for paragraph {index}")
-                
-                # Generate audio
-                yield send_json_message('log', f"Generating audio for paragraph {index}...")
-                audio_url = audio_service.generate_audio(paragraph)
-                yield send_json_message('log', f"Audio generated for paragraph {index}")
-                
-                # Send paragraph data
-                paragraph_data = {
-                    'text': paragraph,
-                    'image_url': image_url or 'https://example.com/fallback-image.jpg',
-                    'audio_url': audio_url or '',
-                    'index': index - 1
-                }
-                yield send_json_message('paragraph', paragraph_data)
-                yield send_json_message('log', f"Paragraph {index} complete")
-                
-                # Ensure stream is flushed
-                sys.stdout.flush()
-                
+                    # Add back the period and process the sentence
+                    full_sentence = sentence + '.'
+                    yield send_json_message('log', f"Processing sentence {current_sentence}/{total_sentences} ({progress:.0f}% complete)")
+                    
+                    # Generate image
+                    yield send_json_message('log', f"Generating image for sentence {current_sentence}...")
+                    image_url = image_service.generate_image(full_sentence)
+                    yield send_json_message('log', f"Image generated for sentence {current_sentence}")
+                    
+                    # Generate audio
+                    yield send_json_message('log', f"Generating audio for sentence {current_sentence}...")
+                    audio_url = audio_service.generate_audio(full_sentence)
+                    yield send_json_message('log', f"Audio generated for sentence {current_sentence}")
+                    
+                    # Send sentence data
+                    sentence_data = {
+                        'text': full_sentence,
+                        'image_url': image_url or 'https://example.com/fallback-image.jpg',
+                        'audio_url': audio_url or '',
+                        'index': current_sentence - 1
+                    }
+                    yield send_json_message('paragraph', sentence_data)
+                    
+                    # Ensure stream is flushed
+                    sys.stdout.flush()
+            
             yield send_json_message('complete', "Story generation complete!")
             
         except Exception as e:
