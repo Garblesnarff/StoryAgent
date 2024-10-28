@@ -40,11 +40,11 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 app.py"
+args = "python main.py"
 waitForPort = 5000
 
 [deployment]
-run = ["sh", "-c", "python3 app.py"]
+run = ["sh", "-c", "python main.py"]
 
 [[ports]]
 localPort = 5000

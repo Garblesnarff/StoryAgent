@@ -1,40 +1,34 @@
 import os
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 import json
 import sys
-import logging
-import io
 
 from services.image_generator import ImageGenerator
 from services.text_generator import TextGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from services.regeneration_service import RegenerationService
-from services.postgresql_storage import db, AudioFile
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+class Base(DeclarativeBase):
+    pass
 
+db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 db.init_app(app)
-socketio = SocketIO(app, async_mode='eventlet')
+socketio = SocketIO(app)
 
 with app.app_context():
+    import models
     db.create_all()
 
-# Initialize services with error handling
-try:
-    image_service = ImageGenerator()
-    text_service = TextGenerator()
-    audio_service = HumeAudioGenerator(app)
-    regeneration_service = RegenerationService(image_service, audio_service)
-except Exception as e:
-    logger.error(f"Error initializing services: {str(e)}")
-    raise
+# Initialize services
+image_service = ImageGenerator()
+text_service = TextGenerator()
+audio_service = HumeAudioGenerator()
+regeneration_service = RegenerationService(image_service, audio_service)
 
 def send_json_message(message_type, message_data):
     """Helper function to ensure consistent JSON message formatting"""
@@ -46,16 +40,6 @@ def send_json_message(message_type, message_data):
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/audio/<int:file_id>')
-def get_audio(file_id):
-    audio_file = AudioFile.query.get_or_404(file_id)
-    return send_file(
-        io.BytesIO(audio_file.data),
-        mimetype='audio/wav',
-        as_attachment=True,
-        download_name=audio_file.filename
-    )
 
 @app.route('/update_paragraph', methods=['POST'])
 def update_paragraph():
@@ -77,7 +61,7 @@ def update_paragraph():
             'audio_url': audio_url
         })
     except Exception as e:
-        logger.error(f"Error updating paragraph: {str(e)}")
+        app.logger.error(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/regenerate_image', methods=['POST'])
@@ -96,7 +80,7 @@ def regenerate_image():
             'image_url': image_url
         })
     except Exception as e:
-        logger.error(f"Error regenerating image: {str(e)}")
+        app.logger.error(f"Error regenerating image: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/regenerate_audio', methods=['POST'])
@@ -115,7 +99,7 @@ def regenerate_audio():
             'audio_url': audio_url
         })
     except Exception as e:
-        logger.error(f"Error regenerating audio: {str(e)}")
+        app.logger.error(f"Error regenerating audio: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/generate_story', methods=['POST'])
@@ -174,14 +158,14 @@ def generate_story():
             yield send_json_message('complete', "Story generation complete!")
             
         except Exception as e:
-            logger.error(f"Error generating story: {str(e)}")
+            app.logger.error(f"Error generating story: {str(e)}")
             yield send_json_message('error', str(e))
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
-    # TODO: Implement story saving logic using PostgreSQL
+    # TODO: Implement story saving logic using Supabase
     return jsonify({'success': True})
 
 if __name__ == '__main__':
