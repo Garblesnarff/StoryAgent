@@ -6,6 +6,7 @@ import os
 import time
 from datetime import datetime
 import logging
+from .supabase_storage import SupabaseStorage
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +29,7 @@ class HumeAudioGenerator:
         ]
         
         self.ws_url = f"{base_url}?{'&'.join(params)}"
+        self.storage = SupabaseStorage()
 
     async def _connect(self):
         self.ws = await websockets.connect(self.ws_url)
@@ -53,23 +55,25 @@ class HumeAudioGenerator:
             }
             await self.ws.send(json.dumps(message))
             
-            # Handle response and save audio
-            filename = None
+            # Handle response and save audio chunks
+            timestamp = int(time.time())
+            chunk_urls = []
+            chunk_counter = 0
+            
             while True:
                 response = await self.ws.recv()
                 response_data = json.loads(response)
                 
                 if response_data["type"] == "audio_output":
                     audio_bytes = base64.b64decode(response_data["data"])
-                    filename = f"paragraph_audio_{int(time.time())}.wav"
-                    filepath = os.path.join(self.audio_dir, filename)
+                    chunk_counter += 1
+                    filename = f"paragraph_{timestamp}_chunk_{chunk_counter}.wav"
                     
-                    # Log the amount of text being processed
-                    print(f"Processing text length: {len(full_text)} characters")
+                    # Upload chunk to Supabase storage
+                    chunk_url = self.storage.upload_audio_chunk(audio_bytes, filename)
+                    if chunk_url:
+                        chunk_urls.append(chunk_url)
                     
-                    with open(filepath, 'wb') as f:
-                        f.write(audio_bytes)
-                
                 elif response_data["type"] == "assistant_end":
                     break
                 
@@ -79,8 +83,10 @@ class HumeAudioGenerator:
             
             await self.ws.close()
             
-            if filename:
-                return f"/static/audio/{filename}"
+            if chunk_urls:
+                # For now, return the URL of the first chunk
+                # In a future enhancement, we could return all URLs or combine the chunks
+                return chunk_urls[0]
             return None
             
         except Exception as e:
