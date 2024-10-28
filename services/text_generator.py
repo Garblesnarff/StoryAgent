@@ -32,7 +32,14 @@ class TextGenerator:
             # Split the story into paragraphs
             story_paragraphs = [p for p in story.split('\n\n') if p.strip()][:paragraphs]
             
-            return story_paragraphs
+            # Split paragraphs into sentences
+            all_sentences = []
+            for paragraph in story_paragraphs:
+                # Split on periods but keep them in the sentences
+                sentences = [s.strip() + '.' for s in paragraph.split('.') if s.strip()]
+                all_sentences.extend(sentences)
+            
+            return all_sentences
             
         except Exception as e:
             print(f"Error generating story: {str(e)}")

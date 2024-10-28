@@ -114,43 +114,38 @@ def generate_story():
             
             yield send_json_message('log', "Starting story generation...")
             
-            # Generate the story
-            story_paragraphs = text_service.generate_story(
+            # Generate the story as sentences
+            story_sentences = text_service.generate_story(
                 prompt, genre, mood, target_audience, paragraphs)
             
-            if not story_paragraphs:
+            if not story_sentences:
                 raise Exception("Failed to generate story")
             
-            total_paragraphs = len(story_paragraphs)
-            yield send_json_message('log', f"Story text generated successfully ({sum(len(p.split()) for p in story_paragraphs)} words)")
+            # Change progress tracking to use sentences instead of paragraphs
+            total_sentences = len(story_sentences)
+            yield send_json_message('log', f"Story text generated successfully ({len(story_sentences)} sentences)")
             
-            # Process each paragraph and stream results
-            for index, paragraph in enumerate(story_paragraphs, 1):
-                if not paragraph.strip():
-                    continue
-                    
-                progress = (index/total_paragraphs*100)
-                yield send_json_message('log', f"Processing paragraph {index}/{total_paragraphs} ({progress:.0f}% complete)")
+            for index, sentence in enumerate(story_sentences, 1):
+                progress = (index/total_sentences*100)
+                yield send_json_message('log', f"Processing sentence {index}/{total_sentences} ({progress:.0f}% complete)")
                 
-                # Generate image
-                yield send_json_message('log', f"Generating image for paragraph {index}...")
-                image_url = image_service.generate_image(paragraph)
-                yield send_json_message('log', f"Image generated for paragraph {index}")
+                # Generate image and audio for each sentence
+                yield send_json_message('log', f"Generating image for sentence {index}...")
+                image_url = image_service.generate_image(sentence)
+                yield send_json_message('log', f"Image generated for sentence {index}")
                 
-                # Generate audio
-                yield send_json_message('log', f"Generating audio for paragraph {index}...")
-                audio_url = audio_service.generate_audio(paragraph)
-                yield send_json_message('log', f"Audio generated for paragraph {index}")
+                yield send_json_message('log', f"Generating audio for sentence {index}...")
+                audio_url = audio_service.generate_audio(sentence)
+                yield send_json_message('log', f"Audio generated for sentence {index}")
                 
-                # Send paragraph data
-                paragraph_data = {
-                    'text': paragraph,
+                sentence_data = {
+                    'text': sentence,
                     'image_url': image_url or 'https://example.com/fallback-image.jpg',
                     'audio_url': audio_url or '',
                     'index': index - 1
                 }
-                yield send_json_message('paragraph', paragraph_data)
-                yield send_json_message('log', f"Paragraph {index} complete")
+                yield send_json_message('paragraph', sentence_data)
+                yield send_json_message('log', f"Sentence {index} complete")
                 
                 # Ensure stream is flushed
                 sys.stdout.flush()
