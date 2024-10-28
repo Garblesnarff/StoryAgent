@@ -18,20 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
-    function createPageElement(sentence, index) {
+    function createPageElement(paragraph, index) {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
         pageDiv.innerHTML = `
             <div class="card h-100">
-                <img src="${sentence.image_url}" class="card-img-top" alt="Sentence image">
+                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
                 <div class="card-body">
-                    <p class="card-text">${sentence.text}</p>
+                    <p class="card-text">${paragraph.text}</p>
                     <button class="btn btn-primary edit-paragraph" data-index="${index}">Edit</button>
                 </div>
                 <div class="card-footer">
-                    <audio controls src="${sentence.audio_url}"></audio>
+                    <audio controls src="${paragraph.audio_url}"></audio>
                 </div>
                 <div class="progress-indicator"></div>
             </div>
@@ -39,24 +39,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return pageDiv;
     }
 
-    function updateProgress(currentIndex, totalSentences) {
+    function updateProgress(currentIndex, totalParagraphs) {
         const cards = document.querySelectorAll('.book-page');
         cards.forEach((card, index) => {
             const indicator = card.querySelector('.progress-indicator');
             if (indicator && index === currentIndex) {
-                const progress = ((index + 1) / totalSentences) * 100;
+                const progress = ((index + 1) / totalParagraphs) * 100;
                 indicator.style.background = `conic-gradient(var(--apple-accent) ${progress}%, transparent ${progress}%)`;
             }
         });
     }
 
-    function addParagraphCard(sentence, index) {
+    function addParagraphCard(paragraph, index) {
         const existingPage = paragraphCards.querySelector(`[data-index="${index}"]`);
         if (existingPage) {
             existingPage.remove();
         }
 
-        const pageElement = createPageElement(sentence, index);
+        const pageElement = createPageElement(paragraph, index);
         paragraphCards.appendChild(pageElement);
         
         updateNavigation();
@@ -144,21 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (audio) {
                 card.addEventListener('mouseenter', () => {
                     try {
-                        if (audio.paused) {
-                            audio.play().catch(() => {
-                                console.log('Audio autoplay prevented');
-                            });
-                        }
+                        audio.play().catch(err => console.log('Audio autoplay prevented'));
                     } catch (err) {
                         console.log('Audio playback error:', err);
                     }
                 });
                 card.addEventListener('mouseleave', () => {
                     try {
-                        if (!audio.paused) {
-                            audio.pause();
-                            audio.currentTime = 0;
-                        }
+                        audio.pause();
+                        audio.currentTime = 0;
                     } catch (err) {
                         console.log('Audio pause error:', err);
                     }
@@ -167,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Edit sentence functionality
+    // Edit paragraph functionality
     paragraphCards.addEventListener('click', async (e) => {
         if (e.target.classList.contains('edit-paragraph')) {
             const index = e.target.dataset.index;
@@ -175,13 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!card) return;
             
             currentEditingCard = card;
-            const sentenceText = card.querySelector('.card-text')?.textContent || '';
-            document.getElementById('editParagraphText').value = sentenceText;
+            const paragraphText = card.querySelector('.card-text')?.textContent || '';
+            document.getElementById('editParagraphText').value = paragraphText;
             editModal.show();
         }
     });
 
-    // Save edited sentence
+    // Save edited paragraph
     document.getElementById('saveParagraphEdit')?.addEventListener('click', async () => {
         if (!currentEditingCard) return;
 
@@ -190,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!paragraphElement) return;
         
         try {
-            addLogMessage('Updating sentence...');
+            addLogMessage('Updating paragraph...');
             const response = await fetch('/update_paragraph', {
                 method: 'POST',
                 headers: {
@@ -202,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update sentence');
+                throw new Error('Failed to update paragraph');
             }
 
             const data = await response.json();
@@ -218,11 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             editModal.hide();
-            addLogMessage('Sentence updated successfully!');
+            addLogMessage('Paragraph updated successfully!');
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage(`Error updating sentence: ${error.message}`);
-            alert('Failed to update sentence. Please try again.');
+            addLogMessage(`Error updating paragraph: ${error.message}`);
+            alert('Failed to update paragraph. Please try again.');
         }
     });
 
@@ -315,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const decoder = new TextDecoder();
             
             let buffer = '';
-            let totalSentences = parseInt(formData.get('paragraphs')) * 3; // Estimate 3 sentences per paragraph
+            let totalParagraphs = parseInt(formData.get('paragraphs'));
             
             while (true) {
                 const {done, value} = await reader.read();
@@ -336,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
-                                updateProgress(data.data.index, totalSentences);
+                                updateProgress(data.data.index, totalParagraphs);
                                 setupAudioHover();
                                 break;
                             case 'error':
