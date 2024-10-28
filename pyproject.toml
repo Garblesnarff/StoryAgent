@@ -20,4 +20,5 @@ dependencies = [
     "python-engineio>=4.10.1",
     "hume~=0.4.2",
     "sounddevice>=0.5.1",
+    "websockets>=12.0",
 ]
