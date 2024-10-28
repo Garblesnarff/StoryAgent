@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
+from flask_session import Session
 from sqlalchemy.orm import DeclarativeBase
 import json
 import sys
@@ -18,6 +19,9 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = os.urandom(24)  # Add secret key for session management
+app.config['SESSION_TYPE'] = 'filesystem'  # Configure session type
+Session(app)  # Initialize Flask-Session
+
 db.init_app(app)
 socketio = SocketIO(app)
 
@@ -54,6 +58,9 @@ def display():
 def generate_story():
     def generate():
         try:
+            # Clear any existing story data
+            session.clear()
+            
             prompt = request.form.get('prompt')
             genre = request.form.get('genre')
             mood = request.form.get('mood')
@@ -62,7 +69,6 @@ def generate_story():
             
             yield send_json_message('log', "Starting story generation...")
             
-            # Generate the story
             story_paragraphs = text_service.generate_story(
                 prompt, genre, mood, target_audience, paragraphs)
             
@@ -71,11 +77,10 @@ def generate_story():
             
             # Store story data in session
             session['story_paragraphs'] = story_paragraphs
-            session['current_step'] = 'review'
+            session.modified = True  # Ensure session is saved
             
-            yield send_json_message('log', f"Story text generated successfully ({sum(len(p.split()) for p in story_paragraphs)} words)")
+            yield send_json_message('log', f"Story generated successfully")
             
-            # Send all paragraphs for review
             for index, paragraph in enumerate(story_paragraphs):
                 paragraph_data = {
                     'text': paragraph,
@@ -128,6 +133,7 @@ def bring_to_life():
                 sys.stdout.flush()
             
             session['current_step'] = 'display'
+            session.modified = True
             yield send_json_message('complete', "Media generation complete!")
             
         except Exception as e:
@@ -151,6 +157,7 @@ def update_paragraph():
         if 0 <= index < len(story_paragraphs):
             story_paragraphs[index] = text
             session['story_paragraphs'] = story_paragraphs
+            session.modified = True
             
             return jsonify({
                 'success': True,
