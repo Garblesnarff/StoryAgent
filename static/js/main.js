@@ -18,20 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
-    function createPageElement(paragraph, index) {
+    function createPageElement(sentence, index) {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
         pageDiv.innerHTML = `
             <div class="card h-100">
-                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
+                <img src="${sentence.image_url}" class="card-img-top" alt="Sentence image">
                 <div class="card-body">
-                    <p class="card-text">${paragraph.text}</p>
+                    <p class="card-text">${sentence.text}</p>
                     <button class="btn btn-primary edit-paragraph" data-index="${index}">Edit</button>
                 </div>
                 <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}"></audio>
+                    <audio controls src="${sentence.audio_url}"></audio>
                 </div>
                 <div class="progress-indicator"></div>
             </div>
@@ -39,24 +39,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return pageDiv;
     }
 
-    function updateProgress(currentIndex, totalParagraphs) {
+    function updateProgress(currentIndex, totalSentences) {
         const cards = document.querySelectorAll('.book-page');
         cards.forEach((card, index) => {
             const indicator = card.querySelector('.progress-indicator');
             if (indicator && index === currentIndex) {
-                const progress = ((index + 1) / totalParagraphs) * 100;
+                const progress = ((index + 1) / totalSentences) * 100;
                 indicator.style.background = `conic-gradient(var(--apple-accent) ${progress}%, transparent ${progress}%)`;
             }
         });
     }
 
-    function addParagraphCard(paragraph, index) {
+    function addParagraphCard(sentence, index) {
         const existingPage = paragraphCards.querySelector(`[data-index="${index}"]`);
         if (existingPage) {
             existingPage.remove();
         }
 
-        const pageElement = createPageElement(paragraph, index);
+        const pageElement = createPageElement(sentence, index);
         paragraphCards.appendChild(pageElement);
         
         updateNavigation();
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!paragraphElement) return;
         
         try {
-            addLogMessage('Updating paragraph...');
+            addLogMessage('Updating sentence...');
             const response = await fetch('/update_paragraph', {
                 method: 'POST',
                 headers: {
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update paragraph');
+                throw new Error('Failed to update sentence');
             }
 
             const data = await response.json();
@@ -212,11 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             editModal.hide();
-            addLogMessage('Paragraph updated successfully!');
+            addLogMessage('Sentence updated successfully!');
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage(`Error updating paragraph: ${error.message}`);
-            alert('Failed to update paragraph. Please try again.');
+            addLogMessage(`Error updating sentence: ${error.message}`);
+            alert('Failed to update sentence. Please try again.');
         }
     });
 
@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const decoder = new TextDecoder();
             
             let buffer = '';
-            let totalParagraphs = parseInt(formData.get('paragraphs'));
+            let totalSentences = parseInt(formData.get('paragraphs'));
             
             while (true) {
                 const {done, value} = await reader.read();
@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'paragraph':
                                 addParagraphCard(data.data, data.data.index);
-                                updateProgress(data.data.index, totalParagraphs);
+                                updateProgress(data.data.index, totalSentences);
                                 setupAudioHover();
                                 break;
                             case 'error':

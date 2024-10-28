@@ -17,7 +17,7 @@ class TextGenerator:
                 model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be exactly {paragraphs} paragraphs long."}
+                    {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. The story should be natural and flowing, with approximately {paragraphs} sentences."}
                 ],
                 temperature=0.7,
             )
@@ -29,10 +29,12 @@ class TextGenerator:
             if not story:
                 raise Exception("Empty response from story generation API")
             
-            # Split the story into paragraphs
-            story_paragraphs = [p for p in story.split('\n\n') if p.strip()][:paragraphs]
+            # Split into sentences instead of paragraphs
+            # Split on ., !, and ? followed by a space
+            sentences = [s.strip() + '.' for s in story.replace('!', '.').replace('?', '.').split('.') if s.strip()]
             
-            return story_paragraphs
+            # Limit to requested number of sentences
+            return sentences[:paragraphs]
             
         except Exception as e:
             print(f"Error generating story: {str(e)}")
