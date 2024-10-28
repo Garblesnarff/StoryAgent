@@ -6,6 +6,7 @@ import os
 import time
 from datetime import datetime
 import logging
+import wave
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -15,18 +16,18 @@ class HumeAudioGenerator:
     def __init__(self):
         self.audio_dir = os.path.join('static', 'audio')
         os.makedirs(self.audio_dir, exist_ok=True)
-        
+
         # Initialize connection parameters
         base_url = "wss://api.hume.ai/v0/evi/chat"
         config_id = os.environ.get('HUME_CONFIG_ID')
         api_key = os.environ.get('HUME_API_KEY')
-        
+
         params = [
             f"config_id={config_id}",
             "evi_version=2",
             f"api_key={api_key}"
         ]
-        
+
         self.ws_url = f"{base_url}?{'&'.join(params)}"
 
     async def _connect(self):
@@ -38,56 +39,60 @@ class HumeAudioGenerator:
         try:
             # Connect to websocket
             await self._connect()
-            
-            # Split long text into sentences if needed
-            sentences = text.split('. ')
-            full_text = '. '.join(sentences)  # Rejoin with periods to maintain proper sentence structure
-            
-            logger.info(f"Processing text length: {len(full_text)} characters")
-            
-            # Send narration request with complete text
+
+            # Send the complete text for narration
             message = {
                 "type": "user_input",
-                "text": full_text,
-                "mode": "narrate"
+                "text": text
             }
+
+            logger.info(f"Sending text for narration: {len(text)} characters")
             await self.ws.send(json.dumps(message))
-            
-            # Handle response and save audio
-            filename = None
+
+            # Collect all audio data
+            audio_data = bytearray()
+
             while True:
                 response = await self.ws.recv()
                 response_data = json.loads(response)
-                
+
                 if response_data["type"] == "audio_output":
-                    audio_bytes = base64.b64decode(response_data["data"])
-                    filename = f"paragraph_audio_{int(time.time())}.wav"
-                    filepath = os.path.join(self.audio_dir, filename)
-                    
-                    # Log the amount of text being processed
-                    print(f"Processing text length: {len(full_text)} characters")
-                    
-                    with open(filepath, 'wb') as f:
-                        f.write(audio_bytes)
-                
+                    chunk = base64.b64decode(response_data["data"])
+                    audio_data.extend(chunk)
+                    logger.info(f"Received audio chunk: {len(chunk)} bytes")
+
                 elif response_data["type"] == "assistant_end":
+                    logger.info("Received end of audio signal")
                     break
-                
+
                 elif response_data["type"] == "error":
                     logger.error(f"Error from EVI: {response_data.get('message', 'Unknown error')}")
-                    break
-            
-            await self.ws.close()
-            
-            if filename:
+                    return None
+
+            if audio_data:
+                filename = f"paragraph_audio_{int(time.time())}.wav"
+                filepath = os.path.join(self.audio_dir, filename)
+
+                # Write the complete audio data as a WAV file
+                with wave.open(filepath, 'wb') as wav_file:
+                    wav_file.setnchannels(1)  # Mono
+                    wav_file.setsampwidth(2)  # 16-bit
+                    wav_file.setframerate(24000)  # 24kHz sample rate
+                    wav_file.writeframes(audio_data)
+
+                logger.info(f"Saved audio file: {filename} ({len(audio_data)} bytes)")
                 return f"/static/audio/{filename}"
+
+            logger.warning("No audio data received")
             return None
-            
+
         except Exception as e:
             logger.error(f"Error generating audio with Hume: {str(e)}")
+            return None
+        finally:
             if hasattr(self, 'ws'):
                 await self.ws.close()
-            return None
+                logger.info("WebSocket connection closed")
 
     def generate_audio(self, text):
         try:
