@@ -1,0 +1,20 @@
+Error parsing message: <html lang=en>
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error parsing message: <title>405 Method Not Allowed</title>
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error parsing message: <h1>Method Not Allowed</h1>
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error parsing message: <p>The method is not allowed for the requested URL.</p>
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

@@ -101,7 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Review page functionality
     if (window.location.pathname === '/review') {
         const processGeneratedStory = async () => {
-            const response = await fetch('/generate_story');
+            const response = await fetch('/generate_story', {
+                method: 'POST',
+                body: new FormData()
+            });
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
@@ -320,7 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Process the generated story with media
         const processGeneratedMedia = async () => {
-            const response = await fetch('/bring_to_life');
+            const response = await fetch('/bring_to_life', {
+                method: 'POST'
+            });
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
