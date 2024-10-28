@@ -140,17 +140,25 @@ body {
 /* Form styling */
 .form-control, .form-select {
     background: var(--apple-card-bg);
-    border: none;
-    backdrop-filter: blur(10px);
-    padding: 1rem;
+    border: 1px solid var(--apple-accent);
     color: var(--apple-text) !important;
+    padding: 1rem;
     border-radius: 12px;
     transition: all 0.3s ease;
+    cursor: pointer;
+    appearance: auto;  /* Show default select arrow */
 }
 
-.form-control:focus, .form-select:focus {
-    background: var(--apple-glass);
+.form-select option {
+    background: var(--apple-bg);
+    color: var(--apple-text);
+    padding: 0.5rem;
+}
+
+.form-select:hover, .form-select:focus {
+    border-color: var(--apple-accent);
     box-shadow: 0 0 0 2px var(--apple-accent);
+    background: var(--apple-glass);
 }
 
 /* Save button container */
