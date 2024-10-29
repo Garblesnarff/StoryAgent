@@ -102,6 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
+        if (index === currentPage) {
+            pageDiv.classList.add('active');
+        } else if (index === currentPage + 1) {
+            pageDiv.classList.add('next');
+        } else if (index === currentPage - 1) {
+            pageDiv.classList.add('prev');
+        }
+        
         pageDiv.innerHTML = `
             <div class="card h-100">
                 <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
@@ -274,26 +282,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const prevButton = document.querySelector('.book-nav.prev');
             const nextButton = document.querySelector('.book-nav.next');
 
-            if (!prevButton || !nextButton) return;
-
-            prevButton.style.display = currentPage > 0 ? 'block' : 'none';
-            nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
+            prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
+            nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
 
             pages.forEach((page, index) => {
+                page.classList.remove('active', 'next', 'prev', 'turning', 'turning-forward', 'turning-backward');
+                
                 if (index === currentPage) {
-                    page.style.display = 'block';
-                    // Pause all other audio elements
-                    pages.forEach((otherPage, otherIndex) => {
-                        if (otherIndex !== currentPage) {
-                            const audio = otherPage.querySelector('audio');
-                            if (audio) {
-                                audio.pause();
-                                audio.currentTime = 0;
-                            }
-                        }
-                    });
-                } else {
-                    page.style.display = 'none';
+                    page.classList.add('active');
+                } else if (index === currentPage + 1) {
+                    page.classList.add('next');
+                } else if (index === currentPage - 1) {
+                    page.classList.add('prev');
+                }
+                
+                // Pause all other audio elements
+                const audio = page.querySelector('audio');
+                if (audio && index !== currentPage) {
+                    audio.pause();
+                    audio.currentTime = 0;
                 }
             });
         }
@@ -301,15 +308,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Navigation event handlers
         document.querySelector('.book-nav.next')?.addEventListener('click', () => {
             if (currentPage < totalPages - 1) {
-                currentPage++;
-                updateNavigation();
+                const pages = document.querySelectorAll('.book-page');
+                pages[currentPage].classList.add('turning', 'turning-forward');
+                pages[currentPage + 1].classList.add('turning', 'turning-backward');
+                
+                setTimeout(() => {
+                    currentPage++;
+                    updateNavigation();
+                }, 400);
             }
         });
 
         document.querySelector('.book-nav.prev')?.addEventListener('click', () => {
             if (currentPage > 0) {
-                currentPage--;
-                updateNavigation();
+                const pages = document.querySelectorAll('.book-page');
+                pages[currentPage].classList.add('turning', 'turning-backward');
+                pages[currentPage - 1].classList.add('turning', 'turning-forward');
+                
+                setTimeout(() => {
+                    currentPage--;
+                    updateNavigation();
+                }, 400);
             }
         });
 

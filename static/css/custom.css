@@ -120,11 +120,54 @@ body {
 .book-page {
     position: absolute;
     width: 100%;
-    height: 800px;
-    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
-    transform-origin: center;
-    backface-visibility: hidden;
-    left: 0;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s ease;
+}
+
+.book-page.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.book-page.prev {
+    opacity: 0;
+    transform: translateX(-100%);
+}
+
+.book-page.next {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+.book-page.turning-forward {
+    animation: turnForward 0.4s ease forwards;
+}
+
+.book-page.turning-backward {
+    animation: turnBackward 0.4s ease forwards;
+}
+
+@keyframes turnForward {
+    from {
+        transform: translateX(0) rotateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%) rotateY(-30deg);
+        opacity: 0;
+    }
+}
+
+@keyframes turnBackward {
+    from {
+        transform: translateX(100%) rotateY(30deg);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) rotateY(0);
+        opacity: 1;
+    }
 }
 
 .book-nav {
@@ -153,6 +196,11 @@ body {
     right: 20px;
 }
 
+.book-nav:hover {
+    background: var(--apple-accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
 .card {
     height: 100%;
     background: var(--apple-card-bg);
@@ -160,6 +208,8 @@ body {
     border: none;
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease;
 }
 
 .card-img-top {
@@ -193,6 +243,13 @@ body {
     border-top: 1px solid var(--apple-glass);
 }
 
+/* Audio player styling */
+audio {
+    width: 100%;
+    height: 40px;
+    filter: invert(1) hue-rotate(180deg);
+}
+
 /* Progress indicator */
 .progress-indicator {
     position: absolute;
@@ -208,13 +265,4 @@ body {
     font-size: 12px;
     color: var(--apple-text);
     transition: background 0.3s ease;
-}
-
-.progress-indicator::before {
-    content: '';
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--apple-bg);
 }
