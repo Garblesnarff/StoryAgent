@@ -65,12 +65,50 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p class="card-text">${card.text}</p>
                     </div>
                     <div class="card-footer">
-                        <audio controls src="${card.audio_url}"></audio>
+                        <div class="audio-container">
+                            <button class="btn btn-sm btn-secondary play-audio-btn">
+                                <i class="bi bi-play-fill"></i> Play Audio
+                            </button>
+                            <audio src="${card.audio_url}" preload="none"></audio>
+                        </div>
                     </div>
                 </div>
             `;
             
             paragraphCards.appendChild(pageDiv);
+        });
+        
+        // Setup audio players
+        document.querySelectorAll('.audio-container').forEach(container => {
+            const playBtn = container.querySelector('.play-audio-btn');
+            const audio = container.querySelector('audio');
+            
+            if (playBtn && audio) {
+                playBtn.addEventListener('click', () => {
+                    const allAudios = document.querySelectorAll('audio');
+                    allAudios.forEach(a => {
+                        if (a !== audio && !a.paused) {
+                            a.pause();
+                            a.currentTime = 0;
+                            a.closest('.audio-container').querySelector('.play-audio-btn').innerHTML = 
+                                '<i class="bi bi-play-fill"></i> Play Audio';
+                        }
+                    });
+                    
+                    if (audio.paused) {
+                        audio.play();
+                        playBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
+                    } else {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Play Audio';
+                    }
+                });
+                
+                audio.addEventListener('ended', () => {
+                    playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Play Audio';
+                });
+            }
         });
         
         // Show navigation buttons if more than one page
@@ -80,12 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Show save button
-        document.getElementById('save-story').style.display = 'block';
+        const saveBtn = document.getElementById('save-story');
+        if (saveBtn) {
+            saveBtn.style.display = 'block';
+        }
         
         // Initialize the first page as active
         const pages = document.querySelectorAll('.book-page');
-        pages[0].classList.add('active');
-        updateNavigation();
+        if (pages.length > 0) {
+            pages[0].classList.add('active');
+            updateNavigation();
+        }
     }
     
     // Navigation functions
@@ -104,8 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Update navigation buttons
-        document.querySelector('.book-nav.prev').style.display = currentPage > 0 ? 'flex' : 'none';
-        document.querySelector('.book-nav.next').style.display = currentPage < pages.length - 1 ? 'flex' : 'none';
+        const prevBtn = document.querySelector('.book-nav.prev');
+        const nextBtn = document.querySelector('.book-nav.next');
+        if (prevBtn) prevBtn.style.display = currentPage > 0 ? 'flex' : 'none';
+        if (nextBtn) nextBtn.style.display = currentPage < pages.length - 1 ? 'flex' : 'none';
     }
     
     // Add navigation event listeners
