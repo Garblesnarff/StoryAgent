@@ -25,14 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/generate_story', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'text/event-stream'
+                }
             });
 
             if (!response.ok) {
                 throw new Error('Story generation failed');
             }
 
-            // Read response as text stream
+            // Process the response stream
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -51,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const data = JSON.parse(line);
                         if (data.type === 'complete') {
-                            // Redirect to review page
                             window.location.href = '/review';
                             return;
                         } else if (data.type === 'log') {
@@ -71,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Function to create paragraph card for review
+    // Function to create review paragraph card
     function createReviewParagraphCard(paragraph, index) {
         const card = document.createElement('div');
         card.className = 'paragraph-card';
@@ -118,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/update_paragraph', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         text: newText,
@@ -150,7 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const response = await fetch('/bring_to_life', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'text/event-stream'
+                    }
                 });
 
                 if (!response.ok) {
@@ -196,6 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 bringToLifeBtn.disabled = false;
             }
         });
+
+        // Show bring to life button after adding paragraphs
+        bringToLifeBtn.style.display = 'block';
     }
 
     // Display page functionality
@@ -212,8 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!prevButton || !nextButton) return;
 
-            prevButton.style.display = currentPage > 0 ? 'block' : 'none';
-            nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
+            prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
+            nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
 
             pages.forEach((page, index) => {
                 if (index === currentPage) {
@@ -260,7 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/save_story', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     }
                 });
 
@@ -278,31 +288,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Display page card creation
-        function createDisplayPageCard(paragraph, index) {
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'book-page';
-            pageDiv.dataset.index = index;
-            
-            pageDiv.innerHTML = `
-                <div class="card h-100">
-                    <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
-                    <div class="card-body">
-                        <p class="card-text">${paragraph.text}</p>
-                    </div>
-                    <div class="card-footer">
-                        <audio controls src="${paragraph.audio_url}" preload="none"></audio>
-                    </div>
-                </div>
-            `;
-            return pageDiv;
-        }
-
         // Process media on page load
         const processGeneratedMedia = async () => {
             try {
                 const response = await fetch('/bring_to_life', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'text/event-stream'
+                    }
                 });
 
                 if (!response.ok) {
@@ -344,6 +337,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 addLogMessage(`Error: ${error.message}`);
             }
         };
+
+        // Create display page card
+        function createDisplayPageCard(paragraph, index) {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'book-page';
+            pageDiv.dataset.index = index;
+            
+            pageDiv.innerHTML = `
+                <div class="card h-100">
+                    <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
+                    <div class="card-body">
+                        <p class="card-text">${paragraph.text}</p>
+                    </div>
+                    <div class="card-footer">
+                        <audio controls src="${paragraph.audio_url}" preload="none"></audio>
+                    </div>
+                </div>
+            `;
+            return pageDiv;
+        }
 
         // Process the media on page load
         processGeneratedMedia();
