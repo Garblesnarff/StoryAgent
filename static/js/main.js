@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingParagraph = null;
     let currentPage = 0;
     let totalPages = 0;
+    let story_paragraphs = [];
 
     // Story generation form submission
     storyForm?.addEventListener('submit', async (e) => {
@@ -41,9 +42,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     try {
                         const data = JSON.parse(line);
+                        if (data.type === 'paragraph') {
+                            story_paragraphs.push(data.data.text);
+                        }
                         if (data.type === 'complete') {
-                            // Only redirect after story generation is complete
-                            window.location.href = '/review';
+                            // Send a POST request to store data before redirecting
+                            const storeResponse = await fetch('/store_story', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    paragraphs: story_paragraphs
+                                })
+                            });
+                            
+                            if (storeResponse.ok) {
+                                window.location.href = '/review';
+                            } else {
+                                throw new Error('Failed to store story data');
+                            }
                             return;
                         }
                     } catch (parseError) {
@@ -205,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Failed to generate media');
                 }
 
-                // Process the response stream
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
@@ -224,11 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const data = JSON.parse(line);
                             if (data.type === 'complete') {
-                                // Only redirect after media generation is complete
                                 window.location.href = '/display';
                                 return;
                             } else if (data.type === 'log') {
                                 addLogMessage(data.message);
+                            } else if (data.type === 'error') {
+                                throw new Error(data.message);
                             }
                         } catch (parseError) {
                             console.error('Error parsing message:', line);
@@ -326,6 +344,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/bring_to_life', {
                 method: 'POST'
             });
+            
+            if (!response.ok) {
+                throw new Error('Failed to generate media');
+            }
+
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
@@ -352,6 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'log':
                                 console.log('Media generation:', data.message);
                                 break;
+                            case 'error':
+                                throw new Error(data.message);
                         }
                     } catch (parseError) {
                         console.error('Error parsing message:', line);
