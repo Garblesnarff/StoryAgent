@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <nav aria-label="Story Progress" class="mb-4">
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 100%">Generate Cards</div>
+        </div>
+    </nav>
+
+    <div id="story-output">
+        <h2 class="h3 mb-4">Story Cards</h2>
+        <div class="book-container">
+            <button class="book-nav prev" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <div class="book-pages" id="paragraph-cards"></div>
+            <button class="book-nav next" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="save-button-container">
+    <button id="save-story" class="btn btn-success btn-lg">Save Story</button>
+</div>
+{% endblock %}

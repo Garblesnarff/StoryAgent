@@ -1,0 +1,81 @@
+Flask Route Structure
+
+
+/ (index): Landing page with story prompt form
+/story/edit: Story editing page
+/story/generate: Card generation page
+Add session management to maintain story state between pages
+
+
+Page-Specific Components
+
+Landing Page (/) Updates:
+
+Keep the existing prompt form
+Remove the card generation elements
+Add a progress indicator
+After submission, redirect to /story/edit instead of generating cards immediately
+Store story data in Flask session
+
+Story Edit Page (/story/edit):
+
+Display full story text in editable format
+Split into paragraphs for easy editing
+Add individual paragraph edit capabilities
+Include a "Generate Cards" button to proceed to next step
+Add preview capability
+Implement save/autosave functionality
+Add navigation controls (back to prompt, forward to generation)
+
+Card Generation Page (/story/generate):
+
+Move existing card generation logic here
+Show generation progress
+Maintain the current card display format
+Add navigation to return to edit page
+Include final save/export options
+
+
+Data Flow Management:
+
+
+Use Flask session to maintain story state
+Store generated content in SQLite database (already set up)
+Create data models for different stages (prompt, edited story, generated cards)
+
+
+UI/UX Considerations:
+
+
+Add consistent navigation header
+Include progress indicator showing current stage
+Implement "Save & Exit" functionality
+Add loading states between pages
+Maintain consistent styling across pages
+
+
+Implementation Steps:
+Create new route handlers
+Split existing templates into page-specific versions
+Modify JavaScript to handle page-specific functionality
+Implement session management
+Add navigation components
+Update database schema if needed
+Add progress tracking
+Implement state persistence
+Technical Considerations:
+
+
+Use Flask blueprints to organize routes
+Implement proper error handling between pages
+Add validation at each step
+Consider caching for performance
+Handle browser navigation/refresh properly
+Implement proper cleanup of temporary files
+
+This structure will create a more organized flow:
+
+User enters initial prompt and settings
+Reviews and edits generated story
+Proceeds to card generation
+Can navigate between stages as needed
