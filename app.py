@@ -141,16 +141,12 @@ def bring_to_life():
                 # Send complete paragraph data
                 paragraph_data = {
                     'text': paragraph,
-                    'image_url': image_url or 'https://example.com/fallback-image.jpg',
-                    'audio_url': audio_url or '',
+                    'image_url': image_url,
+                    'audio_url': audio_url,
                     'index': index
                 }
                 yield send_json_message('paragraph', paragraph_data)
-                
-                sys.stdout.flush()
             
-            session['current_step'] = 'display'
-            session.modified = True
             yield send_json_message('complete', "Media generation complete!")
             
         except Exception as e:

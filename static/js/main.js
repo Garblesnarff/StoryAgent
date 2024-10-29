@@ -145,9 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Review page functionality
     if (window.location.pathname === '/review') {
-        // Process the paragraphs data
         if (paragraphsContainer) {
             const paragraphs = JSON.parse(paragraphsContainer.dataset.paragraphs || '[]');
+            // Clear existing content
+            paragraphsContainer.innerHTML = '';
+            // Add all paragraphs
             paragraphs.forEach((paragraph, index) => {
                 const card = createReviewParagraphCard(paragraph, index);
                 paragraphsContainer.appendChild(card);
@@ -271,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
 
             pages.forEach((page, index) => {
-                page.classList.remove('active', 'next', 'prev', 'turning-forward', 'turning-backward');
+                page.classList.remove('active', 'next', 'prev');
                 
                 if (index === currentPage) {
                     page.classList.add('active');
@@ -288,6 +290,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     audio.currentTime = 0;
                 }
             });
+        }
+
+        if (paragraphCards) {
+            const paragraphs = JSON.parse(paragraphsContainer?.dataset.paragraphs || '[]');
+            // Clear existing content
+            paragraphCards.innerHTML = '';
+            // Add cards for each paragraph
+            paragraphs.forEach((paragraph, index) => {
+                const card = createDisplayPageCard(paragraph, index);
+                paragraphCards.appendChild(card);
+            });
+            // Initialize navigation
+            updateNavigation();
         }
 
         // Navigation event handlers
