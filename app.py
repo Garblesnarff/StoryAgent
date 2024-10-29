@@ -50,13 +50,13 @@ def index():
 def review():
     if 'story_paragraphs' not in session:
         return redirect(url_for('index'))
-    return render_template('review.html')
+    return render_template('review.html', paragraphs=session['story_paragraphs'])
 
 @app.route('/display')
 def display():
     if 'story_paragraphs' not in session:
         return redirect(url_for('index'))
-    return render_template('display.html')
+    return render_template('display.html', paragraphs=session['story_paragraphs'])
 
 @app.route('/store_story', methods=['POST'])
 def store_story():

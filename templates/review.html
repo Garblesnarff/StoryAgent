@@ -10,12 +10,12 @@
     </div>
 
     <div id="story-review" class="mb-5">
-        <div id="paragraphs-container" class="mb-4">
+        <div id="paragraphs-container" class="mb-4" data-paragraphs='{{ paragraphs|tojson|safe }}'>
             <!-- Paragraphs will be inserted here dynamically -->
         </div>
 
         <div class="text-center mt-5">
-            <button id="bring-to-life" class="btn btn-lg btn-glow" style="display: none;">
+            <button id="bring-to-life" class="btn btn-lg btn-glow">
                 <span class="btn-text">Bring to Life</span>
                 <span class="btn-shine"></span>
             </button>

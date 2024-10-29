@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'paragraph-card';
         card.innerHTML = `
-            <div class="paragraph-text">${paragraph.text}</div>
+            <div class="paragraph-text">${paragraph}</div>
             <button class="btn btn-primary edit-paragraph" data-index="${index}">Edit</button>
         `;
         return card;
@@ -126,61 +126,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Review page functionality
     if (window.location.pathname === '/review') {
-        const processGeneratedStory = async () => {
-            const response = await fetch('/generate_story', {
-                method: 'POST',
-                body: new FormData()
+        // Process the generated story
+        if (paragraphsContainer) {
+            const paragraphs = JSON.parse(paragraphsContainer.dataset.paragraphs || '[]');
+            paragraphs.forEach((paragraph, index) => {
+                const card = createReviewParagraphCard(paragraph, index);
+                paragraphsContainer.appendChild(card);
             });
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            let buffer = '';
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'log':
-                                addLogMessage(data.message);
-                                break;
-                            case 'paragraph':
-                                const card = createReviewParagraphCard(data.data, data.data.index);
-                                paragraphsContainer.appendChild(card);
-                                break;
-                            case 'complete':
-                                addLogMessage(data.message);
-                                bringToLifeBtn.style.display = 'block';
-                                break;
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing message:', line);
-                    }
-                }
-                buffer = lines[lines.length - 1];
-            }
-        };
-
-        // Process the generated story on page load
-        processGeneratedStory();
+        }
 
         // Edit paragraph functionality
         paragraphsContainer?.addEventListener('click', (e) => {
             if (e.target.classList.contains('edit-paragraph')) {
-                const index = e.target.dataset.index;
+                const index = parseInt(e.target.dataset.index);
                 const paragraphText = e.target.closest('.paragraph-card').querySelector('.paragraph-text').textContent;
                 
                 currentEditingParagraph = {
                     element: e.target.closest('.paragraph-card').querySelector('.paragraph-text'),
-                    index: parseInt(index)
+                    index: index
                 };
                 
                 document.getElementById('editParagraphText').value = paragraphText;
@@ -210,7 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Failed to update paragraph');
                 }
 
+                // Update local display
                 currentEditingParagraph.element.textContent = newText;
+                
+                // Update session data
+                story_paragraphs[currentEditingParagraph.index] = newText;
+                
                 editModal.hide();
             } catch (error) {
                 console.error('Error:', error);
@@ -253,8 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 return;
                             } else if (data.type === 'log') {
                                 addLogMessage(data.message);
-                            } else if (data.type === 'error') {
-                                throw new Error(data.message);
                             }
                         } catch (parseError) {
                             console.error('Error parsing message:', line);
@@ -357,53 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to save story. Please try again.');
             }
         });
-
-        // Process the generated story with media
-        const processGeneratedMedia = async () => {
-            const response = await fetch('/bring_to_life', {
-                method: 'POST'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to generate media');
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            let buffer = '';
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'paragraph':
-                                const pageElement = createDisplayPageCard(data.data, data.data.index);
-                                paragraphCards.appendChild(pageElement);
-                                updateNavigation();
-                                break;
-                            case 'log':
-                                console.log('Media generation:', data.message);
-                                break;
-                            case 'error':
-                                throw new Error(data.message);
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing message:', line);
-                    }
-                }
-                buffer = lines[lines.length - 1];
-            }
-        };
 
         // Process the media on page load
         processGeneratedMedia();
