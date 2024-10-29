@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Process the response stream
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            story_paragraphs = [];
 
             let buffer = '';
             while (true) {
@@ -42,11 +43,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     try {
                         const data = JSON.parse(line);
+                        
+                        // Display log messages
+                        if (data.type === 'log' && logContent) {
+                            const logEntry = document.createElement('div');
+                            logEntry.textContent = data.message;
+                            logContent.appendChild(logEntry);
+                            logContent.scrollTop = logContent.scrollHeight;
+                        }
+                        
+                        // Handle paragraph data
                         if (data.type === 'paragraph') {
                             story_paragraphs.push(data.data.text);
                         }
+                        
+                        // Handle completion
                         if (data.type === 'complete') {
-                            // Send a POST request to store data before redirecting
+                            // Store story data before redirecting
                             const storeResponse = await fetch('/store_story', {
                                 method: 'POST',
                                 headers: {
@@ -72,6 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
+            if (logContent) {
+                const errorEntry = document.createElement('div');
+                errorEntry.textContent = 'Error: ' + error.message;
+                errorEntry.style.color = 'red';
+                logContent.appendChild(errorEntry);
+            }
             alert('Failed to generate story. Please try again.');
         }
     });
@@ -126,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Review page functionality
     if (window.location.pathname === '/review') {
-        // Process the generated story
+        // Process the paragraphs data
         if (paragraphsContainer) {
             const paragraphs = JSON.parse(paragraphsContainer.dataset.paragraphs || '[]');
             paragraphs.forEach((paragraph, index) => {
@@ -252,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
 
             pages.forEach((page, index) => {
-                page.classList.remove('active', 'next', 'prev', 'turning', 'turning-forward', 'turning-backward');
+                page.classList.remove('active', 'next', 'prev', 'turning-forward', 'turning-backward');
                 
                 if (index === currentPage) {
                     page.classList.add('active');
@@ -275,8 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.book-nav.next')?.addEventListener('click', () => {
             if (currentPage < totalPages - 1) {
                 const pages = document.querySelectorAll('.book-page');
-                pages[currentPage].classList.add('turning', 'turning-forward');
-                pages[currentPage + 1].classList.add('turning', 'turning-backward');
+                pages[currentPage].classList.add('turning-forward');
+                pages[currentPage + 1].classList.add('turning-backward');
                 
                 setTimeout(() => {
                     currentPage++;
@@ -288,8 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.book-nav.prev')?.addEventListener('click', () => {
             if (currentPage > 0) {
                 const pages = document.querySelectorAll('.book-page');
-                pages[currentPage].classList.add('turning', 'turning-backward');
-                pages[currentPage - 1].classList.add('turning', 'turning-forward');
+                pages[currentPage].classList.add('turning-backward');
+                pages[currentPage - 1].classList.add('turning-forward');
                 
                 setTimeout(() => {
                     currentPage--;
@@ -323,8 +342,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to save story. Please try again.');
             }
         });
-
-        // Process the media on page load
-        processGeneratedMedia();
     }
 });

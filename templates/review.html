@@ -6,11 +6,11 @@
     
     <div id="log-output" class="mb-4">
         <h3 class="h4 mb-3">Generation Progress</h3>
-        <div id="log-content" class="border p-3" style="height: 200px; overflow-y: auto;"></div>
+        <div id="log-content" class="border p-3 bg-dark" style="height: 200px; overflow-y: auto; color: #fff; font-family: monospace;"></div>
     </div>
 
     <div id="story-review" class="mb-5">
-        <div id="paragraphs-container" class="mb-4" data-paragraphs='{{ paragraphs|tojson|safe }}'>
+        <div id="paragraphs-container" class="mb-4" data-paragraphs='{{ paragraphs|tojson|safe if paragraphs else "[]" }}'>
             <!-- Paragraphs will be inserted here dynamically -->
         </div>
 

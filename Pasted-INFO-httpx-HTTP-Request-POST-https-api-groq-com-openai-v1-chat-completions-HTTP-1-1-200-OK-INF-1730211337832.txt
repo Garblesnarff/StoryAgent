@@ -1,0 +1,120 @@
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:services.hume_audio_generator:Sending text for narration: 311 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47070 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 94968 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 38540 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46474 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 82270 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 189034 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 97074 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201333.wav (787474 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 302 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47374 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 92496 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 57202 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46634 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 95720 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 57256 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201347.wav (780770 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 318 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47470 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 172532 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 191502 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 47068 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 93368 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 158180 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201362.wav (806164 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 339 characters
+INFO:services.hume_audio_generator:Received audio chunk: 48016 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 190626 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 134740 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 43390 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 39162 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201380.wav (840066 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 352 characters
+INFO:services.hume_audio_generator:Received audio chunk: 48044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 190618 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 382586 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46696 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 116046 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201402.wav (1168122 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 311 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47756 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 51452 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46462 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 87456 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 184624 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 75930 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201418.wav (781768 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 302 characters
+INFO:services.hume_audio_generator:Received audio chunk: 41586 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 94674 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 28050 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46652 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 186632 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201431.wav (685682 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 318 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47358 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 95554 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 172248 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 44748 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 84456 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 131926 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201448.wav (768334 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 339 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47410 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 176938 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 234118 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46816 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 86712 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201466.wav (976126 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:services.hume_audio_generator:Sending text for narration: 352 characters
+INFO:services.hume_audio_generator:Received audio chunk: 47406 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 191634 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 67858 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 46710 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 96044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 192044 bytes
+INFO:services.hume_audio_generator:Received audio chunk: 118802 bytes
+INFO:services.hume_audio_generator:Received end of audio signal
+INFO:services.hume_audio_generator:Saved audio file: paragraph_audio_1730201482.wav (856542 bytes)
+INFO:services.hume_audio_generator:WebSocket connection closed
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
