@@ -1,8 +1,7 @@
 import os
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
-from flask_session import Session
 from sqlalchemy.orm import DeclarativeBase
 import json
 import sys
@@ -18,10 +17,6 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
-app.secret_key = os.urandom(24)  # Add secret key for session management
-app.config['SESSION_TYPE'] = 'filesystem'  # Configure session type
-Session(app)  # Initialize Flask-Session
-
 db.init_app(app)
 socketio = SocketIO(app)
 
@@ -46,36 +41,71 @@ def send_json_message(message_type, message_data):
 def index():
     return render_template('index.html')
 
-@app.route('/review')
-def review():
-    if 'story_paragraphs' not in session:
-        return redirect(url_for('index'))
-    return render_template('review.html', paragraphs=session['story_paragraphs'])
-
-@app.route('/display')
-def display():
-    if 'story_paragraphs' not in session:
-        return redirect(url_for('index'))
-    return render_template('display.html', paragraphs=session['story_paragraphs'])
-
-@app.route('/store_story', methods=['POST'])
-def store_story():
+@app.route('/update_paragraph', methods=['POST'])
+def update_paragraph():
     try:
         data = request.get_json()
-        session['story_paragraphs'] = data.get('paragraphs', [])
-        session.modified = True
-        return jsonify({'success': True})
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        # Generate new image and audio
+        image_url = image_service.generate_image(text)
+        audio_url = audio_service.generate_audio(text)
+        
+        return jsonify({
+            'success': True,
+            'text': text,
+            'image_url': image_url,
+            'audio_url': audio_url
+        })
     except Exception as e:
-        app.logger.error(f"Error storing story: {str(e)}")
+        app.logger.error(f"Error updating paragraph: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/regenerate_image', methods=['POST'])
+def regenerate_image():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        image_url = regeneration_service.regenerate_image(text)
+        
+        return jsonify({
+            'success': True,
+            'image_url': image_url
+        })
+    except Exception as e:
+        app.logger.error(f"Error regenerating image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/regenerate_audio', methods=['POST'])
+def regenerate_audio():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        audio_url = regeneration_service.regenerate_audio(text)
+        
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+    except Exception as e:
+        app.logger.error(f"Error regenerating audio: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     def generate():
         try:
-            # Clear any existing story data
-            session.clear()
-            
             prompt = request.form.get('prompt')
             genre = request.form.get('genre')
             mood = request.form.get('mood')
@@ -84,25 +114,47 @@ def generate_story():
             
             yield send_json_message('log', "Starting story generation...")
             
+            # Generate the story
             story_paragraphs = text_service.generate_story(
                 prompt, genre, mood, target_audience, paragraphs)
             
             if not story_paragraphs:
                 raise Exception("Failed to generate story")
             
-            # Store story data in session
-            session['story_paragraphs'] = story_paragraphs
-            session.modified = True  # Ensure session is saved
+            total_paragraphs = len(story_paragraphs)
+            yield send_json_message('log', f"Story text generated successfully ({sum(len(p.split()) for p in story_paragraphs)} words)")
             
-            yield send_json_message('log', f"Story generated successfully")
-            
-            for index, paragraph in enumerate(story_paragraphs):
+            # Process each paragraph and stream results
+            for index, paragraph in enumerate(story_paragraphs, 1):
+                if not paragraph.strip():
+                    continue
+                    
+                progress = (index/total_paragraphs*100)
+                yield send_json_message('log', f"Processing paragraph {index}/{total_paragraphs} ({progress:.0f}% complete)")
+                
+                # Generate image
+                yield send_json_message('log', f"Generating image for paragraph {index}...")
+                image_url = image_service.generate_image(paragraph)
+                yield send_json_message('log', f"Image generated for paragraph {index}")
+                
+                # Generate audio
+                yield send_json_message('log', f"Generating audio for paragraph {index}...")
+                audio_url = audio_service.generate_audio(paragraph)
+                yield send_json_message('log', f"Audio generated for paragraph {index}")
+                
+                # Send paragraph data
                 paragraph_data = {
                     'text': paragraph,
-                    'index': index
+                    'image_url': image_url or 'https://example.com/fallback-image.jpg',
+                    'audio_url': audio_url or '',
+                    'index': index - 1
                 }
                 yield send_json_message('paragraph', paragraph_data)
-            
+                yield send_json_message('log', f"Paragraph {index} complete")
+                
+                # Ensure stream is flushed
+                sys.stdout.flush()
+                
             yield send_json_message('complete', "Story generation complete!")
             
         except Exception as e:
@@ -111,81 +163,9 @@ def generate_story():
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
-@app.route('/bring_to_life', methods=['POST'])
-def bring_to_life():
-    def generate():
-        try:
-            story_paragraphs = session.get('story_paragraphs')
-            if not story_paragraphs:
-                app.logger.error("No story found in session")
-                yield send_json_message('error', "No story found. Please generate a story first.")
-                return
-
-            total_paragraphs = len(story_paragraphs)
-            
-            # Process each paragraph and generate media
-            for index, paragraph in enumerate(story_paragraphs):
-                progress = ((index + 1) / total_paragraphs * 100)
-                yield send_json_message('log', f"Processing paragraph {index + 1}/{total_paragraphs} ({progress:.0f}% complete)")
-                
-                # Generate image
-                yield send_json_message('log', f"Generating image for paragraph {index + 1}...")
-                image_url = image_service.generate_image(paragraph)
-                yield send_json_message('log', f"Image generated for paragraph {index + 1}")
-                
-                # Generate audio
-                yield send_json_message('log', f"Generating audio for paragraph {index + 1}...")
-                audio_url = audio_service.generate_audio(paragraph)
-                yield send_json_message('log', f"Audio generated for paragraph {index + 1}")
-                
-                # Send complete paragraph data
-                paragraph_data = {
-                    'text': paragraph,
-                    'image_url': image_url,
-                    'audio_url': audio_url,
-                    'index': index
-                }
-                yield send_json_message('paragraph', paragraph_data)
-            
-            yield send_json_message('complete', "Media generation complete!")
-            
-        except Exception as e:
-            app.logger.error(f"Error generating media: {str(e)}")
-            yield send_json_message('error', str(e))
-
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
-
-@app.route('/update_paragraph', methods=['POST'])
-def update_paragraph():
-    try:
-        data = request.get_json()
-        text = data.get('text')
-        index = data.get('index')
-        
-        if text is None or index is None:
-            return jsonify({'error': 'Missing required data'}), 400
-        
-        # Update the paragraph in session
-        story_paragraphs = session.get('story_paragraphs', [])
-        if 0 <= index < len(story_paragraphs):
-            story_paragraphs[index] = text
-            session['story_paragraphs'] = story_paragraphs
-            session.modified = True
-            
-            return jsonify({
-                'success': True,
-                'text': text
-            })
-        else:
-            return jsonify({'error': 'Invalid paragraph index'}), 400
-            
-    except Exception as e:
-        app.logger.error(f"Error updating paragraph: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/save_story', methods=['POST'])
 def save_story():
-    # TODO: Implement story saving logic using database
+    # TODO: Implement story saving logic using Supabase
     return jsonify({'success': True})
 
 if __name__ == '__main__':

@@ -12,91 +12,6 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
 }
 
-/* Glowing button effect */
-.btn-glow {
-    background: var(--apple-accent);
-    color: var(--apple-text);
-    border: none;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    padding: 1rem 2.5rem;
-}
-
-.btn-glow:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px var(--apple-accent);
-}
-
-.btn-shine {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-    );
-    transition: 0.5s;
-}
-
-.btn-glow:hover .btn-shine {
-    left: 100%;
-}
-
-/* Form styling */
-.form-control, .form-select {
-    background: var(--apple-card-bg);
-    border: 1px solid var(--apple-accent);
-    color: var(--apple-text) !important;
-    padding: 1rem;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    appearance: auto;
-}
-
-.form-select option {
-    background: var(--apple-bg);
-    color: var(--apple-text);
-    padding: 0.5rem;
-}
-
-.form-select:hover, .form-select:focus {
-    border-color: var(--apple-accent);
-    box-shadow: 0 0 0 2px var(--apple-accent);
-    background: var(--apple-glass);
-}
-
-/* Review page styles */
-#paragraphs-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.paragraph-card {
-    background: var(--apple-card-bg);
-    border-radius: 12px;
-    padding: 1.5rem;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.paragraph-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.paragraph-text {
-    margin-bottom: 1rem;
-    line-height: 1.6;
-}
-
-/* Book display styles */
 .book-container {
     perspective: 2000px;
     width: 100%;
@@ -120,54 +35,41 @@ body {
 .book-page {
     position: absolute;
     width: 100%;
-    opacity: 0;
-    transform: translateX(100%);
-    transition: all 0.4s ease;
+    height: 800px;
+    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    transform-origin: center;
+    backface-visibility: hidden;
+    left: 0;
 }
 
 .book-page.active {
+    transform: rotateY(0deg);
+    z-index: 2;
     opacity: 1;
-    transform: translateX(0);
-}
-
-.book-page.prev {
-    opacity: 0;
-    transform: translateX(-100%);
 }
 
 .book-page.next {
+    transform: rotateY(0deg);
     opacity: 0;
-    transform: translateX(100%);
+    z-index: 1;
+}
+
+.book-page.prev {
+    transform: rotateY(-180deg);
+    z-index: 1;
+}
+
+.book-page.turning {
+    transition: transform 0.8s, opacity 0.8s;
 }
 
 .book-page.turning-forward {
-    animation: turnForward 0.4s ease forwards;
+    transform: rotateY(-180deg);
 }
 
 .book-page.turning-backward {
-    animation: turnBackward 0.4s ease forwards;
-}
-
-@keyframes turnForward {
-    from {
-        transform: translateX(0) rotateY(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(-100%) rotateY(-30deg);
-        opacity: 0;
-    }
-}
-
-@keyframes turnBackward {
-    from {
-        transform: translateX(100%) rotateY(30deg);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0) rotateY(0);
-        opacity: 1;
-    }
+    transform: rotateY(0deg);
+    opacity: 1;
 }
 
 .book-nav {
@@ -197,8 +99,14 @@ body {
 }
 
 .book-nav:hover {
-    background: var(--apple-accent);
     transform: translateY(-50%) scale(1.1);
+    background: var(--apple-accent);
+}
+
+.book-nav svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--apple-text);
 }
 
 .card {
@@ -208,8 +116,8 @@ body {
     border: none;
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transform-style: preserve-3d;
-    transition: transform 0.4s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-img-top {
@@ -219,6 +127,7 @@ body {
 }
 
 .card-body {
+    flex: 1;
     padding: 2rem;
 }
 
@@ -226,6 +135,57 @@ body {
     background: transparent;
     border-top: 1px solid var(--apple-glass);
     padding: 1rem 2rem;
+}
+
+/* Form styling */
+.form-control, .form-select {
+    background: var(--apple-card-bg);
+    border: 1px solid var(--apple-accent);
+    color: var(--apple-text) !important;
+    padding: 1rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    appearance: auto;  /* Show default select arrow */
+}
+
+.form-select option {
+    background: var(--apple-bg);
+    color: var(--apple-text);
+    padding: 0.5rem;
+}
+
+.form-select:hover, .form-select:focus {
+    border-color: var(--apple-accent);
+    box-shadow: 0 0 0 2px var(--apple-accent);
+    background: var(--apple-glass);
+}
+
+/* Save button container */
+.save-button-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+/* Save button styles */
+#save-story {
+    position: relative;
+    padding: 15px 30px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    background: var(--apple-accent);
+    border: none;
+    color: var(--apple-text);
+    z-index: 1;
+}
+
+#save-story:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Modal styling */
@@ -243,13 +203,6 @@ body {
     border-top: 1px solid var(--apple-glass);
 }
 
-/* Audio player styling */
-audio {
-    width: 100%;
-    height: 40px;
-    filter: invert(1) hue-rotate(180deg);
-}
-
 /* Progress indicator */
 .progress-indicator {
     position: absolute;
@@ -265,4 +218,13 @@ audio {
     font-size: 12px;
     color: var(--apple-text);
     transition: background 0.3s ease;
+}
+
+.progress-indicator::before {
+    content: '';
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--apple-bg);
 }
