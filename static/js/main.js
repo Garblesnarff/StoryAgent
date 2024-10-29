@@ -8,6 +8,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 0;
     let totalPages = 0;
 
+    // Function to add log messages
+    function addLogMessage(message) {
+        if (!logContent) return;
+        const logEntry = document.createElement('div');
+        logEntry.textContent = message;
+        logContent.appendChild(logEntry);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    // Helper function to handle different response types
+    function handleResponseData(data) {
+        switch (data.type) {
+            case 'error':
+                throw new Error(data.message);
+            case 'log':
+                addLogMessage(data.message);
+                break;
+            case 'paragraph':
+                if (paragraphsContainer) {
+                    const card = createReviewParagraphCard(data.data, data.data.index);
+                    paragraphsContainer.appendChild(card);
+                }
+                break;
+            case 'complete':
+                window.location.href = '/review';
+                break;
+        }
+    }
+
     // Story generation form submission
     storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -20,14 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                throw new Error('Story generation failed');
+                throw new Error('Failed to generate story');
             }
 
             // Process the response stream
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-
             let buffer = '';
+
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
@@ -41,14 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     try {
                         const data = JSON.parse(line);
-                        if (data.type === 'error') {
-                            throw new Error(data.message);
-                        } else if (data.type === 'complete') {
-                            window.location.href = '/review';
-                            return;
-                        } else if (data.type === 'log') {
-                            addLogMessage(data.message);
-                        }
+                        handleResponseData(data);
                     } catch (parseError) {
                         console.error('Error parsing message:', line);
                     }
@@ -60,15 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to generate story. Please try again.');
         }
     });
-
-    // Function to add log messages
-    function addLogMessage(message) {
-        if (!logContent) return;
-        const logEntry = document.createElement('div');
-        logEntry.textContent = message;
-        logContent.appendChild(logEntry);
-        logContent.scrollTop = logContent.scrollHeight;
-    }
 
     // Function to create paragraph card for review
     function createReviewParagraphCard(paragraph, index) {
@@ -103,55 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Review page functionality
     if (window.location.pathname === '/review') {
-        const processGeneratedStory = async () => {
-            const response = await fetch('/generate_story', {
-                method: 'POST',
-                body: new FormData()
-            });
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            let buffer = '';
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'error':
-                                addLogMessage(`Error: ${data.message}`);
-                                break;
-                            case 'log':
-                                addLogMessage(data.message);
-                                break;
-                            case 'paragraph':
-                                const card = createReviewParagraphCard(data.data, data.data.index);
-                                paragraphsContainer.appendChild(card);
-                                break;
-                            case 'complete':
-                                addLogMessage(data.message);
-                                bringToLifeBtn.style.display = 'block';
-                                break;
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing message:', line);
-                    }
-                }
-                buffer = lines[lines.length - 1];
-            }
-        };
-
-        // Process the generated story on page load
-        processGeneratedStory();
-
         // Edit paragraph functionality
         paragraphsContainer?.addEventListener('click', (e) => {
             if (e.target.classList.contains('edit-paragraph')) {
@@ -220,11 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Failed to generate media');
                 }
 
-                // Process stream and show progress
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-
                 let buffer = '';
+
                 while (true) {
                     const {done, value} = await reader.read();
                     if (done) break;
@@ -245,6 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 return;
                             } else if (data.type === 'log') {
                                 addLogMessage(data.message);
+                            } else if (data.type === 'paragraph') {
+                                // Handle media updates if needed
+                                addLogMessage(`Generated media for paragraph ${data.data.index + 1}`);
                             }
                         } catch (parseError) {
                             console.error('Error parsing message:', line);
@@ -337,46 +303,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Process the generated story with media
+        // Process the generated story with media on page load
         const processGeneratedMedia = async () => {
-            const response = await fetch('/bring_to_life', {
-                method: 'POST'
-            });
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            try {
+                const response = await fetch('/bring_to_life', {
+                    method: 'POST'
+                });
 
-            let buffer = '';
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
+                if (!response.ok) {
+                    throw new Error('Failed to load story media');
+                }
 
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
 
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
 
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'error':
+                    buffer += decoder.decode(value, {stream: true});
+                    const lines = buffer.split('\n');
+
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.type === 'error') {
                                 throw new Error(data.message);
-                                break;
-                            case 'paragraph':
+                            } else if (data.type === 'paragraph') {
                                 const pageElement = createDisplayPageCard(data.data, data.data.index);
                                 paragraphCards.appendChild(pageElement);
                                 updateNavigation();
-                                break;
-                            case 'log':
-                                console.log('Media generation:', data.message);
-                                break;
+                            }
+                        } catch (parseError) {
+                            console.error('Error parsing message:', line);
                         }
-                    } catch (parseError) {
-                        console.error('Error parsing message:', line);
                     }
+                    buffer = lines[lines.length - 1];
                 }
-                buffer = lines[lines.length - 1];
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load story media. Please try again.');
             }
         };
 
