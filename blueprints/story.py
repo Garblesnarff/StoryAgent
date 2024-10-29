@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
@@ -33,7 +33,10 @@ def edit():
 
 @story.route('/generate')
 def generate():
-    return render_template('story/generate.html')
+    if 'story_paragraphs' not in session:
+        return redirect(url_for('main.index'))
+    paragraphs = session['story_paragraphs']
+    return render_template('story/generate.html', paragraphs=paragraphs)
 
 @story.route('/update_paragraph', methods=['POST'])
 def update_paragraph():
