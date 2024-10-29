@@ -17,26 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
-    // Helper function to handle different response types
-    function handleResponseData(data) {
-        switch (data.type) {
-            case 'error':
-                throw new Error(data.message);
-            case 'log':
-                addLogMessage(data.message);
-                break;
-            case 'paragraph':
-                if (paragraphsContainer) {
-                    const card = createReviewParagraphCard(data.data, data.data.index);
-                    paragraphsContainer.appendChild(card);
-                }
-                break;
-            case 'complete':
-                window.location.href = '/review';
-                break;
-        }
-    }
-
     // Story generation form submission
     storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -45,11 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/generate_story', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'text/event-stream'
+                }
             });
 
             if (!response.ok) {
-                throw new Error('Failed to generate story');
+                throw new Error('Story generation failed');
             }
 
             // Process the response stream
@@ -70,7 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     try {
                         const data = JSON.parse(line);
-                        handleResponseData(data);
+                        if (data.type === 'complete') {
+                            window.location.href = '/review';
+                            return;
+                        } else if (data.type === 'log') {
+                            addLogMessage(data.message);
+                        } else if (data.type === 'paragraph') {
+                            // Store paragraph data if needed
+                            addLogMessage(`Generated paragraph ${data.data.index + 1}`);
+                        } else if (data.type === 'error') {
+                            throw new Error(data.message);
+                        }
                     } catch (parseError) {
                         console.error('Error parsing message:', line);
                     }
@@ -79,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
+            addLogMessage(`Error: ${error.message}`);
             alert('Failed to generate story. Please try again.');
         }
     });
@@ -89,41 +83,29 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'paragraph-card';
         card.innerHTML = `
             <div class="paragraph-text">${paragraph.text}</div>
-            <button class="btn btn-primary edit-paragraph" data-index="${index}">Edit</button>
-        `;
-        return card;
-    }
-
-    // Function to create display page card
-    function createDisplayPageCard(paragraph, index) {
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'book-page';
-        pageDiv.dataset.index = index;
-        
-        pageDiv.innerHTML = `
-            <div class="card h-100">
-                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
-                <div class="card-body">
-                    <p class="card-text">${paragraph.text}</p>
-                </div>
-                <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}" preload="none"></audio>
-                </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary edit-paragraph" data-index="${index}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil me-1" viewBox="0 0 16 16">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                    </svg>
+                    Edit
+                </button>
             </div>
         `;
-        return pageDiv;
+        return card;
     }
 
     // Review page functionality
     if (window.location.pathname === '/review') {
         // Edit paragraph functionality
         paragraphsContainer?.addEventListener('click', (e) => {
-            if (e.target.classList.contains('edit-paragraph')) {
-                const index = e.target.dataset.index;
-                const paragraphText = e.target.closest('.paragraph-card').querySelector('.paragraph-text').textContent;
+            if (e.target.classList.contains('edit-paragraph') || e.target.closest('.edit-paragraph')) {
+                const button = e.target.classList.contains('edit-paragraph') ? e.target : e.target.closest('.edit-paragraph');
+                const index = button.dataset.index;
+                const paragraphText = button.closest('.paragraph-card').querySelector('.paragraph-text').textContent;
                 
                 currentEditingParagraph = {
-                    element: e.target.closest('.paragraph-card').querySelector('.paragraph-text'),
+                    element: button.closest('.paragraph-card').querySelector('.paragraph-text'),
                     index: parseInt(index)
                 };
                 
@@ -176,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/bring_to_life', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Accept': 'text/event-stream'
                     }
                 });
 
@@ -209,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             } else if (data.type === 'log') {
                                 addLogMessage(data.message);
                             } else if (data.type === 'paragraph') {
-                                // Handle media updates if needed
                                 addLogMessage(`Generated media for paragraph ${data.data.index + 1}`);
                             }
                         } catch (parseError) {
@@ -286,7 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
         saveStoryBtn?.addEventListener('click', async () => {
             try {
                 const response = await fetch('/save_story', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (!response.ok) {
@@ -295,11 +280,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const data = await response.json();
                 if (data.success) {
-                    alert('Story saved successfully!');
+                    addLogMessage('Story saved successfully!');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to save story. Please try again.');
+                addLogMessage(`Error: ${error.message}`);
             }
         });
 
@@ -307,7 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const processGeneratedMedia = async () => {
             try {
                 const response = await fetch('/bring_to_life', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'text/event-stream'
+                    }
                 });
 
                 if (!response.ok) {
@@ -346,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to load story media. Please try again.');
+                addLogMessage(`Error: ${error.message}`);
             }
         };
 
