@@ -25,44 +25,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/generate_story', {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'text/event-stream'
-                }
+                body: formData
             });
 
             if (!response.ok) {
                 throw new Error('Story generation failed');
             }
 
-            // Process the response stream
+            // Read response as text stream
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
-
+            
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
-
+                
                 buffer += decoder.decode(value, {stream: true});
                 const lines = buffer.split('\n');
-
+                
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
-
+                    
                     try {
                         const data = JSON.parse(line);
                         if (data.type === 'complete') {
+                            // Redirect to review page
                             window.location.href = '/review';
                             return;
                         } else if (data.type === 'log') {
                             addLogMessage(data.message);
                         } else if (data.type === 'paragraph') {
-                            // Store paragraph data if needed
                             addLogMessage(`Generated paragraph ${data.data.index + 1}`);
-                        } else if (data.type === 'error') {
-                            throw new Error(data.message);
                         }
                     } catch (parseError) {
                         console.error('Error parsing message:', line);
@@ -72,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage(`Error: ${error.message}`);
             alert('Failed to generate story. Please try again.');
         }
     });
@@ -156,10 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const response = await fetch('/bring_to_life', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'text/event-stream'
-                    }
+                    method: 'POST'
                 });
 
                 if (!response.ok) {
@@ -269,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/save_story', {
                     method: 'POST',
                     headers: {
-                        'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     }
                 });
@@ -288,14 +278,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Process the generated story with media on page load
+        // Display page card creation
+        function createDisplayPageCard(paragraph, index) {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'book-page';
+            pageDiv.dataset.index = index;
+            
+            pageDiv.innerHTML = `
+                <div class="card h-100">
+                    <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
+                    <div class="card-body">
+                        <p class="card-text">${paragraph.text}</p>
+                    </div>
+                    <div class="card-footer">
+                        <audio controls src="${paragraph.audio_url}" preload="none"></audio>
+                    </div>
+                </div>
+            `;
+            return pageDiv;
+        }
+
+        // Process media on page load
         const processGeneratedMedia = async () => {
             try {
                 const response = await fetch('/bring_to_life', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'text/event-stream'
-                    }
+                    method: 'POST'
                 });
 
                 if (!response.ok) {
