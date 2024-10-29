@@ -22,5 +22,4 @@ dependencies = [
     "sounddevice>=0.5.1",
     "websockets>=12.0",
     "flask-session>=0.8.0",
-    "flask-cors>=5.0.0",
 ]
