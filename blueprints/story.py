@@ -35,8 +35,24 @@ def edit():
 def generate():
     if 'story_paragraphs' not in session:
         return redirect(url_for('main.index'))
-    paragraphs = session['story_paragraphs']
-    return render_template('story/generate.html', paragraphs=paragraphs)
+    
+    # Generate media for each paragraph if not already in session
+    paragraphs = session.get('story_paragraphs', [])
+    story_media = session.get('story_media', [])
+    
+    if not story_media:
+        story_media = []
+        for text in paragraphs:
+            image_url = image_service.generate_image(text)
+            audio_url = audio_service.generate_audio(text)
+            story_media.append({
+                'text': text,
+                'image_url': image_url,
+                'audio_url': audio_url
+            })
+        session['story_media'] = story_media
+    
+    return render_template('story/generate.html', story_cards=story_media)
 
 @story.route('/update_paragraph', methods=['POST'])
 def update_paragraph():
@@ -54,6 +70,10 @@ def update_paragraph():
             if 0 <= index < len(story_paragraphs):
                 story_paragraphs[index] = text
                 session['story_paragraphs'] = story_paragraphs
+                
+                # Clear story_media from session since text has changed
+                if 'story_media' in session:
+                    del session['story_media']
             
         # Generate new image and audio
         image_url = image_service.generate_image(text)
