@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from flask_session import Session
@@ -48,10 +48,16 @@ def index():
 
 @app.route('/review')
 def review():
+    # Check if story exists in session
+    if 'story_paragraphs' not in session:
+        return redirect(url_for('index'))
     return render_template('review.html')
 
 @app.route('/display')
 def display():
+    # Check if story exists in session and media has been generated
+    if 'story_paragraphs' not in session or session.get('current_step') != 'display':
+        return redirect(url_for('index'))
     return render_template('display.html')
 
 @app.route('/generate_story', methods=['POST'])
@@ -100,10 +106,12 @@ def generate_story():
 def bring_to_life():
     def generate():
         try:
-            story_paragraphs = session.get('story_paragraphs', [])
+            # Get story from session with proper error handling
+            story_paragraphs = session.get('story_paragraphs')
             if not story_paragraphs:
-                raise Exception("No story found in session")
-            
+                yield send_json_message('error', "No story found. Please generate a story first.")
+                return
+                
             total_paragraphs = len(story_paragraphs)
             
             # Process each paragraph and generate media
@@ -145,6 +153,9 @@ def bring_to_life():
 @app.route('/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:
+        if 'story_paragraphs' not in session:
+            return jsonify({'error': 'No story found. Please generate a story first.'}), 400
+
         data = request.get_json()
         text = data.get('text')
         index = data.get('index')

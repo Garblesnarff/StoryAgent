@@ -41,10 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     try {
                         const data = JSON.parse(line);
-                        if (data.type === 'complete') {
-                            // Only redirect after story generation is complete
+                        if (data.type === 'error') {
+                            throw new Error(data.message);
+                        } else if (data.type === 'complete') {
                             window.location.href = '/review';
                             return;
+                        } else if (data.type === 'log') {
+                            addLogMessage(data.message);
                         }
                     } catch (parseError) {
                         console.error('Error parsing message:', line);
@@ -123,6 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const data = JSON.parse(line);
                         switch (data.type) {
+                            case 'error':
+                                addLogMessage(`Error: ${data.message}`);
+                                break;
                             case 'log':
                                 addLogMessage(data.message);
                                 break;
@@ -181,31 +187,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to update paragraph');
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to update paragraph');
                 }
 
-                currentEditingParagraph.element.textContent = newText;
-                editModal.hide();
+                const data = await response.json();
+                if (data.success) {
+                    currentEditingParagraph.element.textContent = newText;
+                    editModal.hide();
+                    addLogMessage('Paragraph updated successfully');
+                }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to update paragraph. Please try again.');
+                addLogMessage(`Error: ${error.message}`);
             }
         });
 
         // Bring to Life button
         bringToLifeBtn?.addEventListener('click', async () => {
             bringToLifeBtn.disabled = true;
+            addLogMessage("Starting media generation...");
             
             try {
                 const response = await fetch('/bring_to_life', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (!response.ok) {
                     throw new Error('Failed to generate media');
                 }
 
-                // Process the response stream
+                // Process stream and show progress
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
@@ -223,8 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         try {
                             const data = JSON.parse(line);
-                            if (data.type === 'complete') {
-                                // Only redirect after media generation is complete
+                            if (data.type === 'error') {
+                                throw new Error(data.message);
+                            } else if (data.type === 'complete') {
                                 window.location.href = '/display';
                                 return;
                             } else if (data.type === 'log') {
@@ -238,8 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error:', error);
+                addLogMessage(`Error: ${error.message}`);
                 bringToLifeBtn.disabled = false;
-                alert('Failed to generate media. Please try again.');
             }
         });
     }
@@ -344,6 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const data = JSON.parse(line);
                         switch (data.type) {
+                            case 'error':
+                                throw new Error(data.message);
+                                break;
                             case 'paragraph':
                                 const pageElement = createDisplayPageCard(data.data, data.data.index);
                                 paragraphCards.appendChild(pageElement);
