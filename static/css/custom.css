@@ -1,6 +1,4 @@
-/* Existing styles... */
-
-/* New navigation styles */
+/* Navigation styles */
 .progress-nav {
     display: flex;
     align-items: center;
@@ -37,7 +35,97 @@
     opacity: 0.2;
 }
 
-/* Update navbar styling */
+/* Card and book container styles */
+.book-container {
+    perspective: 2000px;
+    width: 100%;
+    height: 600px;  /* Reduced height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 20px;  /* Reduced padding */
+}
+
+.book-page {
+    position: absolute;
+    width: 80%;  /* Reduced width */
+    max-width: 600px;  /* Added max-width */
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    transform-origin: left center;
+    transform-style: preserve-3d;
+}
+
+.card {
+    height: 100%;
+    background: var(--apple-card-bg);
+    border: 2px solid var(--apple-accent);  /* Added distinct border */
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.card-img-top {
+    height: 300px;  /* Reduced image height */
+    object-fit: cover;
+    border-radius: 15px 15px 0 0;
+}
+
+/* Navigation buttons */
+.book-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: var(--apple-glass);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.book-nav.prev {
+    left: 20px;
+}
+
+.book-nav.next {
+    right: 20px;
+}
+
+.book-nav:hover {
+    background: var(--apple-accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.book-nav svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--apple-text);
+}
+
+/* Page transitions */
+.book-page.active {
+    transform: rotateY(0deg);
+    z-index: 2;
+}
+
+.book-page.next {
+    transform: rotateY(0deg);
+    opacity: 0;
+    z-index: 1;
+}
+
+.book-page.prev {
+    transform: rotateY(-180deg);
+    z-index: 1;
+}
+
+/* Navbar styling */
 .navbar {
     background: var(--apple-card-bg);
     backdrop-filter: blur(10px);
@@ -54,5 +142,3 @@
 .navbar-brand:hover {
     color: var(--apple-accent);
 }
-
-/* Rest of the existing styles... */
