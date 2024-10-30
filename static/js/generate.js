@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            console.log('Media generation response:', data);
             
             if (data.success && data.story_media) {
                 const paragraphCards = document.getElementById('paragraph-cards');
@@ -40,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     paragraphCards.appendChild(pageDiv);
                 });
                 
-                // Setup navigation
+                // Show first page and setup navigation
                 const pages = document.querySelectorAll('.book-page');
                 if (pages.length > 0) {
                     pages[0].classList.add('active');
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 loadingOverlay.style.display = 'none';
                 document.getElementById('story-output').style.display = 'block';
                 document.getElementById('save-story').style.display = 'block';
+                
             } else {
                 throw new Error(data.error || 'Failed to generate media');
             }

@@ -71,16 +71,33 @@ def generate():
         
         if not paragraphs:
             return redirect(url_for('story.edit'))
+            
+        return render_template('story/generate.html', 
+                             story_cards=[],
+                             is_loading=True,
+                             total_paragraphs=len(paragraphs))
+                             
+    except Exception as e:
+        print(f"Error in generate route: {str(e)}")
+        return redirect(url_for('story.edit'))
+
+@story.route('/generate_media')
+def generate_media():
+    if 'story_paragraphs' not in session:
+        return jsonify({'error': 'No story found'}), 404
         
-        # Generate media for each paragraph
-        story_media = []
-        for text in paragraphs:
+    paragraphs = session.get('story_paragraphs', [])
+    story_media = []
+    
+    try:
+        for idx, text in enumerate(paragraphs):
+            # Generate image and audio for each paragraph
             image_url = image_service.generate_image(text)
             audio_url = audio_service.generate_audio(text)
             
             if not image_url or not audio_url:
-                raise Exception('Failed to generate media')
-                
+                raise Exception(f'Failed to generate media for paragraph {idx + 1}')
+            
             story_media.append({
                 'text': text,
                 'image_url': image_url,
@@ -88,12 +105,9 @@ def generate():
             })
         
         session['story_media'] = story_media
+        session.modified = True
+        return jsonify({'success': True, 'story_media': story_media})
         
-        return render_template('story/generate.html', 
-                             story_cards=story_media,
-                             is_loading=False,
-                             total_paragraphs=len(paragraphs))
-                             
     except Exception as e:
-        print(f"Error in generate route: {str(e)}")
-        return redirect(url_for('story.edit'))
+        print(f'Error generating media: {str(e)}')
+        return jsonify({'error': str(e)}), 500
