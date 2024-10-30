@@ -18,7 +18,8 @@
                 <button class="btn btn-secondary" onclick="window.location.href='/'">
                     <i class="bi bi-arrow-left"></i> Back to Prompt
                 </button>
-                <form action="{{ url_for('story.generate') }}" method="GET" class="d-inline">
+                <form action="{{ url_for('story.generate') }}" method="GET" style="display: inline;">
+                    <input type="hidden" name="generate" value="true">
                     <button type="submit" class="btn btn-primary">
                         Generate Cards <i class="bi bi-arrow-right"></i>
                     </button>

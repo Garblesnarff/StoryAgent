@@ -70,7 +70,10 @@ def generate():
         paragraphs = session.get('story_paragraphs', [])
         print(f"Loading generate page with {len(paragraphs)} paragraphs")  # Debug log
         
-        # Show loading template first
+        if not paragraphs:
+            return redirect(url_for('story.edit'))
+            
+        # Show loading template
         return render_template('story/generate.html', 
                              story_cards=[],
                              is_loading=True,
