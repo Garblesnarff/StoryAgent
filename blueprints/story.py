@@ -61,7 +61,7 @@ def update_paragraph():
         print(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@story.route('/generate', methods=['GET'])
+@story.route('/generate', methods=['GET', 'POST'])
 def generate():
     if 'story_paragraphs' not in session:
         return redirect(url_for('main.index'))
@@ -71,7 +71,7 @@ def generate():
         if not paragraphs:
             return redirect(url_for('story.edit'))
         
-        # Generate media for all paragraphs immediately
+        # Generate media for each paragraph
         story_media = []
         for idx, text in enumerate(paragraphs):
             print(f"Generating media for paragraph {idx + 1}")
@@ -91,7 +91,6 @@ def generate():
         session['story_media'] = story_media
         session.modified = True
         
-        # Pass the generated media directly to the template
         return render_template('story/generate.html', 
                              story_cards=story_media,
                              is_loading=False,
