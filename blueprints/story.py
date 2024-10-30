@@ -31,26 +31,6 @@ def edit():
         return render_template('story/edit.html', paragraphs=paragraphs)
     return render_template('story/edit.html')
 
-@story.route('/generate')
-def generate():
-    if 'story_paragraphs' not in session:
-        return redirect(url_for('main.index'))
-    
-    paragraphs = session.get('story_paragraphs', [])
-    story_media = []
-    
-    for text in paragraphs:
-        image_url = image_service.generate_image(text)
-        audio_url = audio_service.generate_audio(text)
-        story_media.append({
-            'text': text,
-            'image_url': image_url,
-            'audio_url': audio_url
-        })
-    
-    session['story_media'] = story_media
-    return render_template('story/generate.html', story_cards=story_media)
-
 @story.route('/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:
@@ -61,26 +41,62 @@ def update_paragraph():
         if not text:
             return jsonify({'error': 'No text provided'}), 400
             
-        # Update paragraph in session
+        # Only update text in session
         if 'story_paragraphs' in session:
             story_paragraphs = session['story_paragraphs']
             if 0 <= index < len(story_paragraphs):
                 story_paragraphs[index] = text
                 session['story_paragraphs'] = story_paragraphs
+                session.modified = True
                 
-                # Clear story_media from session since text has changed
+                # Clear media cache
                 if 'story_media' in session:
                     del session['story_media']
-            
-        # Generate new image and audio
-        image_url = image_service.generate_image(text)
-        audio_url = audio_service.generate_audio(text)
-        
+                    
         return jsonify({
             'success': True,
-            'text': text,
-            'image_url': image_url,
-            'audio_url': audio_url
+            'text': text
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@story.route('/generate')
+def generate():
+    if 'story_paragraphs' not in session:
+        return redirect(url_for('main.index'))
+    
+    try:
+        paragraphs = session.get('story_paragraphs', [])
+        
+        # Show loading template first
+        return render_template('story/generate.html', 
+                             story_cards=[],
+                             is_loading=True,
+                             total_paragraphs=len(paragraphs))
+                             
+    except Exception as e:
+        return redirect(url_for('story.edit'))
+
+@story.route('/generate_media')
+def generate_media():
+    try:
+        if 'story_paragraphs' not in session:
+            return jsonify({'error': 'No story found'}), 404
+            
+        paragraphs = session.get('story_paragraphs', [])
+        story_media = []
+        
+        for text in paragraphs:
+            image_url = image_service.generate_image(text)
+            audio_url = audio_service.generate_audio(text)
+            story_media.append({
+                'text': text,
+                'image_url': image_url,
+                'audio_url': audio_url
+            })
+        
+        session['story_media'] = story_media
+        return jsonify({'success': True, 'story_media': story_media})
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
