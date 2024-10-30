@@ -87,21 +87,22 @@ def generate():
 def generate_media():
     try:
         if 'story_paragraphs' not in session:
-            print("No story found in session")  # Debug log
+            print("No story found in session")
             return jsonify({'error': 'No story found'}), 404
             
         paragraphs = session.get('story_paragraphs', [])
-        print(f"Generating media for {len(paragraphs)} paragraphs")  # Debug log
+        print(f"Generating media for {len(paragraphs)} paragraphs")
         story_media = []
         
         for idx, text in enumerate(paragraphs):
             try:
-                print(f"Generating media for paragraph {idx + 1}")  # Debug log
+                print(f"Generating media for paragraph {idx + 1}")
+                # Generate media for this paragraph
                 image_url = image_service.generate_image(text)
                 audio_url = audio_service.generate_audio(text)
                 
                 if not image_url or not audio_url:
-                    print(f"Failed to generate media for paragraph {idx + 1}")  # Debug log
+                    print(f"Failed to generate media for paragraph {idx + 1}")
                     raise Exception('Failed to generate media')
                     
                 story_media.append({
@@ -109,7 +110,7 @@ def generate_media():
                     'image_url': image_url,
                     'audio_url': audio_url
                 })
-                print(f"Successfully generated media for paragraph {idx + 1}")  # Debug log
+                print(f"Successfully generated media for paragraph {idx + 1}")
                 
             except Exception as e:
                 print(f'Error generating media for paragraph {idx}: {str(e)}')
@@ -117,7 +118,7 @@ def generate_media():
         
         session['story_media'] = story_media
         session.modified = True
-        print("Successfully generated all media")  # Debug log
+        print("Successfully generated all media")
         return jsonify({'success': True, 'story_media': story_media})
         
     except Exception as e:

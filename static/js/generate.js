@@ -1,10 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingOverlay = document.querySelector('.loading-overlay');
     if (loadingOverlay) {
-        const progressBar = loadingOverlay.querySelector('.progress-bar');
-        const currentProgress = loadingOverlay.querySelector('#current-progress');
-        const totalParagraphs = loadingOverlay.querySelector('#total-paragraphs');
-        
         try {
             console.log('Starting media generation...');
             const response = await fetch('/story/generate_media');
@@ -12,32 +8,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            console.log('Media generation response:', data);
             
             if (data.success && data.story_media) {
-                // Create story cards
                 const paragraphCards = document.getElementById('paragraph-cards');
+                const progressBar = loadingOverlay.querySelector('.progress-bar');
+                const currentProgress = loadingOverlay.querySelector('#current-progress');
+                
                 data.story_media.forEach((card, index) => {
                     // Update progress
                     const progress = ((index + 1) / data.story_media.length) * 100;
                     progressBar.style.width = `${progress}%`;
                     currentProgress.textContent = index + 1;
                     
+                    // Create card
                     const pageDiv = document.createElement('div');
                     pageDiv.className = 'book-page';
                     pageDiv.dataset.index = index;
                     
                     pageDiv.innerHTML = `
                         <div class="card h-100">
-                            <img src="${card.image_url}" class="card-img-top" alt="Generated image" 
-                                 onerror="this.src='/static/img/placeholder.png'">
+                            <img src="${card.image_url}" class="card-img-top" alt="Generated image">
                             <div class="card-body">
                                 <p class="card-text">${card.text}</p>
                             </div>
                             <div class="card-footer">
-                                <audio controls src="${card.audio_url}" 
-                                       onerror="this.closest('.card-footer').innerHTML = 'Audio failed to load'">
-                                </audio>
+                                <audio controls src="${card.audio_url}"></audio>
                             </div>
                         </div>
                     `;
@@ -55,19 +50,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
                 
-                // Hide loading overlay
+                // Hide loading overlay and show content
                 loadingOverlay.style.display = 'none';
-                
-                // Show story output and save button
                 document.getElementById('story-output').style.display = 'block';
-                const saveBtn = document.getElementById('save-story');
-                if (saveBtn) saveBtn.style.display = 'block';
-                
+                document.getElementById('save-story').style.display = 'block';
             } else {
                 throw new Error(data.error || 'Failed to generate media');
             }
         } catch (error) {
-            console.error('Error generating media:', error);
+            console.error('Error:', error);
             loadingOverlay.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="bi bi-exclamation-triangle-fill"></i>
