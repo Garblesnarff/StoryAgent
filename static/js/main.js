@@ -27,6 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+async function generateCards() {
+    try {
+        // Redirect to generate page
+        window.location.href = '/story/generate';
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
 async function saveParagraph(container) {
     const textArea = container.querySelector('.paragraph-text');
     const index = container.dataset.index;
