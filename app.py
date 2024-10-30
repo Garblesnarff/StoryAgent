@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 import secrets
@@ -31,11 +31,20 @@ with app.app_context():
 
 @app.route('/')
 def index():
+    # Clear any existing story data when returning to home
+    if 'story_data' in session:
+        session.pop('story_data', None)
     return render_template('index.html')
 
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     try:
+        # Validate form data
+        required_fields = ['prompt', 'genre', 'mood', 'target_audience']
+        for field in required_fields:
+            if not request.form.get(field):
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
         prompt = request.form.get('prompt')
         genre = request.form.get('genre')
         mood = request.form.get('mood')
@@ -49,12 +58,13 @@ def generate_story():
         if not story_paragraphs:
             return jsonify({'error': 'Failed to generate story'}), 500
             
-        # Store story data in session
+        # Store story data in session with metadata
         session['story_data'] = {
             'prompt': prompt,
             'genre': genre,
             'mood': mood,
             'target_audience': target_audience,
+            'created_at': str(datetime.now()),
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
         }
         
@@ -66,8 +76,20 @@ def generate_story():
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
-    # TODO: Implement story saving logic
-    return jsonify({'success': True})
+    if 'story_data' not in session:
+        return jsonify({'error': 'No story data found'}), 404
+        
+    try:
+        # TODO: Implement story saving logic to database
+        return jsonify({'success': True})
+    except Exception as e:
+        app.logger.error(f"Error saving story: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.errorhandler(403)
+def forbidden(e):
+    flash('Please start by creating a new story', 'warning')
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
