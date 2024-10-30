@@ -41,7 +41,23 @@
                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                 </svg>
             </button>
-            <div class="book-pages" id="paragraph-cards"></div>
+            <div class="book-pages" id="paragraph-cards">
+                {% if story_cards %}
+                    {% for card in story_cards %}
+                    <div class="book-page" data-index="{{ loop.index0 }}">
+                        <div class="card h-100">
+                            <img src="{{ card.image_url }}" class="card-img-top" alt="Generated image">
+                            <div class="card-body">
+                                <p class="card-text">{{ card.text }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <audio controls src="{{ card.audio_url }}"></audio>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
             <button class="book-nav next" style="display: none;">
                 <svg viewBox="0 0 24 24">
                     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>

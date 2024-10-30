@@ -18,7 +18,7 @@
                 <button class="btn btn-secondary" onclick="window.location.href='/'">
                     <i class="bi bi-arrow-left"></i> Back to Prompt
                 </button>
-                <button type="button" class="btn btn-primary" onclick="generateCards()">
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('story.generate') }}'">
                     Generate Cards <i class="bi bi-arrow-right"></i>
                 </button>
             </div>

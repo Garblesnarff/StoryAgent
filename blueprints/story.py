@@ -61,41 +61,25 @@ def update_paragraph():
         print(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@story.route('/generate')
+@story.route('/generate', methods=['GET'])
 def generate():
     if 'story_paragraphs' not in session:
         return redirect(url_for('main.index'))
     
     try:
         paragraphs = session.get('story_paragraphs', [])
-        
         if not paragraphs:
             return redirect(url_for('story.edit'))
-            
-        return render_template('story/generate.html', 
-                             story_cards=[],
-                             is_loading=True,
-                             total_paragraphs=len(paragraphs))
-                             
-    except Exception as e:
-        print(f"Error in generate route: {str(e)}")
-        return redirect(url_for('story.edit'))
-
-@story.route('/generate_media')
-def generate_media():
-    if 'story_paragraphs' not in session:
-        return jsonify({'error': 'No story found'}), 404
         
-    paragraphs = session.get('story_paragraphs', [])
-    story_media = []
-    
-    try:
+        # Generate media for all paragraphs immediately
+        story_media = []
         for idx, text in enumerate(paragraphs):
-            # Generate image and audio for each paragraph
+            print(f"Generating media for paragraph {idx + 1}")
             image_url = image_service.generate_image(text)
             audio_url = audio_service.generate_audio(text)
             
             if not image_url or not audio_url:
+                print(f"Failed to generate media for paragraph {idx + 1}")
                 raise Exception(f'Failed to generate media for paragraph {idx + 1}')
             
             story_media.append({
@@ -106,8 +90,13 @@ def generate_media():
         
         session['story_media'] = story_media
         session.modified = True
-        return jsonify({'success': True, 'story_media': story_media})
         
+        # Pass the generated media directly to the template
+        return render_template('story/generate.html', 
+                             story_cards=story_media,
+                             is_loading=False,
+                             total_paragraphs=len(paragraphs))
+                             
     except Exception as e:
-        print(f'Error generating media: {str(e)}')
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in generate route: {str(e)}")
+        return redirect(url_for('story.edit'))
