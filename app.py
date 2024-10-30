@@ -1,7 +1,6 @@
 import os
 from flask import Flask, render_template, request, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 import secrets
 
@@ -15,7 +14,6 @@ app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)  # Add secret key for session management
 db.init_app(app)
-socketio = SocketIO(app)
 
 # Initialize services
 text_service = TextGenerator()
@@ -72,4 +70,4 @@ def save_story():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)
