@@ -58,6 +58,7 @@ def update_paragraph():
             'text': text
         })
     except Exception as e:
+        print(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @story.route('/generate')
@@ -75,6 +76,7 @@ def generate():
                              total_paragraphs=len(paragraphs))
                              
     except Exception as e:
+        print(f"Error in generate route: {str(e)}")
         return redirect(url_for('story.edit'))
 
 @story.route('/generate_media')
@@ -86,17 +88,27 @@ def generate_media():
         paragraphs = session.get('story_paragraphs', [])
         story_media = []
         
-        for text in paragraphs:
-            image_url = image_service.generate_image(text)
-            audio_url = audio_service.generate_audio(text)
-            story_media.append({
-                'text': text,
-                'image_url': image_url,
-                'audio_url': audio_url
-            })
+        for idx, text in enumerate(paragraphs):
+            try:
+                image_url = image_service.generate_image(text)
+                audio_url = audio_service.generate_audio(text)
+                
+                if not image_url or not audio_url:
+                    raise Exception('Failed to generate media')
+                    
+                story_media.append({
+                    'text': text,
+                    'image_url': image_url,
+                    'audio_url': audio_url
+                })
+                
+            except Exception as e:
+                print(f'Error generating media for paragraph {idx}: {str(e)}')
+                return jsonify({'error': f'Failed to generate media for paragraph {idx + 1}'}), 500
         
         session['story_media'] = story_media
         return jsonify({'success': True, 'story_media': story_media})
         
     except Exception as e:
+        print(f'Error in generate_media: {str(e)}')
         return jsonify({'error': str(e)}), 500

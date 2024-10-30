@@ -6,8 +6,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const totalParagraphs = loadingOverlay.querySelector('#total-paragraphs');
         
         try {
+            console.log('Starting media generation...');
             const response = await fetch('/story/generate_media');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
+            console.log('Media generation response:', data);
             
             if (data.success && data.story_media) {
                 // Create story cards
@@ -24,17 +29,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     pageDiv.innerHTML = `
                         <div class="card h-100">
-                            <img src="${card.image_url}" class="card-img-top" alt="Generated image">
+                            <img src="${card.image_url}" class="card-img-top" alt="Generated image" 
+                                 onerror="this.src='/static/img/placeholder.png'">
                             <div class="card-body">
                                 <p class="card-text">${card.text}</p>
                             </div>
                             <div class="card-footer">
-                                <div class="audio-container">
-                                    <button class="btn btn-sm btn-secondary play-audio-btn">
-                                        <i class="bi bi-play-fill"></i> Play Audio
-                                    </button>
-                                    <audio src="${card.audio_url}" preload="none"></audio>
-                                </div>
+                                <audio controls src="${card.audio_url}" 
+                                       onerror="this.closest('.card-footer').innerHTML = 'Audio failed to load'">
+                                </audio>
                             </div>
                         </div>
                     `;
@@ -42,18 +45,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                     paragraphCards.appendChild(pageDiv);
                 });
                 
-                // Setup navigation and audio players
-                setupNavigation();
-                setupAudioPlayers();
+                // Setup navigation
+                const pages = document.querySelectorAll('.book-page');
+                if (pages.length > 0) {
+                    pages[0].classList.add('active');
+                    if (pages.length > 1) {
+                        document.querySelector('.book-nav.prev').style.display = 'flex';
+                        document.querySelector('.book-nav.next').style.display = 'flex';
+                    }
+                }
                 
                 // Hide loading overlay
                 loadingOverlay.style.display = 'none';
                 
-                // Show save button
+                // Show story output and save button
+                document.getElementById('story-output').style.display = 'block';
                 const saveBtn = document.getElementById('save-story');
-                if (saveBtn) {
-                    saveBtn.style.display = 'block';
-                }
+                if (saveBtn) saveBtn.style.display = 'block';
+                
             } else {
                 throw new Error(data.error || 'Failed to generate media');
             }
@@ -62,59 +71,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadingOverlay.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    Error generating story cards. Please try again.
+                    Error generating story cards: ${error.message}
                     <button class="btn btn-outline-danger mt-3" onclick="window.location.reload()">
                         Retry
                     </button>
                 </div>
             `;
         }
-    }
-    
-    function setupNavigation() {
-        const pages = document.querySelectorAll('.book-page');
-        if (pages.length > 0) {
-            pages[0].classList.add('active');
-            if (pages.length > 1) {
-                document.querySelector('.book-nav.prev').style.display = 'flex';
-                document.querySelector('.book-nav.next').style.display = 'flex';
-            }
-        }
-    }
-    
-    function setupAudioPlayers() {
-        document.querySelectorAll('.audio-container').forEach(container => {
-            const playBtn = container.querySelector('.play-audio-btn');
-            const audio = container.querySelector('audio');
-            
-            if (playBtn && audio) {
-                playBtn.addEventListener('click', () => {
-                    const allAudios = document.querySelectorAll('audio');
-                    allAudios.forEach(a => {
-                        if (a !== audio && !a.paused) {
-                            a.pause();
-                            a.currentTime = 0;
-                            a.closest('.audio-container').querySelector('.play-audio-btn').innerHTML = 
-                                '<i class="bi bi-play-fill"></i> Play Audio';
-                        }
-                    });
-                    
-                    if (audio.paused) {
-                        audio.play().catch(() => {
-                            console.log('Audio playback requires user interaction');
-                        });
-                        playBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
-                    } else {
-                        audio.pause();
-                        audio.currentTime = 0;
-                        playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Play Audio';
-                    }
-                });
-                
-                audio.addEventListener('ended', () => {
-                    playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Play Audio';
-                });
-            }
-        });
     }
 });
