@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <h1 class="display-4 mb-5 text-center">Generated Story Cards</h1>
+    
+    <div id="log-output" class="mt-5 mb-5">
+        <h3 class="h4 mb-3">Generation Progress</h3>
+        <div id="log-content" class="border p-3" style="height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <div id="story-output" class="mt-5">
+        <div class="book-container">
+            <button class="book-nav prev" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <div class="book-pages" id="paragraph-cards"></div>
+            <button class="book-nav next" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="save-button-container">
+    <div class="d-flex gap-3 justify-content-center">
+        <a href="/story/edit" class="btn btn-secondary btn-lg">Back to Edit</a>
+        <button id="save-story" class="btn btn-success btn-lg">Save Story</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/card-generation.js') }}"></script>
+{% endblock %}
