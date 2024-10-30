@@ -105,7 +105,7 @@
 }
 
 .card {
-    width: 512px;
+    width: 400px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -118,8 +118,8 @@
 }
 
 .card-img-top {
-    height: 512px;
-    width: 512px;
+    height: 400px;
+    width: 400px;
     object-fit: contain;
     margin: 0 auto;
     border-radius: 20px 20px 0 0;
@@ -132,6 +132,14 @@
 .card-footer {
     padding: 0.5rem 1rem;
     margin-top: auto;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.card-footer audio {
+    width: 90%;
+    margin: 0 auto;
 }
 
 /* Navbar styling */
