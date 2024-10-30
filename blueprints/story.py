@@ -12,6 +12,7 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
+    # Check if story data exists in session
     if 'story_data' not in session:
         return redirect(url_for('index'))
     return render_template('story/edit.html', story=session['story_data'])
@@ -19,6 +20,10 @@ def edit():
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:
+        # Check if story data exists in session
+        if 'story_data' not in session:
+            return jsonify({'error': 'No story data found'}), 404
+
         data = request.get_json()
         text = data.get('text')
         index = data.get('index')
@@ -27,12 +32,15 @@ def update_paragraph():
             return jsonify({'error': 'Invalid data provided'}), 400
             
         # Update story in session
-        if 'story_data' in session:
-            story_data = session['story_data']
-            story_data['paragraphs'][index]['text'] = text
-            session['story_data'] = story_data
+        story_data = session['story_data']
+        if index >= len(story_data['paragraphs']):
+            return jsonify({'error': 'Invalid paragraph index'}), 400
             
-            # Generate new image and audio
+        story_data['paragraphs'][index]['text'] = text
+        session['story_data'] = story_data
+        
+        # Generate new image and audio if requested
+        if data.get('generate_media', False):
             image_url = image_service.generate_image(text)
             audio_url = audio_service.generate_audio(text)
             
@@ -47,12 +55,22 @@ def update_paragraph():
                 'image_url': image_url,
                 'audio_url': audio_url
             })
+        
+        return jsonify({
+            'success': True,
+            'text': text
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @story_bp.route('/story/regenerate_image', methods=['POST'])
 def regenerate_image():
     try:
+        # Check if story data exists in session
+        if 'story_data' not in session:
+            return jsonify({'error': 'No story data found'}), 404
+
         data = request.get_json()
         text = data.get('text')
         index = data.get('index')
@@ -63,10 +81,9 @@ def regenerate_image():
         image_url = regeneration_service.regenerate_image(text)
         
         # Update image URL in session
-        if 'story_data' in session:
-            story_data = session['story_data']
-            story_data['paragraphs'][index]['image_url'] = image_url
-            session['story_data'] = story_data
+        story_data = session['story_data']
+        story_data['paragraphs'][index]['image_url'] = image_url
+        session['story_data'] = story_data
             
         return jsonify({
             'success': True,
@@ -78,6 +95,10 @@ def regenerate_image():
 @story_bp.route('/story/regenerate_audio', methods=['POST'])
 def regenerate_audio():
     try:
+        # Check if story data exists in session
+        if 'story_data' not in session:
+            return jsonify({'error': 'No story data found'}), 404
+
         data = request.get_json()
         text = data.get('text')
         index = data.get('index')
@@ -88,10 +109,9 @@ def regenerate_audio():
         audio_url = regeneration_service.regenerate_audio(text)
         
         # Update audio URL in session
-        if 'story_data' in session:
-            story_data = session['story_data']
-            story_data['paragraphs'][index]['audio_url'] = audio_url
-            session['story_data'] = story_data
+        story_data = session['story_data']
+        story_data['paragraphs'][index]['audio_url'] = audio_url
+        session['story_data'] = story_data
             
         return jsonify({
             'success': True,

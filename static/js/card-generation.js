@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-footer">
                     <audio controls src="${paragraph.audio_url}"></audio>
                 </div>
-                <div class="progress-indicator"></div>
             </div>
         `;
         return pageDiv;
@@ -35,10 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateProgress(currentIndex, totalParagraphs) {
         const cards = document.querySelectorAll('.book-page');
         cards.forEach((card, index) => {
-            const indicator = card.querySelector('.progress-indicator');
-            if (indicator && index === currentIndex) {
+            if (index === currentIndex) {
                 const progress = ((index + 1) / totalParagraphs) * 100;
-                indicator.style.background = `conic-gradient(var(--apple-accent) ${progress}%, transparent ${progress}%)`;
+                // Update progress indicator if needed
             }
         });
     }
@@ -51,23 +49,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!prevButton || !nextButton) return;
         
-        prevButton.style.display = currentPage > 0 ? 'block' : 'none';
-        nextButton.style.display = currentPage < totalPages - 1 ? 'block' : 'none';
+        // Always show navigation if there are multiple pages
+        if (totalPages > 1) {
+            prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
+            nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
+        } else {
+            prevButton.style.display = 'none';
+            nextButton.style.display = 'none';
+        }
         
         pages.forEach((page, index) => {
-            page.classList.remove('active', 'next', 'prev', 'turning');
-            
             if (index === currentPage) {
-                page.classList.add('active');
                 page.style.display = 'block';
-            } else if (index === currentPage + 1) {
-                page.classList.add('next');
-                page.style.display = 'block';
-            } else if (index === currentPage - 1) {
-                page.classList.add('prev');
-                page.style.display = 'block';
+                page.style.opacity = '1';
+                page.style.transform = 'rotateY(0deg)';
             } else {
                 page.style.display = 'none';
+                page.style.opacity = '0';
             }
         });
     }
@@ -158,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save story functionality
     document.getElementById('save-story')?.addEventListener('click', async () => {
         try {
+            addLogMessage('Saving story...');
             const response = await fetch('/save_story', {
                 method: 'POST',
                 headers: {
@@ -171,12 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             if (data.success) {
-                alert('Story saved successfully!');
+                addLogMessage('Story saved successfully!');
             } else {
                 throw new Error('Failed to save story');
             }
         } catch (error) {
             console.error('Error:', error);
+            addLogMessage('Error: Failed to save story');
             alert('Failed to save story. Please try again.');
         }
     });
