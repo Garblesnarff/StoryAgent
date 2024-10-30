@@ -61,7 +61,7 @@ def update_paragraph():
         print(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@story.route('/generate', methods=['GET', 'POST'])
+@story.route('/generate', methods=['GET'])
 def generate():
     if 'story_paragraphs' not in session:
         return redirect(url_for('main.index'))

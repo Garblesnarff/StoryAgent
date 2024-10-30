@@ -9,70 +9,90 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    const generateCardsBtn = document.getElementById('generateCards');
-    if (generateCardsBtn) {
-        generateCardsBtn.addEventListener('click', async () => {
-            try {
-                window.location.href = '/story/generate';
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        });
-    }
 });
 
 async function saveParagraph(container) {
-    if (!container) return;
-    
-    const text = container.querySelector('.paragraph-text')?.value;
-    const index = parseInt(container.dataset.index);
-    const saveButton = container.querySelector('.save-paragraph');
-    const alert = container.querySelector('.alert');
-    
-    if (!text || isNaN(index) || !saveButton || !alert) {
-        console.error('Required elements not found');
-        return;
-    }
-    
     try {
+        if (!container) {
+            console.error('No container found');
+            return;
+        }
+        
+        const textArea = container.querySelector('.paragraph-text');
+        const index = container.dataset.index;
+        const saveButton = container.querySelector('.save-paragraph');
+        const alert = container.querySelector('.alert');
+        
+        if (!textArea) {
+            throw new Error('Textarea not found');
+        }
+        if (index === undefined) {
+            throw new Error('Paragraph index not found');
+        }
+        if (!saveButton) {
+            throw new Error('Save button not found');
+        }
+        if (!alert) {
+            throw new Error('Alert element not found');
+        }
+
+        const text = textArea.value;
+        
         saveButton.disabled = true;
         const response = await fetch('/story/update_paragraph', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, index })
+            body: JSON.stringify({ text, index: parseInt(index) })
         });
         
-        if (!response.ok) throw new Error('Failed to save');
+        if (!response.ok) {
+            throw new Error('Failed to save changes');
+        }
         
         // Show success alert
         alert.classList.remove('alert-danger');
         alert.classList.add('alert-success');
         alert.innerHTML = `
-            Changes saved successfully!
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                Changes saved successfully!
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
         `;
         alert.style.display = 'block';
         alert.classList.add('show');
         
         setTimeout(() => {
-            if (alert) {
+            if (alert && alert.classList.contains('show')) {
                 alert.classList.remove('show');
-                alert.style.display = 'none';
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 150);
             }
         }, 3000);
         
     } catch (error) {
-        console.error('Error:', error);
-        alert.classList.remove('alert-success');
-        alert.classList.add('alert-danger');
-        alert.innerHTML = `
-            Failed to save changes. Please try again.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        alert.style.display = 'block';
-        alert.classList.add('show');
+        console.error('Error:', error.message);
+        if (!container) return;
+        
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.classList.remove('alert-success');
+            alert.classList.add('alert-danger');
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    ${error.message}
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            alert.style.display = 'block';
+            alert.classList.add('show');
+        }
     } finally {
-        if (saveButton) saveButton.disabled = false;
+        const saveButton = container?.querySelector('.save-paragraph');
+        if (saveButton) {
+            saveButton.disabled = false;
+        }
     }
 }
