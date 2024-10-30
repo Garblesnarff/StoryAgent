@@ -1,0 +1,129 @@
+import websockets
+import json
+import asyncio
+import base64
+import os
+from datetime import datetime
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class AudiobookReader:
+    def __init__(self, api_key, config_id, secret_key=None):
+        self.api_key = api_key
+        # Include config_id in the URL and explicitly set evi_version=2
+        base_url = "wss://api.hume.ai/v0/evi/chat"
+        params = [
+            f"config_id={config_id}",
+            "evi_version=2"
+        ]
+
+        if secret_key:
+            # If secret key is provided, we could implement token-based auth here
+            params.append(f"api_key={api_key}")
+        else:
+            params.append(f"api_key={api_key}")
+
+        self.ws_url = f"{base_url}?{'&'.join(params)}"
+        self.audio_chunk_counter = 0
+        self.output_dir = "audiobook_output"
+
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+            logger.info(f"Created output directory: {self.output_dir}")
+
+    async def connect(self):
+        logger.info(f"Connecting to Hume EVI with URL: {self.ws_url}")
+        self.ws = await websockets.connect(self.ws_url)
+        metadata = await self.ws.recv()
+        metadata_json = json.loads(metadata)
+        logger.info(f"Connected with chat_id: {metadata_json.get('chat_id')}")
+        return metadata_json
+
+    async def read_text(self, text):
+        """
+        Sends text for narration
+        """
+        logger.info("Starting narration...")
+
+        # Create a session directory with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_dir = os.path.join(self.output_dir, f"session_{timestamp}")
+        os.makedirs(session_dir)
+        logger.info(f"Created session directory: {session_dir}")
+
+        # Send the text as a narration request
+        message = {
+            "type": "user_input",
+            "text": text,
+            "mode": "narrate"  # Adding a mode indicator
+        }
+
+        await self.ws.send(json.dumps(message))
+        logger.info("Sent text for narration")
+
+        # Handle the response
+        while True:
+            response = await self.ws.recv()
+            response_data = json.loads(response)
+            logger.info(f"Received message type: {response_data['type']}")
+
+            if response_data["type"] == "audio_output":
+                logger.info("Received audio output")
+                audio_bytes = base64.b64decode(response_data["data"])
+                await self._save_audio(audio_bytes, session_dir)
+
+            elif response_data["type"] == "assistant_end":
+                logger.info("Narration completed")
+                break
+
+            elif response_data["type"] == "assistant_message":
+                # Log any unexpected conversational responses
+                logger.warning(f"Received unexpected assistant message: {response_data.get('text', '')}")
+
+    async def _save_audio(self, audio_bytes, session_dir):
+        """
+        Save the audio chunks with proper naming
+        """
+        self.audio_chunk_counter += 1
+        filename = os.path.join(session_dir, f"chunk_{self.audio_chunk_counter:04d}.wav")
+
+        try:
+            with open(filename, 'wb') as f:
+                f.write(audio_bytes)
+            logger.info(f"Saved audio chunk to: {filename}")
+        except Exception as e:
+            logger.error(f"Error saving audio file: {e}")
+
+    async def close(self):
+        await self.ws.close()
+        logger.info("Connection closed")
+
+async def main():
+    # Use environment variables for sensitive information
+    config_id = os.environ['HUME_CONFIG_ID']
+    api_key = os.environ['HUME_API_KEY']
+    secret_key = os.environ['HUME_SECRET_KEY']
+
+    if not all([config_id, api_key]):
+        raise ValueError("Missing required environment variables")
+
+    reader = AudiobookReader(api_key, config_id, secret_key)
+
+    try:
+        await reader.connect()
+
+        # Your test text
+        text = """In the heart of a whimsical, medieval village, Logan navigates his day-to-day life with a unique blend of curiosity and creativity. Despite his small stature, which often becomes the subject of jest among his peers, Logan's perspective of the world remains undiminished. The scene is set in the bustling village square, where Logan's diminutive form contrasts sharply with the towering figures around him. His keen eyes dart from one fascinating scene to another—merchants hawking their wares, artisans crafting goods, and children running about. Yet, amidst this lively tableau, a few snickers and pointed fingers directed at Logan's size subtly underscore the challenges he faces."""
+
+        await reader.read_text(text)
+
+    except Exception as e:
+        logger.error(f"Error during execution: {e}")
+    finally:
+        await reader.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
