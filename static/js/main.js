@@ -23,15 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
 
+            const data = await response.json();
+            
             if (!response.ok) {
-                throw new Error('Story generation failed');
+                throw new Error(data.error || 'Story generation failed');
             }
 
-            const data = await response.json();
             if (data.success && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                throw new Error('Invalid response from server');
+                throw new Error(data.error || 'Invalid response from server');
             }
         } catch (error) {
             console.error('Error:', error);

@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, session, jsonify, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 import secrets
+from datetime import datetime
 
 from services.text_generator import TextGenerator
 
