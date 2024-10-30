@@ -35,6 +35,64 @@
     opacity: 0.2;
 }
 
+/* Loading animation styles */
+.loading-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 2rem auto;
+}
+
+.loading-circle svg {
+    transform-origin: center;
+    animation: rotate 2s linear infinite;
+}
+
+.loading-circle circle {
+    fill: none;
+    stroke: var(--apple-accent);
+    stroke-width: 4;
+    stroke-dasharray: 283;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dashoffset: 283;
+    }
+    50% {
+        stroke-dashoffset: 70;
+    }
+    100% {
+        stroke-dashoffset: 283;
+    }
+}
+
+#log-output {
+    text-align: center;
+}
+
+#log-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: var(--apple-text);
+    opacity: 0.8;
+    margin-top: 1rem;
+}
+
 /* Card and book container styles */
 .book-container {
     perspective: 2000px;
