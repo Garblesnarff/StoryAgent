@@ -119,21 +119,18 @@
     border-radius: 20px 20px 0 0;
 }
 
-/* Move buttons outside card */
-.save-button-container {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
+.card-footer audio {
     width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 1rem;
-    z-index: 1000;
-    background: linear-gradient(transparent, var(--apple-bg));
+    margin: 10px 0;
+    z-index: 10;
+    position: relative;
 }
 
 /* Navbar styling */
 .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     background: var(--apple-card-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--apple-glass);
@@ -148,4 +145,16 @@
 
 .navbar-brand:hover {
     color: var(--apple-accent);
+}
+
+.nav-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-actions .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
 }

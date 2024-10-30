@@ -17,6 +17,12 @@
                 <div class="nav-item {% if request.endpoint == 'story.edit' %}active{% endif %}" id="edit-stage">2. Story Edit</div>
                 <div class="nav-item {% if request.endpoint == 'generation.generate' %}active{% endif %}" id="generate-stage">3. Card Generation</div>
             </div>
+            <div class="nav-actions">
+                {% if request.endpoint == 'generation.generate' %}
+                    <a href="/story/edit" class="btn btn-secondary">Back to Edit</a>
+                    <button id="save-story" class="btn btn-success">Save Story</button>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
