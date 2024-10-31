@@ -6,15 +6,17 @@
     
     <div id="log-output" class="mt-5 mb-5">
         <h3 class="h4 mb-3">Generation Progress</h3>
-        <div class="loading-circle">
-            <svg viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45"/>
-            </svg>
+        <div class="generation-status">
+            <div class="loading-circle">
+                <svg viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45"/>
+                </svg>
+            </div>
+            <div id="log-content" class="progress-text"></div>
         </div>
-        <div id="log-content" class="progress-text"></div>
     </div>
 
-    <div id="story-output" class="mt-5">
+    <div id="story-output" class="mt-5" style="display: none;">
         <div class="book-container">
             <button class="book-nav prev">
                 <svg viewBox="0 0 24 24">

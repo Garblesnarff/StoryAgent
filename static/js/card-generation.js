@@ -1,11 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
-    const paragraphCards = document.getElementById('paragraph-cards');
+    const loadingCircle = document.querySelector('.loading-circle');
     const logContent = document.getElementById('log-content');
     let currentPage = 0;
     let totalPages = 0;
     
+    function showLoading(show = true) {
+        if (loadingCircle) {
+            loadingCircle.style.display = show ? 'block' : 'none';
+        }
+    }
+    
     function addLogMessage(message) {
+        if (!logContent) return;
         const logEntry = document.createElement('div');
         logEntry.textContent = message;
         logContent.appendChild(logEntry);
@@ -13,32 +20,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function createPageElement(paragraph, index) {
+        if (!paragraph) return null;
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
         pageDiv.innerHTML = `
             <div class="card h-100">
-                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
+                ${paragraph.image_url ? `<img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">` : ''}
                 <div class="card-body">
-                    <p class="card-text">${paragraph.text}</p>
+                    <p class="card-text">${paragraph.text || ''}</p>
                 </div>
+                ${paragraph.audio_url ? `
                 <div class="card-footer">
                     <audio controls src="${paragraph.audio_url}"></audio>
-                </div>
+                </div>` : ''}
             </div>
         `;
         return pageDiv;
-    }
-    
-    function updateProgress(currentIndex, totalParagraphs) {
-        const cards = document.querySelectorAll('.book-page');
-        cards.forEach((card, index) => {
-            if (index === currentIndex) {
-                const progress = ((index + 1) / totalParagraphs) * 100;
-                // Update progress indicator if needed
-            }
-        });
     }
     
     function updateNavigation() {
@@ -49,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!prevButton || !nextButton) return;
         
-        // Always show navigation if there are multiple pages
         if (totalPages > 1) {
             prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
             nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
@@ -74,27 +72,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextButton = document.querySelector('.book-nav.next');
     const prevButton = document.querySelector('.book-nav.prev');
     
-    if (nextButton) {
-        nextButton.addEventListener('click', () => {
-            if (currentPage < totalPages - 1) {
-                currentPage++;
-                updateNavigation();
-            }
-        });
-    }
+    nextButton?.addEventListener('click', () => {
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            updateNavigation();
+        }
+    });
     
-    if (prevButton) {
-        prevButton.addEventListener('click', () => {
-            if (currentPage > 0) {
-                currentPage--;
-                updateNavigation();
-            }
-        });
+    prevButton?.addEventListener('click', () => {
+        if (currentPage > 0) {
+            currentPage--;
+            updateNavigation();
+        }
+    });
+    
+    // Show loading at start
+    if (storyOutput) {
+        showLoading(true);
+        storyOutput.style.display = 'none';
     }
     
     // Generate cards
     async function generateCards() {
         try {
+            showLoading(true);
             const response = await fetch('/story/generate_cards', {
                 method: 'POST'
             });
@@ -125,36 +126,47 @@ document.addEventListener('DOMContentLoaded', () => {
                                 addLogMessage(data.message);
                                 break;
                             case 'paragraph':
-                                const pageElement = createPageElement(data.data, data.data.index);
-                                paragraphCards.appendChild(pageElement);
-                                updateProgress(data.data.index, totalPages);
-                                updateNavigation();
+                                const paragraphCards = document.getElementById('paragraph-cards');
+                                if (paragraphCards && data.data) {
+                                    const pageElement = createPageElement(data.data, data.data.index);
+                                    if (pageElement) {
+                                        paragraphCards.appendChild(pageElement);
+                                        updateNavigation();
+                                    }
+                                }
                                 break;
                             case 'error':
                                 addLogMessage('Error: ' + data.message);
+                                showLoading(false);
                                 break;
                             case 'complete':
                                 addLogMessage(data.message);
-                                storyOutput.style.display = 'block';
+                                showLoading(false);
+                                if (storyOutput) {
+                                    storyOutput.style.display = 'block';
+                                }
                                 break;
                         }
-                    } catch (parseError) {
-                        console.error('Error parsing message:', line);
+                    } catch (error) {
+                        console.error('Error parsing message:', line, error);
                     }
                 }
                 buffer = lines[lines.length - 1];
             }
         } catch (error) {
-            console.error('Error:', error);
-            addLogMessage('Error: ' + error.message);
+            showLoading(false);
+            addLogMessage('Error: ' + (error.message || 'An unknown error occurred'));
         }
     }
     
-    // Start card generation when page loads
-    generateCards();
+    // Start card generation if we're on the generate page
+    if (document.getElementById('paragraph-cards')) {
+        generateCards();
+    }
     
     // Save story functionality
-    document.getElementById('save-story')?.addEventListener('click', async () => {
+    const saveStoryBtn = document.getElementById('save-story');
+    saveStoryBtn?.addEventListener('click', async () => {
         try {
             addLogMessage('Saving story...');
             const response = await fetch('/save_story', {
@@ -172,11 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 addLogMessage('Story saved successfully!');
             } else {
-                throw new Error('Failed to save story');
+                throw new Error(data.error || 'Failed to save story');
             }
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage('Error: Failed to save story');
+            addLogMessage('Error: ' + (error.message || 'Failed to save story'));
             alert('Failed to save story. Please try again.');
         }
     });
