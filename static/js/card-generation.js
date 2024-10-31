@@ -10,10 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loadingContainer) {
             loadingContainer.style.display = show ? 'flex' : 'none';
         }
-        if (storyOutput) {
-            storyOutput.style.display = show ? 'none' : 'block';
-            if (!show) storyOutput.classList.add('visible');
-        }
     }
     
     function addLogMessage(message) {
@@ -50,48 +46,30 @@ document.addEventListener('DOMContentLoaded', () => {
                               step === 'complete' ? 'Complete' : 'Processing';
             stepText.textContent = `${stepMessage} - Paragraph ${currentParagraph}/${totalParagraphs}`;
         }
-        
-        // Update step indicators
-        document.querySelectorAll('.step').forEach(s => {
-            s.classList.remove('active', 'completed');
-            const stepName = s.getAttribute('data-step');
-            if (stepName === step) {
-                s.classList.add('active');
-            } else if (
-                (stepName === 'image' && (step === 'audio' || step === 'complete')) ||
-                (stepName === 'audio' && step === 'complete')
-            ) {
-                s.classList.add('completed');
-            }
-        });
     }
     
     function createPageElement(paragraph, index) {
         if (!paragraph) return null;
         const pageDiv = document.createElement('div');
-        pageDiv.className = 'book-page';
+        pageDiv.className = 'book-page visible';  // Add visible class immediately
         pageDiv.dataset.index = index;
+        pageDiv.style.display = 'block';  // Show immediately
         
-        // Build the card HTML
         pageDiv.innerHTML = `
             <div class="card h-100">
                 ${paragraph.image_url ? `
-                    <div class="card-img-wrapper">
-                        <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image" loading="lazy">
-                    </div>
+                    <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
                 ` : ''}
                 <div class="card-body">
                     <p class="card-text">${paragraph.text || ''}</p>
                 </div>
                 ${paragraph.audio_url ? `
                 <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}" preload="metadata"></audio>
+                    <audio controls src="${paragraph.audio_url}"></audio>
                 </div>` : ''}
             </div>
         `;
         
-        // Show the page with animation
-        setTimeout(() => pageDiv.classList.add('visible'), 100);
         return pageDiv;
     }
     
@@ -114,11 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pages.forEach((page, index) => {
             if (index === currentPage) {
                 page.style.display = 'block';
-                page.style.opacity = '1';
                 page.style.transform = 'rotateY(0deg)';
             } else {
                 page.style.display = 'none';
-                page.style.opacity = '0';
             }
         });
     }
@@ -177,6 +153,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'paragraph':
                                 const paragraphCards = document.getElementById('paragraph-cards');
                                 if (paragraphCards && data.data) {
+                                    // Show story output container if hidden
+                                    if (storyOutput && storyOutput.style.display === 'none') {
+                                        storyOutput.style.display = 'block';
+                                        storyOutput.classList.add('visible');
+                                    }
+                                    
                                     const index = data.data.index;
                                     let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
                                     
@@ -206,9 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'complete':
                                 addLogMessage(data.message);
                                 showLoading(false);
-                                if (storyOutput) {
-                                    storyOutput.style.display = 'block';
-                                }
                                 break;
                         }
                     } catch (error) {
