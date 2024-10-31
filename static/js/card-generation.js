@@ -25,18 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const percentageText = document.querySelector('.progress-percentage');
         const stepText = document.querySelector('.progress-step');
         
-        // Calculate progress (20% per paragraph, split between image and audio)
         const progress = ((currentParagraph - 1) * 20 + (step === 'audio' ? 15 : step === 'image' ? 5 : 0));
         const percentage = Math.min(100, Math.round(progress));
         
-        // Update circle progress
         const circumference = 283;
         const offset = circumference - (progress / 100) * circumference;
         if (progressCircle) {
             progressCircle.style.strokeDashoffset = offset;
         }
         
-        // Update text
         if (percentageText) {
             percentageText.textContent = `${percentage}%`;
         }
@@ -51,9 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function createPageElement(paragraph, index) {
         if (!paragraph) return null;
         const pageDiv = document.createElement('div');
-        pageDiv.className = 'book-page visible';  // Add visible class immediately
+        pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
-        pageDiv.style.display = 'block';  // Show immediately
+        pageDiv.style.opacity = '1';
+        pageDiv.style.display = 'block';
         
         pageDiv.innerHTML = `
             <div class="card h-100">
@@ -92,14 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         pages.forEach((page, index) => {
             if (index === currentPage) {
                 page.style.display = 'block';
-                page.style.transform = 'rotateY(0deg)';
             } else {
                 page.style.display = 'none';
             }
         });
     }
     
-    // Navigation event handlers
     const nextButton = document.querySelector('.book-nav.next');
     const prevButton = document.querySelector('.book-nav.prev');
     
@@ -117,10 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Generate cards
     async function generateCards() {
         try {
             showLoading(true);
+            // Show story output container at start
+            if (storyOutput) {
+                storyOutput.style.display = 'block';
+                storyOutput.classList.add('visible');
+            }
+
             const response = await fetch('/story/generate_cards', {
                 method: 'POST'
             });
@@ -153,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'paragraph':
                                 const paragraphCards = document.getElementById('paragraph-cards');
                                 if (paragraphCards && data.data) {
-                                    // Show story output container if hidden
-                                    if (storyOutput && storyOutput.style.display === 'none') {
+                                    // Show story output container immediately
+                                    if (storyOutput) {
                                         storyOutput.style.display = 'block';
                                         storyOutput.classList.add('visible');
                                     }
@@ -166,6 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         pageElement = createPageElement(data.data, index);
                                         if (pageElement) {
                                             paragraphCards.appendChild(pageElement);
+                                            // Force reflow to trigger animation
+                                            pageElement.offsetHeight;
+                                            pageElement.classList.add('visible');
                                         }
                                     } else {
                                         // Update existing page
@@ -202,12 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Start card generation if we're on the generate page
     if (document.getElementById('paragraph-cards')) {
         generateCards();
     }
     
-    // Save story functionality
     const saveStoryBtn = document.getElementById('save-story');
     saveStoryBtn?.addEventListener('click', async () => {
         try {
