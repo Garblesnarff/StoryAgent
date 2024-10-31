@@ -1,14 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const logContent = document.getElementById('log-content');
-    
-    function addLogMessage(message) {
-        const logEntry = document.createElement('div');
-        logEntry.textContent = message;
-        logContent.appendChild(logEntry);
-        logContent.scrollTop = logContent.scrollHeight;
-    }
-    
-    // Handle paragraph updates with debouncing
     let saveTimeouts = {};
     
     document.querySelectorAll('.paragraph-container').forEach(container => {
@@ -44,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateImageBtn?.addEventListener('click', async () => {
             try {
                 regenerateImageBtn.disabled = true;
-                addLogMessage('Regenerating image...');
+                console.log('Regenerating image...');
                 
                 const response = await fetch('/story/regenerate_image', {
                     method: 'POST',
@@ -63,8 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const data = await response.json();
                 if (data.success) {
-                    addLogMessage('Image regenerated successfully!');
-                    // Update image in UI if needed
+                    console.log('Image regenerated successfully!');
                     const imgElement = container.querySelector('.card-img-top');
                     if (imgElement && data.image_url) {
                         imgElement.src = data.image_url;
@@ -75,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 console.error('Error:', error);
-                addLogMessage(`Error regenerating image: ${error.message}`);
                 alert('Failed to regenerate image. Please try again.');
             } finally {
                 regenerateImageBtn.disabled = false;
@@ -86,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateAudioBtn?.addEventListener('click', async () => {
             try {
                 regenerateAudioBtn.disabled = true;
-                addLogMessage('Regenerating audio...');
+                console.log('Regenerating audio...');
                 
                 const response = await fetch('/story/regenerate_audio', {
                     method: 'POST',
@@ -105,8 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const data = await response.json();
                 if (data.success) {
-                    addLogMessage('Audio regenerated successfully!');
-                    // Update audio in UI if needed
+                    console.log('Audio regenerated successfully!');
                     const audioElement = container.querySelector('audio');
                     if (audioElement && data.audio_url) {
                         audioElement.src = data.audio_url;
@@ -117,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 console.error('Error:', error);
-                addLogMessage(`Error regenerating audio: ${error.message}`);
                 alert('Failed to regenerate audio. Please try again.');
             } finally {
                 regenerateAudioBtn.disabled = false;
@@ -133,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (!generateMedia) {
-                addLogMessage('Saving changes...');
+                console.log('Saving changes...');
             }
             
             const response = await fetch('/story/update_paragraph', {
@@ -161,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                 }
                 if (generateMedia) {
-                    addLogMessage('Changes saved successfully!');
+                    console.log('Changes saved successfully!');
                     const container = document.querySelector(`.paragraph-container[data-index="${index}"]`);
                     // Update UI with new media URLs if provided
                     if (data.image_url && container) {
@@ -187,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusDiv.textContent = 'Error saving changes';
                 statusDiv.style.color = 'var(--bs-danger)';
             }
-            addLogMessage(`Error saving changes: ${error.message}`);
             alert('Failed to save changes. Please try again.');
         } finally {
             if (saveBtn) {
