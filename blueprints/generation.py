@@ -10,12 +10,15 @@ text_service = TextGenerator()
 image_service = ImageGenerator()
 audio_service = HumeAudioGenerator()
 
-def send_json_message(message_type, message_data):
+def send_json_message(message_type, message_data, step=None):
     """Helper function to ensure consistent JSON message formatting"""
-    return json.dumps({
+    message = {
         'type': message_type,
         'message' if isinstance(message_data, str) else 'data': message_data
-    }) + '\n'
+    }
+    if step:
+        message['step'] = step
+    return json.dumps(message) + '\n'
 
 @generation_bp.route('/story/generate', methods=['GET'])
 def generate():
@@ -40,27 +43,33 @@ def generate_cards():
                     continue
                     
                 progress = ((index + 1) / len(paragraphs) * 100)
-                yield send_json_message('log', f"Processing paragraph {index + 1}/{len(paragraphs)} ({progress:.0f}% complete)")
+                current_message = f"Processing paragraph {index + 1}/{len(paragraphs)} ({progress:.0f}% complete)"
                 
-                # Generate image if not already present
+                # Generate image
                 if not paragraph.get('image_url'):
-                    yield send_json_message('log', f"Generating image for paragraph {index + 1}...")
+                    yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
                     paragraph['image_url'] = image_service.generate_image(paragraph['text'])
-                    yield send_json_message('log', f"Image generated for paragraph {index + 1}")
+                    
+                    # Send immediate update after image generation
+                    yield send_json_message('paragraph', {
+                        'text': paragraph['text'],
+                        'image_url': paragraph['image_url'],
+                        'audio_url': paragraph.get('audio_url'),
+                        'index': index
+                    }, step='image')
                 
-                # Generate audio if not already present
+                # Generate audio
                 if not paragraph.get('audio_url'):
-                    yield send_json_message('log', f"Generating audio for paragraph {index + 1}...")
+                    yield send_json_message('log', f"Generating audio for paragraph {index + 1}...", step='audio')
                     paragraph['audio_url'] = audio_service.generate_audio(paragraph['text'])
-                    yield send_json_message('log', f"Audio generated for paragraph {index + 1}")
-                
-                # Send paragraph data
-                yield send_json_message('paragraph', {
-                    'text': paragraph['text'],
-                    'image_url': paragraph['image_url'],
-                    'audio_url': paragraph['audio_url'],
-                    'index': index
-                })
+                    
+                    # Send final update after audio generation
+                    yield send_json_message('paragraph', {
+                        'text': paragraph['text'],
+                        'image_url': paragraph['image_url'],
+                        'audio_url': paragraph['audio_url'],
+                        'index': index
+                    }, step='audio')
                 
                 # Update session data
                 session['story_data'] = story_data
@@ -68,7 +77,7 @@ def generate_cards():
                 # Ensure stream is flushed
                 sys.stdout.flush()
                 
-            yield send_json_message('complete', "Card generation complete!")
+            yield send_json_message('complete', "Card generation complete!", step='complete')
             
         except Exception as e:
             yield send_json_message('error', str(e))

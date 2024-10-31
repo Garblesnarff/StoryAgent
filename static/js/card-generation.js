@@ -1,16 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
-    const loadingCircle = document.querySelector('.loading-circle');
     const logContent = document.getElementById('log-content');
     let currentPage = 0;
     let totalPages = 0;
     let session = { story_data: { paragraphs: [] } };
     
     function showLoading(show = true) {
-        const loadingCircle = document.querySelector('.loading-circle');
-        const storyOutput = document.getElementById('story-output');
-        if (loadingCircle) {
-            loadingCircle.style.display = show ? 'block' : 'none';
+        const loadingContainer = document.querySelector('.loading-container');
+        if (loadingContainer) {
+            loadingContainer.style.display = show ? 'flex' : 'none';
         }
         if (storyOutput) {
             storyOutput.style.display = show ? 'none' : 'block';
@@ -31,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const percentageText = document.querySelector('.progress-percentage');
         const stepText = document.querySelector('.progress-step');
         
-        // Calculate progress (20% per paragraph)
+        // Calculate progress (20% per paragraph, split between image and audio)
         const progress = ((currentParagraph - 1) * 20 + (step === 'audio' ? 15 : step === 'image' ? 5 : 0));
         const percentage = Math.min(100, Math.round(progress));
         
@@ -47,15 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
             percentageText.textContent = `${percentage}%`;
         }
         if (stepText) {
-            stepText.textContent = `Paragraph ${currentParagraph}/${totalParagraphs}`;
+            const stepMessage = step === 'image' ? 'Generating Image' : 
+                              step === 'audio' ? 'Generating Audio' :
+                              step === 'complete' ? 'Complete' : 'Processing';
+            stepText.textContent = `${stepMessage} - Paragraph ${currentParagraph}/${totalParagraphs}`;
         }
         
         // Update step indicators
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        const activeStep = document.querySelector(`[data-step="${step}"]`);
-        if (activeStep) {
-            activeStep.classList.add('active');
-        }
+        document.querySelectorAll('.step').forEach(s => {
+            s.classList.remove('active', 'completed');
+            const stepName = s.getAttribute('data-step');
+            if (stepName === step) {
+                s.classList.add('active');
+            } else if (
+                (stepName === 'image' && (step === 'audio' || step === 'complete')) ||
+                (stepName === 'audio' && step === 'complete')
+            ) {
+                s.classList.add('completed');
+            }
+        });
     }
     
     function createPageElement(paragraph, index) {
@@ -64,15 +72,20 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.className = 'book-page';
         pageDiv.dataset.index = index;
         
+        // Build the card HTML
         pageDiv.innerHTML = `
             <div class="card h-100">
-                ${paragraph.image_url ? `<img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">` : ''}
+                ${paragraph.image_url ? `
+                    <div class="card-img-wrapper">
+                        <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image" loading="lazy">
+                    </div>
+                ` : ''}
                 <div class="card-body">
                     <p class="card-text">${paragraph.text || ''}</p>
                 </div>
                 ${paragraph.audio_url ? `
                 <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}"></audio>
+                    <audio controls src="${paragraph.audio_url}" preload="metadata"></audio>
                 </div>` : ''}
             </div>
         `;
@@ -128,12 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Show loading at start
-    if (storyOutput) {
-        showLoading(true);
-        storyOutput.style.display = 'none';
-    }
-    
     // Generate cards
     async function generateCards() {
         try {
@@ -170,16 +177,26 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'paragraph':
                                 const paragraphCards = document.getElementById('paragraph-cards');
                                 if (paragraphCards && data.data) {
+                                    const index = data.data.index;
+                                    let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
+                                    
+                                    if (!pageElement) {
+                                        pageElement = createPageElement(data.data, index);
+                                        if (pageElement) {
+                                            paragraphCards.appendChild(pageElement);
+                                        }
+                                    } else {
+                                        // Update existing page
+                                        pageElement.innerHTML = createPageElement(data.data, index).innerHTML;
+                                    }
+                                    
                                     updateProgress(
-                                        data.data.index + 1,
+                                        index + 1,
                                         session.story_data.paragraphs.length,
                                         data.step || 'complete'
                                     );
-                                    const pageElement = createPageElement(data.data, data.data.index);
-                                    if (pageElement) {
-                                        paragraphCards.appendChild(pageElement);
-                                        updateNavigation();
-                                    }
+                                    
+                                    updateNavigation();
                                 }
                                 break;
                             case 'error':
