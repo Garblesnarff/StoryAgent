@@ -4,10 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const logContent = document.getElementById('log-content');
     let currentPage = 0;
     let totalPages = 0;
+    let session = { story_data: { paragraphs: [] } };
     
     function showLoading(show = true) {
+        const loadingCircle = document.querySelector('.loading-circle');
+        const storyOutput = document.getElementById('story-output');
         if (loadingCircle) {
             loadingCircle.style.display = show ? 'block' : 'none';
+        }
+        if (storyOutput) {
+            storyOutput.style.display = show ? 'none' : 'block';
+            if (!show) storyOutput.classList.add('visible');
         }
     }
     
@@ -17,6 +24,38 @@ document.addEventListener('DOMContentLoaded', () => {
         logEntry.textContent = message;
         logContent.appendChild(logEntry);
         logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    function updateProgress(currentParagraph, totalParagraphs, step) {
+        const progressCircle = document.querySelector('.progress-circle');
+        const percentageText = document.querySelector('.progress-percentage');
+        const stepText = document.querySelector('.progress-step');
+        
+        // Calculate progress (20% per paragraph)
+        const progress = ((currentParagraph - 1) * 20 + (step === 'audio' ? 15 : step === 'image' ? 5 : 0));
+        const percentage = Math.min(100, Math.round(progress));
+        
+        // Update circle progress
+        const circumference = 283;
+        const offset = circumference - (progress / 100) * circumference;
+        if (progressCircle) {
+            progressCircle.style.strokeDashoffset = offset;
+        }
+        
+        // Update text
+        if (percentageText) {
+            percentageText.textContent = `${percentage}%`;
+        }
+        if (stepText) {
+            stepText.textContent = `Paragraph ${currentParagraph}/${totalParagraphs}`;
+        }
+        
+        // Update step indicators
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        const activeStep = document.querySelector(`[data-step="${step}"]`);
+        if (activeStep) {
+            activeStep.classList.add('active');
+        }
     }
     
     function createPageElement(paragraph, index) {
@@ -37,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>` : ''}
             </div>
         `;
+        
+        // Show the page with animation
+        setTimeout(() => pageDiv.classList.add('visible'), 100);
         return pageDiv;
     }
     
@@ -128,6 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'paragraph':
                                 const paragraphCards = document.getElementById('paragraph-cards');
                                 if (paragraphCards && data.data) {
+                                    updateProgress(
+                                        data.data.index + 1,
+                                        session.story_data.paragraphs.length,
+                                        data.step || 'complete'
+                                    );
                                     const pageElement = createPageElement(data.data, data.data.index);
                                     if (pageElement) {
                                         paragraphCards.appendChild(pageElement);

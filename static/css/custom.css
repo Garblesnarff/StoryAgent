@@ -35,71 +35,104 @@
     opacity: 0.2;
 }
 
+/* Progress container styles */
+.progress-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+}
+
+.loading-circle {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.loading-circle svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-background {
+    fill: none;
+    stroke: rgba(var(--apple-accent-rgb), 0.1);
+    stroke-width: 8;
+}
+
+.progress-circle {
+    fill: none;
+    stroke: var(--apple-accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.progress-percentage {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--apple-accent);
+}
+
+.progress-step {
+    display: block;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    color: var(--apple-text);
+    opacity: 0.8;
+}
+
+.generation-steps {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    opacity: 1;
+    color: var(--apple-accent);
+}
+
+.step.completed {
+    opacity: 1;
+    color: var(--apple-success);
+}
+
+.step-icon {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
 /* Loading animation styles */
 .generation-status {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2rem;
-}
-
-.loading-circle {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;
-}
-
-.loading-circle svg {
-    width: 100%;
-    height: 100%;
-    transform-origin: center;
-    animation: rotate 2s linear infinite;
-}
-
-.loading-circle circle {
-    fill: none;
-    stroke: var(--apple-accent);
-    stroke-width: 4;
-    stroke-dasharray: 283;
-    stroke-linecap: round;
-    animation: dash 1.5s ease-in-out infinite;
-}
-
-@keyframes rotate {
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes dash {
-    0% {
-        stroke-dashoffset: 283;
-    }
-    50% {
-        stroke-dashoffset: 70;
-    }
-    100% {
-        stroke-dashoffset: 283;
-    }
-}
-
-#log-output {
-    text-align: center;
-}
-
-#log-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
-
-.progress-text {
-    font-size: 0.9rem;
-    color: var(--apple-text);
-    opacity: 0.8;
-    margin-top: 1rem;
 }
 
 /* Card and book container styles */
@@ -113,6 +146,25 @@
     position: relative;
     padding: 40px;
     margin-bottom: 4rem;
+}
+
+/* Show completed cards immediately */
+#story-output {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+#story-output.visible {
+    opacity: 1;
+}
+
+.book-page {
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.8s ease;
+}
+
+.book-page.visible {
+    opacity: 1;
 }
 
 .book-pages {
