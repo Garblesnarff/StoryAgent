@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
 
-    // Story generation form submission
     storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -12,7 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('Failed to parse JSON response:', parseError);
+                throw new Error('Server returned an invalid response');
+            }
             
             if (!response.ok) {
                 throw new Error(data.error || 'Story generation failed');
@@ -25,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error: ' + error.message);
+            alert('Error: ' + (error.message || 'An unexpected error occurred'));
         }
     });
 });

@@ -87,15 +87,17 @@ def save_story():
         app.logger.error(f"Error saving story: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.errorhandler(403)
-def forbidden(e):
-    flash('Please start by creating a new story on the home page', 'warning')
-    return redirect(url_for('index'))
-
 @app.errorhandler(404)
 def not_found(e):
-    flash('The requested page was not found', 'error')
-    return redirect(url_for('index'))
+    return jsonify({'error': 'The requested page was not found'}), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({'error': 'An internal server error occurred'}), 500
+
+@app.errorhandler(403)
+def forbidden(e):
+    return jsonify({'error': 'Please start by creating a new story on the home page'}), 403
 
 @app.before_request
 def check_story_data():
@@ -107,8 +109,7 @@ def check_story_data():
     # Check if story data exists for protected routes
     if 'story_data' not in session and \
        (request.path.startswith('/story/') or request.path.startswith('/save')):
-        flash('Please generate a story first', 'warning')
-        return redirect(url_for('index'))
+        return jsonify({'error': 'Please generate a story first'}), 403
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
