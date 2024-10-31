@@ -116,38 +116,6 @@
     margin-top: 1rem;
 }
 
-/* Generation steps */
-.generation-steps {
-    margin-top: 3rem;
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-}
-
-.step {
-    background: rgba(var(--bs-primary-rgb), 0.1);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.step.active {
-    background: var(--bs-primary);
-    transform: scale(1.05);
-    color: var(--bs-white);
-}
-
-.step-icon {
-    width: 24px;
-    height: 24px;
-    stroke: currentColor;
-    stroke-width: 2;
-    fill: none;
-}
-
 /* Card and book container styles */
 .book-container {
     position: relative;
