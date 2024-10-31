@@ -1,49 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
-    const logContent = document.getElementById('log-content');
     let currentPage = 0;
     let totalPages = 0;
     let session = { story_data: { paragraphs: [] } };
-    
-    function showLoading(show = true) {
-        const loadingContainer = document.querySelector('.loading-container');
-        if (loadingContainer) {
-            loadingContainer.style.display = show ? 'flex' : 'none';
-        }
-    }
-    
-    function addLogMessage(message) {
-        if (!logContent) return;
-        const logEntry = document.createElement('div');
-        logEntry.textContent = message;
-        logContent.appendChild(logEntry);
-        logContent.scrollTop = logContent.scrollHeight;
-    }
-
-    function updateProgress(currentParagraph, totalParagraphs, step) {
-        const progressCircle = document.querySelector('.progress-circle');
-        const percentageText = document.querySelector('.progress-percentage');
-        const stepText = document.querySelector('.progress-step');
-        
-        const progress = ((currentParagraph - 1) * 20 + (step === 'audio' ? 15 : step === 'image' ? 5 : 0));
-        const percentage = Math.min(100, Math.round(progress));
-        
-        const circumference = 283;
-        const offset = circumference - (progress / 100) * circumference;
-        if (progressCircle) {
-            progressCircle.style.strokeDashoffset = offset;
-        }
-        
-        if (percentageText) {
-            percentageText.textContent = `${percentage}%`;
-        }
-        if (stepText) {
-            const stepMessage = step === 'image' ? 'Generating Image' : 
-                              step === 'audio' ? 'Generating Audio' :
-                              step === 'complete' ? 'Complete' : 'Processing';
-            stepText.textContent = `${stepMessage} - Paragraph ${currentParagraph}/${totalParagraphs}`;
-        }
-    }
     
     function createPageElement(paragraph, index) {
         if (!paragraph) return null;
@@ -89,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateImageBtn?.addEventListener('click', async () => {
             try {
                 regenerateImageBtn.disabled = true;
-                addLogMessage('Regenerating image...');
+                console.log('Regenerating image...');
                 
                 const response = await fetch('/story/regenerate_image', {
                     method: 'POST',
@@ -108,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const data = await response.json();
                 if (data.success) {
-                    addLogMessage('Image regenerated successfully!');
+                    console.log('Image regenerated successfully!');
                     const imgElement = pageDiv.querySelector('.card-img-top');
                     if (imgElement && data.image_url) {
                         imgElement.src = data.image_url;
@@ -119,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 console.error('Error:', error);
-                addLogMessage(`Error regenerating image: ${error.message}`);
                 alert('Failed to regenerate image. Please try again.');
             } finally {
                 regenerateImageBtn.disabled = false;
@@ -129,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateAudioBtn?.addEventListener('click', async () => {
             try {
                 regenerateAudioBtn.disabled = true;
-                addLogMessage('Regenerating audio...');
+                console.log('Regenerating audio...');
                 
                 const response = await fetch('/story/regenerate_audio', {
                     method: 'POST',
@@ -148,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const data = await response.json();
                 if (data.success) {
-                    addLogMessage('Audio regenerated successfully!');
+                    console.log('Audio regenerated successfully!');
                     const audioElement = pageDiv.querySelector('audio');
                     if (audioElement && data.audio_url) {
                         audioElement.src = data.audio_url;
@@ -159,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 console.error('Error:', error);
-                addLogMessage(`Error regenerating audio: ${error.message}`);
                 alert('Failed to regenerate audio. Please try again.');
             } finally {
                 regenerateAudioBtn.disabled = false;
@@ -213,8 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function generateCards() {
         try {
-            showLoading(true);
-            // Show story output container at start
+            // Show story output container immediately
             if (storyOutput) {
                 storyOutput.style.display = 'block';
                 storyOutput.classList.add('visible');
@@ -247,17 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const data = JSON.parse(line);
                         switch (data.type) {
                             case 'log':
-                                addLogMessage(data.message);
+                                console.log(data.message);
                                 break;
                             case 'paragraph':
                                 const paragraphCards = document.getElementById('paragraph-cards');
                                 if (paragraphCards && data.data) {
-                                    // Show story output container immediately
-                                    if (storyOutput) {
-                                        storyOutput.style.display = 'block';
-                                        storyOutput.classList.add('visible');
-                                    }
-                                    
                                     const index = data.data.index;
                                     let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
                                     
@@ -274,22 +224,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                         pageElement.innerHTML = createPageElement(data.data, index).innerHTML;
                                     }
                                     
-                                    updateProgress(
-                                        index + 1,
-                                        session.story_data.paragraphs.length,
-                                        data.step || 'complete'
-                                    );
-                                    
                                     updateNavigation();
                                 }
                                 break;
                             case 'error':
-                                addLogMessage('Error: ' + data.message);
-                                showLoading(false);
+                                console.error('Error:', data.message);
                                 break;
                             case 'complete':
-                                addLogMessage(data.message);
-                                showLoading(false);
+                                console.log(data.message);
                                 break;
                         }
                     } catch (error) {
@@ -299,8 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 buffer = lines[lines.length - 1];
             }
         } catch (error) {
-            showLoading(false);
-            addLogMessage('Error: ' + (error.message || 'An unknown error occurred'));
+            console.error('Error:', error.message || 'An unknown error occurred');
         }
     }
     
@@ -311,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveStoryBtn = document.getElementById('save-story');
     saveStoryBtn?.addEventListener('click', async () => {
         try {
-            addLogMessage('Saving story...');
+            console.log('Saving story...');
             const response = await fetch('/save_story', {
                 method: 'POST',
                 headers: {
@@ -325,13 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             if (data.success) {
-                addLogMessage('Story saved successfully!');
+                console.log('Story saved successfully!');
             } else {
                 throw new Error(data.error || 'Failed to save story');
             }
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage('Error: ' + (error.message || 'Failed to save story'));
             alert('Failed to save story. Please try again.');
         }
     });

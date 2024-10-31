@@ -12,7 +12,7 @@ class TextGenerator:
         try:
             # Generate story text as before
             response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama-3.1-70b-versatile",
                 messages=[
                     {"role": "system", "content": f"You are a creative storyteller specializing in {genre} stories with a {mood} mood for a {target_audience} audience. Write a story as a series of 2-sentence segments."},
                     {"role": "user", "content": f"Write a {genre} story with a {mood} mood for a {target_audience} audience based on this prompt: {prompt}. Format the story as {paragraphs} segments, with exactly 2 sentences per segment."}
