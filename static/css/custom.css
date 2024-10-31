@@ -9,7 +9,7 @@
 .nav-item {
     position: relative;
     padding: 0.5rem 1rem;
-    color: var(--apple-text);
+    color: var(--bs-body-color);
     opacity: 0.5;
     transition: all 0.3s ease;
 }
@@ -20,7 +20,7 @@
 
 .nav-item.completed {
     opacity: 1;
-    color: var(--apple-accent);
+    color: var(--bs-primary);
 }
 
 .nav-item:not(:last-child)::after {
@@ -31,16 +31,26 @@
     transform: translateY(-50%);
     width: 1rem;
     height: 2px;
-    background: var(--apple-text);
+    background: var(--bs-body-color);
     opacity: 0.2;
 }
 
-/* Progress container styles */
-.progress-container {
+/* Loading animation styles */
+.loading-container {
     position: relative;
-    width: 200px;
-    height: 200px;
+    width: 300px;
+    height: 300px;
     margin: 0 auto;
+}
+
+.glow-effect {
+    position: absolute;
+    inset: -20px;
+    background: var(--bs-primary);
+    filter: blur(30px);
+    opacity: 0.2;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
 }
 
 .loading-circle {
@@ -53,17 +63,18 @@
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);
+    animation: rotate 2s linear infinite;
 }
 
 .progress-background {
     fill: none;
-    stroke: rgba(var(--apple-accent-rgb), 0.1);
+    stroke: rgba(var(--bs-primary-rgb), 0.1);
     stroke-width: 8;
 }
 
 .progress-circle {
     fill: none;
-    stroke: var(--apple-accent);
+    stroke: var(--bs-primary);
     stroke-width: 8;
     stroke-linecap: round;
     stroke-dasharray: 283;
@@ -71,68 +82,74 @@
     transition: stroke-dashoffset 0.5s ease;
 }
 
+.progress-dot {
+    fill: var(--bs-primary);
+    transform-origin: 50px 50px;
+    animation: rotate 2s linear infinite;
+}
+
 .progress-content {
     position: absolute;
     top: 50%;
     left: 50%;
+    width: 80%;
     transform: translate(-50%, -50%);
     text-align: center;
 }
 
 .progress-percentage {
-    display: block;
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: bold;
-    color: var(--apple-accent);
+    color: var(--bs-primary);
+    text-shadow: 0 0 10px rgba(var(--bs-primary-rgb), 0.3);
 }
 
 .progress-step {
-    display: block;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-    color: var(--apple-text);
+    font-size: 1rem;
+    margin: 0.5rem 0;
+    color: var(--bs-body-color);
     opacity: 0.8;
 }
 
+.progress-log {
+    font-size: 0.9rem;
+    color: var(--bs-body-color);
+    opacity: 0.7;
+    max-height: 100px;
+    overflow-y: auto;
+    margin-top: 1rem;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.2;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* Generation steps */
 .generation-steps {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-top: 2rem;
+    margin-top: 3rem;
 }
 
 .step {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    opacity: 0.5;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
     transition: all 0.3s ease;
 }
 
 .step.active {
-    opacity: 1;
-    color: var(--apple-accent);
-}
-
-.step.completed {
-    opacity: 1;
-    color: var(--apple-success);
-}
-
-.step-icon {
-    width: 24px;
-    height: 24px;
-    stroke: currentColor;
-    stroke-width: 2;
-    fill: none;
-}
-
-/* Loading animation styles */
-.generation-status {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
+    background: var(--bs-primary);
+    transform: scale(1.05);
 }
 
 /* Card and book container styles */
@@ -191,9 +208,9 @@
     transform: translateY(-50%);
     width: 60px;
     height: 60px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--bs-body-bg-rgb), 0.1);
     backdrop-filter: blur(10px);
-    border: 2px solid var(--apple-accent);
+    border: 2px solid var(--bs-primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -212,15 +229,15 @@
 }
 
 .book-nav:hover {
-    background: var(--apple-accent);
+    background: var(--bs-primary);
     transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 0 20px rgba(var(--apple-accent-rgb), 0.3);
+    box-shadow: 0 0 20px rgba(var(--bs-primary-rgb), 0.3);
 }
 
 .book-nav svg {
     width: 32px;
     height: 32px;
-    fill: var(--apple-text);
+    fill: var(--bs-body-color);
 }
 
 /* Card styles */
@@ -231,8 +248,8 @@
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
-    background: var(--apple-card-bg);
-    border: 2px solid var(--apple-accent);
+    background: var(--bs-card-bg);
+    border: 2px solid var(--bs-primary);
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
@@ -251,7 +268,7 @@
 .card-footer {
     padding: 1rem;
     margin-top: auto;
-    border-top: 1px solid var(--apple-glass);
+    border-top: 1px solid var(--bs-border-color);
 }
 
 .card-footer audio {
@@ -278,20 +295,20 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: var(--apple-card-bg);
+    background: var(--bs-body-bg);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--apple-glass);
+    border-bottom: 1px solid var(--bs-border-color);
     padding: 1rem 0;
 }
 
 .navbar-brand {
-    color: var(--apple-text);
+    color: var(--bs-body-color);
     font-weight: 600;
     text-decoration: none;
 }
 
 .navbar-brand:hover {
-    color: var(--apple-accent);
+    color: var(--bs-primary);
 }
 
 .nav-actions {
