@@ -1,23 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
-    const logContent = document.getElementById('log-content');
-
-    function addLogMessage(message) {
-        const logEntry = document.createElement('div');
-        logEntry.textContent = message;
-        logContent.appendChild(logEntry);
-        logContent.scrollTop = logContent.scrollHeight;
-    }
 
     // Story generation form submission
     storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        logContent.innerHTML = '';
         
         try {
             const formData = new FormData(storyForm);
-            addLogMessage('Generating story...');
-            
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -36,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
-            addLogMessage('Error: ' + error.message);
+            alert('Error: ' + error.message);
         }
     });
 });
