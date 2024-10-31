@@ -4,39 +4,36 @@
 <div class="content-wrapper">
     <h1 class="display-4 mb-5 text-center">Generated Story Cards</h1>
     
-    <div id="log-output" class="mt-5 mb-5">
-        <h3 class="h4 mb-3">Generation Progress</h3>
-        <div class="generation-status">
-            <div class="loading-container">
-                <div class="loading-circle">
-                    <!-- Outer glow effect -->
-                    <div class="glow-effect"></div>
+    <div class="generation-status">
+        <div class="loading-container">
+            <div class="loading-circle">
+                <!-- Outer glow effect -->
+                <div class="glow-effect"></div>
+                
+                <svg viewBox="0 0 100 100">
+                    <!-- Gradient definition -->
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" class="gradient-start" />
+                            <stop offset="100%" class="gradient-end" />
+                        </linearGradient>
+                    </defs>
                     
-                    <svg viewBox="0 0 100 100">
-                        <!-- Gradient definition -->
-                        <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" class="gradient-start" />
-                                <stop offset="100%" class="gradient-end" />
-                            </linearGradient>
-                        </defs>
-                        
-                        <!-- Background circle -->
-                        <circle cx="50" cy="50" r="45" class="progress-background"/>
-                        
-                        <!-- Progress circle -->
-                        <circle cx="50" cy="50" r="45" class="progress-circle"/>
-                        
-                        <!-- Rotating dot -->
-                        <circle cx="50" cy="5" r="3" class="progress-dot"/>
-                    </svg>
+                    <!-- Background circle -->
+                    <circle cx="50" cy="50" r="45" class="progress-background"/>
                     
-                    <!-- Center content -->
-                    <div class="progress-content">
-                        <div class="progress-percentage">0%</div>
-                        <div class="progress-step">Initializing...</div>
-                        <div id="log-content" class="progress-log"></div>
-                    </div>
+                    <!-- Progress circle -->
+                    <circle cx="50" cy="50" r="45" class="progress-circle"/>
+                    
+                    <!-- Rotating dot -->
+                    <circle cx="50" cy="5" r="3" class="progress-dot"/>
+                </svg>
+                
+                <!-- Center content -->
+                <div class="progress-content">
+                    <div class="progress-percentage">0%</div>
+                    <div class="progress-step">Initializing...</div>
+                    <div id="log-content" class="progress-log"></div>
                 </div>
             </div>
             <div class="generation-steps">

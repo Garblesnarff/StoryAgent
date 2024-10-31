@@ -89,8 +89,26 @@ def save_story():
 
 @app.errorhandler(403)
 def forbidden(e):
-    flash('Please start by creating a new story', 'warning')
+    flash('Please start by creating a new story on the home page', 'warning')
     return redirect(url_for('index'))
+
+@app.errorhandler(404)
+def not_found(e):
+    flash('The requested page was not found', 'error')
+    return redirect(url_for('index'))
+
+@app.before_request
+def check_story_data():
+    # Skip checks for static files and the home/generate routes
+    if request.path.startswith('/static') or request.path == '/' or \
+       request.path == '/generate_story':
+        return
+        
+    # Check if story data exists for protected routes
+    if 'story_data' not in session and \
+       (request.path.startswith('/story/') or request.path.startswith('/save')):
+        flash('Please generate a story first', 'warning')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
