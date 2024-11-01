@@ -1,0 +1,209 @@
+# Story Agent Integration Plan
+
+## 1. Directory Structure Changes
+```
+services/
+├── story_agents/              # New directory
+│   ├── __init__.py           # Data structures and interfaces
+│   ├── prompt_master.py      # Story idea generation
+│   ├── world_shaper.py       # World building
+│   ├── plot_seeder.py        # Plot development
+│   └── idea_generation_crew.py # Orchestration layer
+├── text_generator.py         # Modified to support agent system
+└── [existing services...]
+```
+
+## 2. TextGenerator Service Updates
+- Add new method `generate()` to support structured prompts
+- Enhance response handling to support JSON parsing
+- Add temperature and other generation parameters control
+- Implement retry logic for failed generations
+
+```python
+class TextGenerator:
+    def generate(self, prompt: str, temperature=0.7, max_retries=3):
+        """
+        Generate text with specific parameters and formatting
+        """
+        try:
+            response = self.client.chat.completions.create(
+                model="llama-3.1-70b-versatile",
+                messages=[
+                    {"role": "system", "content": "You are a creative writing assistant specializing in structured story generation."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            if max_retries > 0:
+                return self.generate(prompt, temperature, max_retries - 1)
+            raise e
+```
+
+## 3. Route Updates
+
+### New Routes to Add:
+```python
+@generation_bp.route('/story/generate_concept', methods=['POST'])
+def generate_concept():
+    """Generate initial story concept with world and plot"""
+    crew = IdeaGenerationCrew(text_service)
+    
+    theme = request.form.get('theme')
+    genre = request.form.get('genre')
+    
+    story_concept = await crew.generate_story_concept(theme, genre)
+    return jsonify(story_concept)
+
+@generation_bp.route('/story/refine_world', methods=['POST'])
+def refine_world():
+    """Refine world details based on user feedback"""
+    world_shaper = WorldShaper(text_service)
+    
+    story_idea = StoryIdea(**request.json['story_idea'])
+    genre = request.json['genre']
+    
+    world_setting = world_shaper.generate_world_setting(genre, story_idea)
+    return jsonify(world_setting.__dict__)
+
+@generation_bp.route('/story/develop_plot', methods=['POST'])
+def develop_plot():
+    """Develop plot based on world and story idea"""
+    plot_seeder = PlotSeeder(text_service)
+    
+    story_idea = StoryIdea(**request.json['story_idea'])
+    world_setting = WorldSetting(**request.json['world_setting'])
+    
+    plot_hook = plot_seeder.generate_plot_hooks(story_idea, world_setting)
+    return jsonify(plot_hook.__dict__)
+```
+
+## 4. Frontend Updates
+
+### New Templates:
+- Add `story/concept.html` for initial story concept generation
+- Add `story/world.html` for world building interface
+- Add `story/plot.html` for plot development interface
+
+### JavaScript Updates:
+- Add concept generation handling
+- Add world refinement interface
+- Add plot development workflow
+- Implement progressive story building UI
+
+### CSS Updates:
+- Add styles for concept cards
+- Add world building interface styles
+- Add plot development visualization styles
+
+## 5. Database Schema Updates
+
+Add new tables to track story development:
+```sql
+CREATE TABLE story_concepts (
+    id INTEGER PRIMARY KEY,
+    story_id INTEGER,
+    title TEXT,
+    concept TEXT,
+    themes TEXT,
+    target_audience TEXT,
+    estimated_length TEXT,
+    FOREIGN KEY (story_id) REFERENCES stories(id)
+);
+
+CREATE TABLE world_settings (
+    id INTEGER PRIMARY KEY,
+    story_id INTEGER,
+    location TEXT,
+    time_period TEXT,
+    cultural_elements TEXT,
+    key_locations TEXT,
+    conflicts TEXT,
+    FOREIGN KEY (story_id) REFERENCES stories(id)
+);
+
+CREATE TABLE plot_hooks (
+    id INTEGER PRIMARY KEY,
+    story_id INTEGER,
+    inciting_incident TEXT,
+    stakes TEXT,
+    potential_obstacles TEXT,
+    character_roles TEXT,
+    FOREIGN KEY (story_id) REFERENCES stories(id)
+);
+```
+
+## 6. Model Updates
+
+Add new models to `models.py`:
+```python
+class StoryConcept(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    story_id = db.Column(db.Integer, db.ForeignKey('story.id'))
+    title = db.Column(db.String(200))
+    concept = db.Column(db.Text)
+    themes = db.Column(db.Text)
+    target_audience = db.Column(db.String(50))
+    estimated_length = db.Column(db.String(50))
+
+class WorldSetting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    story_id = db.Column(db.Integer, db.ForeignKey('story.id'))
+    location = db.Column(db.Text)
+    time_period = db.Column(db.String(100))
+    cultural_elements = db.Column(db.Text)
+    key_locations = db.Column(db.Text)
+    conflicts = db.Column(db.Text)
+
+class PlotHook(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    story_id = db.Column(db.Integer, db.ForeignKey('story.id'))
+    inciting_incident = db.Column(db.Text)
+    stakes = db.Column(db.Text)
+    potential_obstacles = db.Column(db.Text)
+    character_roles = db.Column(db.Text)
+```
+
+## 7. Configuration Updates
+
+Add new configuration parameters to `config.py`:
+```python
+class Config:
+    # Existing configs...
+    STORY_GENERATION_TEMPERATURE = 0.7
+    WORLD_GENERATION_TEMPERATURE = 0.8
+    PLOT_GENERATION_TEMPERATURE = 0.6
+    MAX_GENERATION_RETRIES = 3
+```
+
+## Implementation Order
+
+1. Create the story_agents directory and implement base classes
+2. Update TextGenerator service
+3. Add new models and database migrations
+4. Implement new routes
+5. Add frontend templates and JavaScript
+6. Test and debug the integration
+7. Add error handling and recovery
+8. Implement user feedback loop
+9. Add progression tracking
+10. Deploy and monitor
+
+## Error Handling
+
+- Implement proper error handling for generation failures
+- Add retry logic for API calls
+- Implement graceful fallbacks
+- Add user feedback mechanisms
+- Log errors for monitoring
+
+## Future Enhancements
+
+- Add scoring system for story ideas
+- Implement more sophisticated world building
+- Add character development system
+- Implement story outline generation
+- Add genre-specific templates
+- Implement collaborative editing
+- Add version control for story elements
