@@ -32,9 +32,14 @@ class TextGenerator:
             story_paragraphs = []
             
             for paragraph in paragraphs_raw:
-                # Clean the paragraph of any numbering or markers
-                cleaned = re.sub(r'^[0-9]+[\.\)]\s*', '', paragraph.strip())
-                cleaned = re.sub(r'Segment\s*[0-9]+:?\s*', '', cleaned)
+                # Clean the paragraph of numbering and all variations of segment markers
+                cleaned = paragraph.strip()
+                # Remove numbered lists (1., 1), etc.)
+                cleaned = re.sub(r'^[0-9]+[\.\)]\s*', '', cleaned)
+                # Remove "Segment X:" variations (case insensitive)
+                cleaned = re.sub(r'(?i)segment\s*[0-9]+:?\s*', '', cleaned)
+                # Remove any remaining "Segment:" prefix without numbers
+                cleaned = re.sub(r'^(?i)segment\s*:?\s*', '', cleaned)
                 
                 if cleaned:
                     story_paragraphs.append(cleaned)
