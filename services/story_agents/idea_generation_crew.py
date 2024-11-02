@@ -15,7 +15,7 @@ class IdeaGenerationCrew:
         self.world_shaper = WorldShaper(text_generator)
         self.plot_seeder = PlotSeeder(text_generator)
     
-    async def generate_story_concept(
+    def generate_story_concept(
         self,
         genre: str,
         theme: Optional[str] = None,
