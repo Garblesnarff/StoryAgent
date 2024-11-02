@@ -6,6 +6,7 @@ import secrets
 from datetime import datetime
 
 from services.text_generator import TextGenerator
+from services.story_agents.idea_generation_crew import IdeaGenerationCrew
 
 class Base(DeclarativeBase):
     pass
@@ -18,6 +19,7 @@ db.init_app(app)
 
 # Initialize services
 text_service = TextGenerator()
+idea_crew = IdeaGenerationCrew(text_service)
 
 # Register blueprints
 from blueprints.story import story_bp
@@ -52,9 +54,25 @@ def generate_story():
         target_audience = request.form.get('target_audience')
         num_paragraphs = int(request.form.get('paragraphs', 5))
         
-        # Generate story paragraphs
+        # Generate story concept using the agent system
+        story_concept = idea_crew.generate_story_concept(
+            genre=genre,
+            theme=prompt,
+            mood=mood,
+            target_audience=target_audience
+        )
+        
+        if not story_concept:
+            return jsonify({'error': 'Failed to generate story concept'}), 500
+            
+        # Generate story paragraphs using the legacy method for now
         story_paragraphs = text_service.generate_story(
-            prompt, genre, mood, target_audience, num_paragraphs)
+            prompt=prompt,
+            genre=genre,
+            mood=mood,
+            target_audience=target_audience,
+            paragraphs=num_paragraphs
+        )
             
         if not story_paragraphs:
             return jsonify({'error': 'Failed to generate story'}), 500
@@ -66,6 +84,7 @@ def generate_story():
             'mood': mood,
             'target_audience': target_audience,
             'created_at': str(datetime.now()),
+            'story_concept': story_concept,
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
         }
         

@@ -1,0 +1,98 @@
+project_root/
+├── app/
+│   ├── __init__.py                 # Application factory
+│   ├── config.py                   # Configuration classes
+│   ├── extensions.py               # Flask extensions (db, etc.)
+│   ├── constants.py                # App-wide constants
+│   │
+│   ├── agents/                     # AI Agents
+│   │   ├── __init__.py
+│   │   ├── base.py                 # Base agent class
+│   │   ├── prompt_master.py        # Story idea generation
+│   │   ├── world_shaper.py         # World building
+│   │   ├── plot_seeder.py          # Plot development
+│   │   ├── character_architect.py   # Character development
+│   │   └── crew.py                 # Agent orchestration
+│   │
+│   ├── models/                     # Database models
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── story.py
+│   │   └── media.py                # Images and audio storage
+│   │
+│   ├── schemas/                    # Data validation/serialization
+│   │   ├── __init__.py
+│   │   ├── story.py
+│   │   └── generation.py
+│   │
+│   ├── services/                   # Business logic
+│   │   ├── __init__.py
+│   │   ├── text_generation/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   ├── groq.py
+│   │   │   └── gemini.py
+│   │   ├── image_generation/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   └── together.py
+│   │   └── audio_generation/
+│   │       ├── __init__.py
+│   │       ├── base.py
+│   │       ├── gtts.py
+│   │       └── hume.py
+│   │
+│   ├── api/                        # API routes
+│   │   ├── __init__.py
+│   │   ├── story.py               
+│   │   ├── generation.py
+│   │   └── user.py
+│   │
+│   ├── web/                        # Web routes
+│   │   ├── __init__.py
+│   │   ├── story.py
+│   │   ├── generation.py
+│   │   └── auth.py
+│   │
+│   ├── static/
+│   │   ├── css/
+│   │   │   ├── base.css
+│   │   │   └── components/
+│   │   ├── js/
+│   │   │   ├── story-generation.js
+│   │   │   ├── story-editing.js
+│   │   │   └── components/
+│   │   └── media/
+│   │       ├── images/
+│   │       └── audio/
+│   │
+│   └── templates/
+│       ├── base.html
+│       ├── components/             # Reusable template components
+│       ├── story/
+│       │   ├── create.html
+│       │   ├── edit.html
+│       │   └── view.html
+│       └── auth/
+│           ├── login.html
+│           └── register.html
+│
+├── tests/                          # Test directory
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_agents/
+│   ├── test_services/
+│   └── test_api/
+│
+├── migrations/                     # Database migrations
+├── instance/                       # Instance-specific files
+├── logs/                          # Application logs
+├── scripts/                       # Utility scripts
+│   ├── setup_dev.sh
+│   └── deploy.sh
+│
+├── .env.example                   # Example environment variables
+├── .gitignore
+├── README.md
+├── requirements.txt
+└── wsgi.py                        # WSGI entry point
