@@ -26,14 +26,18 @@ class IdeaCrewService:
             llm_config=config.get('llm_config', {})
         )
 
-    def create_task(self, config, agent, **kwargs):
+    def create_task(self, config, agent, context=None):
         """Create a task with the specified configuration"""
-        return Task(
-            description=config['description'],
-            expected_output=config['expected_output'],
-            agent=agent,
-            **kwargs
-        )
+        task_config = {
+            'description': config['description'],
+            'expected_output': config['expected_output'],
+            'agent': agent
+        }
+        
+        if context:
+            task_config['context'] = [context]
+            
+        return Task(**task_config)
 
     def generate_story_concept(self, prompt, genre, mood, target_audience):
         """Generates a complete story concept using the Idea Crew"""
@@ -47,33 +51,19 @@ class IdeaCrewService:
             generate_concepts_task = self.create_task(
                 self.tasks_config['generate_core_concepts'],
                 concept_generator,
-                context=f"""
-                Create a story concept based on:
-                Prompt: {prompt}
-                Genre: {genre}
-                Mood: {mood}
-                Target Audience: {target_audience}
-                
-                Provide a structured response with main themes, key elements, and potential directions.
-                """
+                context=f"Create a story concept based on: Prompt: {prompt}, Genre: {genre}, Mood: {mood}, Target Audience: {target_audience}. Provide a structured response with main themes, key elements, and potential directions."
             )
 
             develop_world_task = self.create_task(
                 self.tasks_config['develop_story_world'],
                 world_builder,
-                context="""
-                Based on the core concepts provided, develop a rich and detailed world for the story.
-                Include key locations, atmosphere, and any relevant background elements.
-                """
+                context="Based on the core concepts provided, develop a rich and detailed world for the story. Include key locations, atmosphere, and any relevant background elements."
             )
 
             craft_plot_task = self.create_task(
                 self.tasks_config['craft_plot_possibilities'],
                 plot_weaver,
-                context="""
-                Using the established world and concepts, create potential plot developments.
-                Include possible story arcs, conflicts, and character dynamics.
-                """
+                context="Using the established world and concepts, create potential plot developments. Include possible story arcs, conflicts, and character dynamics."
             )
 
             # Create and run the crew
