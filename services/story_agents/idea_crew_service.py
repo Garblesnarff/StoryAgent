@@ -74,13 +74,14 @@ class IdeaCrewService:
                 verbose=True
             )
             
-            result = crew.kickoff()
+            # Get results from the crew execution
+            results = crew.kickoff()
             
-            # Process and structure the results
+            # Since results is a list of task outputs in order, we can map them directly
             return {
-                'core_concepts': result[0],
-                'story_world': result[1],
-                'plot_possibilities': result[2]
+                'core_concepts': str(results[0]),  # Convert to string to ensure text format
+                'story_world': str(results[1]),
+                'plot_possibilities': str(results[2])
             }
 
         except Exception as e:
