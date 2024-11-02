@@ -35,53 +35,35 @@ class IdeaCrewService:
         }
         
         if context:
-            task_config['context'] = [context]
+            task_config['context'] = context
             
         return Task(**task_config)
 
     def generate_story_concept(self, prompt, genre, mood, target_audience):
         """Generates a complete story concept using the Idea Crew"""
         try:
-            # Create agents
+            # Create agents with proper configuration
             concept_generator = self.create_agent(self.agents_config['concept_generator'])
             world_builder = self.create_agent(self.agents_config['world_builder'])
             plot_weaver = self.create_agent(self.agents_config['plot_weaver'])
 
-            # Create tasks with context and structured output format
+            # Create tasks with specific contexts
             generate_concepts_task = self.create_task(
                 self.tasks_config['generate_core_concepts'],
                 concept_generator,
-                context=f'''Create a story concept based on:
-                        Prompt: {prompt}
-                        Genre: {genre}
-                        Mood: {mood}
-                        Target Audience: {target_audience}
-                        
-                        Format your response with clear sections for:
-                        - Main Theme
-                        - Key Elements
-                        - Potential Directions'''
+                context=f"Generate a {genre} story concept with {mood} mood for {target_audience} based on: {prompt}"
             )
 
             develop_world_task = self.create_task(
                 self.tasks_config['develop_story_world'],
                 world_builder,
-                context='''Based on the core concepts provided, develop a detailed world.
-                        Structure your response with:
-                        - Setting Description
-                        - Key Locations
-                        - Atmosphere
-                        - Background Elements'''
+                context="Use the above concept to develop the story world"
             )
 
             craft_plot_task = self.create_task(
                 self.tasks_config['craft_plot_possibilities'],
                 plot_weaver,
-                context='''Using the established world and concepts, outline the plot.
-                        Include:
-                        - Story Arcs
-                        - Main Conflicts
-                        - Character Dynamics'''
+                context="Create plot developments based on the world and concept above"
             )
 
             # Create and run the crew
@@ -91,20 +73,22 @@ class IdeaCrewService:
                 process=Process.sequential,
                 verbose=True
             )
-            
-            # Get results from crew execution and format them
+
+            # Execute the crew and get results
             results = crew.kickoff()
             
-            # Ensure we have all required results
-            if len(results) < 3:
+            # Since results is a string array, map them directly
+            if not results or len(results) < 3:
                 raise Exception("Incomplete results from crew execution")
 
-            # Format the results into a structured dictionary
-            return {
-                'core_concepts': str(results[0]).strip(),
-                'story_world': str(results[1]).strip(),
-                'plot_possibilities': str(results[2]).strip()
+            # Create a structured response with the results
+            story_concept = {
+                'core_concepts': str(results[0]),
+                'story_world': str(results[1]),
+                'plot_possibilities': str(results[2])
             }
+
+            return story_concept
 
         except Exception as e:
             print(f"Error in story concept generation: {str(e)}")
