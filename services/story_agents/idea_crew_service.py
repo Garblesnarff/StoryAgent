@@ -35,35 +35,36 @@ class IdeaCrewService:
         }
         
         if context:
-            task_config['context'] = context
+            # Ensure context is a list
+            task_config['context'] = [context] if isinstance(context, str) else context
             
         return Task(**task_config)
 
     def generate_story_concept(self, prompt, genre, mood, target_audience):
         """Generates a complete story concept using the Idea Crew"""
         try:
-            # Create agents with proper configuration
+            # Create agents
             concept_generator = self.create_agent(self.agents_config['concept_generator'])
             world_builder = self.create_agent(self.agents_config['world_builder'])
             plot_weaver = self.create_agent(self.agents_config['plot_weaver'])
 
-            # Create tasks with specific contexts
+            # Create tasks with contexts as lists
             generate_concepts_task = self.create_task(
                 self.tasks_config['generate_core_concepts'],
                 concept_generator,
-                context=f"Generate a {genre} story concept with {mood} mood for {target_audience} based on: {prompt}"
+                [f"Generate a {genre} story concept with {mood} mood for {target_audience} based on: {prompt}"]
             )
 
             develop_world_task = self.create_task(
                 self.tasks_config['develop_story_world'],
                 world_builder,
-                context="Use the above concept to develop the story world"
+                ["Use the above concept to develop the story world"]
             )
 
             craft_plot_task = self.create_task(
                 self.tasks_config['craft_plot_possibilities'],
                 plot_weaver,
-                context="Create plot developments based on the world and concept above"
+                ["Create plot developments based on the world and concept above"]
             )
 
             # Create and run the crew
@@ -74,21 +75,16 @@ class IdeaCrewService:
                 verbose=True
             )
 
-            # Execute the crew and get results
             results = crew.kickoff()
             
-            # Since results is a string array, map them directly
             if not results or len(results) < 3:
                 raise Exception("Incomplete results from crew execution")
 
-            # Create a structured response with the results
-            story_concept = {
+            return {
                 'core_concepts': str(results[0]),
                 'story_world': str(results[1]),
                 'plot_possibilities': str(results[2])
             }
-
-            return story_concept
 
         except Exception as e:
             print(f"Error in story concept generation: {str(e)}")
