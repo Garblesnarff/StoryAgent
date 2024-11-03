@@ -21,6 +21,4 @@ dependencies = [
     "hume~=0.4.2",
     "sounddevice>=0.5.1",
     "websockets>=12.0",
-    "crewai>=0.76.9",
-    "pyyaml>=6.0.2",
 ]
