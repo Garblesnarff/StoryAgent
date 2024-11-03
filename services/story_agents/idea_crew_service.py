@@ -12,16 +12,24 @@ class IdeaCrewService:
         config_path = os.path.join(os.path.dirname(__file__), path)
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
+            
+    def _get_llm_config(self, temperature=0.7):
+        return {
+            "model": "meta-70b",
+            "provider": "groq",
+            "temperature": temperature,
+            "api_key": os.environ.get('GROQ_API_KEY')
+        }
 
     def generate_story_concept(self, prompt, genre, mood, target_audience):
         try:
-            # Create agents with proper configuration
+            # Create agents with proper LLM configuration
             concept_generator = Agent(
                 role=self.agents_config['concept_generator']['role'].format(topic=genre),
                 goal=self.agents_config['concept_generator']['goal'].format(topic=genre),
                 backstory=self.agents_config['concept_generator']['backstory'].format(topic=genre),
                 verbose=True,
-                llm_config={"temperature": 0.8}
+                llm_config=self._get_llm_config(temperature=0.8)
             )
             
             world_builder = Agent(
@@ -29,7 +37,7 @@ class IdeaCrewService:
                 goal=self.agents_config['world_builder']['goal'].format(topic=genre),
                 backstory=self.agents_config['world_builder']['backstory'].format(topic=genre),
                 verbose=True,
-                llm_config={"temperature": 0.7}
+                llm_config=self._get_llm_config(temperature=0.7)
             )
             
             plot_weaver = Agent(
@@ -37,10 +45,10 @@ class IdeaCrewService:
                 goal=self.agents_config['plot_weaver']['goal'].format(topic=genre),
                 backstory=self.agents_config['plot_weaver']['backstory'].format(topic=genre),
                 verbose=True,
-                llm_config={"temperature": 0.7}
+                llm_config=self._get_llm_config(temperature=0.7)
             )
 
-            # Create tasks with specific contexts
+            # Create tasks with proper context lists
             generate_concepts_task = Task(
                 description=self.tasks_config['generate_core_concepts']['description'],
                 expected_output=self.tasks_config['generate_core_concepts']['expected_output'],
@@ -84,10 +92,11 @@ class IdeaCrewService:
 
             # Execute crew and process results
             results = crew.kickoff()
+            
             if not results:
                 raise Exception("No results returned from crew execution")
 
-            # Process results - each task returns a string
+            # Process results and ensure they are strings
             return {
                 'core_concepts': str(results[0]) if results[0] else "",
                 'story_world': str(results[1]) if len(results) > 1 and results[1] else "",

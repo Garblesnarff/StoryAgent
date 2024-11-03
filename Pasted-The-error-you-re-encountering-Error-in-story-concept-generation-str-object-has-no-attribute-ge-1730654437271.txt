@@ -1,0 +1,121 @@
+The error you're encountering, `Error in story concept generation: 'str' object has no attribute 'get'`, typically indicates that something in your configuration or the `Agent` setup is not receiving the expected input or configuration, possibly in the `llm_config` or the data format being used.
+
+Here's a step-by-step troubleshooting approach and modifications to get this working correctly:
+
+### 1. Verify Agent and Task Configuration
+Confirm that your `agents.yaml` and `tasks.yaml` files are structured correctly. Each agent and task should be a dictionary with appropriate keys such as `role`, `goal`, and `backstory` for agents, and `description` and `expected_output` for tasks.
+
+### 2. Ensure `llm_config` Compatibility with Meta 70B Model
+The `llm_config` setup should match the requirements of the Groq Meta 70B model for inference. The model might need specific configuration settings in `llm_config`, so verify this from the model's documentation. For example, you might need to set up parameters like `model="meta-70b"`.
+
+### 3. Modify Agent Setup to Use Meta 70B on Groq
+To use the Groq hardware for inference with the Meta 70B model, ensure your code specifies the right model configuration. Here’s an example modification to integrate the Meta model with `llm_config` settings.
+
+Update the `generate_story_concept` method to configure the Meta 70B model as follows:
+
+```python
+def generate_story_concept(self, prompt, genre, mood, target_audience):
+    try:
+        # Define configuration for the Meta 70B model on Groq
+        llm_config = {
+            "model": "meta-70b",
+            "provider": "groq",
+            "temperature": 0.7  # Adjust temperature as needed for each agent
+        }
+
+        # Create agents with proper configuration
+        concept_generator = Agent(
+            role=self.agents_config['concept_generator']['role'].format(topic=genre),
+            goal=self.agents_config['concept_generator']['goal'].format(topic=genre),
+            backstory=self.agents_config['concept_generator']['backstory'].format(topic=genre),
+            verbose=True,
+            llm_config=llm_config
+        )
+
+        world_builder = Agent(
+            role=self.agents_config['world_builder']['role'].format(topic=genre),
+            goal=self.agents_config['world_builder']['goal'].format(topic=genre),
+            backstory=self.agents_config['world_builder']['backstory'].format(topic=genre),
+            verbose=True,
+            llm_config=llm_config
+        )
+
+        plot_weaver = Agent(
+            role=self.agents_config['plot_weaver']['role'].format(topic=genre),
+            goal=self.agents_config['plot_weaver']['goal'].format(topic=genre),
+            backstory=self.agents_config['plot_weaver']['backstory'].format(topic=genre),
+            verbose=True,
+            llm_config=llm_config
+        )
+
+        # Create tasks with specific contexts
+        generate_concepts_task = Task(
+            description=self.tasks_config['generate_core_concepts']['description'],
+            expected_output=self.tasks_config['generate_core_concepts']['expected_output'],
+            agent=concept_generator,
+            context=[
+                f"Generate a {genre} story concept with {mood} mood for {target_audience}.",
+                f"Story prompt: {prompt}",
+                "Provide a detailed response with clear sections for themes, narrative elements, and key story points."
+            ]
+        )
+
+        develop_world_task = Task(
+            description=self.tasks_config['develop_story_world']['description'],
+            expected_output=self.tasks_config['develop_story_world']['expected_output'],
+            agent=world_builder,
+            context=[
+                "Based on the generated concept above, develop the story world.",
+                f"Consider the {genre} genre elements and {mood} atmosphere.",
+                "Detail the setting, environment, and world rules that support the story."
+            ]
+        )
+
+        craft_plot_task = Task(
+            description=self.tasks_config['craft_plot_possibilities']['description'],
+            expected_output=self.tasks_config['craft_plot_possibilities']['expected_output'],
+            agent=plot_weaver,
+            context=[
+                "Using the established concept and world, outline the plot structure.",
+                f"Focus on creating a {mood} narrative that appeals to {target_audience}.",
+                "Include potential story arcs, conflicts, and character dynamics."
+            ]
+        )
+
+        # Create and run the crew
+        crew = Crew(
+            agents=[concept_generator, world_builder, plot_weaver],
+            tasks=[generate_concepts_task, develop_world_task, craft_plot_task],
+            process=Process.sequential,
+            verbose=True
+        )
+
+        # Execute crew and process results
+        results = crew.kickoff()
+        if not results:
+            raise Exception("No results returned from crew execution")
+
+        # Process results - each task returns a string
+        return {
+            'core_concepts': str(results[0]) if results[0] else "",
+            'story_world': str(results[1]) if len(results) > 1 and results[1] else "",
+            'plot_possibilities': str(results[2]) if len(results) > 2 and results[2] else ""
+        }
+
+    except Exception as e:
+        print(f"Error in story concept generation: {str(e)}")
+        return None
+```
+
+### Explanation of Changes
+
+1. **Unified `llm_config` for the Meta Model**: 
+   The `llm_config` is now unified for all agents with `"model": "meta-70b"` and `"provider": "groq"` to specify the Meta 70B model on Groq.
+
+2. **Error-Handling Check for Results**: 
+   This ensures that if any task fails to produce output, it won’t cause a `NoneType` error on result access.
+
+3. **Verbose Output**: 
+   The `verbose` parameter is set to `True` to help you trace each step of agent and task execution more clearly, useful for debugging.
+
+Try these modifications and run the `generate_story_concept` method again. Let me know if there’s any specific part that still causes issues!
