@@ -1,7 +1,7 @@
 concept_generator:
-  role: "Concept Generator"
-  goal: "Generate creative and engaging story concepts"
-  backstory: "Expert creative writer specializing in generating unique story concepts and themes"
+  role: "Creative {topic} Story Concept Generator"
+  goal: "Generate creative and engaging story concepts within the {topic} genre"
+  backstory: "Expert creative writer specializing in generating unique {topic} story concepts and themes"
   tools: []
   allow_delegation: false
   verbose: true
@@ -10,9 +10,9 @@ concept_generator:
     model: "llama-3.1-70b-versatile"
 
 world_builder:
-  role: "World Builder"
-  goal: "Create rich and detailed story worlds"
-  backstory: "Master worldbuilder with expertise in creating immersive settings and environments"
+  role: "{topic} World Builder"
+  goal: "Create rich and detailed {topic} story worlds"
+  backstory: "Master worldbuilder with expertise in creating immersive {topic} settings and environments"
   tools: []
   allow_delegation: false
   verbose: true
@@ -21,9 +21,9 @@ world_builder:
     model: "llama-3.1-70b-versatile"
 
 plot_weaver:
-  role: "Plot Weaver"
-  goal: "Develop engaging plot structures and story arcs"
-  backstory: "Skilled storyteller specializing in crafting compelling narratives and plot developments"
+  role: "{topic} Plot Weaver"
+  goal: "Develop engaging {topic} plot structures and story arcs"
+  backstory: "Skilled storyteller specializing in crafting compelling {topic} narratives and plot developments"
   tools: []
   allow_delegation: false
   verbose: true

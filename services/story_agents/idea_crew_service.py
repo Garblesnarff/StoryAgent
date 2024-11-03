@@ -41,30 +41,57 @@ class IdeaCrewService:
         return Task(**task_config)
 
     def generate_story_concept(self, prompt, genre, mood, target_audience):
-        """Generates a complete story concept using the Idea Crew"""
         try:
-            # Create agents
-            concept_generator = self.create_agent(self.agents_config['concept_generator'])
-            world_builder = self.create_agent(self.agents_config['world_builder'])
-            plot_weaver = self.create_agent(self.agents_config['plot_weaver'])
+            # Create agents with proper format strings in their configs
+            concept_generator = self.create_agent({
+                **self.agents_config['concept_generator'],
+                'role': self.agents_config['concept_generator']['role'].format(topic=genre)
+            })
+            world_builder = self.create_agent({
+                **self.agents_config['world_builder'],
+                'role': self.agents_config['world_builder']['role'].format(topic=genre)
+            })
+            plot_weaver = self.create_agent({
+                **self.agents_config['plot_weaver'],
+                'role': self.agents_config['plot_weaver']['role'].format(topic=genre)
+            })
 
-            # Create tasks with contexts as lists
+            # Create tasks with detailed contexts
+            concept_context = [
+                f"Generate a {genre} story concept with {mood} mood for {target_audience}.",
+                f"Story prompt: {prompt}",
+                "Provide a detailed response with clear sections for themes, narrative elements, and key story points."
+            ]
+            
+            # Create sequential tasks
             generate_concepts_task = self.create_task(
                 self.tasks_config['generate_core_concepts'],
                 concept_generator,
-                [f"Generate a {genre} story concept with {mood} mood for {target_audience} based on: {prompt}"]
+                concept_context
             )
 
+            world_context = [
+                "Based on the generated concept above, develop the story world.",
+                f"Consider the {genre} genre elements and {mood} atmosphere.",
+                "Detail the setting, environment, and world rules that support the story."
+            ]
+            
             develop_world_task = self.create_task(
                 self.tasks_config['develop_story_world'],
                 world_builder,
-                ["Use the above concept to develop the story world"]
+                world_context
             )
 
+            plot_context = [
+                "Using the established concept and world, outline the plot structure.",
+                f"Focus on creating a {mood} narrative that appeals to {target_audience}.",
+                "Include potential story arcs, conflicts, and character dynamics."
+            ]
+            
             craft_plot_task = self.create_task(
                 self.tasks_config['craft_plot_possibilities'],
                 plot_weaver,
-                ["Create plot developments based on the world and concept above"]
+                plot_context
             )
 
             # Create and run the crew
@@ -75,15 +102,21 @@ class IdeaCrewService:
                 verbose=True
             )
 
+            # Execute crew and get results
             results = crew.kickoff()
             
-            if not results or len(results) < 3:
-                raise Exception("Incomplete results from crew execution")
+            if not results:
+                raise Exception("No results returned from crew execution")
+
+            # Extract results and ensure they are strings
+            core_concepts = str(results[0]) if results[0] else ""
+            story_world = str(results[1]) if len(results) > 1 and results[1] else ""
+            plot_possibilities = str(results[2]) if len(results) > 2 and results[2] else ""
 
             return {
-                'core_concepts': str(results[0]),
-                'story_world': str(results[1]),
-                'plot_possibilities': str(results[2])
+                'core_concepts': core_concepts,
+                'story_world': story_world,
+                'plot_possibilities': plot_possibilities
             }
 
         except Exception as e:
