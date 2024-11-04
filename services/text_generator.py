@@ -2,11 +2,13 @@ import groq
 import os
 import json
 import re
+from .concept_generator import ConceptGenerator
 
 class TextGenerator:
     def __init__(self):
-        # Initialize Groq client
+        # Initialize Groq client and ConceptGenerator
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        self.concept_generator = ConceptGenerator()
     
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
@@ -38,7 +40,27 @@ class TextGenerator:
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
         try:
-            # Generate story text with improved prompt
+            # First, generate a detailed concept
+            concept = self.concept_generator.generate_concept(prompt, genre, mood, target_audience)
+            
+            if not concept:
+                raise Exception("Failed to generate story concept")
+
+            # Create an enhanced prompt using the generated concept
+            enhanced_prompt = (
+                f"Using this detailed concept:\n"
+                f"Theme: {concept['core_theme']}\n"
+                f"Setting: {concept['setting']}\n"
+                f"Plot Points: {json.dumps(concept['plot_points'])}\n"
+                f"Emotional Journey: {concept['emotional_journey']}\n\n"
+                f"Write a {genre} story with a {mood} mood for a {target_audience} "
+                f"audience. Create {paragraphs} distinct paragraphs that naturally "
+                "flow from one to the next. Each paragraph should be 2-3 sentences. "
+                "Follow the emotional journey and plot points while maintaining the core theme. "
+                "Do not include any segment markers, numbers, or labels."
+            )
+
+            # Generate story text with the enhanced prompt
             response = self.client.chat.completions.create(
                 model="llama-3.1-70b-versatile",
                 messages=[
@@ -47,20 +69,13 @@ class TextGenerator:
                         "content": (
                             f"You are a creative storyteller specializing in {genre} stories "
                             f"with a {mood} mood for a {target_audience} audience. Write in a "
-                            "natural, flowing narrative style. With a 3 act format. Do not use any section markers, "
-                            "segment labels, numbers, or chapter divisions. Each paragraph should "
-                            "flow naturally into the next as part of a continuous story."
+                            "natural, flowing narrative style. Follow the provided concept "
+                            "strictly while maintaining engaging prose."
                         )
                     },
                     {
                         "role": "user", 
-                        "content": (
-                            f"Write a {genre} story with a {mood} mood for a {target_audience} "
-                            f"audience based on this prompt: {prompt}. Create {paragraphs} "
-                            "distinct paragraphs where each naturally flows from the previous one. The story should follow the 3 act format."
-                            "Each paragraph should be 2-3 sentences. Do not include any segment markers, "
-                            "numbers, or labels. The story should read as one continuous narrative."
-                        )
+                        "content": enhanced_prompt
                     }
                 ],
                 temperature=0.7,
