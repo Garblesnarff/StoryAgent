@@ -3,12 +3,14 @@ import os
 import json
 import re
 from .concept_generator import ConceptGenerator
+from .world_builder import WorldBuilder
 
 class TextGenerator:
     def __init__(self):
-        # Initialize Groq client and ConceptGenerator
+        # Initialize Groq client and services
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
         self.concept_generator = ConceptGenerator()
+        self.world_builder = WorldBuilder()
     
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
@@ -46,18 +48,33 @@ class TextGenerator:
             if not concept:
                 raise Exception("Failed to generate story concept")
 
-            # Create an enhanced prompt using the generated concept
+            # Generate world details
+            world = self.world_builder.build_world(concept, genre, mood)
+            if not world:
+                raise Exception("Failed to generate world details")
+
+            # Enhance world with genre-specific elements
+            enhanced_world = self.world_builder.enhance_setting(world, genre)
+            if not enhanced_world:
+                raise Exception("Failed to enhance world details")
+
+            # Create an enhanced prompt using the generated concept and world
             enhanced_prompt = (
                 f"Using this detailed concept:\n"
                 f"Theme: {concept['core_theme']}\n"
                 f"Setting: {concept['setting']}\n"
                 f"Plot Points: {json.dumps(concept['plot_points'])}\n"
                 f"Emotional Journey: {concept['emotional_journey']}\n\n"
+                f"And this detailed world:\n"
+                f"Environment: {json.dumps(enhanced_world['physical_environment'])}\n"
+                f"Atmosphere: {json.dumps(enhanced_world['atmosphere'])}\n"
+                f"Key Locations: {json.dumps(enhanced_world['locations'])}\n\n"
                 f"Write a {genre} story with a {mood} mood for a {target_audience} "
                 f"audience. Create {paragraphs} distinct paragraphs that naturally "
                 "flow from one to the next. Each paragraph should be 2-3 sentences. "
-                "Follow the emotional journey and plot points while maintaining the core theme. "
-                "Do not include any segment markers, numbers, or labels."
+                "Follow the emotional journey and plot points while maintaining the core theme "
+                "and incorporating vivid world details. Do not include any segment markers, "
+                "numbers, or labels."
             )
 
             # Generate story text with the enhanced prompt
@@ -70,7 +87,7 @@ class TextGenerator:
                             f"You are a creative storyteller specializing in {genre} stories "
                             f"with a {mood} mood for a {target_audience} audience. Write in a "
                             "natural, flowing narrative style. Follow the provided concept "
-                            "strictly while maintaining engaging prose."
+                            "and world details strictly while maintaining engaging prose."
                         )
                     },
                     {
