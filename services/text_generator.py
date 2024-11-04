@@ -47,7 +47,7 @@ class TextGenerator:
                         "content": (
                             f"You are a creative storyteller specializing in {genre} stories "
                             f"with a {mood} mood for a {target_audience} audience. Write in a "
-                            "natural, flowing narrative style. Do not use any section markers, "
+                            "natural, flowing narrative style. With a 3 act format. Do not use any section markers, "
                             "segment labels, numbers, or chapter divisions. Each paragraph should "
                             "flow naturally into the next as part of a continuous story."
                         )
@@ -57,7 +57,7 @@ class TextGenerator:
                         "content": (
                             f"Write a {genre} story with a {mood} mood for a {target_audience} "
                             f"audience based on this prompt: {prompt}. Create {paragraphs} "
-                            "distinct paragraphs where each naturally flows from the previous one. "
+                            "distinct paragraphs where each naturally flows from the previous one. The story should follow the 3 act format."
                             "Each paragraph should be 2-3 sentences. Do not include any segment markers, "
                             "numbers, or labels. The story should read as one continuous narrative."
                         )
