@@ -4,6 +4,7 @@ import json
 import re
 from .concept_generator import ConceptGenerator
 from .world_builder import WorldBuilder
+from .plot_weaver import PlotWeaver
 
 class TextGenerator:
     def __init__(self):
@@ -11,6 +12,7 @@ class TextGenerator:
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
         self.concept_generator = ConceptGenerator()
         self.world_builder = WorldBuilder()
+        self.plot_weaver = PlotWeaver()
     
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
@@ -42,9 +44,8 @@ class TextGenerator:
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
         try:
-            # First, generate a detailed concept
+            # Generate a detailed concept
             concept = self.concept_generator.generate_concept(prompt, genre, mood, target_audience)
-            
             if not concept:
                 raise Exception("Failed to generate story concept")
 
@@ -58,21 +59,39 @@ class TextGenerator:
             if not enhanced_world:
                 raise Exception("Failed to enhance world details")
 
-            # Create an enhanced prompt using the generated concept and world
+            # Generate plot structure using Plot Weaver
+            plot = self.plot_weaver.weave_plot(concept, enhanced_world, genre, mood)
+            if not plot:
+                raise Exception("Failed to generate plot structure")
+
+            # Develop detailed scenes
+            scenes = self.plot_weaver.develop_scenes(plot, enhanced_world)
+            if not scenes:
+                raise Exception("Failed to develop scenes")
+
+            # Generate dialogue if characters exist in concept
+            dialogue = None
+            if 'characters' in concept and concept['characters']:
+                dialogue = self.plot_weaver.generate_dialogue(scenes, concept['characters'])
+
+            # Refine the complete plot
+            refined_plot = self.plot_weaver.refine_plot(plot, scenes, dialogue or {})
+            if not refined_plot:
+                raise Exception("Failed to refine plot")
+
+            # Create an enhanced prompt using all generated elements
             enhanced_prompt = (
-                f"Using this detailed concept:\n"
+                f"Using this detailed story structure:\n"
                 f"Theme: {concept['core_theme']}\n"
-                f"Setting: {concept['setting']}\n"
-                f"Plot Points: {json.dumps(concept['plot_points'])}\n"
-                f"Emotional Journey: {concept['emotional_journey']}\n\n"
-                f"And this detailed world:\n"
                 f"Setting: {enhanced_world['setting']}\n"
                 f"Atmosphere: {enhanced_world['atmosphere']}\n"
-                f"Rules: {json.dumps(enhanced_world['rules'])}\n\n"
+                f"Plot Outline: {json.dumps(plot['plot_outline'])}\n"
+                f"Story Beats: {json.dumps(refined_plot['story_beats'])}\n"
+                f"Narrative Flow: {refined_plot['narrative_flow']}\n\n"
                 f"Write a {genre} story with a {mood} mood for a {target_audience} "
                 f"audience. Create {paragraphs} distinct paragraphs that naturally "
                 "flow from one to the next. Each paragraph should be 2-3 sentences. "
-                "Follow the emotional journey and plot points while maintaining the core theme "
+                "Follow the narrative flow and story beats while maintaining the core theme "
                 "and incorporating vivid world details. Do not include any segment markers, "
                 "numbers, or labels."
             )
@@ -86,8 +105,8 @@ class TextGenerator:
                         "content": (
                             f"You are a creative storyteller specializing in {genre} stories "
                             f"with a {mood} mood for a {target_audience} audience. Write in a "
-                            "natural, flowing narrative style. Follow the provided concept "
-                            "and world details strictly while maintaining engaging prose."
+                            "natural, flowing narrative style. Follow the provided structure "
+                            "strictly while maintaining engaging prose."
                         )
                     },
                     {
