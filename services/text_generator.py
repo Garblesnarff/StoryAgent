@@ -13,14 +13,17 @@ class TextGenerator:
         # Remove any leading numbers with dots, parentheses, or brackets
         text = re.sub(r'^\s*(?:\d+[.)\]]\s*|\[\d+\]\s*)', '', text.strip())
         
-        # Remove any segment/section markers with optional numbers
-        text = re.sub(r'(?i)(?:segment|section|part|chapter)\s*#?\d*:?\s*', '', text)
+        # Remove any segment/section markers with optional numbers or colons
+        text = re.sub(r'(?i)(?:segment|section|part|chapter|scene)\s*#?\d*:?\s*', '', text)
         
         # Remove any standalone numbers at start of paragraphs
         text = re.sub(r'^\s*\d+\s*', '', text)
         
         # Remove any bracketed or parenthesized numbers
         text = re.sub(r'\s*[\[\(]\d+[\]\)]\s*', ' ', text)
+        
+        # Remove any remaining segment-like markers
+        text = re.sub(r'(?i)(?:segment|section|part|chapter|scene)\s*', '', text)
         
         # Normalize whitespace
         text = ' '.join(text.split())
@@ -30,7 +33,7 @@ class TextGenerator:
     def validate_cleaned_text(self, text):
         """Check if text still contains any unwanted markers"""
         # Pattern to detect common segment markers
-        marker_pattern = r'(?i)(segment|section|part|chapter|\[\d+\]|\(\d+\)|^\d+\.)'
+        marker_pattern = r'(?i)(segment|section|part|chapter|scene|\[\d+\]|\(\d+\)|^\d+\.)'
         return not bool(re.search(marker_pattern, text))
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
@@ -44,8 +47,9 @@ class TextGenerator:
                         "content": (
                             f"You are a creative storyteller specializing in {genre} stories "
                             f"with a {mood} mood for a {target_audience} audience. Write in a "
-                            "natural, flowing narrative style without any section markers, "
-                            "numbers, or labels."
+                            "natural, flowing narrative style. Do not use any section markers, "
+                            "segment labels, numbers, or chapter divisions. Each paragraph should "
+                            "flow naturally into the next as part of a continuous story."
                         )
                     },
                     {
