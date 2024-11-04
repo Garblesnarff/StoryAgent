@@ -1,0 +1,27 @@
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:01] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:02] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:03] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:16] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:16] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:59:17] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:services.plot_weaver:Generating plot structure with Groq API
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:services.plot_weaver:Successfully generated and validated plot structure
+Error generating story: 'plot_outline'
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:07:30] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:07:30] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:07:30] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:07:30] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:07:30] "GET /static/js/story-edit.js HTTP/1.1" 304 -
