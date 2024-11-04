@@ -43,10 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
-                    if (!line) continue;
-
+                    if (!line || !line.startsWith('data:')) continue;
+                    
                     try {
-                        const data = JSON.parse(line);
+                        const jsonStr = line.replace('data:', '').trim();
+                        const data = JSON.parse(jsonStr);
                         switch (data.type) {
                             case 'agent_progress':
                                 updateAgentProgress(data.agent, data.status, data.message);
@@ -59,8 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'error':
                                 throw new Error(data.message || 'An unknown error occurred');
                         }
-                    } catch (parseError) {
-                        console.error('Error parsing progress:', parseError, line);
+                    } catch (error) {
+                        console.error('Error parsing progress:', error, line);
                     }
                 }
                 buffer = lines[lines.length - 1];

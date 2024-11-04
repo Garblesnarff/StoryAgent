@@ -13,21 +13,20 @@ class PlotWeaver:
         try:
             print("Plot Weaver: Starting plot structure generation...")
             system_prompt = (
-                f"You are a {genre} story plotting expert. Create a compelling plot structure "
-                f"that maintains a {mood} atmosphere while incorporating the provided concept "
-                "and world details."
+                f"You are a {genre} story plotting expert. Create a simple plot structure "
+                f"that maintains a {mood} atmosphere. Focus on key story elements only."
             )
 
             user_prompt = (
                 "Based on this concept and world:\n"
                 f"Concept: {json.dumps(concept, indent=2)}\n"
                 f"World: {json.dumps(world, indent=2)}\n\n"
-                "Return a JSON object with these keys:\n"
+                "Return a simple JSON object with these exact fields:\n"
                 "- plot_outline (array of exactly 3 strings: beginning, middle, end)\n"
-                "- key_events (array of exactly 4 strings: major plot points)\n"
-                "- character_arcs (array of objects with name and development)\n"
-                "- pacing_notes (string: guidance for story rhythm)\n"
-                "Keep descriptions concise and impactful."
+                "- key_events (array of exactly 4 key plot points)\n"
+                "- character_arcs (array of objects with name and development fields)\n"
+                "- pacing_notes (string describing story rhythm)\n"
+                "Keep all descriptions under 100 words. No nested objects beyond character_arcs."
             )
 
             response = self.client.chat.completions.create(
@@ -45,25 +44,29 @@ class PlotWeaver:
                 print("Plot Weaver: Failed to generate plot structure")
                 raise Exception("No response from plot generation API")
 
-            # Parse and validate JSON response
             plot_data = json.loads(response.choices[0].message.content)
             
-            # Validate required fields
-            required_fields = ['plot_outline', 'key_events', 'character_arcs', 'pacing_notes']
-            if not all(field in plot_data for field in required_fields):
-                print("Plot Weaver: Missing required fields in plot data")
-                raise Exception("Missing required fields in plot data")
-                
-            # Validate arrays
-            if not isinstance(plot_data['plot_outline'], list) or len(plot_data['plot_outline']) != 3:
-                print("Plot Weaver: Invalid plot outline structure")
-                raise Exception("Plot outline must be an array with exactly 3 elements")
-            if not isinstance(plot_data['key_events'], list) or len(plot_data['key_events']) != 4:
-                print("Plot Weaver: Invalid key events structure")
-                raise Exception("Key events must be an array with exactly 4 elements")
+            # Validate and simplify the response structure
+            simplified_plot = {
+                'plot_outline': plot_data.get('plot_outline', [])[:3],
+                'key_events': plot_data.get('key_events', [])[:4],
+                'character_arcs': [
+                    {'name': arc.get('name', ''), 'development': arc.get('development', '')}
+                    for arc in plot_data.get('character_arcs', [])[:3]
+                ],
+                'pacing_notes': plot_data.get('pacing_notes', 'Standard three-act structure')
+            }
+            
+            # Validate the simplified structure
+            if len(simplified_plot['plot_outline']) != 3:
+                raise Exception("Invalid plot outline structure")
+            if len(simplified_plot['key_events']) != 4:
+                raise Exception("Invalid key events structure")
+            if not simplified_plot['character_arcs']:
+                raise Exception("Missing character arcs")
             
             print("Plot Weaver: Successfully generated plot structure")
-            return plot_data
+            return simplified_plot
 
         except Exception as e:
             print(f"Plot Weaver Error: {str(e)}")
@@ -84,9 +87,9 @@ class PlotWeaver:
                 f"Plot: {json.dumps(plot_data, indent=2)}\n"
                 f"World: {json.dumps(world, indent=2)}\n\n"
                 "Return a JSON object with these keys:\n"
-                "- scenes (array of objects with title, setting, and action)\n"
+                "- scenes (array of objects with title and action)\n"
                 "- transitions (array of strings connecting scenes)\n"
-                "- emotional_beats (array of strings for key emotional moments)\n"
+                "- emotional_beats (array of key emotional moments)\n"
                 "Keep scene descriptions under 100 words each."
             )
 
@@ -112,16 +115,6 @@ class PlotWeaver:
             if not all(field in scene_data for field in required_fields):
                 print("Plot Weaver: Missing required fields in scene data")
                 raise Exception("Missing required fields in scene data")
-                
-            # Validate scene structure
-            if not isinstance(scene_data['scenes'], list) or not scene_data['scenes']:
-                print("Plot Weaver: Invalid scenes array")
-                raise Exception("Invalid scenes array")
-                
-            for scene in scene_data['scenes']:
-                if not all(k in scene for k in ['title', 'setting', 'action']):
-                    print("Plot Weaver: Invalid scene object structure")
-                    raise Exception("Invalid scene object structure")
             
             print("Plot Weaver: Successfully developed scenes")
             return scene_data
@@ -130,23 +123,24 @@ class PlotWeaver:
             print(f"Plot Weaver Error: {str(e)}")
             return None
 
-    def generate_dialogue(self, scene_data: Dict, characters: List[Dict]) -> Optional[Dict]:
-        """Generate natural dialogue for key scenes"""
+    def refine_plot(self, plot_data: Dict, scene_data: Dict, dialogue_data: Dict = None) -> Optional[Dict]:
+        """Refine and polish the complete plot structure"""
         try:
-            print("Plot Weaver: Starting dialogue generation...")
+            print("Plot Weaver: Starting plot refinement...")
             system_prompt = (
-                "You are a dialogue writing expert. Create natural, character-driven "
-                "dialogue that advances the plot and reveals character personalities."
+                "You are a story editor specializing in plot refinement. Create a "
+                "cohesive and engaging final plot structure."
             )
 
             user_prompt = (
-                "Based on these scenes and characters:\n"
+                "Based on these story elements:\n"
+                f"Plot: {json.dumps(plot_data, indent=2)}\n"
                 f"Scenes: {json.dumps(scene_data, indent=2)}\n"
-                f"Characters: {json.dumps(characters, indent=2)}\n\n"
                 "Return a JSON object with these keys:\n"
-                "- dialogue_scenes (array of objects with scene_title and exchanges)\n"
-                "- character_voices (object mapping character names to speech patterns)\n"
-                "Keep dialogue natural and impactful."
+                "- refined_plot (array of scene descriptions)\n"
+                "- story_beats (array of key moments)\n"
+                "- narrative_flow (string describing pacing)\n"
+                "Keep descriptions concise."
             )
 
             response = self.client.chat.completions.create(
@@ -161,70 +155,20 @@ class PlotWeaver:
             )
 
             if not response or not response.choices:
-                print("Plot Weaver: Failed to generate dialogue")
-                raise Exception("No response from dialogue generation API")
-
-            dialogue_data = json.loads(response.choices[0].message.content)
-            
-            # Validate required fields
-            required_fields = ['dialogue_scenes', 'character_voices']
-            if not all(field in dialogue_data for field in required_fields):
-                print("Plot Weaver: Missing required fields in dialogue data")
-                raise Exception("Missing required fields in dialogue data")
-                
-            print("Plot Weaver: Successfully generated dialogue")
-            return dialogue_data
-
-        except Exception as e:
-            print(f"Plot Weaver Error: {str(e)}")
-            return None
-
-    def refine_plot(self, plot_data: Dict, scene_data: Dict, dialogue_data: Dict) -> Optional[Dict]:
-        """Refine and polish the complete plot structure"""
-        try:
-            print("Plot Weaver: Starting plot refinement...")
-            system_prompt = (
-                "You are a story editor specializing in plot refinement. Create a "
-                "cohesive and engaging final plot structure that integrates all elements."
-            )
-
-            user_prompt = (
-                "Based on these story elements:\n"
-                f"Plot: {json.dumps(plot_data, indent=2)}\n"
-                f"Scenes: {json.dumps(scene_data, indent=2)}\n"
-                f"Dialogue: {json.dumps(dialogue_data, indent=2)}\n\n"
-                "Return a JSON object with these keys:\n"
-                "- refined_plot (array of detailed scene descriptions)\n"
-                "- story_beats (array of emotional and plot points)\n"
-                "- narrative_flow (string describing pacing and transitions)\n"
-                "Focus on creating a seamless and engaging narrative."
-            )
-
-            response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.7,
-                max_tokens=1000,
-                response_format={"type": "json_object"}
-            )
-
-            if not response or not response.choices:
                 print("Plot Weaver: Failed to refine plot")
                 raise Exception("No response from plot refinement API")
 
             refined_data = json.loads(response.choices[0].message.content)
             
-            # Validate required fields
-            required_fields = ['refined_plot', 'story_beats', 'narrative_flow']
-            if not all(field in refined_data for field in required_fields):
-                print("Plot Weaver: Missing required fields in refined plot data")
-                raise Exception("Missing required fields in refined plot data")
-                
+            # Validate and simplify the structure
+            simplified_refined = {
+                'refined_plot': refined_data.get('refined_plot', [])[:5],
+                'story_beats': refined_data.get('story_beats', [])[:4],
+                'narrative_flow': refined_data.get('narrative_flow', '')
+            }
+            
             print("Plot Weaver: Successfully refined plot")
-            return refined_data
+            return simplified_refined
 
         except Exception as e:
             print(f"Plot Weaver Error: {str(e)}")
