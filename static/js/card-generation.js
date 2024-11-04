@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="alert alert-danger mt-2 d-none" role="alert"></div>
         `;
         
-        // Add event listeners for regeneration buttons
         const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
         const regenerateAudioBtn = pageDiv.querySelector('.regenerate-audio');
         
@@ -73,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const alert = pageDiv.querySelector('.alert');
         
         try {
-            // Disable button and show spinner
             button.disabled = true;
             spinner.classList.remove('d-none');
             buttonText.textContent = `Regenerating ${type}...`;
@@ -91,7 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error(`Failed to regenerate ${type}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Failed to regenerate ${type}`);
             }
             
             const data = await response.json();
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (type === 'image') {
                     const imgElement = pageDiv.querySelector('.card-img-top');
                     if (imgElement && data.image_url) {
-                        // Create new image and swap once loaded
                         const newImage = new Image();
                         newImage.onload = () => {
                             imgElement.src = data.image_url;
@@ -112,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const audioElement = pageDiv.querySelector('audio');
                     if (audioElement && data.audio_url) {
                         audioElement.src = data.audio_url;
-                        audioElement.load(); // Reload the audio element
+                        audioElement.load();
                     }
                 }
             } else {
@@ -120,11 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
         } catch (error) {
-            console.error('Error:', error);
-            alert.textContent = `Failed to regenerate ${type}. Please try again.`;
+            console.error('Error:', error.message || `Failed to regenerate ${type}`);
+            alert.textContent = error.message || `Failed to regenerate ${type}. Please try again.`;
             alert.classList.remove('d-none');
         } finally {
-            // Re-enable button and hide spinner
             button.disabled = false;
             spinner.classList.add('d-none');
             buttonText.textContent = `Regenerate ${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -139,20 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!prevButton || !nextButton) return;
         
-        if (totalPages > 1) {
-            prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
-            nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
-        } else {
-            prevButton.style.display = 'none';
-            nextButton.style.display = 'none';
-        }
+        prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
+        nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
         
         pages.forEach((page, index) => {
-            if (index === currentPage) {
-                page.style.display = 'block';
-            } else {
-                page.style.display = 'none';
-            }
+            page.style.display = index === currentPage ? 'block' : 'none';
         });
     }
     
@@ -175,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function generateCards() {
         try {
-            // Show story output container immediately
             if (storyOutput) {
                 storyOutput.style.display = 'block';
                 storyOutput.classList.add('visible');
@@ -186,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error('Failed to generate cards');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const reader = response.body.getReader();
@@ -220,16 +207,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                         pageElement = createPageElement(data.data, index);
                                         if (pageElement) {
                                             paragraphCards.appendChild(pageElement);
-                                            // Force reflow to trigger animation
-                                            pageElement.offsetHeight;
+                                            pageElement.offsetHeight; // Force reflow
                                             pageElement.classList.add('visible');
                                         }
                                     } else {
-                                        // Update existing page
                                         const newPage = createPageElement(data.data, index);
                                         if (newPage) {
                                             pageElement.innerHTML = newPage.innerHTML;
-                                            // Reattach event listeners
                                             const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
                                             const regenerateAudioBtn = pageElement.querySelector('.regenerate-audio');
                                             regenerateImageBtn?.addEventListener('click', () => handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
@@ -241,20 +225,28 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                                 break;
                             case 'error':
-                                console.error('Error:', data.message);
+                                console.error('Error:', data.message || 'An unknown error occurred');
+                                throw new Error(data.message || 'An unknown error occurred');
                                 break;
                             case 'complete':
                                 console.log(data.message);
                                 break;
                         }
                     } catch (error) {
-                        console.error('Error parsing message:', line, error);
+                        console.error('Error parsing or handling message:', error.message, line);
                     }
                 }
                 buffer = lines[lines.length - 1];
             }
         } catch (error) {
-            console.error('Error:', error.message || 'An unknown error occurred');
+            console.error('Error generating cards:', error.message || 'An unknown error occurred');
+            const paragraphCards = document.getElementById('paragraph-cards');
+            if (paragraphCards) {
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-danger';
+                errorAlert.textContent = error.message || 'Failed to generate cards. Please try again.';
+                paragraphCards.appendChild(errorAlert);
+            }
         }
     }
     
@@ -265,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveStoryBtn = document.getElementById('save-story');
     saveStoryBtn?.addEventListener('click', async () => {
         try {
-            console.log('Saving story...');
             const response = await fetch('/save_story', {
                 method: 'POST',
                 headers: {
@@ -274,18 +265,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error('Failed to save story');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save story');
             }
             
             const data = await response.json();
             if (data.success) {
                 console.log('Story saved successfully!');
+                alert('Story saved successfully!');
             } else {
                 throw new Error(data.error || 'Failed to save story');
             }
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to save story. Please try again.');
+            console.error('Error saving story:', error.message);
+            alert('Failed to save story: ' + error.message);
         }
     });
 });

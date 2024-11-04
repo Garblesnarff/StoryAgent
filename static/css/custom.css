@@ -69,6 +69,47 @@
     100% { transform: rotate(360deg); }
 }
 
+/* Progress container styles */
+.progress-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+}
+
+.agent-progress-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    transition: all 0.3s ease;
+}
+
+.agent-progress-item:last-child {
+    border-bottom: none;
+}
+
+.agent-status {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agent-info {
+    flex-grow: 1;
+}
+
+.agent-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.agent-message {
+    opacity: 0.8;
+}
+
 /* Card and book container styles */
 .book-container {
     position: relative;

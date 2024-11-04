@@ -13,48 +13,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingOverlay.style.display = 'flex';
             }
 
+            // Clear previous progress
             if (agentProgress) {
-                agentProgress.innerHTML = ''; // Clear previous progress
-                
-                // Update progress with each agent's status
-                const updateProgress = (step, status) => {
-                    const stepDiv = document.createElement('div');
-                    stepDiv.className = `agent-progress-step ${status}`;
-                    stepDiv.textContent = step;
-                    agentProgress.appendChild(stepDiv);
-                };
-
-                // Initial progress steps
-                updateProgress('Concept Generator: Creating story concept...', 'active');
-                updateProgress('World Builder: Building story world...', 'pending');
-                updateProgress('Plot Weaver: Developing plot structure...', 'pending');
+                agentProgress.innerHTML = '';
             }
 
             const response = await fetch('/generate_story', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'text/event-stream'
+                }
             });
 
-            let data;
-            try {
-                data = await response.json();
-            } catch (parseError) {
-                console.error('Failed to parse JSON response:', parseError);
-                throw new Error('Server returned an invalid response');
-            }
-            
             if (!response.ok) {
-                throw new Error(data.error || 'Story generation failed');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            if (data.success && data.redirect) {
-                window.location.href = data.redirect;
-            } else {
-                throw new Error(data.error || 'Invalid response from server');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    try {
+                        const data = JSON.parse(line);
+                        switch (data.type) {
+                            case 'agent_progress':
+                                updateAgentProgress(data.agent, data.status, data.message);
+                                break;
+                            case 'success':
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
+                                }
+                                break;
+                            case 'error':
+                                throw new Error(data.message || 'An unknown error occurred');
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing progress:', parseError, line);
+                    }
+                }
+                buffer = lines[lines.length - 1];
             }
+
         } catch (error) {
-            console.error('Error:', error);
-            alert('Error: ' + (error.message || 'An unexpected error occurred'));
+            console.error('Error:', error.message || error);
+            
+            // Update progress display with error state
+            const errorMessage = error.message || 'An unexpected error occurred';
+            updateAgentProgress('Story Generation', 'error', errorMessage);
+            
+            // Show error in alert
+            alert('Error: ' + errorMessage);
         } finally {
             const loadingOverlay = document.getElementById('loading-overlay');
             if (loadingOverlay) {
@@ -63,3 +83,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function updateAgentProgress(agent, status, message) {
+    const agentProgress = document.getElementById('agent-progress');
+    if (!agentProgress) {
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'agent-progress';
+        progressContainer.className = 'progress-container';
+        document.querySelector('.content-wrapper')?.appendChild(progressContainer);
+    }
+
+    let agentElement = document.getElementById(`progress-${agent}`);
+    if (!agentElement) {
+        agentElement = document.createElement('div');
+        agentElement.id = `progress-${agent}`;
+        agentElement.className = 'agent-progress-item';
+        document.getElementById('agent-progress')?.appendChild(agentElement);
+    }
+
+    const statusClasses = {
+        'pending': 'text-muted',
+        'active': 'text-primary',
+        'completed': 'text-success',
+        'error': 'text-danger'
+    };
+
+    agentElement.className = `agent-progress-item ${statusClasses[status] || 'text-muted'}`;
+    agentElement.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+            <div class="agent-status">
+                ${status === 'active' ? '<div class="spinner-border spinner-border-sm"></div>' :
+                 status === 'completed' ? '<i class="bi bi-check-circle-fill"></i>' :
+                 status === 'error' ? '<i class="bi bi-x-circle-fill"></i>' : '○'}
+            </div>
+            <div class="agent-info">
+                <div class="agent-name">${agent}</div>
+                <div class="agent-message small">${message}</div>
+            </div>
+        </div>
+    `;
+}
