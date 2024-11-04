@@ -12,22 +12,20 @@ class WorldBuilder:
         """Generate a detailed world based on the story concept"""
         try:
             system_prompt = (
-                f"You are a {genre} world-building expert. Create a simple but vivid world "
-                f"that maintains a {mood} atmosphere. Focus on essential details only."
+                f"You are a {genre} world-building expert specializing in creating vivid "
+                f"settings with a {mood} atmosphere. Focus on concise but evocative descriptions."
             )
 
             user_prompt = (
                 "Based on this concept:\n"
                 f"{json.dumps(concept, indent=2)}\n\n"
                 "Return a JSON object with exactly these fields:\n"
-                "{\n"
-                "  'environment': string (brief physical description, max 50 words),\n"
-                "  'society': string (brief social description, max 50 words),\n"
-                "  'mood': array of exactly 3 mood descriptors,\n"
-                "  'senses': array of exactly 3 sensory details,\n"
-                "  'locations': array of exactly 2 objects with 'name' and 'description' fields\n"
-                "}\n\n"
-                "Important: Follow this exact structure. No additional fields."
+                "- environment (string describing physical setting)\n"
+                "- society (string describing social structure)\n"
+                "- mood (array of exactly 3 strings)\n"
+                "- sensory_details (array of exactly 3 strings)\n"
+                "- locations (array of exactly 2 objects with name and description)\n\n"
+                "Important: Follow this exact structure. No nested objects."
             )
 
             response = self.client.chat.completions.create(
@@ -48,7 +46,7 @@ class WorldBuilder:
             world_data = json.loads(response.choices[0].message.content)
             
             # Validate required fields
-            required_fields = ['environment', 'society', 'mood', 'senses', 'locations']
+            required_fields = ['environment', 'society', 'mood', 'sensory_details', 'locations']
             missing_fields = [field for field in required_fields if field not in world_data]
             if missing_fields:
                 raise Exception(f"Missing required fields: {', '.join(missing_fields)}")
@@ -56,8 +54,8 @@ class WorldBuilder:
             # Validate array lengths
             if len(world_data['mood']) != 3:
                 raise Exception("Mood array must contain exactly 3 elements")
-            if len(world_data['senses']) != 3:
-                raise Exception("Senses array must contain exactly 3 elements")
+            if len(world_data['sensory_details']) != 3:
+                raise Exception("Sensory details array must contain exactly 3 elements")
             if len(world_data['locations']) != 2:
                 raise Exception("Locations array must contain exactly 2 elements")
             
@@ -79,19 +77,20 @@ class WorldBuilder:
         """Add genre-specific enhancements to the world"""
         try:
             system_prompt = (
-                f"You are a {genre} genre expert. Add essential genre elements "
-                "while maintaining consistency with the existing world."
+                f"You are a {genre} world-building expert. Enhance this existing world "
+                "with exactly three rules and three unique elements."
             )
 
             user_prompt = (
-                "Enhance this world:\n"
+                "Based on this world:\n"
                 f"{json.dumps(world_data, indent=2)}\n\n"
-                "Add exactly these fields to the JSON:\n"
-                "{\n"
-                "  'rules': array of exactly 3 strings (fundamental laws),\n"
-                "  'elements': array of exactly 3 strings (unique genre features)\n"
-                "}\n\n"
-                "Important: Keep all existing fields unchanged."
+                "Return a JSON object with exactly these fields:\n"
+                "- environment (string describing physical setting)\n"
+                "- society (string describing social structure)\n"
+                "- rules (array of exactly 3 strings)\n"
+                "- elements (array of exactly 3 strings)\n"
+                "- atmosphere (object with mood and sensory_details arrays)\n\n"
+                "Important: Follow this exact structure. No nested objects except for atmosphere."
             )
 
             response = self.client.chat.completions.create(
@@ -108,27 +107,9 @@ class WorldBuilder:
             if not response or not response.choices:
                 raise Exception("No response from enhancement API")
 
-            enhancements = json.loads(response.choices[0].message.content)
-            
-            # Validate enhancement fields
-            required_fields = ['rules', 'elements']
-            missing_fields = [field for field in required_fields if field not in enhancements]
-            if missing_fields:
-                raise Exception(f"Missing required enhancement fields: {', '.join(missing_fields)}")
-            
-            # Validate array lengths
-            if len(enhancements['rules']) != 3:
-                raise Exception("Rules array must contain exactly 3 elements")
-            if len(enhancements['elements']) != 3:
-                raise Exception("Elements array must contain exactly 3 elements")
-            
-            # Merge enhancements with original world data
-            world_data.update(enhancements)
-            return world_data
+            enhanced_data = json.loads(response.choices[0].message.content)
+            return enhanced_data
 
-        except json.JSONDecodeError as e:
-            print(f"JSON parsing error in enhancement: {str(e)}")
-            return self._add_fallback_enhancements(world_data)
         except Exception as e:
             print(f"Error enhancing setting: {str(e)}")
             return self._add_fallback_enhancements(world_data)
@@ -139,7 +120,7 @@ class WorldBuilder:
             'environment': 'A mysterious realm where ancient magic and modern technology coexist in delicate balance.',
             'society': 'A diverse community bound by ancient traditions and modern innovations.',
             'mood': ['mysterious', 'harmonious', 'dynamic'],
-            'senses': ['shimmering lights', 'humming machines', 'warm breezes'],
+            'sensory_details': ['shimmering lights', 'humming machines', 'warm breezes'],
             'locations': [
                 {
                     'name': 'The Grand Archive',
@@ -153,8 +134,10 @@ class WorldBuilder:
         }
 
     def _add_fallback_enhancements(self, world_data: Dict) -> Dict:
-        """Add fallback enhancements to the world data"""
-        world_data.update({
+        """Return fallback enhanced world when enhancement fails"""
+        return {
+            'environment': world_data.get('environment', 'A mysterious realm of endless possibilities'),
+            'society': world_data.get('society', 'A complex web of relationships and traditions'),
             'rules': [
                 'Magic follows the law of equivalent exchange',
                 'Technology must respect natural balance',
@@ -164,6 +147,9 @@ class WorldBuilder:
                 'Ancient prophecies',
                 'Mystical artifacts',
                 'Hidden portals'
-            ]
-        })
-        return world_data
+            ],
+            'atmosphere': {
+                'mood': world_data.get('mood', ['mysterious', 'harmonious', 'dynamic']),
+                'sensory_details': world_data.get('sensory_details', ['shimmering lights', 'humming machines', 'warm breezes'])
+            }
+        }
