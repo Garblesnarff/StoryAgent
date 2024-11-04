@@ -1,0 +1,46 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:13] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:13] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:13] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:14] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:14] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:14] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:15] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:15] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:16] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:29] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:29] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:29] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 18:32:50] "POST /generate_story HTTP/1.1" 200 -
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Starting plot structure generation...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully generated plot structure
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:groq._base_client:Retrying request to /openai/v1/chat/completions in 2.000000 seconds
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:groq._base_client:Retrying request to /openai/v1/chat/completions in 12.000000 seconds
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:groq._base_client:Retrying request to /openai/v1/chat/completions in 7.000000 seconds
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+Error building world: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n   "setting": "New Eden is a city shrouded in perpetual twilight, its towering skyscrapers and cramped alleyways hiding secrets in every shadow. Neon lights reflect off wet pavement, casting a gaudy glow on the city\'s inhabitants as they navigate the blurred lines between truth and manipulated reality.",\n   "atmosphere": "Ominous and foreboding, with an undercurrent of desperation and paranoia, as if the very fabric of reality is fragile and easily manipulated.",\n   "locations": [\n      {"name": "The Nexus", "description": "A dimly lit, rundown bar on the outskirts of New Eden, where memories are bought and sold in hushed whispers and Lyra often finds himself entangled in the city\'s underworld."},\n      {"name": "The Archives", "description": "A heavily fortified, high-tech facility housing the city\'s most valuable memories, where Dr. Sophia Patel works tirelessly to develop a cure for memory manipulation and Lyra often infiltrates to uncover hidden truths."\n   ]\n}}'}}
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Starting plot structure generation...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:groq._base_client:Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully generated plot structure
+Plot Weaver: Starting scene development...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:groq._base_client:Retrying request to /openai/v1/chat/completions in 8.000000 seconds
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully developed scenes
+Error generating story: 'PlotWeaver' object has no attribute 'generate_dialogue'

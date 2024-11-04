@@ -123,6 +123,18 @@ class PlotWeaver:
             print(f"Plot Weaver Error: {str(e)}")
             return None
 
+    def generate_dialogue(self, scenes: Dict, characters: List[Dict]) -> Optional[Dict]:
+        """Generate dialogue for the scenes"""
+        # Simple placeholder implementation
+        try:
+            print("Plot Weaver: Generating dialogue...")
+            return {
+                'dialogues': []
+            }
+        except Exception as e:
+            print(f"Plot Weaver Error: {str(e)}")
+            return None
+
     def refine_plot(self, plot_data: Dict, scene_data: Dict, dialogue_data: Dict = None) -> Optional[Dict]:
         """Refine and polish the complete plot structure"""
         try:

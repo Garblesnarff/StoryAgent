@@ -48,20 +48,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const jsonStr = line.replace('data:', '').trim();
                         const data = JSON.parse(jsonStr);
+                        
+                        // Handle different message types
                         switch (data.type) {
                             case 'agent_progress':
                                 updateAgentProgress(data.agent, data.status, data.message);
+                                break;
+                            case 'error':
+                                updateAgentProgress('Story Generation', 'error', data.message);
+                                throw new Error(data.message);
                                 break;
                             case 'success':
                                 if (data.redirect) {
                                     window.location.href = data.redirect;
                                 }
                                 break;
-                            case 'error':
-                                throw new Error(data.message || 'An unknown error occurred');
                         }
                     } catch (error) {
-                        console.error('Error parsing progress:', error, line);
+                        console.error('Error parsing progress:', error);
+                        // Show error in progress display
+                        updateAgentProgress('Story Generation', 'error', 'Failed to generate story');
                     }
                 }
                 buffer = lines[lines.length - 1];

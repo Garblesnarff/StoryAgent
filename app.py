@@ -50,6 +50,7 @@ def generate_story():
             required_fields = ['prompt', 'genre', 'mood', 'target_audience']
             for field in required_fields:
                 if not request.form.get(field):
+                    yield send_progress('Story Generation', 'error', f'Missing required field: {field}')
                     yield f"data: {json.dumps({'type': 'error', 'message': f'Missing required field: {field}'})}\n\n"
                     return
 
@@ -110,7 +111,8 @@ def generate_story():
 
         except Exception as e:
             app.logger.error(f"Error generating story: {str(e)}")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            yield send_progress('Story Generation', 'error', str(e))
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
