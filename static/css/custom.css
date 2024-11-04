@@ -40,7 +40,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -67,76 +67,6 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* Agent progress styles */
-.agent-progress {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    max-width: 500px;
-    width: 90%;
-}
-
-.agent-status {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.agent-status.active {
-    background: rgba(var(--bs-primary-rgb), 0.1);
-    box-shadow: 0 0 20px rgba(var(--bs-primary-rgb), 0.2);
-}
-
-.agent-status.completed {
-    background: rgba(var(--bs-success-rgb), 0.1);
-}
-
-.agent-icon {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.agent-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.agent-task {
-    font-size: 0.9rem;
-    opacity: 0.8;
-    margin-bottom: 1rem;
-    min-height: 2.5em;
-}
-
-.progress {
-    height: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    background: var(--bs-primary);
-    transition: width 0.3s ease;
-}
-
-.agent-status.completed .progress-bar {
-    background: var(--bs-success);
-}
-
-.overall-progress {
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-}
-
-.progress-text {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Card and book container styles */
