@@ -20,10 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const response = await fetch('/generate_story', {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'text/event-stream'
-                }
+                body: formData
             });
 
             if (!response.ok) {
@@ -43,21 +40,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
-                    if (!line || !line.startsWith('data:')) continue;
-                    
+                    if (!line) continue;
+
                     try {
-                        const jsonStr = line.replace('data:', '').trim();
+                        // Remove 'data: ' prefix if it exists
+                        const jsonStr = line.startsWith('data:') ? line.substring(5).trim() : line;
                         const data = JSON.parse(jsonStr);
                         
-                        // Handle different message types
                         switch (data.type) {
                             case 'agent_progress':
                                 updateAgentProgress(data.agent, data.status, data.message);
                                 break;
                             case 'error':
                                 updateAgentProgress('Story Generation', 'error', data.message);
+                                if (loadingOverlay) {
+                                    loadingOverlay.style.display = 'none';
+                                }
                                 throw new Error(data.message);
-                                break;
                             case 'success':
                                 if (data.redirect) {
                                     window.location.href = data.redirect;
@@ -65,9 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                         }
                     } catch (error) {
-                        console.error('Error parsing progress:', error);
-                        // Show error in progress display
-                        updateAgentProgress('Story Generation', 'error', 'Failed to generate story');
+                        console.error('Error parsing progress:', error, line);
+                        updateAgentProgress('Story Generation', 'error', error.message || 'Failed to generate story');
                     }
                 }
                 buffer = lines[lines.length - 1];
@@ -75,13 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error:', error.message || error);
-            
-            // Update progress display with error state
-            const errorMessage = error.message || 'An unexpected error occurred';
-            updateAgentProgress('Story Generation', 'error', errorMessage);
-            
-            // Show error in alert
-            alert('Error: ' + errorMessage);
+            updateAgentProgress('Story Generation', 'error', error.message || 'An unexpected error occurred');
+            alert('Error: ' + (error.message || 'An unexpected error occurred'));
         } finally {
             const loadingOverlay = document.getElementById('loading-overlay');
             if (loadingOverlay) {
@@ -92,20 +85,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateAgentProgress(agent, status, message) {
-    const agentProgress = document.getElementById('agent-progress');
+    let agentProgress = document.getElementById('agent-progress');
     if (!agentProgress) {
-        const progressContainer = document.createElement('div');
-        progressContainer.id = 'agent-progress';
-        progressContainer.className = 'progress-container';
-        document.querySelector('.content-wrapper')?.appendChild(progressContainer);
+        agentProgress = document.createElement('div');
+        agentProgress.id = 'agent-progress';
+        agentProgress.className = 'progress-container mt-4';
+        document.querySelector('.content-wrapper')?.appendChild(agentProgress);
     }
 
-    let agentElement = document.getElementById(`progress-${agent}`);
+    let agentElement = document.getElementById(`progress-${agent.replace(/\s+/g, '-')}`);
     if (!agentElement) {
         agentElement = document.createElement('div');
-        agentElement.id = `progress-${agent}`;
+        agentElement.id = `progress-${agent.replace(/\s+/g, '-')}`;
         agentElement.className = 'agent-progress-item';
-        document.getElementById('agent-progress')?.appendChild(agentElement);
+        agentProgress.appendChild(agentElement);
     }
 
     const statusClasses = {
