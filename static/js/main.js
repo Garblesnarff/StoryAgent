@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const formData = new FormData(storyForm);
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -31,6 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error:', error);
             alert('Error: ' + (error.message || 'An unexpected error occurred'));
+        } finally {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
         }
     });
 });
