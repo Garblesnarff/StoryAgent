@@ -12,22 +12,22 @@ class WorldBuilder:
         """Generate a detailed world based on the story concept"""
         try:
             system_prompt = (
-                "You are a world-building expert specializing in creating rich, "
-                "detailed story settings. For each story concept, develop comprehensive "
-                "world elements that enhance the narrative while maintaining consistency "
-                "with the genre and mood."
+                f"You are a {genre} world-building expert. Create a simple but vivid world "
+                f"that maintains a {mood} atmosphere. Focus on essential details only."
             )
 
             user_prompt = (
-                f"Create a detailed world for a {genre} story with a {mood} mood "
-                f"based on this concept:\n{json.dumps(concept, indent=2)}\n\n"
-                "Return a JSON object with these keys:\n"
-                "- physical_environment (object with: geography, climate, architecture)\n"
-                "- social_structure (object with: hierarchy, customs, beliefs)\n"
-                "- world_history (object with: key_events, conflicts, developments)\n"
-                "- atmosphere (object with: mood_elements, sensory_details)\n"
-                "- world_rules (array of strings: fundamental laws/rules of this world)\n"
-                "- locations (array of objects: key story locations with descriptions)"
+                "Based on this concept:\n"
+                f"{json.dumps(concept, indent=2)}\n\n"
+                "Return a JSON object with exactly these fields:\n"
+                "{\n"
+                "  'environment': string (brief physical description, max 50 words),\n"
+                "  'society': string (brief social description, max 50 words),\n"
+                "  'mood': array of exactly 3 mood descriptors,\n"
+                "  'senses': array of exactly 3 sensory details,\n"
+                "  'locations': array of exactly 2 objects with 'name' and 'description' fields\n"
+                "}\n\n"
+                "Important: Follow this exact structure. No additional fields."
             )
 
             response = self.client.chat.completions.create(
@@ -37,74 +37,61 @@ class WorldBuilder:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1000,
+                max_tokens=300,
                 response_format={"type": "json_object"}
             )
 
             if not response or not response.choices:
                 raise Exception("No response from world building API")
 
+            # Parse and validate JSON response
             world_data = json.loads(response.choices[0].message.content)
             
-            # Validate the world data
-            if not self.validate_world_data(world_data):
-                raise Exception("Generated world data failed validation")
-
+            # Validate required fields
+            required_fields = ['environment', 'society', 'mood', 'senses', 'locations']
+            missing_fields = [field for field in required_fields if field not in world_data]
+            if missing_fields:
+                raise Exception(f"Missing required fields: {', '.join(missing_fields)}")
+            
+            # Validate array lengths
+            if len(world_data['mood']) != 3:
+                raise Exception("Mood array must contain exactly 3 elements")
+            if len(world_data['senses']) != 3:
+                raise Exception("Senses array must contain exactly 3 elements")
+            if len(world_data['locations']) != 2:
+                raise Exception("Locations array must contain exactly 2 elements")
+            
+            # Validate location objects
+            for loc in world_data['locations']:
+                if not isinstance(loc, dict) or 'name' not in loc or 'description' not in loc:
+                    raise Exception("Invalid location object structure")
+            
             return world_data
 
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {str(e)}")
+            return self._get_fallback_world()
         except Exception as e:
             print(f"Error building world: {str(e)}")
-            return None
-
-    def validate_world_data(self, world_data: Dict) -> bool:
-        """Validate if the world data contains all required elements"""
-        try:
-            required_fields = [
-                'physical_environment', 'social_structure', 'world_history',
-                'atmosphere', 'world_rules', 'locations'
-            ]
-            
-            if not all(field in world_data for field in required_fields):
-                return False
-
-            # Validate nested structure
-            nested_requirements = {
-                'physical_environment': ['geography', 'climate', 'architecture'],
-                'social_structure': ['hierarchy', 'customs', 'beliefs'],
-                'world_history': ['key_events', 'conflicts', 'developments'],
-                'atmosphere': ['mood_elements', 'sensory_details']
-            }
-
-            for field, subfields in nested_requirements.items():
-                if not all(subfield in world_data[field] for subfield in subfields):
-                    return False
-
-            # Validate array fields
-            if not isinstance(world_data['world_rules'], list) or \
-               not isinstance(world_data['locations'], list):
-                return False
-
-            return True
-
-        except Exception as e:
-            print(f"Error validating world data: {str(e)}")
-            return False
+            return self._get_fallback_world()
 
     def enhance_setting(self, world_data: Dict, genre: str) -> Optional[Dict]:
         """Add genre-specific enhancements to the world"""
         try:
             system_prompt = (
-                f"You are a {genre} genre expert. Enhance the provided world with "
-                "genre-specific elements while maintaining internal consistency."
+                f"You are a {genre} genre expert. Add essential genre elements "
+                "while maintaining consistency with the existing world."
             )
 
             user_prompt = (
-                "Enhance this world with genre-specific details:\n"
+                "Enhance this world:\n"
                 f"{json.dumps(world_data, indent=2)}\n\n"
-                "Return a JSON object adding these keys:\n"
-                "- genre_elements (array of unique genre features)\n"
-                "- world_mechanics (how things work in this world)\n"
-                "- distinctive_features (what makes this world unique)"
+                "Add exactly these fields to the JSON:\n"
+                "{\n"
+                "  'rules': array of exactly 3 strings (fundamental laws),\n"
+                "  'elements': array of exactly 3 strings (unique genre features)\n"
+                "}\n\n"
+                "Important: Keep all existing fields unchanged."
             )
 
             response = self.client.chat.completions.create(
@@ -114,7 +101,7 @@ class WorldBuilder:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=500,
+                max_tokens=300,
                 response_format={"type": "json_object"}
             )
 
@@ -123,11 +110,60 @@ class WorldBuilder:
 
             enhancements = json.loads(response.choices[0].message.content)
             
+            # Validate enhancement fields
+            required_fields = ['rules', 'elements']
+            missing_fields = [field for field in required_fields if field not in enhancements]
+            if missing_fields:
+                raise Exception(f"Missing required enhancement fields: {', '.join(missing_fields)}")
+            
+            # Validate array lengths
+            if len(enhancements['rules']) != 3:
+                raise Exception("Rules array must contain exactly 3 elements")
+            if len(enhancements['elements']) != 3:
+                raise Exception("Elements array must contain exactly 3 elements")
+            
             # Merge enhancements with original world data
             world_data.update(enhancements)
-            
             return world_data
 
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error in enhancement: {str(e)}")
+            return self._add_fallback_enhancements(world_data)
         except Exception as e:
             print(f"Error enhancing setting: {str(e)}")
-            return None
+            return self._add_fallback_enhancements(world_data)
+
+    def _get_fallback_world(self) -> Dict:
+        """Return a simplified fallback world when generation fails"""
+        return {
+            'environment': 'A mysterious realm where ancient magic and modern technology coexist in delicate balance.',
+            'society': 'A diverse community bound by ancient traditions and modern innovations.',
+            'mood': ['mysterious', 'harmonious', 'dynamic'],
+            'senses': ['shimmering lights', 'humming machines', 'warm breezes'],
+            'locations': [
+                {
+                    'name': 'The Grand Archive',
+                    'description': 'A vast library where ancient scrolls and digital records are preserved.'
+                },
+                {
+                    'name': 'The Nexus Plaza',
+                    'description': 'A bustling marketplace where magic and technology traders gather.'
+                }
+            ]
+        }
+
+    def _add_fallback_enhancements(self, world_data: Dict) -> Dict:
+        """Add fallback enhancements to the world data"""
+        world_data.update({
+            'rules': [
+                'Magic follows the law of equivalent exchange',
+                'Technology must respect natural balance',
+                'Knowledge comes with responsibility'
+            ],
+            'elements': [
+                'Ancient prophecies',
+                'Mystical artifacts',
+                'Hidden portals'
+            ]
+        })
+        return world_data
