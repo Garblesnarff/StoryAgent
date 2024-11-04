@@ -11,6 +11,7 @@ class PlotWeaver:
     def weave_plot(self, concept: Dict, world: Dict, genre: str, mood: str) -> Optional[Dict]:
         """Generate a detailed plot structure based on the story concept and world"""
         try:
+            print("Plot Weaver: Starting plot structure generation...")
             system_prompt = (
                 f"You are a {genre} story plotting expert. Create a compelling plot structure "
                 f"that maintains a {mood} atmosphere while incorporating the provided concept "
@@ -41,6 +42,7 @@ class PlotWeaver:
             )
 
             if not response or not response.choices:
+                print("Plot Weaver: Failed to generate plot structure")
                 raise Exception("No response from plot generation API")
 
             # Parse and validate JSON response
@@ -49,23 +51,28 @@ class PlotWeaver:
             # Validate required fields
             required_fields = ['plot_outline', 'key_events', 'character_arcs', 'pacing_notes']
             if not all(field in plot_data for field in required_fields):
+                print("Plot Weaver: Missing required fields in plot data")
                 raise Exception("Missing required fields in plot data")
                 
             # Validate arrays
             if not isinstance(plot_data['plot_outline'], list) or len(plot_data['plot_outline']) != 3:
+                print("Plot Weaver: Invalid plot outline structure")
                 raise Exception("Plot outline must be an array with exactly 3 elements")
             if not isinstance(plot_data['key_events'], list) or len(plot_data['key_events']) != 4:
+                print("Plot Weaver: Invalid key events structure")
                 raise Exception("Key events must be an array with exactly 4 elements")
-                
+            
+            print("Plot Weaver: Successfully generated plot structure")
             return plot_data
 
         except Exception as e:
-            print(f"Error weaving plot: {str(e)}")
+            print(f"Plot Weaver Error: {str(e)}")
             return None
 
     def develop_scenes(self, plot_data: Dict, world: Dict) -> Optional[Dict]:
         """Develop detailed scenes based on the plot structure"""
         try:
+            print("Plot Weaver: Starting scene development...")
             system_prompt = (
                 "You are a scene development expert. Create vivid scene descriptions "
                 "that bring the plot to life while maintaining consistency with the "
@@ -95,6 +102,7 @@ class PlotWeaver:
             )
 
             if not response or not response.choices:
+                print("Plot Weaver: Failed to develop scenes")
                 raise Exception("No response from scene development API")
 
             scene_data = json.loads(response.choices[0].message.content)
@@ -102,25 +110,30 @@ class PlotWeaver:
             # Validate required fields
             required_fields = ['scenes', 'transitions', 'emotional_beats']
             if not all(field in scene_data for field in required_fields):
+                print("Plot Weaver: Missing required fields in scene data")
                 raise Exception("Missing required fields in scene data")
                 
             # Validate scene structure
             if not isinstance(scene_data['scenes'], list) or not scene_data['scenes']:
+                print("Plot Weaver: Invalid scenes array")
                 raise Exception("Invalid scenes array")
                 
             for scene in scene_data['scenes']:
                 if not all(k in scene for k in ['title', 'setting', 'action']):
+                    print("Plot Weaver: Invalid scene object structure")
                     raise Exception("Invalid scene object structure")
             
+            print("Plot Weaver: Successfully developed scenes")
             return scene_data
 
         except Exception as e:
-            print(f"Error developing scenes: {str(e)}")
+            print(f"Plot Weaver Error: {str(e)}")
             return None
 
     def generate_dialogue(self, scene_data: Dict, characters: List[Dict]) -> Optional[Dict]:
         """Generate natural dialogue for key scenes"""
         try:
+            print("Plot Weaver: Starting dialogue generation...")
             system_prompt = (
                 "You are a dialogue writing expert. Create natural, character-driven "
                 "dialogue that advances the plot and reveals character personalities."
@@ -148,6 +161,7 @@ class PlotWeaver:
             )
 
             if not response or not response.choices:
+                print("Plot Weaver: Failed to generate dialogue")
                 raise Exception("No response from dialogue generation API")
 
             dialogue_data = json.loads(response.choices[0].message.content)
@@ -155,17 +169,20 @@ class PlotWeaver:
             # Validate required fields
             required_fields = ['dialogue_scenes', 'character_voices']
             if not all(field in dialogue_data for field in required_fields):
+                print("Plot Weaver: Missing required fields in dialogue data")
                 raise Exception("Missing required fields in dialogue data")
                 
+            print("Plot Weaver: Successfully generated dialogue")
             return dialogue_data
 
         except Exception as e:
-            print(f"Error generating dialogue: {str(e)}")
+            print(f"Plot Weaver Error: {str(e)}")
             return None
 
     def refine_plot(self, plot_data: Dict, scene_data: Dict, dialogue_data: Dict) -> Optional[Dict]:
         """Refine and polish the complete plot structure"""
         try:
+            print("Plot Weaver: Starting plot refinement...")
             system_prompt = (
                 "You are a story editor specializing in plot refinement. Create a "
                 "cohesive and engaging final plot structure that integrates all elements."
@@ -195,6 +212,7 @@ class PlotWeaver:
             )
 
             if not response or not response.choices:
+                print("Plot Weaver: Failed to refine plot")
                 raise Exception("No response from plot refinement API")
 
             refined_data = json.loads(response.choices[0].message.content)
@@ -202,10 +220,12 @@ class PlotWeaver:
             # Validate required fields
             required_fields = ['refined_plot', 'story_beats', 'narrative_flow']
             if not all(field in refined_data for field in required_fields):
+                print("Plot Weaver: Missing required fields in refined plot data")
                 raise Exception("Missing required fields in refined plot data")
                 
+            print("Plot Weaver: Successfully refined plot")
             return refined_data
 
         except Exception as e:
-            print(f"Error refining plot: {str(e)}")
+            print(f"Plot Weaver Error: {str(e)}")
             return None

@@ -7,9 +7,27 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const formData = new FormData(storyForm);
             const loadingOverlay = document.getElementById('loading-overlay');
+            const agentProgress = document.getElementById('agent-progress');
             
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
+            }
+
+            if (agentProgress) {
+                agentProgress.innerHTML = ''; // Clear previous progress
+                
+                // Update progress with each agent's status
+                const updateProgress = (step, status) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = `agent-progress-step ${status}`;
+                    stepDiv.textContent = step;
+                    agentProgress.appendChild(stepDiv);
+                };
+
+                // Initial progress steps
+                updateProgress('Concept Generator: Creating story concept...', 'active');
+                updateProgress('World Builder: Building story world...', 'pending');
+                updateProgress('Plot Weaver: Developing plot structure...', 'pending');
             }
 
             const response = await fetch('/generate_story', {
