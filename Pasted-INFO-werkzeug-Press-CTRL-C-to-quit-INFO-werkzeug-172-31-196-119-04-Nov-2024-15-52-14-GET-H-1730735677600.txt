@@ -1,0 +1,27 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:14] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:14] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:14] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:15] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:15] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:16] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:27] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:27] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:27] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:42] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:42] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:52:42] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+Error weaving plot: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n   "plot_outline":[\n      "The group discovers the abandoned asylum and becomes trapped, forcing them to navigate its ever-changing layout and uncover the dark history of the asylum.",\n      "As they delve deeper, internal conflicts intensify, and external threats become more deadly. The group\'s discoveries propel them toward a climactic confrontation with the forces manipulating the asylum.",\n      "The group faces a desperate bid to escape, confronting the darkest aspects of their own psyches and the true horror of the asylum in a final, deadly confrontation."\n   ],\n   "key_events":[\n      "The group discovers a hidden journal belonging to a former patient, revealing the asylum\'s dark past and the sinister experiments that took place there.",\n      "Emily\'s PTSD is triggered by the asylum\'s manipulation of her memories, causing her to turn against her friends and forcing the group to re-evaluate their trust in each other.",\n      "Matt\'s dark secret is revealed, threatening to tear the group apart and leaving them vulnerable to the asylum\'s deadly traps and puzzles.",\n      "Sarah uncovers the truth about the asylum\'s layout and the forces manipulating it, but her obsession puts the group in danger and forces them to make a desperate choice to escape."\n   ],\n   "character_arcs":[\n      {\n         "name":"Emily",\n         "development":"Emily\'s growing paranoia and mistrust of her friends threaten to tear the group apart, but she ultimately confronts her PTSD and finds a way to overcome it, redeeming herself to the group."\n      },\n      {\n         "name":"Matt",\n         "development":"Matt\'s leadership is tested, and his true nature is revealed, forcing him to confront the consequences of his actions and make amends with the group."\n      },\n      {\n         "name":"Sarah",\n         "development":"Sarah\'s obsession with the asylum\'s past puts the group in danger, but she ultimately uncovers the truth and finds a way to use her knowledge to help the group escape."\n      },\n      {\n         "name":"Jack",\n         "development":"Jack\'s recklessness puts the group in danger, but he ultimately confronts the consequences of his actions and finds a way to redeem himself to the group."\n      }}'}}
+Error generating story: Failed to generate plot structure
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:53:35] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:53:35] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:53:35] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:53:35] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:53:35] "GET /static/js/story-edit.js HTTP/1.1" 304 -
