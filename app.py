@@ -6,6 +6,7 @@ import secrets
 from datetime import datetime, timedelta
 import json
 import logging
+from time import sleep
 
 from services.text_generator import TextGenerator
 
@@ -19,8 +20,15 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
+# Session configuration
+app.config.update(
+    SESSION_TYPE='filesystem',
+    SESSION_COOKIE_SECURE=False,  # Allow non-HTTPS for development
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=1)
+)
 app.secret_key = secrets.token_hex(16)
 db.init_app(app)
 
@@ -118,11 +126,14 @@ def generate_story():
                 
             # Clear session and store new story data
             session.clear()
-            session.permanent = True
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
             session.modified = True
+            session.permanent = True
+
+            # Add a short sleep to ensure session is saved
+            sleep(0.5)
 
             # Log session state
             logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")

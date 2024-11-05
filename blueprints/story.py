@@ -19,6 +19,7 @@ def edit():
     logger.info('Accessing edit page')
     logger.debug(f'Session data: {session.get("story_data")}')
     
+    # Double check session data
     if 'story_data' not in session:
         logger.warning('No story data found in session')
         flash('Please generate a story first')
@@ -29,7 +30,8 @@ def edit():
         logger.error('Invalid story data structure')
         flash('Invalid story data')
         return redirect(url_for('index'))
-        
+    
+    # Log successful load    
     logger.info(f'Loading story edit page with {len(story_data["paragraphs"])} paragraphs')
     return render_template('story/edit.html', story=story_data)
 
