@@ -54,33 +54,36 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         switch (data.type) {
                             case 'agent_progress':
-                                updateAgentProgress(data.agent, data.status, data.message);
+                                if (data.agent && data.status && data.message) {
+                                    updateAgentProgress(data.agent, data.status, data.message);
+                                }
                                 break;
                             case 'error':
-                                updateAgentProgress('Story Generation', 'error', data.message);
-                                if (loadingOverlay) {
-                                    loadingOverlay.classList.add('error');
-                                    loadingOverlay.querySelector('.loading-text').classList.add('error');
-                                    loadingOverlay.style.display = 'none';
+                                if (data.message) {
+                                    updateAgentProgress('Story Generation', 'error', data.message);
+                                    if (loadingOverlay) {
+                                        loadingOverlay.classList.add('error');
+                                        const loadingText = loadingOverlay.querySelector('.loading-text');
+                                        if (loadingText) {
+                                            loadingText.classList.add('error');
+                                            loadingText.textContent = data.message;
+                                        }
+                                    }
                                 }
-                                throw new Error(data.message);
+                                break;
                             case 'success':
                                 if (data.redirect) {
-                                    setTimeout(() => {
+                                    try {
                                         window.location.href = data.redirect;
-                                    }, 1000); // Small delay to show completion
+                                    } catch (error) {
+                                        console.error('Error redirecting:', error);
+                                        alert('Error navigating to edit page. Please try again.');
+                                    }
                                 }
                                 break;
                         }
                     } catch (error) {
-                        console.error('Error parsing progress:', error);
-                        const errorMessage = 'An error occurred during story generation. Please try again.';
-                        updateAgentProgress('Story Generation', 'error', errorMessage);
-                        if (loadingOverlay) {
-                            loadingOverlay.classList.add('error');
-                            loadingOverlay.querySelector('.loading-text').classList.add('error');
-                            loadingOverlay.style.display = 'none';
-                        }
+                        console.error('Error parsing message:', line);
                     }
                 }
                 buffer = lines[lines.length - 1];
@@ -106,19 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function updateAgentProgress(agent, status, message) {
     const agentProgress = document.getElementById('agent-progress');
-    if (!agentProgress) {
-        const progressContainer = document.createElement('div');
-        progressContainer.id = 'agent-progress';
-        progressContainer.className = 'progress-container';
-        document.querySelector('.content-wrapper')?.appendChild(progressContainer);
-    }
+    if (!agentProgress) return;
 
-    let agentElement = document.getElementById(`progress-${agent}`);
+    let agentElement = document.getElementById(`progress-${agent.replace(/\s+/g, '-').toLowerCase()}`);
     if (!agentElement) {
         agentElement = document.createElement('div');
-        agentElement.id = `progress-${agent}`;
+        agentElement.id = `progress-${agent.replace(/\s+/g, '-').toLowerCase()}`;
         agentElement.className = 'agent-progress-item';
-        document.getElementById('agent-progress')?.appendChild(agentElement);
+        agentProgress.appendChild(agentElement);
     }
 
     const statusClasses = {
@@ -128,13 +126,18 @@ function updateAgentProgress(agent, status, message) {
         'error': 'text-danger'
     };
 
+    const statusIcons = {
+        'pending': '○',
+        'active': '<div class="spinner-border spinner-border-sm"></div>',
+        'completed': '<i class="bi bi-check-circle-fill"></i>',
+        'error': '<i class="bi bi-x-circle-fill"></i>'
+    };
+
     agentElement.className = `agent-progress-item ${statusClasses[status] || 'text-muted'}`;
     agentElement.innerHTML = `
         <div class="d-flex align-items-center gap-2">
             <div class="agent-status">
-                ${status === 'active' ? '<div class="spinner-border spinner-border-sm"></div>' :
-                 status === 'completed' ? '<i class="bi bi-check-circle-fill"></i>' :
-                 status === 'error' ? '<i class="bi bi-x-circle-fill"></i>' : '○'}
+                ${statusIcons[status] || statusIcons.pending}
             </div>
             <div class="agent-info">
                 <div class="agent-name">${agent}</div>
@@ -142,4 +145,7 @@ function updateAgentProgress(agent, status, message) {
             </div>
         </div>
     `;
+
+    // Auto-scroll to the latest progress
+    agentProgress.scrollTop = agentProgress.scrollHeight;
 }
