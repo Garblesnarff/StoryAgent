@@ -45,6 +45,7 @@ def send_progress(agent, status, message):
 def index():
     # Clear any existing story data when returning to home
     if 'story_data' in session:
+        logger.info("Clearing existing story data from session")
         session.pop('story_data', None)
     return render_template('index.html')
 
@@ -52,6 +53,8 @@ def index():
 def generate_story():
     def generate():
         try:
+            logger.info("Starting story generation process")
+            
             # Validate form data
             required_fields = ['prompt', 'genre', 'mood', 'target_audience']
             for field in required_fields:
@@ -66,6 +69,8 @@ def generate_story():
             mood = request.form.get('mood')
             target_audience = request.form.get('target_audience')
             num_paragraphs = int(request.form.get('paragraphs', 5))
+
+            logger.info(f"Generating story with parameters - Genre: {genre}, Mood: {mood}, Target Audience: {target_audience}")
 
             # Start Concept Generator
             yield send_progress('Concept Generator', 'active', 'Creating story concept...')
@@ -127,10 +132,12 @@ def generate_story():
 @app.route('/save_story', methods=['POST'])
 def save_story():
     if 'story_data' not in session:
+        logger.error("Attempted to save story without story data in session")
         return jsonify({'error': 'No story data found'}), 404
         
     try:
         # TODO: Implement story saving logic to database
+        logger.info("Story saved successfully")
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Error saving story: {str(e)}")
@@ -138,14 +145,17 @@ def save_story():
 
 @app.errorhandler(404)
 def not_found(e):
+    logger.warning(f"404 error: {request.url}")
     return jsonify({'error': 'The requested page was not found'}), 404
 
 @app.errorhandler(500)
 def server_error(e):
+    logger.error(f"500 error: {str(e)}")
     return jsonify({'error': 'An internal server error occurred'}), 500
 
 @app.errorhandler(403)
 def forbidden(e):
+    logger.warning(f"403 error: {request.url}")
     return jsonify({'error': 'Please start by creating a new story on the home page'}), 403
 
 @app.before_request
@@ -154,6 +164,7 @@ def check_story_data():
         return
         
     if 'story_data' not in session and request.path.startswith('/story/'):
+        logger.warning(f"Attempted to access {request.path} without story data in session")
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
