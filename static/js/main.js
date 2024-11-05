@@ -73,15 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'success':
                                 if (data.redirect) {
-                                    try {
-                                        // Add a small delay before redirect to ensure session is saved
-                                        setTimeout(() => {
-                                            window.location.href = data.redirect;
-                                        }, 500);
-                                    } catch (error) {
-                                        console.error('Error redirecting:', error);
-                                        alert('Error navigating to edit page. Please try again.');
-                                    }
+                                    // Add a small delay to ensure session is saved
+                                    setTimeout(() => {
+                                        window.location.href = data.redirect;
+                                    }, 1000);
                                 }
                                 break;
                         }

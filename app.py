@@ -115,11 +115,12 @@ def generate_story():
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
-            session.modified = True  # Ensure session is saved
-            
+            session.modified = True
+            session.permanent = True  # Make session data persistent
+
             # Send success response with redirect
             yield send_progress('Story Generator', 'completed', 'Story generated successfully')
-            yield f"data: {json.dumps({'type': 'success', 'redirect': '/story/edit'})}\n\n"
+            yield f"data: {json.dumps({'type': 'success', 'redirect': url_for('story.edit')})}\n\n"
 
         except Exception as e:
             logger.error(f"Error generating story: {str(e)}")

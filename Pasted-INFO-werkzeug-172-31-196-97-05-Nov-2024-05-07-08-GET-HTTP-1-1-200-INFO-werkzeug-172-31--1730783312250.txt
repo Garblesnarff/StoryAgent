@@ -1,0 +1,49 @@
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:08] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:08] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:08] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:12] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:12] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:12] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:26] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:26] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:26] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:app:Starting story generation process
+INFO:app:Generating story with parameters - Genre: horror, Mood: sad, Target Audience: adult
+INFO:app:Concept Generator: Creating story concept...
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:07:51] "POST /generate_story HTTP/1.1" 200 -
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app:Concept Generator: Story concept created successfully
+INFO:app:World Builder: Building story world...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app:World Builder: Story world created successfully
+INFO:app:Plot Weaver: Developing plot structure...
+Plot Weaver: Starting plot structure generation...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully generated plot structure
+INFO:app:Plot Weaver: Plot structure developed successfully
+INFO:app:Story Generator: Generating story text...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Starting plot structure generation...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully generated plot structure
+Plot Weaver: Starting scene development...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully developed scenes
+Plot Weaver: Generating dialogue...
+Plot Weaver: Starting plot refinement...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully refined plot
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app:Story Generator: Story generated successfully
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:08:04] "GET /story/edit HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:08:04] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:08:04] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:08:05] "GET /static/js/main.js HTTP/1.1" 304 -
