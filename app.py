@@ -22,9 +22,11 @@ text_service = TextGenerator()
 # Register blueprints
 from blueprints.story import story_bp
 from blueprints.generation import generation_bp
+from blueprints.document import doc_bp
 
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
+app.register_blueprint(doc_bp)
 
 with app.app_context():
     import models
@@ -87,6 +89,7 @@ def save_story():
         app.logger.error(f"Error saving story: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# Error handlers
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({'error': 'The requested page was not found'}), 404
@@ -101,9 +104,9 @@ def forbidden(e):
 
 @app.before_request
 def check_story_data():
-    # Skip checks for static files and the home/generate routes
+    # Skip checks for static files and the home/generate/upload routes
     if request.path.startswith('/static') or request.path == '/' or \
-       request.path == '/generate_story':
+       request.path == '/generate_story' or request.path.startswith('/upload'):
         return
         
     # Check if story data exists for protected routes
