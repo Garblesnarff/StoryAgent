@@ -99,9 +99,9 @@ def generate_story():
             # Store story data in session with proper structure
             if story_paragraphs:
                 session['story_data'] = {
-                    'paragraphs': [{'text': p} for p in story_paragraphs]
+                    'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
                 }
-                session.modified = True  # Ensure session is saved
+                session.modified = True
 
             # Send success and redirect
             yield f"data: {json.dumps({'type': 'success', 'redirect': '/story/edit'})}\n\n"
