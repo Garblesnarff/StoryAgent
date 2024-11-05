@@ -1,0 +1,43 @@
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:05] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:05] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:05] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:05] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:05] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:05] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:21] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:22] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 05:56:22] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:app:Starting story generation process
+INFO:app:Generating story with parameters - Genre: horror, Mood: suspenseful, Target Audience: adult
+INFO:app:Concept Generator: Creating story concept...
+INFO:werkzeug:172.31.196.97 - - [05/Nov/2024 06:01:00] "POST /generate_story HTTP/1.1" 200 -
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app:Concept Generator: Story concept created successfully
+INFO:app:World Builder: Building story world...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app:World Builder: Story world created successfully
+INFO:app:Plot Weaver: Developing plot structure...
+Plot Weaver: Starting plot structure generation...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully generated plot structure
+INFO:app:Plot Weaver: Plot structure developed successfully
+INFO:app:Story Generator: Generating story text...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+Error generating premise: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n   "hook": "When the last radio broadcast of a small, isolated town abruptly cuts off, the only signal left on the airwaves is a haunting, childlike voice repeating a single phrase: \'They\'re coming for me...\'",\n\n   "premise": "After a mysterious event known as \'The Silence,\' a group of survivors must navigate the treacherous landscape of a town overrun by supernatural entities, all while unraveling the dark secrets behind the child\'s voice and their own connection to the eerie phenomenon.",\n   \n   "unique_elements": ["The Silence," "Supernatural entities resembling children," "Radio broadcasts as a narrative device," "Unreliable narrator with a fragmented past"],\n   \n   "target_themes": ["Trauma and PTSD," "The Blurred Lines between Reality and Madness," "Isolation and Desperation"]\n}'}}
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Starting plot structure generation...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+Plot Weaver: Successfully generated plot structure
+Plot Weaver: Starting scene development...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+Plot Weaver Error: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n  "scenes": [\n    {\n      "title": "Whispers of the Past",\n      "action": "Anya stumbles upon a hidden chamber beneath the village, its walls adorned with cryptic symbols. Shadows shift erratically as she glimpses ancient artifacts shrouded in dust."\n    },\n    {\n      "title": "Forbidden Knowledge",\n      "action": "Anya deciphers the symbols, unlocking a dark history of a forbidden cult. Her heart pounds as she realizes the connection to her village, fear and fascination locked in a deadly embrace."\n    },\n    {\n      "title": "Confrontation",\n      "action": "Anya faces the cult leader, their eyes locked in a battle of wills. The leader reveals the power at her disposal, forcing her to choose between personal glory and the safety of her people."\n    },\n    {\n      "title": "Choice and consequence",\n      "action": "Anya stands at a crossroads, eyes filled with determination. She grasps the artifact, a surge of power threatening to consume her. Will she wield the magic or cast it away, risking the cult\'s wrath?"\n  ],\n  "transitions": ["Slow descent", "Eerie silence", "Rapid heartbeat"],\n  "emotional_beats": ["Discovery", "Unease", "Confrontation", "Empowerment"]\n}}'}}
+Error generating story: Failed to develop scenes
+ERROR:app:Failed to generate story
+INFO:app:Story Generator: Failed to generate story
