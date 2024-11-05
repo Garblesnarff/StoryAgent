@@ -16,6 +16,9 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
+    logger.info('Accessing edit page')
+    logger.debug(f'Session data: {session.get("story_data")}')
+    
     if 'story_data' not in session:
         logger.warning('No story data found in session')
         flash('Please generate a story first')

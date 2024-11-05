@@ -19,8 +19,9 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
-app.secret_key = secrets.token_hex(16)  # Add secret key for session management
-app.permanent_session_lifetime = timedelta(hours=1)  # Set session lifetime
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.secret_key = secrets.token_hex(16)
 db.init_app(app)
 
 # Initialize services
@@ -114,7 +115,7 @@ def generate_story():
                 yield send_progress('Story Generator', 'error', 'Failed to generate story')
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
                 return
-
+                
             # Clear session and store new story data
             session.clear()
             session.permanent = True
@@ -174,7 +175,7 @@ def check_story_data():
     if request.path.startswith('/static') or request.path == '/' or request.path == '/generate_story':
         return
         
-    # Check session status
+    # Ensure session is permanent
     if not session.permanent:
         session.permanent = True
         
