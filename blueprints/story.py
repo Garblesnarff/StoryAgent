@@ -16,24 +16,22 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    """Handle story edit page access"""
     logger.info('Accessing edit page')
     logger.debug(f'Session data: {session.get("story_data")}')
     
-    # Check if story data exists
-    story_data = session.get('story_data')
-    if not story_data:
+    if not session.get('story_data'):
         logger.warning('No story data found in session')
         flash('Please generate a story first')
         return redirect(url_for('index'))
     
-    # Validate story data structure
-    if not story_data.get('paragraphs'):
+    story_data = session['story_data']
+    if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
         logger.error('Invalid story data structure')
         flash('Invalid story data')
         return redirect(url_for('index'))
     
-    # Ensure session is marked as modified to persist changes
+    # Ensure session stays permanent
+    session.permanent = True
     session.modified = True
     
     logger.info(f'Loading story edit page with {len(story_data["paragraphs"])} paragraphs')

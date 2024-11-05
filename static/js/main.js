@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     // Add a longer delay to ensure session is saved
                                     setTimeout(() => {
                                         window.location.href = data.redirect;
-                                    }, 2000);
+                                    }, 2500);
                                 }
                                 break;
                         }

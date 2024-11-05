@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+from flask.sessions import SecureCookieSession
 import secrets
 from datetime import datetime, timedelta
 import json
@@ -128,20 +129,27 @@ def generate_story():
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
                 return
 
-            # Store story data in session
+            # Clear any existing session data and store new story
+            session.clear()
             session.permanent = True
+            
+            # Store story data
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
             session.modified = True
-
-            # Add a longer sleep to ensure session is saved
-            sleep(2.0)
-
-            # Log session state
+            
+            # Force session save
+            if isinstance(session._get_current_object(), SecureCookieSession):
+                session.modified = True
+            
+            # Add debugging
             logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")
             logger.debug(f"Session story_data: {session['story_data']}")
 
+            # Add a longer sleep to ensure session is saved
+            sleep(2.5)
+            
             # Send success response with redirect
             yield send_progress('Story Generator', 'completed', 'Story generated successfully')
             yield f"data: {json.dumps({'type': 'success', 'redirect': url_for('story.edit')})}\n\n"
