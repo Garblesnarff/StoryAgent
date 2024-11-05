@@ -5,8 +5,13 @@ from sqlalchemy.orm import DeclarativeBase
 import secrets
 from datetime import datetime
 import json
+import logging
 
 from services.text_generator import TextGenerator
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Base(DeclarativeBase):
     pass
@@ -33,6 +38,7 @@ with app.app_context():
 
 def send_progress(agent, status, message):
     """Helper function to send progress updates"""
+    logger.info(f"{agent}: {message}")
     return f"data: {json.dumps({'type': 'agent_progress', 'agent': agent, 'status': status, 'message': message})}\n\n"
 
 @app.route('/')
@@ -50,6 +56,7 @@ def generate_story():
             required_fields = ['prompt', 'genre', 'mood', 'target_audience']
             for field in required_fields:
                 if not request.form.get(field):
+                    logger.error(f"Missing required field: {field}")
                     yield send_progress('Story Generation', 'error', f'Missing required field: {field}')
                     yield f"data: {json.dumps({'type': 'error', 'message': f'Missing required field: {field}'})}\n\n"
                     return
@@ -64,6 +71,7 @@ def generate_story():
             yield send_progress('Concept Generator', 'active', 'Creating story concept...')
             concept = text_service.concept_generator.generate_concept(prompt, genre, mood, target_audience)
             if not concept:
+                logger.error("Failed to generate concept")
                 yield send_progress('Concept Generator', 'error', 'Failed to generate concept')
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story concept'})}\n\n"
                 return
@@ -73,6 +81,7 @@ def generate_story():
             yield send_progress('World Builder', 'active', 'Building story world...')
             world = text_service.world_builder.build_world(concept, genre, mood)
             if not world:
+                logger.error("Failed to generate world")
                 yield send_progress('World Builder', 'error', 'Failed to generate world')
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate world details'})}\n\n"
                 return
@@ -82,6 +91,7 @@ def generate_story():
             yield send_progress('Plot Weaver', 'active', 'Developing plot structure...')
             plot = text_service.plot_weaver.weave_plot(concept, world, genre, mood)
             if not plot:
+                logger.error("Failed to generate plot")
                 yield send_progress('Plot Weaver', 'error', 'Failed to generate plot')
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate plot structure'})}\n\n"
                 return
@@ -91,23 +101,24 @@ def generate_story():
             yield send_progress('Story Generator', 'active', 'Generating story text...')
             story_paragraphs = text_service.generate_story(prompt, genre, mood, target_audience, num_paragraphs)
             if not story_paragraphs:
+                logger.error("Failed to generate story")
                 yield send_progress('Story Generator', 'error', 'Failed to generate story')
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
                 return
-            yield send_progress('Story Generator', 'completed', 'Story text generated successfully')
 
-            # Store story data in session with proper structure
-            if story_paragraphs:
-                session['story_data'] = {
-                    'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
-                }
-                session.modified = True
-
-            # Send success and redirect
-            yield f"data: {json.dumps({'type': 'success', 'redirect': '/story/edit'})}\n\n"
+            # Store story data in session
+            session.clear()  # Clear any existing session data
+            session['story_data'] = {
+                'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
+            }
+            session.modified = True  # Ensure session is saved
+            
+            # Send success response with redirect
+            yield send_progress('Story Generator', 'completed', 'Story generated successfully')
+            yield f"data: {json.dumps({'type': 'success', 'redirect': url_for('story.edit')})}\n\n"
 
         except Exception as e:
-            app.logger.error(f"Error generating story: {str(e)}")
+            logger.error(f"Error generating story: {str(e)}")
             yield send_progress('Story Generation', 'error', str(e))
             yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
 
@@ -122,7 +133,7 @@ def save_story():
         # TODO: Implement story saving logic to database
         return jsonify({'success': True})
     except Exception as e:
-        app.logger.error(f"Error saving story: {str(e)}")
+        logger.error(f"Error saving story: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)
