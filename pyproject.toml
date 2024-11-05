@@ -24,4 +24,5 @@ dependencies = [
     "beautifulsoup4>=4.12.3",
     "ebooklib>=0.18",
     "pypdf2>=3.0.1",
+    "flask-wtf>=1.2.2",
 ]

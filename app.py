@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+from flask_wtf.csrf import CSRFProtect
 import secrets
 from datetime import datetime
 
@@ -14,6 +15,10 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)  # Add secret key for session management
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
+
 db.init_app(app)
 
 # Initialize services

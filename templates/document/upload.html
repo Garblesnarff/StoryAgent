@@ -9,6 +9,7 @@
             <div class="card">
                 <div class="card-body">
                     <form id="upload-form" enctype="multipart/form-data">
+                        {{ csrf_token() }}
                         <div class="mb-4">
                             <label for="file" class="form-label h5">Select Document</label>
                             <input type="file" class="form-control" id="file" name="file" accept=".pdf,.epub,.html" required>
@@ -58,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(form);
             const response = await fetch('/doc/upload', {
                 method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                },
                 body: formData
             });
             

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, send_file, render_template, redirect, url_for
+from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
 from services.document_processor import DocumentProcessor
@@ -26,60 +26,65 @@ def upload_document():
     if request.method == 'GET':
         return render_template('document/upload.html')
         
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-        
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-        
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'Invalid file type'}), 400
-        
     try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+            
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+            
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Invalid file type'}), 400
+            
         # Save uploaded file
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(file_path)
         
-        # Process document
-        file_type = filename.rsplit('.', 1)[1].lower()
-        result = doc_processor.process_document(file_path, file_type)
-        
-        # Transform into session format
-        paragraphs = []
-        for chapter in result['chapters']:
-            for para in chapter['paragraphs']:
-                paragraphs.append({
-                    'text': para['text'],
-                    'chapter': chapter['number'],
-                    'chapter_title': chapter['title'],
-                    'image_prompt': para['suggested_image_prompt'],
-                    'image_url': None,
-                    'audio_url': None
-                })
-        
-        # Store in session
-        session['book_data'] = {
-            'type': 'processed_book',
-            'filename': filename,
-            'metadata': result['metadata'],
-            'paragraphs': paragraphs
-        }
-        
-        # Clean up uploaded file
-        os.remove(file_path)
-        
-        return jsonify({
-            'success': True,
-            'message': f'Successfully processed {len(paragraphs)} paragraphs',
-            'metadata': result['metadata'],
-            'redirect': '/doc/view'
-        })
-        
+        try:
+            # Process document
+            file_type = filename.rsplit('.', 1)[1].lower()
+            result = doc_processor.process_document(file_path, file_type)
+            
+            # Transform into session format
+            paragraphs = []
+            for chapter in result.get('chapters', []):
+                for para in chapter.get('paragraphs', []):
+                    if para.get('text'):  # Only include non-empty paragraphs
+                        paragraphs.append({
+                            'text': para['text'],
+                            'chapter': chapter.get('number', 1),
+                            'chapter_title': chapter.get('title', 'Chapter'),
+                            'image_prompt': para.get('suggested_image_prompt', para['text']),
+                            'image_url': None,
+                            'audio_url': None
+                        })
+            
+            if not paragraphs:
+                raise ValueError("No valid paragraphs found in document")
+            
+            # Store in session
+            session['book_data'] = {
+                'type': 'processed_book',
+                'filename': filename,
+                'metadata': result.get('metadata', {}),
+                'paragraphs': paragraphs
+            }
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully processed {len(paragraphs)} paragraphs',
+                'metadata': result.get('metadata', {}),
+                'redirect': '/doc/view'
+            })
+            
+        finally:
+            # Clean up uploaded file
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
     except Exception as e:
-        if os.path.exists(file_path):
-            os.remove(file_path)
         return jsonify({'error': str(e)}), 500
 
 @doc_bp.route('/doc/view')
@@ -88,78 +93,83 @@ def view_document():
         return redirect(url_for('doc.upload_document'))
     return render_template('document/view.html', book=session['book_data'])
 
-@doc_bp.route('/doc/batch', methods=['POST'])
-def generate_batch():
-    """Generate media for a batch of paragraphs"""
+@doc_bp.route('/doc/generate_media', methods=['POST'])
+def generate_media():
+    """Generate media for document paragraphs"""
     if 'book_data' not in session:
         return jsonify({'error': 'No book data found'}), 404
         
-    data = request.get_json()
-    start_index = data.get('start_index', 0)
-    batch_size = data.get('batch_size', 5)
-    
-    book_data = session['book_data']
-    
-    def generate():
-        try:
-            batch = book_data['paragraphs'][start_index:start_index + batch_size]
-            
-            for i, paragraph in enumerate(batch):
-                current_index = start_index + i
-                
-                # Generate image
-                yield json.dumps({
-                    'status': 'generating_image',
-                    'index': current_index,
-                    'message': f'Generating image {i+1}/{len(batch)}'
-                }) + '\n'
-                
-                image_url = image_generator.generate_image(paragraph['image_prompt'])
-                paragraph['image_url'] = image_url
-                
-                # Generate audio
-                yield json.dumps({
-                    'status': 'generating_audio',
-                    'index': current_index,
-                    'message': f'Generating audio {i+1}/{len(batch)}'
-                }) + '\n'
-                
-                audio_url = audio_generator.generate_audio(paragraph['text'])
-                paragraph['audio_url'] = audio_url
-                
-                # Send complete paragraph update
-                yield json.dumps({
-                    'status': 'paragraph_complete',
-                    'index': current_index,
-                    'data': paragraph
-                }) + '\n'
-                
-                # Update session after each paragraph
-                book_data['paragraphs'][current_index] = paragraph
-                session['book_data'] = book_data
-                
-            yield json.dumps({
-                'status': 'batch_complete',
-                'message': f'Completed batch of {len(batch)} paragraphs'
-            }) + '\n'
-            
-        except Exception as e:
-            yield json.dumps({
-                'status': 'error',
-                'message': str(e)
-            }) + '\n'
-            
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
-
-@doc_bp.route('/doc/enhance', methods=['POST'])
-def enhance_paragraph():
     try:
         data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({'error': 'No text provided'}), 400
+        if not data:
+            return jsonify({'error': 'Invalid request data'}), 400
             
-        result = doc_processor.enhance_paragraph_prompts(data['text'])
-        return jsonify(result)
+        start_index = data.get('start_index', 0)
+        batch_size = min(data.get('batch_size', 5), 10)  # Limit batch size
+        
+        book_data = session['book_data']
+        
+        def generate():
+            try:
+                paragraphs = book_data['paragraphs'][start_index:start_index + batch_size]
+                total = len(paragraphs)
+                
+                for i, paragraph in enumerate(paragraphs, 1):
+                    current_index = start_index + i - 1
+                    
+                    try:
+                        # Generate image
+                        yield json.dumps({
+                            'type': 'progress',
+                            'step': 'image',
+                            'message': f'Generating image for paragraph {i}/{total}',
+                            'index': current_index
+                        }) + '\n'
+                        
+                        image_url = image_generator.generate_image(paragraph['image_prompt'])
+                        paragraph['image_url'] = image_url
+                        
+                        # Generate audio
+                        yield json.dumps({
+                            'type': 'progress',
+                            'step': 'audio',
+                            'message': f'Generating audio for paragraph {i}/{total}',
+                            'index': current_index
+                        }) + '\n'
+                        
+                        audio_url = audio_generator.generate_audio(paragraph['text'])
+                        paragraph['audio_url'] = audio_url
+                        
+                        # Send update
+                        yield json.dumps({
+                            'type': 'update',
+                            'index': current_index,
+                            'data': paragraph
+                        }) + '\n'
+                        
+                        # Update session
+                        book_data['paragraphs'][current_index] = paragraph
+                        session['book_data'] = book_data
+                        
+                    except Exception as e:
+                        yield json.dumps({
+                            'type': 'error',
+                            'message': f'Error processing paragraph {i}: {str(e)}',
+                            'index': current_index
+                        }) + '\n'
+                
+                yield json.dumps({
+                    'type': 'complete',
+                    'message': f'Completed processing {total} paragraphs'
+                }) + '\n'
+                
+            except Exception as e:
+                yield json.dumps({
+                    'type': 'error',
+                    'message': str(e)
+                }) + '\n'
+        
+        return Response(stream_with_context(generate()), mimetype='text/event-stream')
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
