@@ -7,6 +7,7 @@ import re
 import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,10 +28,10 @@ class PDFProcessor:
             logger.error(f"Error extracting text from PDF: {str(e)}")
             raise
 
-    def extract_text_from_epub(self, epub_file):
+    def extract_text_from_epub(self, epub_path):
         """Extract text from EPUB file"""
         try:
-            book = epub.read_epub(epub_file)
+            book = epub.read_epub(epub_path)
             text = ""
             for item in book.get_items():
                 if item.get_type() == ebooklib.ITEM_DOCUMENT:
@@ -64,14 +65,15 @@ class PDFProcessor:
     async def analyze_text_structure(self, text):
         """Use Gemini to analyze text and split into proper paragraphs"""
         try:
-            prompt = f"""Analyze this text and split it into proper paragraphs. 
+            prompt = f'''Analyze this text and split it into proper paragraphs. 
             Ensure each paragraph is a complete thought or scene.
             Remove any headers, footers, or page numbers.
             Text to analyze: 
-            {text[:4000]}"""  # Limit text chunk size
+            {text[:4000]}'''
             
             response = await self.model.generate_content(prompt)
-            return self._parse_paragraphs(response.text)
+            result = response.text if hasattr(response, 'text') else response.parts[0].text
+            return self._parse_paragraphs(result)
         except Exception as e:
             logger.error(f"Error analyzing text structure: {str(e)}")
             raise
@@ -86,36 +88,40 @@ class PDFProcessor:
 
     async def process_document(self, file, file_type):
         """Process document file end-to-end"""
+        temp_path = None
         try:
+            # Save file temporarily
+            temp_path = os.path.join('uploads', f'temp_{int(time.time())}.{file_type}')
+            with open(temp_path, 'wb') as f:
+                f.write(file.read())
+            
             # Extract text based on file type
             if file_type == 'pdf':
-                raw_text = self.extract_text_from_pdf(file)
+                with open(temp_path, 'rb') as f:
+                    raw_text = self.extract_text_from_pdf(f)
             elif file_type == 'epub':
-                raw_text = self.extract_text_from_epub(file)
+                raw_text = self.extract_text_from_epub(temp_path)
             elif file_type == 'html':
-                raw_text = self.extract_text_from_html(file)
-            else:
-                raise ValueError(f"Unsupported file type: {file_type}")
-                
-            logger.info(f"Extracted {len(raw_text)} characters from {file_type}")
+                with open(temp_path, 'r', encoding='utf-8') as f:
+                    raw_text = self.extract_text_from_html(f)
+                    
+            # Clean up temp file
+            os.remove(temp_path)
+            temp_path = None
             
-            # Clean text
+            # Continue with existing processing
             cleaned_text = self.clean_text(raw_text)
-            logger.info("Text cleaned and normalized")
-            
-            # Split into chunks if text is very long
             text_chunks = [cleaned_text[i:i+4000] for i in range(0, len(cleaned_text), 4000)]
-            logger.info(f"Split text into {len(text_chunks)} chunks")
             
-            # Process each chunk
             all_paragraphs = []
             for chunk in text_chunks:
                 chunk_paragraphs = await self.analyze_text_structure(chunk)
                 all_paragraphs.extend(chunk_paragraphs)
             
-            logger.info(f"Generated {len(all_paragraphs)} paragraphs")
             return all_paragraphs
-            
+                
         except Exception as e:
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
             logger.error(f"Error processing document: {str(e)}")
             raise

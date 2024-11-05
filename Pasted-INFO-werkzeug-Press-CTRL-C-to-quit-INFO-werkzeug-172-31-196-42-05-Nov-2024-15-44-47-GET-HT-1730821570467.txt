@@ -1,0 +1,27 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:47] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:47] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:47] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:47] "GET /pdf HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:47] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:48] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:48] "GET /pdf HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:48] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:44:48] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:45:01] "GET /pdf HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:45:01] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:45:01] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:45:01] "GET /static/css/custom.css HTTP/1.1" 200 -
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/ebooklib/epub.py:1395: UserWarning: In the future version we will turn default option ignore_ncx to True.
+  warnings.warn('In the future version we will turn default option ignore_ncx to True.')
+ERROR:services.pdf_processor:Error extracting text from EPUB: stat: path should be string, bytes, os.PathLike or integer, not BufferedReader
+ERROR:services.pdf_processor:Error processing document: stat: path should be string, bytes, os.PathLike or integer, not BufferedReader
+ERROR:root:Error processing document: stat: path should be string, bytes, os.PathLike or integer, not BufferedReader
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:45:23] "POST /pdf/upload HTTP/1.1" 500 -
+INFO:services.pdf_processor:Extracted 446324 characters from html
+INFO:services.pdf_processor:Text cleaned and normalized
+INFO:services.pdf_processor:Split text into 110 chunks
+ERROR:services.pdf_processor:Error analyzing text structure: object GenerateContentResponse can't be used in 'await' expression
+ERROR:services.pdf_processor:Error processing document: object GenerateContentResponse can't be used in 'await' expression
+ERROR:root:Error processing document: object GenerateContentResponse can't be used in 'await' expression
+INFO:werkzeug:172.31.196.42 - - [05/Nov/2024 15:45:37] "POST /pdf/upload HTTP/1.1" 500 -
