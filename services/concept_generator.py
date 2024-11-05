@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 class ConceptGenerator:
     def __init__(self):
         # Initialize Groq client
-        self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        self.client = groq.Groq(api_key=os.environ.get('GROQ_CONCEPT_API_KEY'))
 
     def generate_premise(self, genre: str, target_audience: str) -> Dict:
         """Generate unique premises and hooks for a story"""

@@ -40,23 +40,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
-                    if (!line) continue;
-
+                    if (!line || !line.startsWith('data:')) continue;
+                    
                     try {
-                        // Remove 'data: ' prefix if it exists
-                        const jsonStr = line.startsWith('data:') ? line.substring(5).trim() : line;
+                        const jsonStr = line.replace('data:', '').trim();
                         const data = JSON.parse(jsonStr);
                         
                         switch (data.type) {
                             case 'agent_progress':
-                                updateAgentProgress(data.agent, data.status, data.message);
+                                if (data.agent && data.status && data.message) {
+                                    updateAgentProgress(data.agent, data.status, data.message);
+                                }
                                 break;
                             case 'error':
-                                updateAgentProgress('Story Generation', 'error', data.message);
-                                if (loadingOverlay) {
-                                    loadingOverlay.style.display = 'none';
+                                if (data.message) {
+                                    updateAgentProgress('Story Generation', 'error', data.message);
+                                    if (loadingOverlay) {
+                                        loadingOverlay.style.display = 'none';
+                                    }
+                                    throw new Error(data.message);
                                 }
-                                throw new Error(data.message);
+                                break;
                             case 'success':
                                 if (data.redirect) {
                                     window.location.href = data.redirect;
@@ -97,7 +101,7 @@ function updateAgentProgress(agent, status, message) {
     if (!agentElement) {
         agentElement = document.createElement('div');
         agentElement.id = `progress-${agent.replace(/\s+/g, '-')}`;
-        agentElement.className = 'agent-progress-item';
+        agentElement.className = 'agent-progress-item mb-2';
         agentProgress.appendChild(agentElement);
     }
 
@@ -108,18 +112,31 @@ function updateAgentProgress(agent, status, message) {
         'error': 'text-danger'
     };
 
-    agentElement.className = `agent-progress-item ${statusClasses[status] || 'text-muted'}`;
+    const statusIcons = {
+        'pending': '○',
+        'active': '<div class="spinner-border spinner-border-sm"></div>',
+        'completed': '<i class="bi bi-check-circle-fill"></i>',
+        'error': '<i class="bi bi-x-circle-fill"></i>'
+    };
+
+    const statusClass = statusClasses[status] || 'text-muted';
+    const statusIcon = statusIcons[status] || '○';
+
+    agentElement.className = `agent-progress-item mb-2 ${statusClass}`;
     agentElement.innerHTML = `
         <div class="d-flex align-items-center gap-2">
             <div class="agent-status">
-                ${status === 'active' ? '<div class="spinner-border spinner-border-sm"></div>' :
-                 status === 'completed' ? '<i class="bi bi-check-circle-fill"></i>' :
-                 status === 'error' ? '<i class="bi bi-x-circle-fill"></i>' : '○'}
+                ${statusIcon}
             </div>
             <div class="agent-info">
-                <div class="agent-name">${agent}</div>
-                <div class="agent-message small">${message}</div>
+                <div class="agent-name fw-bold">${agent}</div>
+                <div class="agent-message small text-wrap">${message}</div>
             </div>
         </div>
     `;
+
+    // If there's an error, add an alert class
+    if (status === 'error') {
+        agentElement.classList.add('border', 'border-danger', 'rounded', 'p-2');
+    }
 }

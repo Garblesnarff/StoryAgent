@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class PlotWeaver:
     def __init__(self):
         # Initialize Groq client
-        self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        self.client = groq.Groq(api_key=os.environ.get('GROQ_PLOT_API_KEY'))
 
     def weave_plot(self, concept: Dict, world: Dict, genre: str, mood: str) -> Optional[Dict]:
         """Generate a detailed plot structure based on the story concept and world"""
