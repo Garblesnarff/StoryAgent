@@ -16,19 +16,25 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
+    """Handle story edit page access"""
     logger.info('Accessing edit page')
     logger.debug(f'Session data: {session.get("story_data")}')
     
-    if not session.get('story_data'):
+    # Check if story data exists
+    story_data = session.get('story_data')
+    if not story_data:
         logger.warning('No story data found in session')
         flash('Please generate a story first')
         return redirect(url_for('index'))
     
-    story_data = session['story_data']
+    # Validate story data structure
     if not story_data.get('paragraphs'):
         logger.error('Invalid story data structure')
         flash('Invalid story data')
         return redirect(url_for('index'))
+    
+    # Ensure session is marked as modified to persist changes
+    session.modified = True
     
     logger.info(f'Loading story edit page with {len(story_data["paragraphs"])} paragraphs')
     return render_template('story/edit.html', story=story_data)
@@ -37,7 +43,7 @@ def edit():
 def update_paragraph():
     try:
         # Check if story data exists in session
-        if 'story_data' not in session:
+        if not session.get('story_data'):
             logger.error('No story data found in session during paragraph update')
             return jsonify({'error': 'No story data found'}), 404
 
@@ -65,7 +71,7 @@ def update_paragraph():
             
         story_data['paragraphs'][index]['text'] = text
         session['story_data'] = story_data
-        session.modified = True  # Ensure session is saved
+        session.modified = True
         
         logger.info(f'Successfully updated paragraph {index}')
         return jsonify({

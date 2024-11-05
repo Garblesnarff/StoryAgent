@@ -73,10 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'success':
                                 if (data.redirect) {
+                                    console.log('Redirecting to:', data.redirect);
                                     // Add a longer delay to ensure session is saved
                                     setTimeout(() => {
                                         window.location.href = data.redirect;
-                                    }, 1500);
+                                    }, 2000);
                                 }
                                 break;
                         }

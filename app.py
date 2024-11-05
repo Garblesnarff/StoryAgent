@@ -24,12 +24,13 @@ app.config.from_object('config.Config')
 # Session configuration
 app.config.update(
     SESSION_TYPE='filesystem',
+    SESSION_FILE_DIR='flask_session',  # Specify session file directory
     SESSION_COOKIE_SECURE=False,  # Allow non-HTTPS for development
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=timedelta(hours=1)
 )
-app.secret_key = secrets.token_hex(16)
+app.secret_key = secrets.token_hex(32)  # Use a longer secret key
 db.init_app(app)
 
 # Initialize services
@@ -41,6 +42,9 @@ from blueprints.generation import generation_bp
 
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
+
+# Create session directory if it doesn't exist
+os.makedirs('flask_session', exist_ok=True)
 
 with app.app_context():
     import models
@@ -123,9 +127,8 @@ def generate_story():
                 yield send_progress('Story Generator', 'error', 'Failed to generate story')
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
                 return
-                
-            # Clear session and store new story data
-            session.clear()
+
+            # Store story data in session
             session.permanent = True
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
@@ -133,7 +136,7 @@ def generate_story():
             session.modified = True
 
             # Add a longer sleep to ensure session is saved
-            sleep(1.0)
+            sleep(2.0)
 
             # Log session state
             logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")
@@ -188,11 +191,10 @@ def check_story_data():
         return
         
     # Ensure session is permanent
-    if not session.permanent:
-        session.permanent = True
+    session.permanent = True
         
     # Redirect to index if trying to access story routes without story data
-    if 'story_data' not in session and request.path.startswith('/story/'):
+    if not session.get('story_data') and request.path.startswith('/story/'):
         logger.warning(f"Attempted to access {request.path} without story data in session")
         flash('Please generate a story first')
         return redirect(url_for('index'))
