@@ -2,7 +2,6 @@ import os
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from flask_wtf.csrf import CSRFProtect
 import secrets
 from datetime import datetime
 
@@ -15,10 +14,6 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)  # Add secret key for session management
-
-# Initialize CSRF protection
-csrf = CSRFProtect(app)
-
 db.init_app(app)
 
 # Initialize services
@@ -27,11 +22,9 @@ text_service = TextGenerator()
 # Register blueprints
 from blueprints.story import story_bp
 from blueprints.generation import generation_bp
-from blueprints.document import doc_bp
 
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
-app.register_blueprint(doc_bp)
 
 with app.app_context():
     import models
@@ -108,11 +101,9 @@ def forbidden(e):
 
 @app.before_request
 def check_story_data():
-    # Skip checks for static files, home, generate routes, and document routes
-    if (request.path.startswith('/static') or 
-        request.path == '/' or 
-        request.path == '/generate_story' or
-        request.path.startswith('/doc/')):
+    # Skip checks for static files and the home/generate routes
+    if request.path.startswith('/static') or request.path == '/' or \
+       request.path == '/generate_story':
         return
         
     # Check if story data exists for protected routes
