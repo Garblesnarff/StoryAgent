@@ -33,112 +33,6 @@
     opacity: 0.2;
 }
 
-/* Loading overlay styles */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
-}
-
-.loading-content {
-    display: flex;
-    gap: 2rem;
-    align-items: flex-start;
-    max-width: 1200px;
-    width: 100%;
-    padding: 2rem;
-}
-
-.loading-animation {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 200px;
-}
-
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid var(--bs-primary);
-    border-top: 5px solid transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.loading-text {
-    margin-top: 20px;
-    color: white;
-    font-size: 1.2rem;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Progress container styles */
-.agent-progress {
-    flex-grow: 1;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1rem;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.agent-progress-item {
-    background: rgba(255, 255, 255, 0.05);
-    margin-bottom: 0.5rem;
-    padding: 0.75rem;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-}
-
-.agent-progress-item:last-child {
-    margin-bottom: 0;
-}
-
-.agent-progress-item.text-primary {
-    border-left: 3px solid var(--bs-primary);
-}
-
-.agent-progress-item.text-success {
-    border-left: 3px solid var(--bs-success);
-}
-
-.agent-progress-item.text-danger {
-    border-left: 3px solid var(--bs-danger);
-}
-
-.agent-status {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.agent-info {
-    flex-grow: 1;
-}
-
-.agent-name {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.agent-message {
-    opacity: 0.8;
-}
-
 /* Card and book container styles */
 .book-container {
     position: relative;
@@ -176,6 +70,44 @@
     opacity: 1;
 }
 
+.book-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(var(--bs-body-bg-rgb), 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.book-nav.prev {
+    left: -60px;
+}
+
+.book-nav.next {
+    right: -60px;
+}
+
+.book-nav:hover {
+    background: var(--bs-primary);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.book-nav svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
 /* Card styles */
 .card {
     width: 100%;
@@ -208,23 +140,4 @@
 
 .card-footer audio {
     width: 100%;
-}
-
-/* Progress bar animation */
-@keyframes progress {
-    from { width: 0; }
-}
-
-.progress {
-    height: 4px;
-    margin-top: 0.5rem;
-    background: rgba(var(--bs-primary-rgb), 0.1);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background: var(--bs-primary);
-    animation: progress 2s ease;
 }

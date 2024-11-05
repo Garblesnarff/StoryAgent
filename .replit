@@ -23,10 +23,6 @@ args = "Flask Server"
 task = "workflow.run"
 args = "Flask Application"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Flask App"
-
 [[workflows.workflow]]
 name = "Run Flask App"
 author = "agent"
@@ -56,21 +52,6 @@ waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Flask Application"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python main.py"
-waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Flask App"
 author = "agent"
 
 [workflows.workflow.metadata]

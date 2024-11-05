@@ -2,20 +2,11 @@ import groq
 import os
 import json
 import re
-from .concept_generator import ConceptGenerator
-from .world_builder import WorldBuilder
-from .plot_weaver import PlotWeaver
-import logging
-
-logger = logging.getLogger(__name__)
 
 class TextGenerator:
     def __init__(self):
-        # Initialize Groq client and services
+        # Initialize Groq client
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
-        self.concept_generator = ConceptGenerator()
-        self.world_builder = WorldBuilder()
-        self.plot_weaver = PlotWeaver()
     
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
@@ -47,84 +38,7 @@ class TextGenerator:
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
         try:
-            # Generate a detailed concept
-            concept = self.concept_generator.generate_concept(prompt, genre, mood, target_audience)
-            if not concept:
-                logger.warning("Using fallback concept")
-                concept = {
-                    'core_theme': 'Growth and Change',
-                    'characters': [{'name': 'Protagonist', 'description': 'A character facing challenges'}],
-                    'setting': 'A world of possibilities',
-                    'plot_points': ['Beginning', 'Middle', 'End'],
-                    'emotional_journey': 'From struggle to triumph'
-                }
-
-            # Generate world details
-            world = self.world_builder.build_world(concept, genre, mood)
-            if not world:
-                logger.warning("Using fallback world details")
-                world = {
-                    'setting': 'A mysterious realm where ancient magic and modern technology coexist.',
-                    'atmosphere': 'An air of mystery and wonder pervades this timeless place.',
-                    'locations': [
-                        {'name': 'Central Hub', 'description': 'Where the story begins'},
-                        {'name': 'Challenge Zone', 'description': 'Where conflicts unfold'}
-                    ]
-                }
-
-            # Generate plot structure
-            plot = self.plot_weaver.weave_plot(concept, world, genre, mood)
-            if not plot:
-                logger.warning("Using fallback plot structure")
-                plot = {
-                    'plot_outline': ['Beginning', 'Middle', 'End'],
-                    'key_events': ['Introduction', 'Rising Action', 'Climax', 'Resolution'],
-                    'character_arcs': [{'name': 'Protagonist', 'development': 'Growth'}],
-                    'pacing_notes': 'Standard three-act structure'
-                }
-
-            # Develop detailed scenes
-            scenes = self.plot_weaver.develop_scenes(plot, world)
-            if not scenes:
-                logger.warning("Using fallback scenes")
-                scenes = {
-                    'scenes': [
-                        {'title': 'Opening', 'action': 'The story begins...'},
-                        {'title': 'Conflict', 'action': 'Tension rises...'},
-                        {'title': 'Resolution', 'action': 'The story concludes...'}
-                    ],
-                    'transitions': ['Beginning', 'Middle', 'End'],
-                    'emotional_beats': ['Hope', 'Fear', 'Struggle', 'Resolution']
-                }
-
-            # Refine the complete plot
-            refined_plot = self.plot_weaver.refine_plot(plot, scenes)
-            if not refined_plot:
-                logger.warning("Using fallback refined plot")
-                refined_plot = {
-                    'refined_plot': ['Setup', 'Conflict', 'Resolution'],
-                    'story_beats': ['Introduction', 'Rising Action', 'Climax', 'Resolution'],
-                    'narrative_flow': 'Classic three-act structure'
-                }
-
-            # Create an enhanced prompt using all generated elements
-            enhanced_prompt = (
-                f"Using this detailed story structure:\n"
-                f"Theme: {concept['core_theme']}\n"
-                f"Setting: {world['setting']}\n"
-                f"Atmosphere: {world['atmosphere']}\n"
-                f"Plot Outline: {json.dumps(plot['plot_outline'])}\n"
-                f"Story Beats: {json.dumps(refined_plot['story_beats'])}\n"
-                f"Narrative Flow: {refined_plot['narrative_flow']}\n\n"
-                f"Write a {genre} story with a {mood} mood for a {target_audience} "
-                f"audience. Create {paragraphs} distinct paragraphs that naturally "
-                "flow from one to the next. Each paragraph should be 2-3 sentences. "
-                "Follow the narrative flow and story beats while maintaining the core theme "
-                "and incorporating vivid world details. Do not include any segment markers, "
-                "numbers, or labels."
-            )
-
-            # Generate story text with the enhanced prompt
+            # Generate story text with improved prompt
             response = self.client.chat.completions.create(
                 model="llama-3.1-70b-versatile",
                 messages=[
@@ -133,13 +47,20 @@ class TextGenerator:
                         "content": (
                             f"You are a creative storyteller specializing in {genre} stories "
                             f"with a {mood} mood for a {target_audience} audience. Write in a "
-                            "natural, flowing narrative style. Follow the provided structure "
-                            "strictly while maintaining engaging prose."
+                            "natural, flowing narrative style. With a 3 act format. Do not use any section markers, "
+                            "segment labels, numbers, or chapter divisions. Each paragraph should "
+                            "flow naturally into the next as part of a continuous story."
                         )
                     },
                     {
                         "role": "user", 
-                        "content": enhanced_prompt
+                        "content": (
+                            f"Write a {genre} story with a {mood} mood for a {target_audience} "
+                            f"audience based on this prompt: {prompt}. Create {paragraphs} "
+                            "distinct paragraphs where each naturally flows from the previous one. The story should follow the 3 act format."
+                            "Each paragraph should be 2-3 sentences. Do not include any segment markers, "
+                            "numbers, or labels. The story should read as one continuous narrative."
+                        )
                     }
                 ],
                 temperature=0.7,
@@ -172,5 +93,5 @@ class TextGenerator:
             return story_paragraphs[:paragraphs]
             
         except Exception as e:
-            logger.error(f"Error generating story: {str(e)}")
+            print(f"Error generating story: {str(e)}")
             return None
