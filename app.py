@@ -116,15 +116,12 @@ def generate_story():
                 return
 
             # Clear session and store new story data
-            session.clear()  # Clear any existing session data
-            session.permanent = True  # Ensure session persistence
+            session.clear()
+            session.permanent = True
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
             session.modified = True
-
-            # Force session save
-            app.save_session(session, Response())
 
             # Log session state
             logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")

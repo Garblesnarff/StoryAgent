@@ -16,14 +16,18 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    story_data = session.get('story_data')
-    if not story_data or 'paragraphs' not in story_data:
-        logger.warning('No valid story data found in session')
+    if 'story_data' not in session:
+        logger.warning('No story data found in session')
         flash('Please generate a story first')
         return redirect(url_for('index'))
     
-    # Add debug logging
-    logger.info(f'Story data found in session: {len(story_data["paragraphs"])} paragraphs')
+    story_data = session.get('story_data')
+    if not story_data or 'paragraphs' not in story_data:
+        logger.error('Invalid story data structure')
+        flash('Invalid story data')
+        return redirect(url_for('index'))
+        
+    logger.info(f'Loading story edit page with {len(story_data["paragraphs"])} paragraphs')
     return render_template('story/edit.html', story=story_data)
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
