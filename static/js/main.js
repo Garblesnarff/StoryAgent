@@ -74,7 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'success':
                                 if (data.redirect) {
                                     try {
-                                        window.location.href = data.redirect;
+                                        // Add a small delay before redirect to ensure session is saved
+                                        setTimeout(() => {
+                                            window.location.href = data.redirect;
+                                        }, 500);
                                     } catch (error) {
                                         console.error('Error redirecting:', error);
                                         alert('Error navigating to edit page. Please try again.');
@@ -83,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                         }
                     } catch (error) {
-                        console.error('Error parsing message:', line);
+                        console.error('Error parsing message:', error);
                     }
                 }
                 buffer = lines[lines.length - 1];

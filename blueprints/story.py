@@ -16,18 +16,15 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    if 'story_data' not in session:
-        logger.warning('No story data found in session')
+    """Handle story edit page access"""
+    story_data = session.get('story_data')
+    
+    if not story_data or 'paragraphs' not in story_data:
+        logger.warning('No valid story data found in session')
         flash('Please generate a story first')
         return redirect(url_for('index'))
     
-    story_data = session.get('story_data')
-    if not story_data or 'paragraphs' not in story_data:
-        logger.error('Invalid story data structure in session')
-        flash('Invalid story data')
-        return redirect(url_for('index'))
-        
-    logger.info('Loading story edit page with valid story data')
+    logger.info('Loading story edit page with story data')
     return render_template('story/edit.html', story=story_data)
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
@@ -39,15 +36,23 @@ def update_paragraph():
             return jsonify({'error': 'No story data found'}), 404
 
         data = request.get_json()
+        if not data:
+            logger.error('No JSON data received in request')
+            return jsonify({'error': 'No data provided'}), 400
+
         text = data.get('text')
         index = data.get('index')
         
-        if not text or index is None:
+        if text is None or index is None:
             logger.error(f'Invalid update data - text: {bool(text)}, index: {index}')
             return jsonify({'error': 'Invalid data provided'}), 400
             
         # Update story in session
         story_data = session['story_data']
+        if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
+            logger.error('Invalid story data structure in session')
+            return jsonify({'error': 'Invalid story data structure'}), 500
+            
         if index >= len(story_data['paragraphs']):
             logger.error(f'Invalid paragraph index: {index}')
             return jsonify({'error': 'Invalid paragraph index'}), 400

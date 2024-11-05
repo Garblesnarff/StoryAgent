@@ -112,7 +112,6 @@ def generate_story():
                 return
 
             # Store story data in session
-            session.clear()  # Clear any existing session data
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
@@ -120,7 +119,7 @@ def generate_story():
             
             # Send success response with redirect
             yield send_progress('Story Generator', 'completed', 'Story generated successfully')
-            yield f"data: {json.dumps({'type': 'success', 'redirect': url_for('story.edit')})}\n\n"
+            yield f"data: {json.dumps({'type': 'success', 'redirect': '/story/edit'})}\n\n"
 
         except Exception as e:
             logger.error(f"Error generating story: {str(e)}")
@@ -156,15 +155,18 @@ def server_error(e):
 @app.errorhandler(403)
 def forbidden(e):
     logger.warning(f"403 error: {request.url}")
-    return jsonify({'error': 'Please start by creating a new story on the home page'}), 403
+    return redirect(url_for('index'))
 
 @app.before_request
 def check_story_data():
+    """Check if story data exists in session before accessing story-related routes"""
+    # Skip check for static files and certain routes
     if request.path.startswith('/static') or request.path == '/' or request.path == '/generate_story':
         return
         
+    # Redirect to index if trying to access story routes without story data
     if 'story_data' not in session and request.path.startswith('/story/'):
-        logger.warning(f"Attempted to access {request.path} without story data in session")
+        flash('Please generate a story first')
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
