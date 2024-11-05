@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, session, jsonify, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import logging
 
@@ -20,6 +20,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)  # Add secret key for session management
+app.permanent_session_lifetime = timedelta(hours=1)  # Set session lifetime
 db.init_app(app)
 
 # Initialize services
@@ -54,6 +55,9 @@ def generate_story():
     def generate():
         try:
             logger.info("Starting story generation process")
+            
+            # Make session permanent at the start
+            session.permanent = True
             
             # Validate form data
             required_fields = ['prompt', 'genre', 'mood', 'target_audience']
@@ -111,12 +115,19 @@ def generate_story():
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
                 return
 
-            # Store story data in session
+            # Clear session and store new story data
+            session.clear()  # Clear any existing session data
+            session.permanent = True  # Ensure session persistence
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
             session.modified = True
-            session.permanent = True  # Make session data persistent
+
+            # Force session save
+            app.save_session(session, Response())
+
+            # Log session state
+            logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")
 
             # Send success response with redirect
             yield send_progress('Story Generator', 'completed', 'Story generated successfully')
@@ -156,6 +167,7 @@ def server_error(e):
 @app.errorhandler(403)
 def forbidden(e):
     logger.warning(f"403 error: {request.url}")
+    flash('Please generate a story first')
     return redirect(url_for('index'))
 
 @app.before_request
@@ -165,8 +177,13 @@ def check_story_data():
     if request.path.startswith('/static') or request.path == '/' or request.path == '/generate_story':
         return
         
+    # Check session status
+    if not session.permanent:
+        session.permanent = True
+        
     # Redirect to index if trying to access story routes without story data
     if 'story_data' not in session and request.path.startswith('/story/'):
+        logger.warning(f"Attempted to access {request.path} without story data in session")
         flash('Please generate a story first')
         return redirect(url_for('index'))
 
