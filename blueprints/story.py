@@ -19,21 +19,13 @@ def edit():
     logger.info('Accessing edit page')
     logger.debug(f'Session data: {session.get("story_data")}')
     
-    if not session.get('story_data'):
-        logger.warning('No story data found in session')
+    story_data = session.get('story_data')
+    if not story_data or not isinstance(story_data, dict) or 'paragraphs' not in story_data:
+        logger.warning('No valid story data found in session')
         flash('Please generate a story first')
         return redirect(url_for('index'))
     
-    story_data = session['story_data']
-    if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
-        logger.error('Invalid story data structure')
-        flash('Invalid story data')
-        return redirect(url_for('index'))
-    
-    # Ensure session stays permanent
-    session.permanent = True
-    session.modified = True
-    
+    # Log successful access
     logger.info(f'Loading story edit page with {len(story_data["paragraphs"])} paragraphs')
     return render_template('story/edit.html', story=story_data)
 

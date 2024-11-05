@@ -129,30 +129,25 @@ def generate_story():
                 yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
                 return
 
-            # Clear any existing session data and store new story
+            # Store story data in session before redirect
             session.clear()
             session.permanent = True
-            
-            # Store story data
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
             session.modified = True
-            
-            # Force session save
-            if isinstance(session._get_current_object(), SecureCookieSession):
-                session.modified = True
-            
-            # Add debugging
+
+            # Log session state for debugging
             logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")
             logger.debug(f"Session story_data: {session['story_data']}")
 
-            # Add a longer sleep to ensure session is saved
-            sleep(2.5)
-            
+            # Add a longer delay and ensure session is saved
+            sleep(1.0)
+
             # Send success response with redirect
             yield send_progress('Story Generator', 'completed', 'Story generated successfully')
             yield f"data: {json.dumps({'type': 'success', 'redirect': url_for('story.edit')})}\n\n"
+            return
 
         except Exception as e:
             logger.error(f"Error generating story: {str(e)}")
