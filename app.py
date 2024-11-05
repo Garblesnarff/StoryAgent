@@ -126,17 +126,18 @@ def generate_story():
                 
             # Clear session and store new story data
             session.clear()
+            session.permanent = True
             session['story_data'] = {
                 'paragraphs': [{'text': p.strip()} for p in story_paragraphs if p.strip()]
             }
             session.modified = True
-            session.permanent = True
 
-            # Add a short sleep to ensure session is saved
-            sleep(0.5)
+            # Add a longer sleep to ensure session is saved
+            sleep(1.0)
 
             # Log session state
             logger.info(f"Story data saved to session with {len(session['story_data']['paragraphs'])} paragraphs")
+            logger.debug(f"Session story_data: {session['story_data']}")
 
             # Send success response with redirect
             yield send_progress('Story Generator', 'completed', 'Story generated successfully')
