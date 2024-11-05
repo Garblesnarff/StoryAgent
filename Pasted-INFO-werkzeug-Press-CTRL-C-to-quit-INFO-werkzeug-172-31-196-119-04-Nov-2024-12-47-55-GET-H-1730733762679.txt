@@ -1,0 +1,22 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:47:55] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:47:55] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:47:55] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:47:59] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:47:59] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:47:59] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:48:14] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:48:14] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 12:48:14] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:20:39] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:20:40] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:20:40] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+Error enhancing setting: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '```json\n{\n   "environment": "The mist-shrouded asylum has grown a twisted, thorny undergrowth that seems to be slowly devouring the structure, while the walls continue to crumble under the weight of their dark history.",\n   "society": "The remnants of the community are now fragmented into rival factions, each with their own twisted agendas, as they try to survive and unravel the mysteries of the asylum.",\n   "rules": [\n      "No sound can escape the asylum\'s walls, trapping the screams and whispers of the trapped souls within.",\n      "All physical harm is healed by the asylum, but the psychological trauma remains, festering like an open wound.",\n      "The entity that haunts the asylum feeds on fear, growing stronger with each passing moment of terror."\n   ],\n   "elements": [\n      "The Shadow People: humanoid silhouettes that stalk the corridors, born from the darkest corners of the patients\' minds.",\n      "The Memory Eater: a manifestation of the asylum\'s dark past, devouring the memories of those who dare to confront it.",\n      "The Echoes: disembodied voices of former patients, trapped in an eternal loop of suffering and madness."\n   ],\n   "atmosphere": {\n      "mood": [\n         "Claustrophobic",\n         "Malevolent",\n         "Hysterical"\n      ],\n      "sensory_details": [\n         "The scent of burning flesh wafts from the abandoned operating theater, mingling with'}}
+Error generating story: 'physical_environment'
+INFO:werkzeug:172.31.196.119 - - [04/Nov/2024 15:22:05] "POST /generate_story HTTP/1.1" 500 -

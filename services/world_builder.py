@@ -6,7 +6,7 @@ from typing import Dict, Optional
 class WorldBuilder:
     def __init__(self):
         # Initialize Groq client
-        self.client = groq.Groq(api_key=os.environ.get('GROQ_WORLD_API_KEY'))
+        self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
 
     def build_world(self, concept: Dict, genre: str, mood: str) -> Optional[Dict]:
         """Generate a detailed world based on the story concept"""

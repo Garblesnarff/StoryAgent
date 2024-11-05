@@ -73,23 +73,20 @@
 .progress-container {
     max-width: 600px;
     margin: 2rem auto;
-    padding: 1.5rem;
-    border-radius: 12px;
+    padding: 1rem;
+    border-radius: 8px;
     background: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .agent-progress-item {
     padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 8px;
+    border-bottom: 1px solid var(--bs-border-color);
     transition: all 0.3s ease;
-    background: rgba(var(--bs-body-bg-rgb), 0.5);
 }
 
 .agent-progress-item:last-child {
-    margin-bottom: 0;
+    border-bottom: none;
 }
 
 .agent-status {
@@ -111,23 +108,113 @@
 
 .agent-message {
     opacity: 0.8;
-    line-height: 1.4;
 }
 
-/* Error state styling */
-.agent-progress-item.text-danger {
-    background: rgba(var(--bs-danger-rgb), 0.1);
+/* Card and book container styles */
+.book-container {
+    position: relative;
+    max-width: 1200px;
+    min-height: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
 }
 
-/* Active state animation */
-.agent-progress-item .spinner-border {
-    color: var(--bs-primary);
+#story-output {
+    opacity: 0;
+    transition: opacity 0.5s ease;
 }
 
-/* Completed state styling */
-.agent-progress-item.text-success {
-    background: rgba(var(--bs-success-rgb), 0.1);
+#story-output.visible {
+    opacity: 1;
 }
 
-/* Rest of the existing styles... */
-[Previous CSS content from line 113 onwards remains the same]
+.book-pages {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.book-page {
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.8s ease;
+}
+
+.book-page.visible {
+    opacity: 1;
+}
+
+.book-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(var(--bs-body-bg-rgb), 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.book-nav.prev {
+    left: -60px;
+}
+
+.book-nav.next {
+    right: -60px;
+}
+
+.book-nav:hover {
+    background: var(--bs-primary);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.book-nav svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+/* Card styles */
+.card {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--bs-card-bg);
+    border: 2px solid var(--bs-primary);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.card-img-top {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 18px 18px 0 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.card-footer audio {
+    width: 100%;
+}

@@ -16,16 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear previous progress
             if (agentProgress) {
                 agentProgress.innerHTML = '';
-                // Initialize all agents as pending
-                const agents = ['Concept Generator', 'World Builder', 'Plot Weaver', 'Story Generator'];
-                agents.forEach(agent => {
-                    updateAgentProgress(agent, 'pending', 'Waiting to start...');
-                });
             }
 
             const response = await fetch('/generate_story', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'text/event-stream'
+                }
             });
 
             if (!response.ok) {
@@ -45,55 +43,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
-                    if (!line) continue;
-
+                    if (!line || !line.startsWith('data:')) continue;
+                    
                     try {
-                        // Extract JSON data from SSE format
-                        const match = line.match(/^data:\s*(.+)$/);
-                        if (!match) continue;
-
-                        const data = JSON.parse(match[1]);
+                        const jsonStr = line.replace('data:', '').trim();
+                        const data = JSON.parse(jsonStr);
                         
+                        // Handle different message types
                         switch (data.type) {
                             case 'agent_progress':
-                                if (data.agent && data.status && data.message) {
-                                    console.log(`Agent Progress: ${data.agent} - ${data.status} - ${data.message}`);
-                                    updateAgentProgress(data.agent, data.status, data.message);
-                                }
+                                updateAgentProgress(data.agent, data.status, data.message);
                                 break;
                             case 'error':
-                                if (data.message) {
-                                    console.error('Generation Error:', data.message);
-                                    updateAgentProgress('Story Generation', 'error', data.message);
-                                    if (loadingOverlay) {
-                                        loadingOverlay.style.display = 'none';
-                                    }
-                                    throw new Error(data.message);
-                                }
+                                updateAgentProgress('Story Generation', 'error', data.message);
+                                throw new Error(data.message);
                                 break;
                             case 'success':
                                 if (data.redirect) {
-                                    // Mark all agents as completed before redirecting
-                                    const agents = document.querySelectorAll('.agent-progress-item');
-                                    agents.forEach(agent => {
-                                        if (!agent.classList.contains('text-success') && !agent.classList.contains('text-danger')) {
-                                            const agentName = agent.querySelector('.agent-name')?.textContent;
-                                            if (agentName) {
-                                                updateAgentProgress(agentName, 'completed', 'Task completed successfully');
-                                            }
-                                        }
-                                    });
-                                    setTimeout(() => {
-                                        window.location.href = data.redirect;
-                                    }, 1000); // Small delay to show completion
+                                    window.location.href = data.redirect;
                                 }
                                 break;
                         }
                     } catch (error) {
-                        console.error('Error parsing progress:', error, line);
-                        if (line.includes('error')) {
-                            updateAgentProgress('Story Generation', 'error', 'Failed to process server response');
-                        }
+                        console.error('Error parsing progress:', error);
+                        // Show error in progress display
+                        updateAgentProgress('Story Generation', 'error', 'Failed to generate story');
                     }
                 }
                 buffer = lines[lines.length - 1];
@@ -101,8 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error:', error.message || error);
-            updateAgentProgress('Story Generation', 'error', error.message || 'An unexpected error occurred');
-            alert('Error: ' + (error.message || 'An unexpected error occurred'));
+            
+            // Update progress display with error state
+            const errorMessage = error.message || 'An unexpected error occurred';
+            updateAgentProgress('Story Generation', 'error', errorMessage);
+            
+            // Show error in alert
+            alert('Error: ' + errorMessage);
         } finally {
             const loadingOverlay = document.getElementById('loading-overlay');
             if (loadingOverlay) {
@@ -113,20 +92,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateAgentProgress(agent, status, message) {
-    let agentProgress = document.getElementById('agent-progress');
+    const agentProgress = document.getElementById('agent-progress');
     if (!agentProgress) {
-        agentProgress = document.createElement('div');
-        agentProgress.id = 'agent-progress';
-        agentProgress.className = 'progress-container mt-4';
-        document.querySelector('.content-wrapper')?.appendChild(agentProgress);
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'agent-progress';
+        progressContainer.className = 'progress-container';
+        document.querySelector('.content-wrapper')?.appendChild(progressContainer);
     }
 
-    let agentElement = document.getElementById(`progress-${agent.replace(/\s+/g, '-')}`);
+    let agentElement = document.getElementById(`progress-${agent}`);
     if (!agentElement) {
         agentElement = document.createElement('div');
-        agentElement.id = `progress-${agent.replace(/\s+/g, '-')}`;
-        agentElement.className = 'agent-progress-item mb-2';
-        agentProgress.appendChild(agentElement);
+        agentElement.id = `progress-${agent}`;
+        agentElement.className = 'agent-progress-item';
+        document.getElementById('agent-progress')?.appendChild(agentElement);
     }
 
     const statusClasses = {
@@ -136,41 +115,18 @@ function updateAgentProgress(agent, status, message) {
         'error': 'text-danger'
     };
 
-    const statusIcons = {
-        'pending': '<i class="bi bi-clock"></i>',
-        'active': '<div class="spinner-border spinner-border-sm"></div>',
-        'completed': '<i class="bi bi-check-circle-fill"></i>',
-        'error': '<i class="bi bi-x-circle-fill"></i>'
-    };
-
-    const statusClass = statusClasses[status] || 'text-muted';
-    const statusIcon = statusIcons[status] || '<i class="bi bi-clock"></i>';
-
-    agentElement.className = `agent-progress-item mb-2 ${statusClass}`;
+    agentElement.className = `agent-progress-item ${statusClasses[status] || 'text-muted'}`;
     agentElement.innerHTML = `
         <div class="d-flex align-items-center gap-2">
             <div class="agent-status">
-                ${statusIcon}
+                ${status === 'active' ? '<div class="spinner-border spinner-border-sm"></div>' :
+                 status === 'completed' ? '<i class="bi bi-check-circle-fill"></i>' :
+                 status === 'error' ? '<i class="bi bi-x-circle-fill"></i>' : '○'}
             </div>
             <div class="agent-info">
-                <div class="agent-name fw-bold">${agent}</div>
-                <div class="agent-message small text-wrap">${message}</div>
+                <div class="agent-name">${agent}</div>
+                <div class="agent-message small">${message}</div>
             </div>
         </div>
     `;
-
-    // Add visual feedback for different states
-    switch (status) {
-        case 'error':
-            agentElement.classList.add('border', 'border-danger', 'rounded', 'p-2');
-            break;
-        case 'completed':
-            agentElement.classList.add('border', 'border-success', 'rounded', 'p-2');
-            // Add completion animation
-            agentElement.style.animation = 'fadeInScale 0.3s ease-out';
-            break;
-        case 'active':
-            agentElement.classList.add('border', 'border-primary', 'rounded', 'p-2');
-            break;
-    }
 }

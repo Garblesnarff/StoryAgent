@@ -1,0 +1,1045 @@
+/.gitignore:
+-----------------------
+
+__pycache__
+test*
+data
+build
+*.DS_Store
+*egg-info
+*env
+
+
+-----------------------
+
+/LICENSE:
+-----------------------
+
+MIT License
+
+Copyright (c) 2023 GOAT.AI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+-----------------------
+
+/README.md:
+-----------------------
+
+# GOAT-Storytelling-Agent: Agent for writing consistent and interesting long stories for any fiction form
+![Goat Agent](./images/GOAT-story.png)
+## Description
+GOAT-Storytelling-Agent writes consistent and  interesting stories over long context requiring only a standard LLM for text generation. By default it takes our open-source model, [GOAT-70B-Storytelling](https://huggingface.co/GOAT-AI/GOAT-70B-Storytelling), specifically tuned for the task.
+The agent consists of several stages of planning and writing to build a story from top to down. A user can control the story creation at any preferred scale - starting from a basic novel description to the text of a specific scene. More details can be found in the [release blogpost](https://www.blog.goat.ai/goat-st/).
+
+## Novella dataset
+To demonstrate the capabilities of the agent, we release 20 novellas generated without human supervision requiring only single initial topic for input. The dataset is hosted as an HF dataset - [generated-novels](https://huggingface.co/datasets/GOAT-AI/generated-novels/tree/main/generated-books).
+
+## Setup
+1. Provide configuration details in `goat_storytelling_agent/config.py` with a text generation endpoint and huggingface access token for tokenizer initialization.
+
+2. You can install the dependencies only
+
+    ```pip install -r requirements.txt```
+
+    or install as a package
+
+    ```pip install -e .```
+
+## Usage
+### Generate a complete story from a topic (complete pipeline)
+The whole pipeline consists of an interplay between different story elements. A whole story can be generated from scratch using the general pipeline. Currently, `HF(TGI)` and `Llama.cpp` text generation backends are supported, but can be extended to any engine.
+
+```python
+from goat_storytelling_agent.storytelling_agent import StoryAgent
+
+backend_uri = # Text generation endpoint
+writer = StoryAgent(backend_uri, form='novel')
+novel_scenes = writer.generate_story('treasure hunt in a jungle')
+```
+
+Under the hood, `generate_story` performs following operations:
+```python
+msgs, book_spec = self.init_book_spec(topic)
+msgs, book_spec = self.enhance_book_spec(book_spec)
+msgs, plan = self.create_plot_chapters(book_spec)
+msgs, plan = self.enhance_plot_chapters(book_spec, plan)
+msgs, plan = self.split_chapters_into_scenes(plan)
+
+form_text = []
+for act in plan:
+    for ch_num, chapter in act['chapter_scenes'].items():
+        sc_num = 1
+        for scene in chapter:
+            previous_scene = form_text[-1] if form_text else None
+            _, generated_scene = self.write_a_scene(
+                scene, sc_num, ch_num, plan,
+                previous_scene=previous_scene)
+            form_text.append(generated_scene)
+            sc_num += 1
+```
+
+Some of the steps will be reviewed in the examples below.
+### Create novel ideas from a seed topic
+It is possible to break down the generation process and have a more granular control over the story. `init_book_spec` command takes a topic and comes up with a book description consisting of predefined fields - Genre, Place, Time, Theme, Tone, Point of View, Characters, Premise. It is possible to add your own fields and then pass the spec in subsequent stages.
+
+```python
+message, book_spec = writer.init_book_spec(topic='treasure hunt in a jungle')
+print(book_spec)
+```
+```output
+Genre: Adventure Thriller
+Place: Amazon Jungle, South America
+Time: Present Day
+Theme: Persistence, Survival, Discovery of ancient culture
+Tone: Suspenseful, Tense
+Point of View: Third person limited
+Characters: Dr. Helen Carr, an archaeology professor; Ignacio, an experienced local guide; Bruno Hafner, a greedy treasure collector; Ana Maria, an idealistic student and local tribe leader, Kaya.
+Premise: Dr. Helen Carr uncovers a map to an ancient artifact believed to be deep inside the Amazon Jungle. Teaming up with local guide, Ignacio, she embarks on a tense journey to locate the artifact before the ruthless treasure collector, Bruno Hafner, gets there first. Along the way, their path crosses with the idealistic student Ana Maria who is fascinated by the legend of the artifact. The plot thickens as Helen and her team rediscover a lost civilization and have to navigate through both physical dangers of the jungle and complex local politics represented by the tribe leader Kaya. In this race against time, they will also have to fight against the elements of jungle and not to fall into the trap set by Hafner while handling Kaya's tribe with respect and care.
+```
+### Create a by-chapter outline of the story
+```python
+from goat_storytelling_agent.plan import Plan
+
+messages, plan = writer.create_plot_chapters(book_spec)
+print(Plan.plan_2_str(plan))
+```
+```output
+Act 1: Setting Up The Expedition
+- Chapter 1: Dr. Helen Carr's discovery of an ancient map suggesting the location of a valuable artifact deep inside the Amazon Jungle.
+- Chapter 2: rugged guide Ignacio and passionate anthropology student, Ana Maria.
+- Chapter 3: The expedition's unexpected adversary - Bruno Hafner, a ruthless treasure collector with his technologically advanced team and similar intentions.
+
+Act 2: Journey Through the Jungle and Revelations
+- Chapter 4: The expedition commences - navigating treacherous terrain, confronting dangerous wildlife, and surviving on limited resources.
+- Chapter 5: Tensions rise within the group due to the intense conditions. A riveting rescue from a piranha-infested river crossing builds trust.
+- Chapter 6: The team discovers Kaya and her tribe, decedents of the tribe that created the artifact.
+- Chapter 7: Ana Maria's revelation about her connection to Kaya's tribe creates new alliances and emotions.
+- Chapter 8: Bruno Hafner's team attacks the village, attempting to steal the artifact's location. A brief skirmish reveals Ignacio's skilled combat past.
+- Chapter 9: The staggering scale and sophistication of the underground cave are discovered. The booby-trapped chamber designed to protect the artifact provides a challenging hurdle.
+
+Act 3: Showdown and Epilogue
+- Chapter 10: An intense showdown between Helen's group and Bruno in the underground cave, culminating in thwarting Bruno's plans.
+- Chapter 11: The true significance of the artifact unraveled, not just a historical treasure but a record of sustainable agricultural practices of the lost tribe.
+- Chapter 12: The struggle to return the artifact from the clutches of Bruno and ensure its safe return to Kaya and her tribe.
+- Chapter 13: Helen's team departs from the Amazon, leaving the artifact with Kaya's tribe. The journey has not only been about preserving history but also learning from it.
+- Chapter 14: Back at the research facility, Helen's successful expedition has increased respect for her work and sparks new research on sustainable ancient practices. The lives of Helen, Ignacio, and Ana Maria are forever changed through their shared adventure and experiences.
+```
+
+### Create a by-scene outline
+`split_chapters_into_scenes` takes the generated Plan object with chapter outlines and break each into scenes in a predefined format - Characters, Place, Time, Event, Conflct, Story value, Story value charge, Mood, Outcome.
+```python
+messages, plan = writer.split_chapters_into_scenes(plan)
+act_n = 0
+scene_n = 0
+chapter_n = 1
+scene_descr = plan[act_n]['chapter_scenes'][chapter_n][scene_n]
+print(scene_descr)
+```
+```output
+Chapter 1:
+Scene 1:
+Characters: Dr. Helen Carr
+Place: Helen's office
+Time: Morning
+Event: Helen uncovers an ancient map
+Conflict: Decoding the map's information successfully
+Story value: Knowledge
+Story value charge: Positive
+Mood: Curiosity
+Outcome: A potential location of the priceless artifact is discovered.
+```
+
+### Generate scene text based on the plan
+Finally, it is possible to generate the scene text with `write_a_scene`. Sometimes the whole text would not fit into the context window, so there is a `continue_a_scene` function that continues the text for the same scene given the progress so far.
+```python
+messages, generated_scene = writer.write_a_scene(
+    scene_descr, sc_num+1, ch_num, plan, previous_scene=None)
+```
+```
+Chapter 1: Unveiling Secrets
+
+Dr. Helen Carr was no stranger to mystery. Within the confines of her
+office at the prestigious Oxford University, the archaeologist had 
+brought age-old artifacts to life, disseminating enigmatic tales of 
+civilizations long lost. Under the golden hue of her desk lamp this 
+cool morning, stood an object of ultimate intrigue - an ancient map 
+she'd discovered on her last expedition to Peru.
+
+The map was an intricate dance of color and lines, a kaleidoscope of 
+symbols that caught Helen's eyes. She sat at her desk, her steaming 
+cup of Earl Grey ignored as she poured over the parchment, a delicious 
+thrill coursing through her veins. The map bore its age with grace, 
+the edges slightly singed, mocking her with its stoic silence.
+
+She felt that some secrets were locked inside this parchment. "Talk to 
+me", Helen whispered to herself, her eyes squinting at the delicately 
+inscribed symbols. Her fingers traced the lines of the map, feeling 
+the faintest etchings, the texture almost whispering the tales of yore.
+
+Suddenly, she paused. Her heart throbbed a little as she looked at a 
+part of the map that felt different from the rest. Helen lowered her 
+eyeglasses down to her nose, peering at a set of unusual inscriptions. 
+
+Her blood was now a concerto of adrenaline. Something was uncannily 
+remarkable with the characters etched. "An undiscovered dialect? No." 
+Helen muttered. The characters resembled a form of ancient Amazonian 
+language. But this wasn't right, ancient Amazonian dialect wasn't a 
+writing language.
+
+Determinedly, she grabbed several volumes from her bookshelf, each a 
+hefty tome of knowledge on South American civilizations. Helen 
+immersed herself in study, to decode the curious symbols. The aroma of 
+old books mixed with her dampening enthusiasm, turning the hours into 
+seconds.
+
+Just as lunch time approached, the mood of frustration counterpointed 
+with a moment of insight. With shaking hands, Helen drew parallels 
+between the symbols and ancient Amazonian petroglyphs, forgotten by 
+the world except for a handful of scholars such as herself.
+
+As she successfully decoded the symbols one after another, the meaning 
+dawned on her - the location of a priceless artifact, hidden within 
+the unfathomable Amazon jungle depths. Helen's heart thumped loudly in 
+her ears. This ethereal moment held a mesmerizing potential - 
+countless years of seasoned research leading to an extraordinary 
+discovery.
+
+Reverently, she touched the map again, feeling a boundless respect 
+towards the ancient civilization. They had safeguarded their 
+knowledge, handed it down until it found its way into her hands, to 
+unfurl its story and hand it down to posterity. Months of meticulously 
+planned expeditions would follow, but now, she savored this moment of 
+solitary discovery.
+
+The clock on the wall read noon but this ordinary morning had turned 
+extraordinary for Dr. Helen Carr. The walls of her office bore silent 
+witness to a remarkable revelation, one that could change the course 
+of history.
+```
+
+
+-----------------------
+
+/goat_storytelling_agent/config.py:
+-----------------------
+
+ENDPOINT = ''  # insert text generation endpoint here
+
+
+-----------------------
+
+/goat_storytelling_agent/plan.py:
+-----------------------
+
+"""Unifies all plot forms such as by-chapter and by-scene outlines in a single dict."""
+import re
+import json
+
+
+class Plan:
+    @staticmethod
+    def split_by_act(original_plan):
+        # removes only Act texts with newline prepended soemwhere near
+        acts = re.split('\n.{0,5}?Act ', original_plan)
+        # remove random short garbage from re split
+        acts = [text.strip() for text in acts[:]
+                if (text and (len(text.split()) > 3))]
+        if len(acts) == 4:
+            acts = acts[1:]
+        elif len(acts) != 3:
+            print('Fail: split_by_act, attempt 1', original_plan)
+            acts = original_plan.split('Act ')
+            if len(acts) == 4:
+                acts = acts[-3:]
+            elif len(acts) != 3:
+                print('Fail: split_by_act, attempt 2', original_plan)
+                return []
+
+        # [act1, act2, act3], [Act + act1, act2, act3]
+        if acts[0].startswith('Act '):
+            acts = [acts[0]] + ['Act ' + act for act in acts[1:]]
+        else:
+            acts = ['Act ' + act for act in acts[:]]
+        return acts
+
+    @staticmethod
+    def parse_act(act):
+        act = re.split(r'\n.{0,20}?Chapter .+:', act.strip())
+        chapters = [text.strip() for text in act[1:]
+                    if (text and (len(text.split()) > 3))]
+        return {'act_descr': act[0].strip(), 'chapters': chapters}
+
+    @staticmethod
+    def parse_text_plan(text_plan):
+        acts = Plan.split_by_act(text_plan)
+        if not acts:
+            return []
+        plan = [Plan.parse_act(act) for act in acts if act]
+        plan = [act for act in plan if act['chapters']]
+        return plan
+
+    @staticmethod
+    def normalize_text_plan(text_plan):
+        plan = Plan.parse_text_plan(text_plan)
+        text_plan = Plan.plan_2_str(plan)
+        return text_plan
+
+    @staticmethod
+    def act_2_str(plan, act_num):
+        text_plan = ''
+        chs = []
+        ch_num = 1
+        for i, act in enumerate(plan):
+            act_descr = act['act_descr'] + '\n'
+            if not re.search(r'Act \d', act_descr[0:50]):
+                act_descr = f'Act {i+1}:\n' + act_descr
+            for chapter in act['chapters']:
+                if (i + 1) == act_num:
+                    act_descr += f'- Chapter {ch_num}: {chapter}\n'
+                    chs.append(ch_num)
+                elif (i + 1) > act_num:
+                    return text_plan.strip(), chs
+                ch_num += 1
+            text_plan += act_descr + '\n'
+        return text_plan.strip(), chs
+
+    @staticmethod
+    def plan_2_str(plan):
+        text_plan = ''
+        ch_num = 1
+        for i, act in enumerate(plan):
+            act_descr = act['act_descr'] + '\n'
+            if not re.search(r'Act \d', act_descr[0:50]):
+                act_descr = f'Act {i+1}:\n' + act_descr
+            for chapter in act['chapters']:
+                act_descr += f'- Chapter {ch_num}: {chapter}\n'
+                ch_num += 1
+            text_plan += act_descr + '\n'
+        return text_plan.strip()
+
+    @staticmethod
+    def save_plan(plan, fpath):
+        with open(fpath, 'w') as fp:
+            json.dump(plan, fp, indent=4)
+
+
+-----------------------
+
+/goat_storytelling_agent/prompts.py:
+-----------------------
+
+system = (
+    "You are a helpful assistant for fiction writing. "
+    "Always cut the bullshit and provide concise outlines with useful details. "
+    "Do not turn your stories into fairy tales, be realistic.")
+
+book_spec_fields = ['Genre', 'Place', 'Time', 'Theme',
+                    'Tone', 'Point of View', 'Characters', 'Premise']
+
+book_spec_format = (
+    "Genre: genre\n"
+    "Place: place\n"
+    "Time: period\n"
+    "Theme: main topics\n"
+    "Tone: tone\n"
+    "Point of View: POV\n"
+    "Characters: use specific names already\n"
+    "Premise: describe some concrete events already")
+
+scene_spec_format = (
+    "Chapter [number]:\nScene [number]:\nCharacters: character list\nPlace: place\nTime: absolute or relative time\nEvent: what happens\nConflict: scene micro-conflict\n"
+    "Story value: story value affected by the scene\nStory value charge: the charge of story value by the end of the scene (positive or negative)\nMood: mood\nOutcome: the result.")
+
+prev_scene_intro = "\n\nHere is the ending of the previous scene:\n"
+cur_scene_intro = "\n\nHere is the last written snippet of the current scene:\n"
+
+
+def init_book_spec_messages(topic, form):
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user",
+         "content": f"Given the topic, come up with a specification to write a {form}. Write spec using the format below. "
+                    f"Topic: {topic}\nFormat:\n\"\"\"\n{book_spec_format}\"\"\""},
+    ]
+    return messages
+
+
+def missing_book_spec_messages(field, text_spec):
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user",
+         "content": (
+            f"Given a hypothetical book spec, fill the missing field: {field}."
+            f'Return only field, separator and value in one line like "Field: value".\n'
+            f'Book spec:\n"""{text_spec}"""')
+        }
+    ]
+    return messages
+
+
+def enhance_book_spec_messages(book_spec, form):
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content":
+            f"Make the specification for an upcoming {form} more detailed "
+            f"(specific settings, major events that differentiate the {form} "
+            f"from others). Do not change the format or add more fields."
+            f"\nEarly {form} specification:\n\"\"\"{book_spec}\"\"\""}
+    ]
+    return messages
+
+
+def create_plot_chapters_messages(book_spec, form):
+    messages = [
+        {"role": "user", "content": (
+            f"Come up with a plot for a bestseller-grade {form} in 3 acts taking inspiration from its description. "
+            "Break down the plot into chapters using the following structure:\nActs\n- Chapters\n\n"
+            f"Early {form} description:\n\"\"\"{book_spec}\"\"\".")}
+    ]
+    return messages
+
+
+def enhance_plot_chapters_messages(act_num, text_plan, book_spec, form):
+    act_num += 1
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": f"Come up with a plot for a bestseller-grade {form} in 3 acts. Break down the plot into chapters using the following structure:\nActs\n- Chapters\n\nEarly {form} description:\n\"\"\"{book_spec}\"\"\""},
+        {"role": "assistant", "content": text_plan},
+        {"role": "user", "content": f"Take Act {act_num}. Rewrite the plan so that chapter's story value alternates (i.e. if Chapter 1 is positive, Chapter 2 is negative, and so on). Describe only concrete events and actions (who did what). Make it very short (one brief sentence and value charge indication per chapter)"}
+    ]
+    return messages
+
+
+def split_chapters_into_scenes_messages(act_num, text_act, form):
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": (
+            f"Break each chapter in Act {act_num} into scenes (number depends on how packed a chapter is), give scene specifications for each.\n"
+            f"Here is the by-chapter plot summary for the act in a {form}:\n\"\"\"{text_act}\"\"\"\n\n"
+            f"Scene spec format:\n\"\"\"{scene_spec_format}\"\"\"")}
+    ]
+    return messages
+
+
+def scene_messages(scene, sc_num, ch_num, text_plan, form):
+    messages = [
+        {"role": "system", "content": 'You are an expert fiction writer. Write detailed scenes with lively dialogue.'},
+        {"role": "user",
+            "content": f"Write a long detailed scene for a {form} for scene {sc_num} in chapter {ch_num} based on the information. "
+            "Be creative, explore interesting characters and unusual settings. Do NOT use foreshadowing.\n"
+            f"Here is the scene specification:\n\"\"\"{scene}\"\"\"\n\nHere is the overall plot:\n\"\"\"{text_plan}\"\"\""},
+        {"role": "assistant", "content": f"\nChapter {ch_num}, Scene {sc_num}\n"},
+    ]
+    return messages
+
+
+-----------------------
+
+/goat_storytelling_agent/storytelling_agent.py:
+-----------------------
+
+import sys
+import time
+import re
+import json
+import requests
+import traceback
+
+from goat_storytelling_agent import utils
+from goat_storytelling_agent.plan import Plan
+
+
+SUPPORTED_BACKENDS = ["hf", "llama.cpp"]
+
+
+def generate_prompt_parts(
+        messages, include_roles=set(('user', 'assistant', 'system'))):
+    last_role = None
+    messages = [m for m in messages if m['role'] in include_roles]
+    for idx, message in enumerate(messages):
+        nl = "\n" if idx > 0 else ""
+        if message['role'] == 'system':
+            if idx > 0 and last_role not in (None, "system"):
+                raise ValueError("system message not at start")
+            yield f"{message['content']}"
+        elif message['role'] == 'user':
+            yield f"{nl}### USER: {message['content']}"
+        elif message['role'] == 'assistant':
+            yield f"{nl}### ASSISTANT: {message['content']}"
+        last_role = message['role']
+    if last_role != 'assistant':
+        yield '\n### ASSISTANT:'
+
+
+def _query_chat_hf(endpoint, messages, tokenizer, retries=3,
+                   request_timeout=120, max_tokens=4096,
+                   extra_options={'do_sample': True}):
+    endpoint = endpoint.rstrip('/')
+    prompt = ''.join(generate_prompt_parts(messages))
+    tokens = tokenizer(prompt, add_special_tokens=True,
+                       truncation=False)['input_ids']
+    data = {
+        "inputs": prompt,
+        "parameters": {
+            'max_new_tokens': max_tokens - len(tokens),
+            **extra_options
+        }
+    }
+    headers = {'Content-Type': 'application/json'}
+
+    while retries > 0:
+        try:
+            response = requests.post(
+                f"{endpoint}/generate", headers=headers, data=json.dumps(data),
+                timeout=request_timeout)
+            if messages and messages[-1]["role"] == "assistant":
+                result_prefix = messages[-1]["content"]
+            else:
+                result_prefix = ''
+            generated_text = result_prefix + json.loads(
+                response.text)['generated_text']
+            return generated_text
+        except Exception:
+            traceback.print_exc()
+            print('Timeout error, retrying...')
+            retries -= 1
+            time.sleep(5)
+    else:
+        return ''
+
+
+def _query_chat_llamacpp(endpoint, messages, retries=3, request_timeout=120,
+                         max_tokens=4096, extra_options={}):
+    endpoint = endpoint.rstrip('/')
+    headers = {'Content-Type': 'application/json'}
+    prompt = ''.join(generate_prompt_parts(messages))
+    print(f"\n\n========== Submitting prompt: >>\n{prompt}", end="")
+    sys.stdout.flush()
+    response = requests.post(
+        f"{endpoint}/tokenize", headers=headers,
+        data=json.dumps({"content": prompt}),
+        timeout=request_timeout, stream=False)
+    tokens = [1, *response.json()["tokens"]]
+    data = {
+        "prompt": tokens,
+        "stream": True,
+        "n_predict": max_tokens - len(tokens),
+        **extra_options,
+    }
+    jdata = json.dumps(data)
+    request_kwargs = dict(headers=headers, data=jdata,
+                          timeout=request_timeout, stream=True)
+    response = requests.post(f"{endpoint}/completion", **request_kwargs)
+    result = bytearray()
+    if messages and messages[-1]["role"] == "assistant":
+        result += messages[-1]["content"].encode("utf-8")
+    is_first = True
+    for line in response.iter_lines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith(b"error:"):
+            retries -= 1
+            print(f"\nError(retry={retries}): {line!r}")
+            if retries < 0:
+                break
+            del response
+            time.sleep(5)
+            response = requests.post(f"{endpoint}/completion", **request_kwargs)
+            is_first = True
+            result.clear()
+            continue
+        if not line.startswith(b"data: "):
+            raise ValueError(f"Got unexpected response: {line!r}")
+        parsed = json.loads(line[6:])
+        content = parsed.get("content", b"")
+        result += bytes(content, encoding="utf-8")
+        if is_first:
+            is_first = False
+            print("<<|", end="")
+            sys.stdout.flush()
+        print(content, end="")
+        sys.stdout.flush()
+        if parsed.get("stop") is True:
+            break
+    print("\nDone reading response.")
+    return str(result, encoding="utf-8").strip()
+
+
+class StoryAgent:
+    def __init__(self, backend_uri, backend="hf", request_timeout=120,
+                 max_tokens=4096, n_crop_previous=400,
+                 prompt_engine=None, form='novel',
+                 extra_options={}, scene_extra_options={}):
+
+        self.backend = backend.lower()
+        if self.backend not in SUPPORTED_BACKENDS:
+            raise ValueError("Unknown backend")
+
+        if self.backend == "hf":
+            from transformers import LlamaTokenizerFast
+            self.tokenizer = LlamaTokenizerFast.from_pretrained(
+                "GOAT-AI/GOAT-70B-Storytelling")
+
+        if prompt_engine is None:
+            from goat_storytelling_agent import prompts
+            self.prompt_engine = prompts
+        else:
+            self.prompt_engine = prompt_engine
+
+        self.form = form
+        self.max_tokens = max_tokens
+        self.extra_options = extra_options
+        self.scene_extra_options = extra_options.copy()
+        self.scene_extra_options.update(scene_extra_options)
+        self.backend_uri = backend_uri
+        self.n_crop_previous = n_crop_previous
+        self.request_timeout = request_timeout
+
+    def query_chat(self, messages, retries=3):
+        if self.backend == "hf":
+            result = _query_chat_hf(
+                self.backend_uri, messages, self.tokenizer, retries=retries,
+                request_timeout=self.request_timeout,
+                max_tokens=self.max_tokens, extra_options=self.extra_options)
+        elif self.backend == "llama.cpp":
+            result = _query_chat_llamacpp(
+                self.backend_uri, messages, retries=retries,
+                request_timeout=self.request_timeout,
+                max_tokens=self.max_tokens, extra_options=self.extra_options)
+        return result
+
+    def parse_book_spec(self, text_spec):
+        # Initialize book spec dict with empty fields
+        fields = self.prompt_engine.book_spec_fields
+        spec_dict = {field: '' for field in fields}
+        last_field = None
+        if "\"\"\"" in text_spec[:int(len(text_spec)/2)]:
+            header, sep, text_spec = text_spec.partition("\"\"\"")
+        text_spec = text_spec.strip()
+
+        # Process raw spec into dict
+        for line in text_spec.split('\n'):
+            pseudokey, sep, value = line.partition(':')
+            pseudokey = pseudokey.lower().strip()
+            matched_key = [key for key in fields
+                           if (key.lower().strip() in pseudokey)
+                           and (len(pseudokey) < (2 * len(key.strip())))]
+            if (':' in line) and (len(matched_key) == 1):
+                last_field = matched_key[0]
+                if last_field in spec_dict:
+                    spec_dict[last_field] += value.strip()
+            elif ':' in line:
+                last_field = 'other'
+                spec_dict[last_field] = ''
+            else:
+                if last_field:
+                    # If line does not contain ':' it should be
+                    # the continuation of the last field's value
+                    spec_dict[last_field] += ' ' + line.strip()
+        spec_dict.pop('other', None)
+        return spec_dict
+
+    def init_book_spec(self, topic):
+        """Creates initial book specification
+
+        Parameters
+        ----------
+        topic : str
+            Short initial topic
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        str
+            Book specification text
+        """
+        messages = self.prompt_engine.init_book_spec_messages(topic, self.form)
+        text_spec = self.query_chat(messages)
+        spec_dict = self.parse_book_spec(text_spec)
+
+        text_spec = "\n".join(f"{key}: {value}"
+                              for key, value in spec_dict.items())
+        # Check and fill in missing fields
+        for field in self.prompt_engine.book_spec_fields:
+            while not spec_dict[field]:
+                messages = self.prompt_engine.missing_book_spec_messages(
+                    field, text_spec)
+                missing_part = self.query_chat(messages)
+                key, sep, value = missing_part.partition(':')
+                if key.lower().strip() == field.lower().strip():
+                    spec_dict[field] = value.strip()
+        text_spec = "\n".join(f"{key}: {value}"
+                              for key, value in spec_dict.items())
+        return messages, text_spec
+
+    def enhance_book_spec(self, book_spec):
+        """Make book specification more detailed
+
+        Parameters
+        ----------
+        book_spec : str
+            Book specification
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        str
+            Book specification text
+        """
+        messages = self.prompt_engine.enhance_book_spec_messages(
+            book_spec, self.form)
+        text_spec = self.query_chat(messages)
+        spec_dict_old = self.parse_book_spec(book_spec)
+        spec_dict_new = self.parse_book_spec(text_spec)
+
+        # Check and fill in missing fields
+        for field in self.prompt_engine.book_spec_fields:
+            if not spec_dict_new[field]:
+                spec_dict_new[field] = spec_dict_old[field]
+
+        text_spec = "\n".join(f"{key}: {value}"
+                              for key, value in spec_dict_new.items())
+        return messages, text_spec
+
+    def create_plot_chapters(self, book_spec):
+        """Create initial by-plot outline of form
+
+        Parameters
+        ----------
+        book_spec : str
+            Book specification
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        dict
+            Dict with book plan
+        """
+        messages = self.prompt_engine.create_plot_chapters_messages(book_spec, self.form)
+        plan = []
+        while not plan:
+            text_plan = self.query_chat(messages)
+            if text_plan:
+                plan = Plan.parse_text_plan(text_plan)
+        return messages, plan
+
+    def enhance_plot_chapters(self, book_spec, plan):
+        """Enhances the outline to make the flow more engaging
+
+        Parameters
+        ----------
+        book_spec : str
+            Book specification
+        plan : Dict
+            Dict with book plan
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        dict
+            Dict with updated book plan
+        """
+        text_plan = Plan.plan_2_str(plan)
+        all_messages = []
+        for act_num in range(3):
+            messages = self.prompt_engine.enhance_plot_chapters_messages(
+                act_num, text_plan, book_spec, self.form)
+            act = self.query_chat(messages)
+            if act:
+                act_dict = Plan.parse_act(act)
+                while len(act_dict['chapters']) < 2:
+                    act = self.query_chat(messages)
+                    act_dict = Plan.parse_act(act)
+                else:
+                    plan[act_num] = act_dict
+                text_plan = Plan.plan_2_str(plan)
+            all_messages.append(messages)
+        return all_messages, plan
+
+    def split_chapters_into_scenes(self, plan):
+        """Creates a by-scene breakdown of all chapters
+
+        Parameters
+        ----------
+        plan : Dict
+            Dict with book plan
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        dict
+            Dict with updated book plan
+        """
+        all_messages = []
+        act_chapters = {}
+        for i, act in enumerate(plan, start=1):
+            text_act, chs = Plan.act_2_str(plan, i)
+            act_chapters[i] = chs
+            messages = self.prompt_engine.split_chapters_into_scenes_messages(
+                i, text_act, self.form)
+            act_scenes = self.query_chat(messages)
+            act['act_scenes'] = act_scenes
+            all_messages.append(messages)
+
+        for i, act in enumerate(plan, start=1):
+            act_scenes = act['act_scenes']
+            act_scenes = re.split(r'Chapter (\d+)', act_scenes.strip())
+
+            act['chapter_scenes'] = {}
+            chapters = [text.strip() for text in act_scenes[:]
+                        if (text and text.strip())]
+            current_ch = None
+            merged_chapters = {}
+            for snippet in chapters:
+                if snippet.isnumeric():
+                    ch_num = int(snippet)
+                    if ch_num != current_ch:
+                        current_ch = snippet
+                        merged_chapters[ch_num] = ''
+                    continue
+                if merged_chapters:
+                    merged_chapters[ch_num] += snippet
+            ch_nums = list(merged_chapters.keys()) if len(
+                merged_chapters) <= len(act_chapters[i]) else act_chapters[i]
+            merged_chapters = {ch_num: merged_chapters[ch_num]
+                               for ch_num in ch_nums}
+            for ch_num, chapter in merged_chapters.items():
+                scenes = re.split(r'Scene \d+.{0,10}?:', chapter)
+                scenes = [text.strip() for text in scenes[1:]
+                          if (text and (len(text.split()) > 3))]
+                if not scenes:
+                    continue
+                act['chapter_scenes'][ch_num] = scenes
+        return all_messages, plan
+
+    @staticmethod
+    def prepare_scene_text(text):
+        lines = text.split('\n')
+        ch_ids = [i for i in range(5)
+                  if 'Chapter ' in lines[i]]
+        if ch_ids:
+            lines = lines[ch_ids[-1]+1:]
+        sc_ids = [i for i in range(5)
+                  if 'Scene ' in lines[i]]
+        if sc_ids:
+            lines = lines[sc_ids[-1]+1:]
+
+        placeholder_i = None
+        for i in range(len(lines)):
+            if lines[i].startswith('Chapter ') or lines[i].startswith('Scene '):
+                placeholder_i = i
+                break
+        if placeholder_i is not None:
+            lines = lines[:i]
+
+        text = '\n'.join(lines)
+        return text
+
+    def write_a_scene(
+            self, scene, sc_num, ch_num, plan, previous_scene=None):
+        """Generates a scene text for a form
+
+        Parameters
+        ----------
+        scene : str
+            Scene description
+        sc_num : int
+            Scene number
+        ch_num : int
+            Chapter number
+        plan : Dict
+            Dict with book plan
+        previous_scene : str, optional
+            Previous scene text, by default None
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        str
+            Generated scene text
+        """
+        text_plan = Plan.plan_2_str(plan)
+        messages = self.prompt_engine.scene_messages(
+            scene, sc_num, ch_num, text_plan, self.form)
+        if previous_scene:
+            previous_scene = utils.keep_last_n_words(previous_scene,
+                                                     n=self.n_crop_previous)
+            messages[1]['content'] += f'{self.prompt_engine.prev_scene_intro}\"\"\"{previous_scene}\"\"\"'
+        generated_scene = self.query_chat(messages)
+        generated_scene = self.prepare_scene_text(generated_scene)
+        return messages, generated_scene
+
+    def continue_a_scene(self, scene, sc_num, ch_num,
+                         plan, current_scene=None):
+        """Continues a scene text for a form
+
+        Parameters
+        ----------
+        scene : str
+            Scene description
+        sc_num : int
+            Scene number
+        ch_num : int
+            Chapter number
+        plan : Dict
+            Dict with book plan
+        current_scene : str, optional
+            Text of the current scene so far, by default None
+
+        Returns
+        -------
+        List[Dict]
+            Used messages for logging
+        str
+            Generated scene continuation text
+        """
+        text_plan = Plan.plan_2_str(plan)
+        messages = self.prompt_engine.scene_messages(
+            scene, sc_num, ch_num, text_plan, self.form)
+        if current_scene:
+            current_scene = utils.keep_last_n_words(current_scene,
+                                                    n=self.n_crop_previous)
+            messages[1]['content'] += f'{self.prompt_engine.cur_scene_intro}\"\"\"{current_scene}\"\"\"'
+        generated_scene = self.query_chat(messages)
+        generated_scene = self.prepare_scene_text(generated_scene)
+        return messages, generated_scene
+
+    def generate_story(self, topic):
+        """Example pipeline for a novel creation"""
+        _, book_spec = self.init_book_spec(topic)
+        _, book_spec = self.enhance_book_spec(book_spec)
+        _, plan = self.create_plot_chapters(book_spec)
+        _, plan = self.enhance_plot_chapters(book_spec, plan)
+        _, plan = self.split_chapters_into_scenes(plan)
+
+        form_text = []
+        for act in plan:
+            for ch_num, chapter in act['chapter_scenes'].items():
+                sc_num = 1
+                for scene in chapter:
+                    previous_scene = form_text[-1] if form_text else None
+                    _, generated_scene = self.write_a_scene(
+                        scene, sc_num, ch_num, plan,
+                        previous_scene=previous_scene)
+                    form_text.append(generated_scene)
+                    sc_num += 1
+        return form_text
+
+
+-----------------------
+
+/goat_storytelling_agent/utils.py:
+-----------------------
+
+def split_into_words_w_newline(text):
+    lines = text.split('\n')
+    split_text = [line.split(None) for line in lines if line]
+    return split_text
+
+
+def remove_last_n_words(text, n):
+    split_text = split_into_words_w_newline(text)
+    i = 1
+    lines_to_slice = 0
+    while True:
+        line = split_text[-i]
+        if line:
+            n_words = len(line)
+            if n_words < n:
+                n -= n_words
+                lines_to_slice += 1
+            else:
+                split_text[-i] = line[:-n]
+                break
+        i += 1
+        if i > len(split_text):
+            break
+    split_text = split_text[:-lines_to_slice]
+    text = "\n".join([" ".join(line) for line in split_text])
+    return text.strip()
+
+
+def keep_last_n_words(text, n):
+    split_text = split_into_words_w_newline(text)
+    i = 1
+    lines_to_slice = 0
+    while True:
+        line = split_text[-i]
+        if line:
+            n_words = len(line)
+            if n_words < n:
+                n -= n_words
+                lines_to_slice += 1
+            else:
+                split_text[i] = line[-n:]
+                break
+        i += 1
+        if i > len(split_text):
+            break
+    split_text = split_text[-(lines_to_slice+1):]
+    text = "\n".join([" ".join(line) for line in split_text])
+    return text.strip()
+
+
+-----------------------
+
+/images/GOAT-story.png:
+-----------------------
+
+https://raw.githubusercontent.com/GOAT-AI-lab/GOAT-Storytelling-Agent/main/images/GOAT-story.png
+
+-----------------------
+
+/pyproject.toml:
+-----------------------
+
+[build-system]
+requires = [
+    "setuptools",
+    "wheel",
+    "setuptools-scm",
+]
+
+[tool.setuptools]
+packages = ["goat_storytelling_agent"]
+
+[project]
+name = "goat_storytelling_agent"
+version = "0.0.1"
+dependencies = [
+    "requests==2.31.0",
+    "transformers==4.36.0"
+]
+
+-----------------------
+
+/requirements.txt:
+-----------------------
+
+requests==2.31.0
+transformers==4.36.0

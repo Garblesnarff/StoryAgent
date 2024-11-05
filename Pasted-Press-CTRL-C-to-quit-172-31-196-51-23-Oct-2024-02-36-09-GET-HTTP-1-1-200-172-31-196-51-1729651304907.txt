@@ -1,0 +1,264 @@
+Press CTRL+C to quit
+172.31.196.51 - - [23/Oct/2024 02:36:09] "GET / HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:09] "GET /static/css/custom.css HTTP/1.1" 304 -
+172.31.196.51 - - [23/Oct/2024 02:36:09] "GET /static/js/main.js HTTP/1.1" 304 -
+172.31.196.51 - - [23/Oct/2024 02:36:10] "GET /socket.io/?EIO=4&transport=polling&t=PAtEqsB HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:11] "POST /socket.io/?EIO=4&transport=polling&t=PAtEqte&sid=19BIuFnvIBw6Vw4XAAAA HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:11] "GET /socket.io/?EIO=4&transport=polling&t=PAtEqti&sid=19BIuFnvIBw6Vw4XAAAA HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:11] "GET /socket.io/?EIO=4&transport=websocket&sid=19BIuFnvIBw6Vw4XAAAA HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:36:56] "GET /socket.io/?EIO=4&transport=polling&t=PAtEqve&sid=19BIuFnvIBw6Vw4XAAAA HTTP/1.1" 400 -
+Invalid session 19BIuFnvIBw6Vw4XAAAA (further occurrences of this error will be logged with level INFO)
+172.31.196.51 - - [23/Oct/2024 02:36:56] "POST /socket.io/?EIO=4&transport=polling&t=PAtE_t0&sid=19BIuFnvIBw6Vw4XAAAA HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:36:57] "GET /socket.io/?EIO=4&transport=polling&t=PAtF0EV HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:57] "POST /socket.io/?EIO=4&transport=polling&t=PAtF0G3&sid=G3T2AWlM8oh_xJC_AAAC HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:57] "GET /socket.io/?EIO=4&transport=polling&t=PAtF0G6&sid=G3T2AWlM8oh_xJC_AAAC HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:36:57] "GET /socket.io/?EIO=4&transport=websocket&sid=G3T2AWlM8oh_xJC_AAAC HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:37:34] "POST /generate_story HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:37:42] "GET /socket.io/?EIO=4&transport=polling&t=PAtF0JJ&sid=G3T2AWlM8oh_xJC_AAAC HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:37:43] "POST /socket.io/?EIO=4&transport=polling&t=PAtFBFO&sid=G3T2AWlM8oh_xJC_AAAC HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:37:43] "GET /socket.io/?EIO=4&transport=polling&t=PAtFBT5 HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:37:43] "POST /socket.io/?EIO=4&transport=polling&t=PAtFBUV&sid=CIsdAWGa8ayGEnDDAAAE HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:37:43] "GET /socket.io/?EIO=4&transport=polling&t=PAtFBUW&sid=CIsdAWGa8ayGEnDDAAAE HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:37:44] "GET /socket.io/?EIO=4&transport=websocket&sid=CIsdAWGa8ayGEnDDAAAE HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:38:28] "GET /socket.io/?EIO=4&transport=polling&t=PAtFBX4&sid=CIsdAWGa8ayGEnDDAAAE HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:38:28] "POST /socket.io/?EIO=4&transport=polling&t=PAtFMTt&sid=CIsdAWGa8ayGEnDDAAAE HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:38:30] "GET /socket.io/?EIO=4&transport=polling&t=PAtFMpt HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:38:30] "POST /socket.io/?EIO=4&transport=polling&t=PAtFMxG&sid=-G_lcZbQ4raIoLNfAAAG HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:38:30] "GET /socket.io/?EIO=4&transport=polling&t=PAtFMxH&sid=-G_lcZbQ4raIoLNfAAAG HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:38:30] "GET /socket.io/?EIO=4&transport=websocket&sid=-G_lcZbQ4raIoLNfAAAG HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:39:15] "GET /socket.io/?EIO=4&transport=polling&t=PAtFM-M&sid=-G_lcZbQ4raIoLNfAAAG HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:39:15] "POST /socket.io/?EIO=4&transport=polling&t=PAtFXwT&sid=-G_lcZbQ4raIoLNfAAAG HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:39:16] "GET /socket.io/?EIO=4&transport=polling&t=PAtFY52 HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:39:16] "POST /socket.io/?EIO=4&transport=polling&t=PAtFY6S&sid=sDOAKmgaA1HNCKTFAAAI HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:39:16] "GET /socket.io/?EIO=4&transport=polling&t=PAtFY6U&sid=sDOAKmgaA1HNCKTFAAAI HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:39:16] "GET /socket.io/?EIO=4&transport=websocket&sid=sDOAKmgaA1HNCKTFAAAI HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:40:01] "GET /socket.io/?EIO=4&transport=polling&t=PAtFY9N&sid=sDOAKmgaA1HNCKTFAAAI HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:40:01] "POST /socket.io/?EIO=4&transport=polling&t=PAtFj5g&sid=sDOAKmgaA1HNCKTFAAAI HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:40:02] "GET /socket.io/?EIO=4&transport=polling&t=PAtFjJe HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:40:02] "POST /socket.io/?EIO=4&transport=polling&t=PAtFjLL&sid=PrsE4u1A08soFDucAAAK HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:40:02] "GET /socket.io/?EIO=4&transport=polling&t=PAtFjLM&sid=PrsE4u1A08soFDucAAAK HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:40:02] "GET /socket.io/?EIO=4&transport=websocket&sid=PrsE4u1A08soFDucAAAK HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:40:47] "GET /socket.io/?EIO=4&transport=polling&t=PAtFjN2&sid=PrsE4u1A08soFDucAAAK HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:40:47] "POST /socket.io/?EIO=4&transport=polling&t=PAtFuOt&sid=PrsE4u1A08soFDucAAAK HTTP/1.1" 400 -
+172.31.196.51 - - [23/Oct/2024 02:40:49] "GET /socket.io/?EIO=4&transport=polling&t=PAtFuou HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:40:49] "POST /socket.io/?EIO=4&transport=polling&t=PAtFuqa&sid=uplMKUQR44JrLQjiAAAM HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:40:49] "GET /socket.io/?EIO=4&transport=polling&t=PAtFuqf&sid=uplMKUQR44JrLQjiAAAM HTTP/1.1" 200 -
+172.31.196.51 - - [23/Oct/2024 02:40:49] "GET /socket.io/?EIO=4&transport=websocket&sid=uplMKUQR44JrLQjiAAAM HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_socketio/__init__.py", line 43, in __call__
+    return super(_SocketIOMiddleware, self).__call__(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/socketio/server.py", line 433, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/server.py", line 281, in handle_request
+    packets = socket.handle_get_request(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 90, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/socket.py", line 146, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/engineio/async_drivers/eventlet.py", line 40, in __call__
+    raise RuntimeError('You need to use the eventlet server. '
+RuntimeError: You need to use the eventlet server. See the Deployment section of the documentation for more information.
+172.31.196.51 - - [23/Oct/2024 02:41:34] "GET /socket.io/?EIO=4&transport=polling&t=PAtFutg&sid=uplMKUQR44JrLQjiAAAM HTTP/
