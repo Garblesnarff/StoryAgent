@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
+                loadingOverlay.classList.remove('error');
             }
 
             // Clear previous progress
@@ -47,27 +48,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     try {
                         const jsonStr = line.replace('data:', '').trim();
+                        if (!jsonStr) continue;
+                        
                         const data = JSON.parse(jsonStr);
                         
-                        // Handle different message types
                         switch (data.type) {
                             case 'agent_progress':
                                 updateAgentProgress(data.agent, data.status, data.message);
                                 break;
                             case 'error':
                                 updateAgentProgress('Story Generation', 'error', data.message);
+                                if (loadingOverlay) {
+                                    loadingOverlay.classList.add('error');
+                                    loadingOverlay.querySelector('.loading-text').classList.add('error');
+                                    loadingOverlay.style.display = 'none';
+                                }
                                 throw new Error(data.message);
-                                break;
                             case 'success':
                                 if (data.redirect) {
-                                    window.location.href = data.redirect;
+                                    setTimeout(() => {
+                                        window.location.href = data.redirect;
+                                    }, 1000); // Small delay to show completion
                                 }
                                 break;
                         }
                     } catch (error) {
                         console.error('Error parsing progress:', error);
-                        // Show error in progress display
-                        updateAgentProgress('Story Generation', 'error', 'Failed to generate story');
+                        const errorMessage = 'An error occurred during story generation. Please try again.';
+                        updateAgentProgress('Story Generation', 'error', errorMessage);
+                        if (loadingOverlay) {
+                            loadingOverlay.classList.add('error');
+                            loadingOverlay.querySelector('.loading-text').classList.add('error');
+                            loadingOverlay.style.display = 'none';
+                        }
                     }
                 }
                 buffer = lines[lines.length - 1];
@@ -84,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Error: ' + errorMessage);
         } finally {
             const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) {
+            if (loadingOverlay && !loadingOverlay.classList.contains('error')) {
                 loadingOverlay.style.display = 'none';
             }
         }

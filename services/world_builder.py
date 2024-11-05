@@ -27,7 +27,7 @@ class WorldBuilder:
             )
 
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama3-8b-8192",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -85,7 +85,7 @@ class WorldBuilder:
             )
 
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.2-3b-preview",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
