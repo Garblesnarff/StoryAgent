@@ -7,9 +7,10 @@
     <div class="upload-section mb-5">
         <form id="upload-form" class="p-4 border rounded">
             <div class="mb-4">
-                <label for="pdf-file" class="form-label h5">Upload PDF Book</label>
-                <input type="file" class="form-control" id="pdf-file" name="file" accept=".pdf" required>
-                <small class="text-muted">Upload a public domain book in PDF format</small>
+                <label for="file-upload" class="form-label h5">Upload Book</label>
+                <input type="file" class="form-control" id="file-upload" name="file" 
+                       accept=".pdf,.epub,.html" required>
+                <small class="text-muted">Upload a public domain book in PDF, EPUB, or HTML format</small>
             </div>
             
             <div class="text-center">
@@ -21,8 +22,10 @@
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Processing...</span>
             </div>
-            <p class="mt-2">Processing your PDF book...</p>
+            <p class="mt-2">Processing your book...</p>
         </div>
+
+        <div id="error-alert" class="alert alert-danger mt-3 d-none" role="alert"></div>
     </div>
 </div>
 {% endblock %}
@@ -32,11 +35,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     const uploadForm = document.getElementById('upload-form');
     const processingStatus = document.getElementById('processing-status');
+    const errorAlert = document.getElementById('error-alert');
     
     uploadForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const formData = new FormData(uploadForm);
+        const file = formData.get('file');
+        const fileType = file.name.split('.').pop().toLowerCase();
+        
+        // Hide any previous error
+        errorAlert.classList.add('d-none');
         processingStatus.classList.remove('d-none');
         
         try {
@@ -48,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to process PDF');
+                throw new Error(data.error || `Failed to process ${fileType.toUpperCase()} file`);
             }
             
             if (data.success && data.redirect) {
@@ -57,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error:', error);
-            alert('Error: ' + (error.message || 'Failed to process PDF'));
+            errorAlert.textContent = error.message;
+            errorAlert.classList.remove('d-none');
         } finally {
             processingStatus.classList.add('d-none');
         }

@@ -12,7 +12,7 @@ pdf_processor = PDFProcessor()
 image_generator = ImageGenerator()
 audio_generator = HumeAudioGenerator()
 
-ALLOWED_EXTENSIONS = {'pdf'}
+ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html'}
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -37,28 +37,32 @@ async def upload_pdf():
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
         
-        # Process PDF and get paragraphs
+        # Get file type
+        file_type = filename.rsplit('.', 1)[1].lower()
+        
+        # Process document and get paragraphs
         with open(filepath, 'rb') as f:
-            paragraphs = await pdf_processor.process_pdf(f)
+            paragraphs = await pdf_processor.process_document(f, file_type)
         
         # Clean up temporary file
         os.remove(filepath)
         
         # Store in session similar to story generation
         session['story_data'] = {
-            'type': 'pdf_book',
+            'type': 'book',
             'filename': filename,
+            'format': file_type,
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in paragraphs]
         }
         
         return jsonify({
             'success': True,
-            'message': f'Successfully processed {len(paragraphs)} paragraphs',
+            'message': f'Successfully processed {len(paragraphs)} paragraphs from {file_type.upper()} file',
             'redirect': '/story/edit'  # Reuse existing edit page
         })
         
     except Exception as e:
-        logging.error(f"Error processing PDF: {str(e)}")
+        logging.error(f"Error processing document: {str(e)}")
         # Clean up file if it exists
         if os.path.exists(filepath):
             os.remove(filepath)

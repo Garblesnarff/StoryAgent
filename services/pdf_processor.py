@@ -4,6 +4,9 @@ import PyPDF2
 import os
 import logging
 import re
+import ebooklib
+from ebooklib import epub
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +25,29 @@ class PDFProcessor:
             return text
         except Exception as e:
             logger.error(f"Error extracting text from PDF: {str(e)}")
+            raise
+
+    def extract_text_from_epub(self, epub_file):
+        """Extract text from EPUB file"""
+        try:
+            book = epub.read_epub(epub_file)
+            text = ""
+            for item in book.get_items():
+                if item.get_type() == ebooklib.ITEM_DOCUMENT:
+                    soup = BeautifulSoup(item.get_content(), 'html.parser')
+                    text += soup.get_text() + "\n"
+            return text
+        except Exception as e:
+            logger.error(f"Error extracting text from EPUB: {str(e)}")
+            raise
+
+    def extract_text_from_html(self, html_file):
+        """Extract text from HTML file"""
+        try:
+            soup = BeautifulSoup(html_file.read(), 'html.parser')
+            return soup.get_text()
+        except Exception as e:
+            logger.error(f"Error extracting text from HTML: {str(e)}")
             raise
 
     def clean_text(self, text):
@@ -58,12 +84,20 @@ class PDFProcessor:
         paragraphs = [re.sub(r'^[0-9]+[\.\)]\s*', '', p) for p in paragraphs]
         return paragraphs
 
-    async def process_pdf(self, pdf_file):
-        """Process PDF file end-to-end"""
+    async def process_document(self, file, file_type):
+        """Process document file end-to-end"""
         try:
-            # Extract raw text
-            raw_text = self.extract_text_from_pdf(pdf_file)
-            logger.info(f"Extracted {len(raw_text)} characters from PDF")
+            # Extract text based on file type
+            if file_type == 'pdf':
+                raw_text = self.extract_text_from_pdf(file)
+            elif file_type == 'epub':
+                raw_text = self.extract_text_from_epub(file)
+            elif file_type == 'html':
+                raw_text = self.extract_text_from_html(file)
+            else:
+                raise ValueError(f"Unsupported file type: {file_type}")
+                
+            logger.info(f"Extracted {len(raw_text)} characters from {file_type}")
             
             # Clean text
             cleaned_text = self.clean_text(raw_text)
@@ -83,5 +117,5 @@ class PDFProcessor:
             return all_paragraphs
             
         except Exception as e:
-            logger.error(f"Error processing PDF: {str(e)}")
+            logger.error(f"Error processing document: {str(e)}")
             raise
