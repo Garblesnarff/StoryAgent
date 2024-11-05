@@ -5,8 +5,13 @@ from sqlalchemy.orm import DeclarativeBase
 import secrets
 from datetime import datetime
 import json
+import logging
 
 from services.text_generator import TextGenerator
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Base(DeclarativeBase):
     pass
@@ -14,7 +19,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
-app.secret_key = secrets.token_hex(16)  # Add secret key for session management
+app.secret_key = secrets.token_hex(16)
 db.init_app(app)
 
 # Initialize services
@@ -32,8 +37,14 @@ with app.app_context():
     db.create_all()
 
 def send_progress(agent, status, message):
-    """Helper function to send progress updates"""
-    return f"data: {json.dumps({'type': 'agent_progress', 'agent': agent, 'status': status, 'message': message})}\n\n"
+    """Helper function to send progress updates with consistent format"""
+    progress_data = {
+        'type': 'agent_progress',
+        'agent': agent,
+        'status': status,
+        'message': message
+    }
+    return f"data: {json.dumps(progress_data)}\n\n"
 
 @app.route('/')
 def index():
@@ -50,8 +61,8 @@ def generate_story():
             required_fields = ['prompt', 'genre', 'mood', 'target_audience']
             for field in required_fields:
                 if not request.form.get(field):
+                    logger.error(f"Missing required field: {field}")
                     yield send_progress('Story Generation', 'error', f'Missing required field: {field}')
-                    yield f"data: {json.dumps({'type': 'error', 'message': f'Missing required field: {field}'})}\n\n"
                     return
 
             prompt = request.form.get('prompt')
@@ -60,12 +71,14 @@ def generate_story():
             target_audience = request.form.get('target_audience')
             num_paragraphs = int(request.form.get('paragraphs', 5))
 
+            logger.info(f"Starting story generation with genre: {genre}, mood: {mood}")
+
             # Start Concept Generator
             yield send_progress('Concept Generator', 'active', 'Creating story concept...')
             concept = text_service.concept_generator.generate_concept(prompt, genre, mood, target_audience)
             if not concept:
-                yield send_progress('Concept Generator', 'error', 'Failed to generate concept')
-                yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story concept'})}\n\n"
+                logger.error("Failed to generate concept")
+                yield send_progress('Concept Generator', 'error', 'Failed to generate story concept')
                 return
             yield send_progress('Concept Generator', 'completed', 'Story concept created successfully')
 
@@ -73,8 +86,8 @@ def generate_story():
             yield send_progress('World Builder', 'active', 'Building story world...')
             world = text_service.world_builder.build_world(concept, genre, mood)
             if not world:
-                yield send_progress('World Builder', 'error', 'Failed to generate world')
-                yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate world details'})}\n\n"
+                logger.error("Failed to generate world")
+                yield send_progress('World Builder', 'error', 'Failed to generate world details')
                 return
             yield send_progress('World Builder', 'completed', 'Story world created successfully')
 
@@ -82,8 +95,8 @@ def generate_story():
             yield send_progress('Plot Weaver', 'active', 'Developing plot structure...')
             plot = text_service.plot_weaver.weave_plot(concept, world, genre, mood)
             if not plot:
-                yield send_progress('Plot Weaver', 'error', 'Failed to generate plot')
-                yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate plot structure'})}\n\n"
+                logger.error("Failed to generate plot")
+                yield send_progress('Plot Weaver', 'error', 'Failed to generate plot structure')
                 return
             yield send_progress('Plot Weaver', 'completed', 'Plot structure developed successfully')
 
@@ -91,8 +104,8 @@ def generate_story():
             yield send_progress('Story Generator', 'active', 'Generating story text...')
             story_paragraphs = text_service.generate_story(prompt, genre, mood, target_audience, num_paragraphs)
             if not story_paragraphs:
-                yield send_progress('Story Generator', 'error', 'Failed to generate story')
-                yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
+                logger.error("Failed to generate story")
+                yield send_progress('Story Generator', 'error', 'Failed to generate story text')
                 return
             yield send_progress('Story Generator', 'completed', 'Story text generated successfully')
 
@@ -110,9 +123,8 @@ def generate_story():
             yield f"data: {json.dumps({'type': 'success', 'redirect': '/story/edit'})}\n\n"
 
         except Exception as e:
-            app.logger.error(f"Error generating story: {str(e)}")
+            logger.error(f"Error generating story: {str(e)}")
             yield send_progress('Story Generation', 'error', str(e))
-            yield f"data: {json.dumps({'type': 'error', 'message': 'Failed to generate story'})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
@@ -125,7 +137,7 @@ def save_story():
         # TODO: Implement story saving logic to database
         return jsonify({'success': True})
     except Exception as e:
-        app.logger.error(f"Error saving story: {str(e)}")
+        logger.error(f"Error saving story: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)

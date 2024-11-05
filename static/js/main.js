@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear previous progress
             if (agentProgress) {
                 agentProgress.innerHTML = '';
+                // Initialize all agents as pending
+                const agents = ['Concept Generator', 'World Builder', 'Plot Weaver', 'Story Generator'];
+                agents.forEach(agent => {
+                    updateAgentProgress(agent, 'pending', 'Waiting to start...');
+                });
             }
 
             const response = await fetch('/generate_story', {
@@ -40,20 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
-                    if (!line || !line.startsWith('data:')) continue;
-                    
+                    if (!line) continue;
+
                     try {
-                        const jsonStr = line.replace('data:', '').trim();
-                        const data = JSON.parse(jsonStr);
+                        // Extract JSON data from SSE format
+                        const match = line.match(/^data:\s*(.+)$/);
+                        if (!match) continue;
+
+                        const data = JSON.parse(match[1]);
                         
                         switch (data.type) {
                             case 'agent_progress':
                                 if (data.agent && data.status && data.message) {
+                                    console.log(`Agent Progress: ${data.agent} - ${data.status} - ${data.message}`);
                                     updateAgentProgress(data.agent, data.status, data.message);
                                 }
                                 break;
                             case 'error':
                                 if (data.message) {
+                                    console.error('Generation Error:', data.message);
                                     updateAgentProgress('Story Generation', 'error', data.message);
                                     if (loadingOverlay) {
                                         loadingOverlay.style.display = 'none';
@@ -63,13 +73,27 @@ document.addEventListener('DOMContentLoaded', () => {
                                 break;
                             case 'success':
                                 if (data.redirect) {
-                                    window.location.href = data.redirect;
+                                    // Mark all agents as completed before redirecting
+                                    const agents = document.querySelectorAll('.agent-progress-item');
+                                    agents.forEach(agent => {
+                                        if (!agent.classList.contains('text-success') && !agent.classList.contains('text-danger')) {
+                                            const agentName = agent.querySelector('.agent-name')?.textContent;
+                                            if (agentName) {
+                                                updateAgentProgress(agentName, 'completed', 'Task completed successfully');
+                                            }
+                                        }
+                                    });
+                                    setTimeout(() => {
+                                        window.location.href = data.redirect;
+                                    }, 1000); // Small delay to show completion
                                 }
                                 break;
                         }
                     } catch (error) {
                         console.error('Error parsing progress:', error, line);
-                        updateAgentProgress('Story Generation', 'error', error.message || 'Failed to generate story');
+                        if (line.includes('error')) {
+                            updateAgentProgress('Story Generation', 'error', 'Failed to process server response');
+                        }
                     }
                 }
                 buffer = lines[lines.length - 1];
@@ -113,14 +137,14 @@ function updateAgentProgress(agent, status, message) {
     };
 
     const statusIcons = {
-        'pending': '○',
+        'pending': '<i class="bi bi-clock"></i>',
         'active': '<div class="spinner-border spinner-border-sm"></div>',
         'completed': '<i class="bi bi-check-circle-fill"></i>',
         'error': '<i class="bi bi-x-circle-fill"></i>'
     };
 
     const statusClass = statusClasses[status] || 'text-muted';
-    const statusIcon = statusIcons[status] || '○';
+    const statusIcon = statusIcons[status] || '<i class="bi bi-clock"></i>';
 
     agentElement.className = `agent-progress-item mb-2 ${statusClass}`;
     agentElement.innerHTML = `
@@ -135,8 +159,18 @@ function updateAgentProgress(agent, status, message) {
         </div>
     `;
 
-    // If there's an error, add an alert class
-    if (status === 'error') {
-        agentElement.classList.add('border', 'border-danger', 'rounded', 'p-2');
+    // Add visual feedback for different states
+    switch (status) {
+        case 'error':
+            agentElement.classList.add('border', 'border-danger', 'rounded', 'p-2');
+            break;
+        case 'completed':
+            agentElement.classList.add('border', 'border-success', 'rounded', 'p-2');
+            // Add completion animation
+            agentElement.style.animation = 'fadeInScale 0.3s ease-out';
+            break;
+        case 'active':
+            agentElement.classList.add('border', 'border-primary', 'rounded', 'p-2');
+            break;
     }
 }

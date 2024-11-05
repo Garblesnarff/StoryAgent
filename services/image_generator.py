@@ -1,49 +1,75 @@
-from datetime import datetime, timedelta
-from collections import deque
-from together import Together
 import os
-import time
+import json
+import logging
+from PIL import Image
+import requests
+from io import BytesIO
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ImageGenerator:
     def __init__(self):
-        # Initialize Together AI client
-        self.client = Together(api_key=os.environ.get('TOGETHER_AI_API_KEY'))
-        
-        # Rate limiting settings
-        self.image_generation_queue = deque(maxlen=6)
-        self.IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
-        
-    def generate_image(self, text):
+        # Initialize API configuration
+        self.api_key = os.environ.get('TOGETHER_API_KEY')
+        self.api_url = "https://api.together.xyz/inference"
+        self.image_dir = os.path.join('static', 'images')
+        os.makedirs(self.image_dir, exist_ok=True)
+
+    def generate_image(self, text: str) -> str:
+        """Generate an image based on the text description"""
         try:
-            # Check rate limit
-            current_time = datetime.now()
-            while self.image_generation_queue and current_time - self.image_generation_queue[0] > timedelta(seconds=self.IMAGE_RATE_LIMIT):
-                self.image_generation_queue.popleft()
-            
-            if len(self.image_generation_queue) >= 6:
-                wait_time = (self.image_generation_queue[0] + timedelta(seconds=self.IMAGE_RATE_LIMIT) - current_time).total_seconds()
-                time.sleep(wait_time)
-            
-            # Generate image using Together AI
-            image_response = self.client.images.generate(
-                prompt=f"An image representing: {text[:100]}",  # Use first 100 characters as prompt
-                model="black-forest-labs/FLUX.1-schnell-Free",
-                width=512,
-                height=512,
-                steps=4,
-                n=1,
-                response_format="b64_json"
+            logger.info("Image Generator: Starting image generation...")
+            logger.info(f"Image Generator: Generating image for text of length {len(text)}")
+
+            # Prepare the API request
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+
+            # Create a more detailed prompt for better image generation
+            enhanced_prompt = (
+                f"Create a vivid, detailed illustration for this story excerpt: {text}\n"
+                "Style: Digital art, high quality, detailed, cohesive composition"
             )
+
+            payload = {
+                "model": "stabilityai/stable-diffusion-2-1",
+                "prompt": enhanced_prompt,
+                "negative_prompt": "text, watermark, signature, blurry, distorted",
+                "num_inference_steps": 30,
+                "width": 768,
+                "height": 512
+            }
+
+            logger.info("Image Generator: Sending request to API...")
+            response = requests.post(self.api_url, headers=headers, json=payload)
+
+            if response.status_code != 200:
+                logger.error(f"Image Generator Error: API request failed with status {response.status_code}")
+                logger.error(f"Image Generator Error: {response.text}")
+                raise Exception(f"API request failed with status {response.status_code}")
+
+            # Process the image data
+            image_data = response.json()
+            if not image_data or 'output' not in image_data:
+                logger.error("Image Generator Error: Invalid response format from API")
+                raise Exception("Invalid response format from API")
+
+            # Save the image
+            image_bytes = BytesIO(image_data['output'].encode('utf-8'))
+            image = Image.open(image_bytes)
             
-            if image_response and hasattr(image_response, 'data') and image_response.data:
-                image_b64 = image_response.data[0].b64_json
-                
-                # Add timestamp to queue
-                self.image_generation_queue.append(datetime.now())
-                
-                return f"data:image/png;base64,{image_b64}"
-            return None
+            filename = f"story_image_{int(time.time())}.png"
+            filepath = os.path.join(self.image_dir, filename)
             
+            image.save(filepath, format='PNG')
+            logger.info(f"Image Generator: Successfully saved image as {filename}")
+            
+            return f"/static/images/{filename}"
+
         except Exception as e:
-            print(f"Error generating image: {str(e)}")
+            logger.error(f"Image Generator Error: {str(e)}")
             return None
