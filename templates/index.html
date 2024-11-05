@@ -49,13 +49,16 @@
             <button type="submit" class="btn btn-primary btn-lg">Generate Story</button>
         </div>
     </form>
-
-    <div id="agent-progress" class="progress-container mt-4"></div>
 </div>
 
 <div id='loading-overlay' class='loading-overlay' style='display: none;'>
-    <div class='loading-spinner'></div>
-    <div class='loading-text'>Generating your story...</div>
+    <div class="loading-content">
+        <div class="loading-animation">
+            <div class='loading-spinner'></div>
+            <div class='loading-text'>Generating your story...</div>
+        </div>
+        <div id="agent-progress" class="agent-progress"></div>
+    </div>
 </div>
 {% endblock %}
 

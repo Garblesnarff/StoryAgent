@@ -96,15 +96,12 @@ def generate_story():
                 return
             yield send_progress('Story Generator', 'completed', 'Story text generated successfully')
 
-            # Store story data in session
-            session['story_data'] = {
-                'prompt': prompt,
-                'genre': genre,
-                'mood': mood,
-                'target_audience': target_audience,
-                'created_at': str(datetime.now()),
-                'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
-            }
+            # Store story data in session with proper structure
+            if story_paragraphs:
+                session['story_data'] = {
+                    'paragraphs': [{'text': p} for p in story_paragraphs]
+                }
+                session.modified = True  # Ensure session is saved
 
             # Send success and redirect
             yield f"data: {json.dumps({'type': 'success', 'redirect': '/story/edit'})}\n\n"
