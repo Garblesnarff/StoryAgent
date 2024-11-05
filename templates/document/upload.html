@@ -8,8 +8,8 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
-                    <form id="upload-form" enctype="multipart/form-data">
-                        {{ csrf_token() }}
+                    <form id="upload-form" enctype="multipart/form-data" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-4">
                             <label for="file" class="form-label h5">Select Document</label>
                             <input type="file" class="form-control" id="file" name="file" accept=".pdf,.epub,.html" required>
@@ -47,9 +47,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('upload-form');
     const status = document.getElementById('processing-status');
     const errorDiv = document.getElementById('error-message');
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
     
     form?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            errorDiv.classList.remove('d-none');
+            errorDiv.querySelector('.alert').textContent = 'Security token missing. Please refresh the page.';
+            return;
+        }
         
         // Reset state
         status.classList.remove('d-none');
@@ -59,10 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(form);
             const response = await fetch('/doc/upload', {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    'X-CSRFToken': csrfToken
                 },
-                body: formData
+                credentials: 'same-origin'
             });
             
             const data = await response.json();
@@ -72,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (data.success) {
-                window.location.href = '/doc/view';
+                window.location.href = data.redirect;
             } else {
                 throw new Error(data.error || 'Unknown error occurred');
             }

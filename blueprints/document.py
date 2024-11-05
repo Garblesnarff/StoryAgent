@@ -6,6 +6,7 @@ from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 import json
 from flask import Response, stream_with_context
+from flask_wtf.csrf import generate_csrf
 
 doc_bp = Blueprint('doc', __name__)
 doc_processor = DocumentProcessor()
@@ -20,6 +21,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@doc_bp.after_request
+def add_csrf_header(response):
+    response.headers['X-CSRFToken'] = generate_csrf()
+    return response
 
 @doc_bp.route('/doc/upload', methods=['GET', 'POST'])
 def upload_document():
