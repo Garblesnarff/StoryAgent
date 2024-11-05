@@ -8,6 +8,7 @@ import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 import time
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -111,13 +112,17 @@ class PDFProcessor:
             
             # Continue with existing processing
             cleaned_text = self.clean_text(raw_text)
+            logger.info(f"Extracted {len(cleaned_text)} characters from {file_type}")
+            
             text_chunks = [cleaned_text[i:i+4000] for i in range(0, len(cleaned_text), 4000)]
+            logger.info(f"Split text into {len(text_chunks)} chunks")
             
             all_paragraphs = []
             for chunk in text_chunks:
                 chunk_paragraphs = await self.analyze_text_structure(chunk)
                 all_paragraphs.extend(chunk_paragraphs)
             
+            logger.info(f"Generated {len(all_paragraphs)} paragraphs")
             return all_paragraphs
                 
         except Exception as e:

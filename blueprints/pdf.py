@@ -19,6 +19,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@pdf_bp.errorhandler(404)
+def not_found(e):
+    return jsonify({'error': 'The requested resource was not found'}), 404
+
+@pdf_bp.errorhandler(500)
+def server_error(e):
+    return jsonify({'error': 'An internal server error occurred'}), 500
+
 @pdf_bp.route('/upload', methods=['POST'])
 async def upload_pdf():
     if 'file' not in request.files:
@@ -29,7 +37,7 @@ async def upload_pdf():
         return jsonify({'error': 'No file selected'}), 400
         
     if not allowed_file(file.filename):
-        return jsonify({'error': 'Invalid file type'}), 400
+        return jsonify({'error': 'Invalid file type. Only PDF, EPUB, and HTML files are supported'}), 400
         
     try:
         # Save file temporarily
@@ -45,7 +53,11 @@ async def upload_pdf():
             paragraphs = await pdf_processor.process_document(f, file_type)
         
         # Clean up temporary file
-        os.remove(filepath)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        
+        if not paragraphs:
+            return jsonify({'error': 'Failed to extract content from the file'}), 500
         
         # Store in session similar to story generation
         session['story_data'] = {
