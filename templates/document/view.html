@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <h1 class="display-4 mb-5 text-center">{{ book.metadata.title }}</h1>
+    
+    <div class="book-metadata mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Book Information</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Author:</strong> {{ book.metadata.author }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Year:</strong> {{ book.metadata.year }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Genre:</strong> {{ book.metadata.genre }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Chapters:</strong> {{ book.paragraphs|length }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="processing-status" class="d-none">
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Processing...</span>
+                </div>
+                <span id="status-message">Generating content...</span>
+            </div>
+            <div class="progress mt-2">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="book-content">
+        {% for paragraph in book.paragraphs %}
+        <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
+            <div class="card">
+                {% if paragraph.image_url %}
+                <img src="{{ paragraph.image_url }}" class="card-img-top" alt="Paragraph illustration">
+                {% endif %}
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Chapter {{ paragraph.chapter }}: {{ paragraph.chapter_title }}</h6>
+                    <p class="card-text">{{ paragraph.text }}</p>
+                    {% if paragraph.audio_url %}
+                    <audio controls class="w-100 mt-3">
+                        <source src="{{ paragraph.audio_url }}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center mt-4">
+        <button id="generate-media" class="btn btn-primary">Generate Media Content</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const generateBtn = document.getElementById('generate-media');
+    const status = document.getElementById('processing-status');
+    const statusMessage = document.getElementById('status-message');
+    const progressBar = document.querySelector('.progress-bar');
+    const paragraphs = document.querySelectorAll('.paragraph-container');
+    
+    let currentBatch = 0;
+    const batchSize = 5;
+    
+    async function processBatch() {
+        const startIndex = currentBatch * batchSize;
+        if (startIndex >= paragraphs.length) {
+            status.classList.add('d-none');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/doc/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_index: startIndex,
+                    batch_size: batchSize
+                })
+            });
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                const lines = decoder.decode(value).split('\n');
+                for (const line of lines) {
+                    if (!line) continue;
+                    
+                    const data = JSON.parse(line);
+                    switch (data.status) {
+                        case 'generating_image':
+                        case 'generating_audio':
+                            statusMessage.textContent = data.message;
+                            const progress = ((startIndex + (data.index - startIndex)) / paragraphs.length) * 100;
+                            progressBar.style.width = `${progress}%`;
+                            break;
+                            
+                        case 'paragraph_complete':
+                            const container = document.querySelector(`.paragraph-container[data-index="${data.index}"]`);
+                            if (container) {
+                                // Update content
+                                if (data.data.image_url) {
+                                    let img = container.querySelector('.card-img-top');
+                                    if (!img) {
+                                        img = document.createElement('img');
+                                        img.className = 'card-img-top';
+                                        container.querySelector('.card').prepend(img);
+                                    }
+                                    img.src = data.data.image_url;
+                                }
+                                
+                                if (data.data.audio_url) {
+                                    let audio = container.querySelector('audio');
+                                    if (!audio) {
+                                        audio = document.createElement('audio');
+                                        audio.className = 'w-100 mt-3';
+                                        audio.controls = true;
+                                        const source = document.createElement('source');
+                                        source.type = 'audio/wav';
+                                        audio.appendChild(source);
+                                        container.querySelector('.card-body').appendChild(audio);
+                                    }
+                                    audio.querySelector('source').src = data.data.audio_url;
+                                    audio.load();
+                                }
+                            }
+                            break;
+                            
+                        case 'batch_complete':
+                            currentBatch++;
+                            await processBatch();
+                            break;
+                            
+                        case 'error':
+                            throw new Error(data.message);
+                    }
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            status.className = 'alert alert-danger';
+            statusMessage.textContent = `Error: ${error.message}`;
+        }
+    }
+    
+    generateBtn?.addEventListener('click', async () => {
+        generateBtn.disabled = true;
+        status.classList.remove('d-none');
+        currentBatch = 0;
+        await processBatch();
+        generateBtn.disabled = false;
+    });
+});
+</script>
+{% endblock %}

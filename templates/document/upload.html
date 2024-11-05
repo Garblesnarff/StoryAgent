@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <h1 class="display-4 mb-5 text-center">Upload Document</h1>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="file" class="form-label h5">Select Document</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".pdf,.epub,.html" required>
+                            <div class="form-text">Supported formats: PDF, EPUB, HTML</div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Process Document</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="processing-status" class="mt-4 d-none">
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <span>Processing document, please wait...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="error-message" class="mt-4 d-none">
+                <div class="alert alert-danger"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('upload-form');
+    const status = document.getElementById('processing-status');
+    const errorDiv = document.getElementById('error-message');
+    
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Reset state
+        status.classList.remove('d-none');
+        errorDiv.classList.add('d-none');
+        
+        try {
+            const formData = new FormData(form);
+            const response = await fetch('/doc/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to process document');
+            }
+            
+            if (data.success) {
+                window.location.href = '/doc/view';
+            } else {
+                throw new Error(data.error || 'Unknown error occurred');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            status.classList.add('d-none');
+            errorDiv.classList.remove('d-none');
+            errorDiv.querySelector('.alert').textContent = error.message;
+        }
+    });
+});
+</script>
+{% endblock %}
