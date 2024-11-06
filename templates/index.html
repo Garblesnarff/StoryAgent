@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         try {
-            const formData = new FormData(storyForm);
+            const formData = new FormData(e.target);
             const response = await fetch('/generate_story', {
                 method: 'POST',
                 body: formData
@@ -133,79 +133,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    uploadForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        try {
-            const formData = new FormData(uploadForm);
-            uploadProgress.style.display = 'block';
-            progressBar.style.width = '0%';
-            progressMessage.textContent = 'Starting upload...';
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Upload failed');
-            }
-            
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
+            try {
+                const formData = new FormData(e.target);
+                uploadProgress.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressMessage.textContent = 'Starting upload...';
                 
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
                 
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
-                        console.log('Progress update:', data);
-                        
-                        switch (data.status) {
-                            case 'uploading':
-                                progressBar.style.width = '25%';
-                                progressMessage.textContent = data.message;
-                                break;
-                            case 'processing':
-                                progressBar.style.width = '75%';
-                                progressMessage.textContent = data.message;
-                                break;
-                            case 'complete':
-                                progressBar.style.width = '100%';
-                                progressMessage.textContent = data.message;
-                                if (data.redirect) {
-                                    setTimeout(() => {
-                                        window.location.href = data.redirect;
-                                    }, 1000);
-                                }
-                                break;
-                            case 'error':
-                                throw new Error(data.message);
-                        }
-                    } catch (error) {
-                        console.error('Error parsing message:', line, error);
-                        throw error;
-                    }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Upload failed');
                 }
-                buffer = lines[lines.length - 1];
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, {stream: true});
+                    const lines = buffer.split('\n');
+                    
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        try {
+                            const data = JSON.parse(line);
+                            console.log('Progress update:', data);
+                            
+                            switch (data.status) {
+                                case 'uploading':
+                                    progressBar.style.width = '25%';
+                                    progressMessage.textContent = data.message;
+                                    break;
+                                case 'processing':
+                                    progressBar.style.width = '75%';
+                                    progressMessage.textContent = data.message;
+                                    break;
+                                case 'complete':
+                                    progressBar.style.width = '100%';
+                                    progressMessage.textContent = data.message;
+                                    if (data.redirect) {
+                                        setTimeout(() => {
+                                            window.location.href = data.redirect;
+                                        }, 1000);
+                                    }
+                                    break;
+                                case 'error':
+                                    throw new Error(data.message);
+                            }
+                        } catch (error) {
+                            console.error('Error parsing message:', line, error);
+                            throw error;
+                        }
+                    }
+                    buffer = lines[lines.length - 1];
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                progressBar.style.width = '100%';
+                progressBar.classList.add('bg-danger');
+                progressMessage.textContent = 'Error: ' + (error.message || 'Upload failed');
             }
-        } catch (error) {
-            console.error('Error:', error);
-            progressBar.style.width = '100%';
-            progressBar.classList.add('bg-danger');
-            progressMessage.textContent = 'Error: ' + (error.message || 'Upload failed');
-        }
-    });
+        });
+    }
 });
 </script>
 {% endblock %}
