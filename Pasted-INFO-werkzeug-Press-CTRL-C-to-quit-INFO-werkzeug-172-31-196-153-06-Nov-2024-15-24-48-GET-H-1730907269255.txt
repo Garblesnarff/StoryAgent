@@ -1,0 +1,49 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:24:48] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:24:48] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:24:48] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:24:48] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:24:48] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:24:49] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:25:04] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:25:04] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:25:04] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:blueprints.document:Received file upload request: pg84-images.html
+INFO:blueprints.document:Saving file to: uploads/pg84-images.html
+INFO:blueprints.document:Initiating streaming response
+INFO:blueprints.document:Starting document processing stream
+INFO:services.document_processor:Starting document processing: uploads/pg84-images.html (size: 466262 bytes, type: .html)
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:27:40] "POST /document/upload HTTP/1.1" 200 -
+INFO:services.document_processor:Uploading file to Gemini API: uploads/pg84-images.html
+INFO:services.document_processor:File uploaded successfully: files/mii29ugt01w
+INFO:services.document_processor:Starting content extraction
+INFO:services.document_processor:Sending content extraction request to Gemini API
+INFO:services.document_processor:Received response from Gemini API
+INFO:services.document_processor:Extracted 3 paragraphs from document
+INFO:services.document_processor:Processing complete: 3 valid paragraphs
+INFO:blueprints.document:Stored 3 paragraphs in session
+INFO:blueprints.document:Cleaning up uploaded file: uploads/pg84-images.html
+INFO:app:Session data missing for /story/edit
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:27:49] "GET /story/edit HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:27:49] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:27:49] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:27:49] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:blueprints.document:Received file upload request: pg84-images.html
+INFO:blueprints.document:Saving file to: uploads/pg84-images.html
+INFO:blueprints.document:Initiating streaming response
+INFO:blueprints.document:Starting document processing stream
+INFO:services.document_processor:Starting document processing: uploads/pg84-images.html (size: 466262 bytes, type: .html)
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:33:44] "POST /document/upload HTTP/1.1" 200 -
+INFO:services.document_processor:Uploading file to Gemini API: uploads/pg84-images.html
+INFO:services.document_processor:File uploaded successfully: files/5igcv9xaxi3q
+INFO:services.document_processor:Starting content extraction
+INFO:services.document_processor:Sending content extraction request to Gemini API
+INFO:services.document_processor:Received response from Gemini API
+INFO:services.document_processor:Extracted 2 paragraphs from document
+INFO:services.document_processor:Processing complete: 2 valid paragraphs
+INFO:blueprints.document:Stored 2 paragraphs in session
+INFO:blueprints.document:Cleaning up uploaded file: uploads/pg84-images.html
+INFO:app:Session data missing for /story/edit
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:33:54] "GET /story/edit HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:33:54] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.153 - - [06/Nov/2024 15:33:54] "GET /static/css/custom.css HTTP/1.1" 304 -

@@ -58,6 +58,8 @@ def upload_document():
                                 progress_dict['can_summarize'] = progress.details.get('can_summarize', False)
                         
                         if progress.stage.value == 'complete' and progress.details:
+                            # Store data in session and make it permanent
+                            session.permanent = True
                             session['story_data'] = {
                                 'source': 'document',
                                 'filename': filename,
@@ -67,7 +69,9 @@ def upload_document():
                                     'audio_url': None
                                 } for p in progress.details['paragraphs']]
                             }
+                            session.modified = True
                             logger.info(f"Stored {len(session['story_data']['paragraphs'])} paragraphs in session")
+                            logger.debug(f"Session data: {dict(session)}")
                             progress_dict['redirect'] = '/story/edit'
                         
                         json_data = json.dumps(progress_dict, ensure_ascii=False)
@@ -121,11 +125,15 @@ def summarize_document():
                         }
                         
                         if progress.stage.value == 'complete' and progress.details:
+                            session.permanent = True
                             session['story_data'] = {
                                 'source': 'document_summary',
                                 'filename': filename,
                                 'paragraphs': progress.details['paragraphs']
                             }
+                            session.modified = True
+                            logger.info(f"Stored summary with {len(session['story_data']['paragraphs'])} paragraphs")
+                            logger.debug(f"Session data: {dict(session)}")
                             progress_dict['redirect'] = '/story/edit'
                             
                         yield f"data: {json.dumps(progress_dict, ensure_ascii=False)}\n\n"
