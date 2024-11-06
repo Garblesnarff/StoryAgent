@@ -5,22 +5,18 @@
     <h1 class="display-4 mb-5 text-center">Edit Your Story</h1>
     
     <div class="story-editor mb-5">
-        {% if story and story.paragraphs %}
-            {% for paragraph in story.paragraphs %}
-            <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
-                <div class="card">
-                    <div class="card-body">
-                        <textarea class="form-control paragraph-text mb-3" rows="4">{{ paragraph.text }}</textarea>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary save-paragraph">Save Changes</button>
-                        </div>
+        {% for paragraph in story.paragraphs %}
+        <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
+            <div class="card">
+                <div class="card-body">
+                    <textarea class="form-control paragraph-text mb-3" rows="4">{{ paragraph.text }}</textarea>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary save-paragraph">Save Changes</button>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="alert alert-warning">No story content available. Please start by creating a new story.</div>
-        {% endif %}
+        </div>
+        {% endfor %}
     </div>
     
     <div class="d-flex justify-content-center gap-3">

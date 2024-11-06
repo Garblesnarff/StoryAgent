@@ -3,211 +3,71 @@
 {% block content %}
 <div class="content-wrapper">
     <h1 class="display-4 mb-5 text-center">Generate Your Story</h1>
-    
-    <!-- Tab navigation -->
-    <ul class="nav nav-tabs mb-4" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" id="prompt-tab" data-bs-toggle="tab" href="#prompt-form" role="tab">Write Prompt</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="upload-tab" data-bs-toggle="tab" href="#upload-form" role="tab">Upload Document</a>
-        </li>
-    </ul>
-    
-    <!-- Tab content -->
-    <div class="tab-content">
-        <!-- Prompt Form Tab -->
-        <div class="tab-pane fade show active" id="prompt-form" role="tabpanel">
-            <form id="story-form" class="mb-5">
-                <div class="mb-4">
-                    <label for="prompt" class="form-label h5">Story Prompt</label>
-                    <textarea class="form-control" id="prompt" name="prompt" rows="3" required placeholder="Enter your story idea here..."></textarea>
-                </div>
-                <div class="row g-4 mb-4">
-                    <div class="col-md-4">
-                        <label for="genre" class="form-label h5">Genre</label>
-                        <select class="form-select" id="genre" name="genre" required>
-                            <option value="">Choose a genre</option>
-                            <option value="fantasy">Fantasy</option>
-                            <option value="sci-fi">Science Fiction</option>
-                            <option value="mystery">Mystery</option>
-                            <option value="romance">Romance</option>
-                            <option value="horror">Horror</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="mood" class="form-label h5">Mood</label>
-                        <select class="form-select" id="mood" name="mood" required>
-                            <option value="">Choose a mood</option>
-                            <option value="happy">Happy</option>
-                            <option value="sad">Sad</option>
-                            <option value="suspenseful">Suspenseful</option>
-                            <option value="mysterious">Mysterious</option>
-                            <option value="romantic">Romantic</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="target_audience" class="form-label h5">Target Audience</label>
-                        <select class="form-select" id="target_audience" name="target_audience" required>
-                            <option value="">Choose a target audience</option>
-                            <option value="children">Children</option>
-                            <option value="young_adult">Young Adult</option>
-                            <option value="adult">Adult</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <label for="paragraphs" class="form-label h5">Number of Paragraphs</label>
-                    <input type="number" class="form-control" id="paragraphs" name="paragraphs" min="1" max="10" value="5" required>
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary btn-lg">Generate Story</button>
-                </div>
-            </form>
+    <form id="story-form" class="mb-5">
+        <div class="mb-4">
+            <label for="prompt" class="form-label h5">Story Prompt</label>
+            <textarea class="form-control" id="prompt" name="prompt" rows="3" required placeholder="Enter your story idea here..."></textarea>
         </div>
-        
-        <!-- Upload Form Tab -->
-        <div class="tab-pane fade" id="upload-form" role="tabpanel">
-            <form id="upload-form" class="mb-5">
-                <div class="mb-4">
-                    <label for="document" class="form-label h5">Upload Document</label>
-                    <input type="file" class="form-control" id="document" name="file" accept=".txt,.pdf,.doc,.docx,.rtf,.md" required>
-                    <div class="form-text">Supported formats: TXT, PDF, DOC, DOCX, RTF, MD</div>
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary btn-lg">Process Document</button>
-                </div>
-            </form>
-            
-            <!-- Upload Progress -->
-            <div id="upload-progress" class="mt-4" style="display: none;">
-                <div class="progress mb-3">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                </div>
-                <div id="progress-message" class="text-center"></div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <label for="genre" class="form-label h5">Genre</label>
+                <select class="form-select" id="genre" name="genre" required>
+                    <option value="">Choose a genre</option>
+                    <option value="fantasy">Fantasy</option>
+                    <option value="sci-fi">Science Fiction</option>
+                    <option value="mystery">Mystery</option>
+                    <option value="romance">Romance</option>
+                    <option value="horror">Horror</option>
+                </select>
             </div>
+            <div class="col-md-4">
+                <label for="mood" class="form-label h5">Mood</label>
+                <select class="form-select" id="mood" name="mood" required>
+                    <option value="">Choose a mood</option>
+                    <option value="happy">Happy</option>
+                    <option value="sad">Sad</option>
+                    <option value="suspenseful">Suspenseful</option>
+                    <option value="mysterious">Mysterious</option>
+                    <option value="romantic">Romantic</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="target_audience" class="form-label h5">Target Audience</label>
+                <select class="form-select" id="target_audience" name="target_audience" required>
+                    <option value="">Choose a target audience</option>
+                    <option value="children">Children</option>
+                    <option value="young_adult">Young Adult</option>
+                    <option value="adult">Adult</option>
+                </select>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="paragraphs" class="form-label h5">Number of Paragraphs</label>
+            <input type="number" class="form-control" id="paragraphs" name="paragraphs" min="1" max="10" value="5" required>
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">Generate Story</button>
+        </div>
+    </form>
+
+    <div id="story-output" class="mt-5" style="display: none;">
+        <h2 class="h3 mb-4">Generated Story</h2>
+        <div class="book-container">
+            <button class="book-nav prev" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <div class="book-pages" id="paragraph-cards"></div>
+            <button class="book-nav next" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const storyForm = document.getElementById('story-form');
-    const uploadForm = document.getElementById('upload-form');
-    const uploadProgress = document.getElementById('upload-progress');
-    const progressBar = uploadProgress.querySelector('.progress-bar');
-    const progressMessage = document.getElementById('progress-message');
-
-    storyForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        try {
-            const formData = new FormData(e.target);
-            const response = await fetch('/generate_story', {
-                method: 'POST',
-                body: formData
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (parseError) {
-                console.error('Failed to parse JSON response:', parseError);
-                throw new Error('Server returned an invalid response');
-            }
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Story generation failed');
-            }
-
-            if (data.success && data.redirect) {
-                window.location.href = data.redirect;
-            } else {
-                throw new Error(data.error || 'Invalid response from server');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error: ' + (error.message || 'An unexpected error occurred'));
-        }
-    });
-
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            try {
-                const formData = new FormData(e.target);
-                uploadProgress.style.display = 'block';
-                progressBar.style.width = '0%';
-                progressMessage.textContent = 'Starting upload...';
-                
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Upload failed');
-                }
-                
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-                
-                while (true) {
-                    const {done, value} = await reader.read();
-                    if (done) break;
-                    
-                    buffer += decoder.decode(value, {stream: true});
-                    const lines = buffer.split('\n');
-                    
-                    for (let i = 0; i < lines.length - 1; i++) {
-                        const line = lines[i].trim();
-                        if (!line) continue;
-                        
-                        try {
-                            const data = JSON.parse(line);
-                            console.log('Progress update:', data);
-                            
-                            switch (data.status) {
-                                case 'uploading':
-                                    progressBar.style.width = '25%';
-                                    progressMessage.textContent = data.message;
-                                    break;
-                                case 'processing':
-                                    progressBar.style.width = '75%';
-                                    progressMessage.textContent = data.message;
-                                    break;
-                                case 'complete':
-                                    progressBar.style.width = '100%';
-                                    progressMessage.textContent = data.message;
-                                    if (data.redirect) {
-                                        setTimeout(() => {
-                                            window.location.href = data.redirect;
-                                        }, 1000);
-                                    }
-                                    break;
-                                case 'error':
-                                    throw new Error(data.message);
-                            }
-                        } catch (error) {
-                            console.error('Error parsing message:', line, error);
-                            throw error;
-                        }
-                    }
-                    buffer = lines[lines.length - 1];
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                progressBar.style.width = '100%';
-                progressBar.classList.add('bg-danger');
-                progressMessage.textContent = 'Error: ' + (error.message || 'Upload failed');
-            }
-        });
-    }
-});
-</script>
+<div class="save-button-container">
+    <button id="save-story" class="btn btn-success btn-lg" style="display: none;">Save Story</button>
+</div>
 {% endblock %}
