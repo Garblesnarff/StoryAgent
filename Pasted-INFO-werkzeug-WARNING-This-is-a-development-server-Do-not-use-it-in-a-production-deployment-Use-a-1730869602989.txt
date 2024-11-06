@@ -1,0 +1,31 @@
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.37:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:04] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:04] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:04] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:16] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:16] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:16] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:25] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:25] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:25] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:blueprints.document:Received file upload request: The Raven.pdf
+INFO:blueprints.document:Saving file to: uploads/The_Raven.pdf
+INFO:blueprints.document:Initiating streaming response
+INFO:blueprints.document:Starting document processing stream
+INFO:services.document_processor:Starting document processing: uploads/The_Raven.pdf (size: 544551 bytes, type: .pdf)
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:05:38] "POST /document/upload HTTP/1.1" 200 -
+INFO:services.document_processor:Uploading file to Gemini API: uploads/The_Raven.pdf
+INFO:services.document_processor:File uploaded successfully: files/wx8q2nxlnzsb
+INFO:services.document_processor:Starting content extraction
+INFO:services.document_processor:Sending content extraction request to Gemini API
+INFO:services.document_processor:Received response from Gemini API
+INFO:services.document_processor:Extracted 1 paragraphs from document
+INFO:services.document_processor:Processing complete: 1 valid paragraphs
+INFO:blueprints.document:Processing complete, storing data in session
+INFO:blueprints.document:Stored 1 paragraphs in session
+INFO:blueprints.document:Cleaning up uploaded file: uploads/The_Raven.pdf
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 05:06:21] "GET /story/edit HTTP/1.1" 403 -

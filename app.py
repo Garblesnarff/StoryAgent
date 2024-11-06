@@ -68,6 +68,7 @@ def generate_story():
             'mood': mood,
             'target_audience': target_audience,
             'created_at': str(datetime.now()),
+            'source': 'generated',
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
         }
         
@@ -103,7 +104,7 @@ def forbidden(e):
 
 @app.before_request
 def check_story_data():
-    # Skip checks for static files and the home/generate routes
+    # Skip checks for static files and the home/generate/document routes
     if request.path.startswith('/static') or request.path == '/' or \
        request.path == '/generate_story' or request.path.startswith('/document/'):
         return
@@ -111,6 +112,9 @@ def check_story_data():
     # Check if story data exists for protected routes
     if 'story_data' not in session and \
        (request.path.startswith('/story/') or request.path.startswith('/save')):
+        if request.path == '/story/edit':
+            # If trying to access edit page without story data, redirect to home
+            return redirect(url_for('index'))
         return jsonify({'error': 'Please generate a story first'}), 403
 
 if __name__ == '__main__':

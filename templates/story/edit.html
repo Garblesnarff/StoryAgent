@@ -5,6 +5,12 @@
     <h1 class="display-4 mb-5 text-center">Edit Your Story</h1>
     
     <div class="story-editor mb-5">
+        {% if story.source == 'document' %}
+            <div class="alert alert-info mb-4">
+                Uploaded document: {{ story.filename }}
+            </div>
+        {% endif %}
+        
         {% for paragraph in story.paragraphs %}
         <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
             <div class="card">
