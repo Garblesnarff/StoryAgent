@@ -148,26 +148,36 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                throw new Error('Upload failed');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Upload failed');
             }
             
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
                 
-                const text = decoder.decode(value);
-                const messages = text.split('\n').filter(line => line.trim());
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
                 
-                for (const message of messages) {
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
                     try {
-                        const data = JSON.parse(message);
+                        const data = JSON.parse(line);
+                        console.log('Progress update:', data);
                         
                         switch (data.status) {
+                            case 'uploading':
+                                progressBar.style.width = '25%';
+                                progressMessage.textContent = data.message;
+                                break;
                             case 'processing':
-                                progressBar.style.width = '50%';
+                                progressBar.style.width = '75%';
                                 progressMessage.textContent = data.message;
                                 break;
                             case 'complete':
@@ -183,9 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 throw new Error(data.message);
                         }
                     } catch (error) {
-                        console.error('Error parsing message:', message, error);
+                        console.error('Error parsing message:', line, error);
+                        throw error;
                     }
                 }
+                buffer = lines[lines.length - 1];
             }
         } catch (error) {
             console.error('Error:', error);

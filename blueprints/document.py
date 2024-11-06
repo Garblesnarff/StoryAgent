@@ -23,7 +23,7 @@ def allowed_file(filename):
 
 # Initialize Gemini
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-model = genai.GenerativeModel('gemini-1.5-flash-8b')
+model = genai.GenerativeModel('gemini-1.5-pro')  # Use pro model for better document handling
 
 @doc_bp.route('/upload', methods=['POST'])
 def upload_document():
@@ -50,7 +50,8 @@ def upload_document():
                     'message': 'Uploading document to process'
                 }) + '\n'
                 
-                uploaded_file = genai.upload_file(file_path)
+                # Using Gemini's file upload
+                uploaded_file = genai.upload_file(str(file_path))
                 
                 yield json.dumps({
                     'status': 'processing',
@@ -74,8 +75,26 @@ def upload_document():
                     ]
                 }'''
                 
-                response = model.generate_content([prompt, uploaded_file])
-                result = json.loads(response.text)
+                # Generate content with error handling
+                response = model.generate_content([
+                    prompt,
+                    uploaded_file
+                ])
+                
+                if not response.text:
+                    raise Exception("Empty response from Gemini API")
+                    
+                try:
+                    result = json.loads(response.text)
+                except json.JSONDecodeError:
+                    # If response is not JSON, try to extract content
+                    result = {
+                        "paragraphs": [{
+                            "text": response.text,
+                            "image_prompt": "Generate an illustration for this text",
+                            "narration_guidance": "Read in a clear, engaging tone"
+                        }]
+                    }
                 
                 # Store in session
                 session['story_data'] = {
@@ -109,9 +128,7 @@ def upload_document():
                 # Cleanup
                 if file_path.exists():
                     file_path.unlink()
-                if 'uploaded_file' in locals():
-                    uploaded_file.delete()
-        
+                
         return Response(
             stream_with_context(generate()),
             mimetype='text/event-stream'
