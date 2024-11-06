@@ -52,6 +52,60 @@ class BookProcessor:
                 text += soup.get_text() + "\n"
         return text
 
+    def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process extracted text into structured paragraphs with metadata."""
+        try:
+            # Clean the text initially
+            text = self._clean_text(text)
+            
+            # Use Gemini to identify and extract the first chapter
+            prompt = f'''
+            Extract and process the first chapter from this text.
+            Steps:
+            1. Identify the first complete chapter
+            2. Split it into natural paragraphs
+            3. Preserve all the content and flow
+            4. Remove any metadata or markers
+            5. Keep complete sentences and maintain context
+            6. Return all paragraphs from the chapter
+            
+            Text to process:
+            {text[:8000]}  # Process larger portion to ensure we get the full chapter
+            '''
+            
+            response = self.model.generate_content(prompt)
+            processed_text = response.text
+            
+            # Split into paragraphs and clean each one
+            paragraphs = []
+            for raw_paragraph in processed_text.split('\n\n'):
+                clean_paragraph = self._clean_paragraph(raw_paragraph)
+                if clean_paragraph and len(clean_paragraph) > 30:  # Only keep substantial paragraphs
+                    paragraphs.append({
+                        'text': clean_paragraph,
+                        'image_url': None,
+                        'audio_url': None
+                    })
+            
+            return paragraphs
+                
+        except Exception as e:
+            print(f"Error processing text: {str(e)}")
+            return []
+
+    def _clean_text(self, text: str) -> str:
+        """Clean and normalize text."""
+        # Remove excessive whitespace
+        text = re.sub(r'\s+', ' ', text)
+        # Remove page numbers
+        text = re.sub(r'\b\d+\b(?=\s*$)', '', text)
+        # Remove headers and footers (common in PDFs)
+        text = re.sub(r'^\s*(?:chapter|page)\s+\d+\s*$', '', text, flags=re.MULTILINE | re.IGNORECASE)
+        # Normalize quotes and dashes
+        text = text.replace('"', '"').replace('"', '"')
+        text = text.replace('--', '—')
+        return text.strip()
+
     def _clean_paragraph(self, text: str) -> str:
         # Remove leading/trailing whitespace
         text = text.strip()
@@ -70,71 +124,3 @@ class BookProcessor:
         text = text.strip()
         
         return text if len(text) > 30 else ''  # Only return substantial paragraphs
-
-    def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process extracted text into structured paragraphs with metadata."""
-        try:
-            # Clean the text initially
-            text = self._clean_text(text)
-            
-            try:
-                # Try Gemini first
-                prompt = f'''
-                Process this book text and extract the first chapter's content.
-                Split it into natural paragraphs while preserving the story flow.
-                Remove any metadata, page numbers, or markers.
-                
-                Text to process:
-                {text[:4000]}  # Process first portion to get started
-                '''
-                
-                response = self.model.generate_content(prompt)
-                processed_text = response.text
-                
-            except Exception as api_error:
-                print(f"Gemini API error: {str(api_error)}")
-                # Fall back to basic text processing
-                processed_text = text
-            
-            # Split into paragraphs using various common markers
-            paragraphs = []
-            for raw_paragraph in processed_text.split('\n\n'):
-                clean_paragraph = self._clean_paragraph(raw_paragraph)
-                if clean_paragraph:
-                    paragraphs.append(clean_paragraph)
-            
-            # If no paragraphs found, try other delimiters
-            if not paragraphs:
-                for raw_paragraph in processed_text.split('.'):
-                    if len(raw_paragraph.strip()) > 50:  # Only keep substantial paragraphs
-                        clean_paragraph = self._clean_paragraph(raw_paragraph)
-                        if clean_paragraph:
-                            paragraphs.append(clean_paragraph)
-            
-            # Create paragraph entries
-            processed_paragraphs = []
-            for p in paragraphs[:10]:  # Limit to first 10 paragraphs
-                if p:
-                    processed = {
-                        'text': p,
-                        'image_url': None,
-                        'audio_url': None
-                    }
-                    processed_paragraphs.append(processed)
-            
-            return processed_paragraphs
-                
-        except Exception as e:
-            print(f"Error processing text: {str(e)}")
-            return []
-
-    def _clean_text(self, text: str) -> str:
-        """Clean and normalize text."""
-        # Remove excessive whitespace
-        text = re.sub(r'\s+', ' ', text)
-        # Remove page numbers
-        text = re.sub(r'\b\d+\b(?=\s*$)', '', text)
-        # Normalize quotes and dashes
-        text = text.replace('"', '"').replace('"', '"')
-        text = text.replace('--', '—')
-        return text.strip()
