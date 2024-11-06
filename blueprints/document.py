@@ -55,13 +55,12 @@ def upload_document():
                         }
                         progress_dict['redirect'] = '/story/edit'
                     
-                    # Ensure proper JSON encoding
-                    response = f"data: {json.dumps(progress_dict, ensure_ascii=False, separators=(',', ':'))}\\n\\n"
-                    yield response
+                    # Fix JSON response format
+                    yield f"data: {json.dumps(progress_dict, ensure_ascii=False)}\n\n"
 
             except Exception as e:
                 error_dict = {'status': 'error', 'message': str(e)}
-                yield f"data: {json.dumps(error_dict, ensure_ascii=False)}\\n\\n"
+                yield f"data: {json.dumps(error_dict, ensure_ascii=False)}\n\n"
             finally:
                 if os.path.exists(file_path):
                     os.remove(file_path)

@@ -54,12 +54,9 @@ class DocumentProcessor:
                 message="Analyzing document content"
             )
 
-            # Process content with Gemini
-            response = self.model.generate_content(
-                "Extract and clean text from this document, split into paragraphs.",
-                content,
-                stream=False  # Ensure we get complete response
-            )
+            # Process content with Gemini - Fixed API call
+            prompt = "Extract and clean text from this document, split into paragraphs."
+            response = self.model.generate_content([prompt, content])
             
             if not response or not response.text:
                 raise Exception("Failed to process document content")
