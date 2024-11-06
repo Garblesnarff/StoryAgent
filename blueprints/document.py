@@ -28,6 +28,9 @@ def upload_document():
         file = request.files['file']
         logger.info(f"Received file upload request: {file.filename}")
         
+        # Add session debug logging
+        logger.debug(f"Session before upload: {dict(session)}")
+        
         if file.filename == '':
             logger.error("Empty filename provided")
             return jsonify({'error': 'No file selected'}), 400
@@ -58,9 +61,12 @@ def upload_document():
                                 progress_dict['can_summarize'] = progress.details.get('can_summarize', False)
                         
                         if progress.stage.value == 'complete' and progress.details:
-                            # Store data in session and make it permanent
-                            session.permanent = True
-                            session['story_data'] = {
+                            # Initialize session data
+                            if 'story_data' not in session:
+                                session['story_data'] = {}
+                            
+                            # Update session data
+                            session['story_data'].update({
                                 'source': 'document',
                                 'filename': filename,
                                 'paragraphs': [{
@@ -68,10 +74,16 @@ def upload_document():
                                     'image_url': None,
                                     'audio_url': None
                                 } for p in progress.details['paragraphs']]
-                            }
+                            })
+                            
+                            # Force session persistence
+                            session.permanent = True
                             session.modified = True
-                            logger.info(f"Stored {len(session['story_data']['paragraphs'])} paragraphs in session")
-                            logger.debug(f"Session data: {dict(session)}")
+                            
+                            # Log session state
+                            logger.info(f"Updated session with {len(session['story_data']['paragraphs'])} paragraphs")
+                            logger.debug(f"Session after update: {dict(session)}")
+                            
                             progress_dict['redirect'] = '/story/edit'
                         
                         json_data = json.dumps(progress_dict, ensure_ascii=False)
@@ -90,7 +102,6 @@ def upload_document():
                     logger.info(f"Cleaning up uploaded file: {file_path}")
                     os.remove(file_path)
 
-        logger.info("Initiating streaming response")
         return Response(
             stream_with_context(generate()),
             mimetype='text/event-stream'
@@ -110,6 +121,8 @@ def summarize_document():
             return jsonify({'error': 'No file provided'}), 400
             
         file = request.files['file']
+        logger.debug(f"Session before summary: {dict(session)}")
+        
         filename = secure_filename(file.filename)
         file_path = UPLOAD_FOLDER / filename
         file.save(file_path)
@@ -125,15 +138,28 @@ def summarize_document():
                         }
                         
                         if progress.stage.value == 'complete' and progress.details:
-                            session.permanent = True
-                            session['story_data'] = {
+                            # Initialize session data
+                            if 'story_data' not in session:
+                                session['story_data'] = {}
+                                
+                            # Update session data    
+                            session['story_data'].update({
                                 'source': 'document_summary',
                                 'filename': filename,
-                                'paragraphs': progress.details['paragraphs']
-                            }
+                                'paragraphs': [{
+                                    'text': str(p['text'])[:5000],
+                                    'image_url': None,
+                                    'audio_url': None
+                                } for p in progress.details['paragraphs']]
+                            })
+                            
+                            # Force session persistence
+                            session.permanent = True
                             session.modified = True
+                            
                             logger.info(f"Stored summary with {len(session['story_data']['paragraphs'])} paragraphs")
-                            logger.debug(f"Session data: {dict(session)}")
+                            logger.debug(f"Session after summary: {dict(session)}")
+                            
                             progress_dict['redirect'] = '/story/edit'
                             
                         yield f"data: {json.dumps(progress_dict, ensure_ascii=False)}\n\n"
