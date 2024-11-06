@@ -60,47 +60,45 @@ class BookProcessor:
         # Clean up quotes and dashes
         text = text.replace('"', '"').replace('"', '"')
         text = text.replace('--', '—')
-        # Split into paragraphs and clean each
-        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-        # Join cleaned paragraphs
-        return '\n\n'.join(paragraphs)
+        return text.strip()
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
         try:
             # Clean the text
             text = self._clean_text(text)
             
-            # Split into chapters using common chapter markers
-            chapter_pattern = r'(?i)(?:chapter|book|part)\s+(?:[IVX]+|\d+|\w+)(?:\s*[-:]\s*\w+)?'
-            chapters = re.split(chapter_pattern, text)
+            # Find chapters using regex
+            chapter_pattern = r'(?i)(?:chapter|book|part)\s+(?:[IVX]+|\d+|\w+)(?:\s*[-:]\s*[\w\s]+)?'
+            chapter_matches = list(re.finditer(chapter_pattern, text))
             
-            # Remove empty chapters and limit to first 10
-            chapters = [ch.strip() for ch in chapters if ch.strip()][:10]
+            if not chapter_matches:
+                # If no chapters found, treat entire text as one chapter
+                paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+                return [{'text': p, 'image_url': None, 'audio_url': None} for p in paragraphs[:10]]
             
-            processed_chapters = []
-            for chapter in chapters:
-                if chapter.strip():
-                    # Store chapter without generating additional metadata
+            # Get first chapter's content
+            chapter_start = chapter_matches[0].start()
+            next_chapter_start = chapter_matches[1].start() if len(chapter_matches) > 1 else len(text)
+            first_chapter = text[chapter_start:next_chapter_start].strip()
+            
+            # Remove chapter heading
+            first_chapter = re.sub(chapter_pattern, '', first_chapter, count=1).strip()
+            
+            # Split first chapter into paragraphs
+            paragraphs = [p.strip() for p in first_chapter.split('\n\n') if p.strip()]
+            
+            # Create paragraph entries
+            processed_paragraphs = []
+            for p in paragraphs[:10]:  # Limit to first 10 paragraphs
+                if p:
                     processed = {
-                        'text': chapter.strip(),
+                        'text': p,
                         'image_url': None,
                         'audio_url': None
                     }
-                    processed_chapters.append(processed)
+                    processed_paragraphs.append(processed)
             
-            # If no chapters were found, split by paragraphs
-            if not processed_chapters:
-                paragraphs = [p for p in text.split('\n\n') if p.strip()][:10]
-                processed_chapters = [
-                    {
-                        'text': p.strip(),
-                        'image_url': None,
-                        'audio_url': None
-                    }
-                    for p in paragraphs
-                ]
-            
-            return processed_chapters
+            return processed_paragraphs
                 
         except Exception as e:
             print(f"Error processing text: {str(e)}")
