@@ -1,0 +1,44 @@
+Progress update: 
+Object {status: "uploading", message: "Starting file upload", progress: 0}
+Progress update: 
+Object {status: "uploading", message: "Document upload complete", progress: 100}
+Progress update: 
+Object {status: "analyzing", message: "Analyzing document content", progress: 0}
+Progress update: 
+Object {status: "error", message: "Error: Invalid operation: The `response.text` quick accessor requires the response to contain a…", progress: 0}
+Error parsing progress: 
+Error {}
+
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Progress update: 
+Object {status: "error", message: "Invalid operation: The `response.text` quick accessor requires the response to contain a valid…"}
+Error parsing progress: 
+Error {}
+message: "Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material."
+stack: "Error: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.↵ at HTMLFormElement.<anonymous> (https://8b45168a-6828-4450-9f6c-dc4e19093791-00-39gbhmfk2xzzf.kirk.replit.dev/:189:39)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+Story Generation Framework
+1. Story Prompt
+2. Story Edit
+3. Card Generation
+Generate Your Story
+Write a New Story
+Story Prompt
+Enter your story idea here...
+Genre
+Choose a genre
+Mood
+Choose a mood
+Target Audience
+Choose a target audience
+Number of Paragraphs
+5
+Upload Existing Story
+Choose DocumentThe Raven.pdf
+Supported formats: PDF, TXT, EPUB, HTML

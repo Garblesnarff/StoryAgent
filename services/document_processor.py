@@ -65,21 +65,35 @@ class DocumentProcessor:
             )
             self.logger.info("Starting content extraction")
 
-            # Extract text content using Gemini
-            prompt = '''Extract clean, readable text from this document, properly formatted into paragraphs.
-            Remove any headers, footers, page numbers, and formatting markers.
-            Split text into natural paragraphs based on content breaks.
-            Return only the cleaned text content.'''
+            # Extract text content using Gemini with copyright-safe prompt
+            prompt = '''Extract and summarize the main themes and content from this document.
+            Focus on describing the content rather than direct extraction.
+            Do not quote directly from the text.
+            Return a high-level overview of:
+            - Main themes and ideas
+            - General structure
+            - Key events or concepts
+            Format as clean paragraphs without any markers or labels.'''
 
             self.logger.info("Sending content extraction request to Gemini API")
             response = self.model.generate_content([prompt, uploaded_file])
             self.logger.info("Received response from Gemini API")
             
-            if not response or not response.text:
-                raise Exception("Failed to extract content from document")
-
+            try:
+                text = response.text
+            except ValueError as ve:
+                if 'finish_reason is 4' in str(ve):
+                    self.logger.info("Detected copyrighted content, offering summary option")
+                    yield ProcessingProgress(
+                        stage=ProcessingStage.ERROR,
+                        progress=0,
+                        message="This appears to be copyrighted material. For copyright protection, we can only provide a high-level summary rather than the full text.",
+                        details={"error_type": "copyright", "can_summarize": True}
+                    )
+                    return
+                raise
+            
             # Split into paragraphs and clean
-            text = response.text.strip()
             paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
             self.logger.info(f"Extracted {len(paragraphs)} paragraphs from document")
             
@@ -110,81 +124,49 @@ class DocumentProcessor:
             )
             raise
 
-    async def process_document_streaming(
-        self, file_path: str
-    ) -> AsyncGenerator[ProcessingProgress, None]:
+    def summarize_document(self, file_path: str) -> Generator[ProcessingProgress, None, None]:
         """
-        Process document with progress updates and streaming results
-        Returns an async generator of ProcessingProgress objects
+        Generate a high-level summary for copyrighted content
         """
         try:
-            file_size = os.path.getsize(file_path)
-            file_type = Path(file_path).suffix
-            self.logger.info(f"Starting streaming document processing: {file_path} (size: {file_size} bytes, type: {file_type})")
+            self.logger.info(f"Starting document summary: {file_path}")
             
-            # Upload file
-            yield ProcessingProgress(
-                stage=ProcessingStage.UPLOADING,
-                progress=0,
-                message="Starting file upload"
-            )
-
-            self.logger.info(f"Uploading file to Gemini API: {file_path}")
-            uploaded_file = genai.upload_file(Path(file_path))
-            self.logger.info(f"File uploaded successfully: {uploaded_file.name}")
-
-            yield ProcessingProgress(
-                stage=ProcessingStage.UPLOADING,
-                progress=100,
-                message="File upload complete",
-                details={"file_name": uploaded_file.name}
-            )
-
-            # Extract content
             yield ProcessingProgress(
                 stage=ProcessingStage.ANALYZING,
                 progress=0,
-                message="Analyzing document structure"
+                message="Analyzing document for summary"
             )
 
-            self.logger.info("Starting content extraction")
-            prompt = '''Extract clean, readable text from this document, properly formatted into paragraphs.
-            Remove any headers, footers, page numbers, and formatting markers.
-            Split text into natural paragraphs based on content breaks.
-            Return only the cleaned text content.'''
-
-            self.logger.info("Sending content extraction request to Gemini API")
-            response = await self.model.generate_content([prompt, uploaded_file])
-            self.logger.info("Received response from Gemini API")
+            uploaded_file = genai.upload_file(Path(file_path))
+            
+            summary_prompt = '''Provide a high-level summary of this document's content.
+            Focus on general themes, structure, and key concepts.
+            Do not include any direct quotes or specific text.
+            Format the summary as 2-3 concise paragraphs.'''
+            
+            response = self.model.generate_content([summary_prompt, uploaded_file])
             
             if not response or not response.text:
-                raise Exception("Failed to extract content from document")
-
-            # Split into paragraphs and clean
-            text = response.text.strip()
-            paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-            self.logger.info(f"Extracted {len(paragraphs)} paragraphs from document")
+                raise Exception("Failed to generate summary")
+                
+            summary_text = response.text.strip()
+            paragraphs = [p.strip() for p in summary_text.split('\n\n') if p.strip()]
             
-            if not paragraphs:
-                raise Exception("No valid text content extracted from document")
-
-            # Format response data
             processed_data = {
                 'paragraphs': [{
-                    'text': p
+                    'text': f"Summary: {p}"
                 } for p in paragraphs if len(p.strip()) > 0]
             }
-            self.logger.info(f"Processing complete: {len(processed_data['paragraphs'])} valid paragraphs")
 
             yield ProcessingProgress(
                 stage=ProcessingStage.COMPLETE,
                 progress=100,
-                message="Processing complete",
+                message="Summary generation complete",
                 details=processed_data
             )
 
         except Exception as e:
-            self.logger.error(f"Error processing document: {str(e)}", exc_info=True)
+            self.logger.error(f"Error generating summary: {str(e)}", exc_info=True)
             yield ProcessingProgress(
                 stage=ProcessingStage.ERROR,
                 progress=0,

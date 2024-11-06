@@ -131,49 +131,67 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(uploadForm);
             uploadProgress.style.display = 'block';
             progressBar.style.width = '0%';
+            let currentEndpoint = '/document/upload';
             
-            const response = await fetch('/document/upload', {
-                method: 'POST',
-                body: formData
-            });
+            const processStream = async (endpoint) => {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
 
-            if (!response.ok) {
-                throw new Error('Upload failed');
-            }
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
 
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
 
-                const text = decoder.decode(value);
-                const lines = text.split('\n');
+                    const text = decoder.decode(value);
+                    const lines = text.split('\n');
 
-                for (const line of lines) {
-                    if (line.trim().startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            console.log('Progress update:', data);
+                    for (const line of lines) {
+                        if (line.trim().startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                console.log('Progress update:', data);
 
-                            if (data.status === 'error') {
-                                throw new Error(data.message);
+                                if (data.status === 'error') {
+                                    if (data.error_type === 'copyright') {
+                                        if (data.can_summarize && confirm(data.message + '\n\nWould you like to generate a summary instead?')) {
+                                            // Switch to summary processing
+                                            return processStream('/document/summarize');
+                                        } else {
+                                            throw new Error(data.message);
+                                        }
+                                    } else {
+                                        throw new Error(data.message);
+                                    }
+                                }
+
+                                // Update progress bar
+                                if (data.progress) {
+                                    progressBar.style.width = `${data.progress}%`;
+                                }
+                                
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
+                                    return;
+                                }
+                            } catch (error) {
+                                console.error('Error parsing progress:', error);
+                                throw error;
                             }
-
-                            // Update progress bar
-                            progressBar.style.width = `${data.progress}%`;
-                            
-                            if (data.redirect) {
-                                window.location.href = data.redirect;
-                                return;
-                            }
-                        } catch (error) {
-                            console.error('Error parsing progress:', error);
                         }
                     }
                 }
-            }
+            };
+
+            await processStream(currentEndpoint);
+
         } catch (error) {
             console.error('Error:', error);
             alert('Error: ' + (error.message || 'An unexpected error occurred'));

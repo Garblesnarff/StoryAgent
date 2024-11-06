@@ -52,8 +52,12 @@ def upload_document():
                             'progress': float(progress.progress)
                         }
                         
+                        if progress.stage.value == 'error':
+                            if progress.details and progress.details.get('error_type') == 'copyright':
+                                progress_dict['error_type'] = 'copyright'
+                                progress_dict['can_summarize'] = progress.details.get('can_summarize', False)
+                        
                         if progress.stage.value == 'complete' and progress.details:
-                            logger.info("Processing complete, storing data in session")
                             session['story_data'] = {
                                 'source': 'document',
                                 'filename': filename,
@@ -66,7 +70,7 @@ def upload_document():
                             logger.info(f"Stored {len(session['story_data']['paragraphs'])} paragraphs in session")
                             progress_dict['redirect'] = '/story/edit'
                         
-                        json_data = json.dumps(progress_dict, ensure_ascii=False, default=str)
+                        json_data = json.dumps(progress_dict, ensure_ascii=False)
                         logger.debug(f"Sending progress update: {json_data}")
                         yield f"data: {json_data}\n\n"
 
@@ -90,6 +94,57 @@ def upload_document():
         
     except Exception as e:
         logger.error(f"Error handling upload: {str(e)}", exc_info=True)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'error': str(e)}), 500
+
+@doc_bp.route('/summarize', methods=['POST'])
+def summarize_document():
+    try:
+        if 'file' not in request.files:
+            logger.error("No file provided for summary")
+            return jsonify({'error': 'No file provided'}), 400
+            
+        file = request.files['file']
+        filename = secure_filename(file.filename)
+        file_path = UPLOAD_FOLDER / filename
+        file.save(file_path)
+        
+        def generate():
+            try:
+                for progress in doc_processor.summarize_document(str(file_path)):
+                    try:
+                        progress_dict = {
+                            'status': str(progress.stage.value),
+                            'message': str(progress.message),
+                            'progress': float(progress.progress)
+                        }
+                        
+                        if progress.stage.value == 'complete' and progress.details:
+                            session['story_data'] = {
+                                'source': 'document_summary',
+                                'filename': filename,
+                                'paragraphs': progress.details['paragraphs']
+                            }
+                            progress_dict['redirect'] = '/story/edit'
+                            
+                        yield f"data: {json.dumps(progress_dict, ensure_ascii=False)}\n\n"
+                        
+                    except Exception as json_error:
+                        logger.error(f"Error encoding summary progress: {str(json_error)}")
+                        yield f"data: {json.dumps({'status': 'error', 'message': str(json_error)})}\n\n"
+                        
+            finally:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream'
+        )
+        
+    except Exception as e:
+        logger.error(f"Error handling summary: {str(e)}")
         if os.path.exists(file_path):
             os.remove(file_path)
         return jsonify({'error': str(e)}), 500
