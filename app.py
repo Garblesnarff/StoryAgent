@@ -22,9 +22,11 @@ text_service = TextGenerator()
 # Register blueprints
 from blueprints.story import story_bp
 from blueprints.generation import generation_bp
+from blueprints.document import doc_bp
 
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
+app.register_blueprint(doc_bp, url_prefix='/document')
 
 with app.app_context():
     import models
@@ -103,7 +105,7 @@ def forbidden(e):
 def check_story_data():
     # Skip checks for static files and the home/generate routes
     if request.path.startswith('/static') or request.path == '/' or \
-       request.path == '/generate_story':
+       request.path == '/generate_story' or request.path.startswith('/document/'):
         return
         
     # Check if story data exists for protected routes
