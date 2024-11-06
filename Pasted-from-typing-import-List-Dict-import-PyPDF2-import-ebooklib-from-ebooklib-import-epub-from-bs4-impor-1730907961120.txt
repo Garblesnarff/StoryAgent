@@ -1,0 +1,115 @@
+from typing import List, Dict
+import PyPDF2
+import ebooklib
+from ebooklib import epub
+from bs4 import BeautifulSoup
+import google.generativeai as genai
+import re
+
+class BookProcessor:
+    def __init__(self, gemini_api_key: str):
+        # Initialize Gemini
+        genai.configure(api_key=gemini_api_key)
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        
+    def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
+        """Extract and process text from PDF files."""
+        raw_text = self._extract_pdf_text(file_path)
+        return self._process_text(raw_text)
+    
+    def process_epub(self, file_path: str) -> List[Dict[str, str]]:
+        """Extract and process text from EPUB files."""
+        raw_text = self._extract_epub_text(file_path)
+        return self._process_text(raw_text)
+    
+    def process_html(self, file_path: str) -> List[Dict[str, str]]:
+        """Extract and process text from HTML files."""
+        with open(file_path, 'r', encoding='utf-8') as file:
+            soup = BeautifulSoup(file, 'html.parser')
+            # Remove scripts, styles, and other non-content elements
+            for tag in soup(['script', 'style', 'meta', 'link']):
+                tag.decompose()
+            raw_text = soup.get_text()
+            return self._process_text(raw_text)
+
+    def _extract_pdf_text(self, pdf_path: str) -> str:
+        """Extract text from PDF file."""
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text() + "\n"
+            return text
+
+    def _extract_epub_text(self, epub_path: str) -> str:
+        """Extract text from EPUB file."""
+        book = epub.read_epub(epub_path)
+        text = ""
+        for item in book.get_items():
+            if item.get_type() == ebooklib.ITEM_DOCUMENT:
+                soup = BeautifulSoup(item.get_content(), 'html.parser')
+                text += soup.get_text() + "\n"
+        return text
+
+    def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process extracted text into structured paragraphs with metadata."""
+        try:
+            # Clean the text
+            text = self._clean_text(text)
+            
+            # Use Gemini to split into meaningful paragraphs and add context
+            response = self.model.generate_content([
+                "Split this text into meaningful paragraphs. For each paragraph, provide:"
+                "1. The paragraph text"
+                "2. A brief description of the scene or content for image generation"
+                "3. The emotional tone for audio narration"
+                "\n\nText to process:\n" + text
+            ])
+            
+            # Parse Gemini's response into structured format
+            paragraphs = self._parse_gemini_response(response.text)
+            
+            return paragraphs
+
+        except Exception as e:
+            print(f"Error processing text: {str(e)}")
+            return []
+
+    def _clean_text(self, text: str) -> str:
+        """Clean and normalize text."""
+        # Remove excessive whitespace
+        text = re.sub(r'\s+', ' ', text)
+        # Remove page numbers
+        text = re.sub(r'\b\d+\b(?=\s*$)', '', text)
+        # Normalize quotes and dashes
+        text = text.replace('"', '"').replace('"', '"')
+        text = text.replace('--', '—')
+        return text.strip()
+
+    def _parse_gemini_response(self, response: str) -> List[Dict[str, str]]:
+        """Parse Gemini's response into structured paragraph data."""
+        paragraphs = []
+        
+        # Split response into paragraph blocks
+        blocks = response.split('\n\n')
+        
+        for block in blocks:
+            if not block.strip():
+                continue
+                
+            try:
+                # Extract paragraph components
+                parts = block.split('\n')
+                paragraph = {
+                    'text': parts[0],
+                    'scene_description': parts[1] if len(parts) > 1 else '',
+                    'emotional_tone': parts[2] if len(parts) > 2 else 'neutral',
+                    'image_url': None,  # To be filled by image generator
+                    'audio_url': None   # To be filled by audio generator
+                }
+                paragraphs.append(paragraph)
+            except Exception as e:
+                print(f"Error parsing paragraph block: {str(e)}")
+                continue
+                
+        return paragraphs

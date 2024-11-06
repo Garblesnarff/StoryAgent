@@ -3,6 +3,8 @@
 {% block content %}
 <div class="content-wrapper">
     <h1 class="display-4 mb-5 text-center">Generate Your Story</h1>
+    
+    <!-- Story generation form -->
     <form id="story-form" class="mb-5">
         <div class="mb-4">
             <label for="prompt" class="form-label h5">Story Prompt</label>
@@ -50,6 +52,22 @@
         </div>
     </form>
 
+    <!-- File upload section -->
+    <div class="text-center mb-5">
+        <h2 class="h3 mb-4">Or Upload a Book</h2>
+        <form id="upload-form" class="upload-form">
+            <div class="mb-3">
+                <input type="file" class="form-control" id="book-file" name="file" accept=".pdf,.epub,.html">
+                <div class="form-text">Supported formats: PDF, EPUB, HTML</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload and Process</button>
+        </form>
+        <div id="upload-progress" class="progress mt-3 d-none">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+        </div>
+        <div id="upload-status" class="mt-2"></div>
+    </div>
+
     <div id="story-output" class="mt-5" style="display: none;">
         <h2 class="h3 mb-4">Generated Story</h2>
         <div class="book-container">
@@ -67,7 +85,80 @@
         </div>
     </div>
 </div>
-<div class="save-button-container">
-    <button id="save-story" class="btn btn-success btn-lg" style="display: none;">Save Story</button>
-</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const uploadForm = document.getElementById('upload-form');
+    const progressBar = document.querySelector('#upload-progress .progress-bar');
+    const uploadProgress = document.getElementById('upload-progress');
+    const uploadStatus = document.getElementById('upload-status');
+
+    uploadForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(uploadForm);
+        uploadProgress.classList.remove('d-none');
+        progressBar.style.width = '0%';
+        uploadStatus.textContent = '';
+        
+        try {
+            // Start upload
+            console.log('Progress update:', {
+                status: 'uploading',
+                message: 'Starting file upload',
+                progress: 0
+            });
+            progressBar.style.width = '0%';
+            uploadStatus.textContent = 'Starting upload...';
+            
+            const response = await fetch('/story/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            // Upload complete
+            console.log('Progress update:', {
+                status: 'uploading',
+                message: 'Document upload complete',
+                progress: 100
+            });
+            progressBar.style.width = '50%';
+            uploadStatus.textContent = 'Processing document...';
+            
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                throw new Error('Server returned an invalid response');
+            }
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
+            
+            // Processing complete
+            console.log('Progress update:', {
+                status: 'complete',
+                message: 'Processing complete',
+                progress: 100,
+                redirect: data.redirect
+            });
+            progressBar.style.width = '100%';
+            uploadStatus.textContent = 'Processing complete!';
+            
+            // Redirect to edit page
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            uploadStatus.textContent = `Error: ${error.message}`;
+            uploadStatus.style.color = 'var(--bs-danger)';
+        }
+    });
+});
+</script>
 {% endblock %}
