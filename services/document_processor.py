@@ -10,14 +10,14 @@ import json
 class ProcessingStage(Enum):
     UPLOADING = "uploading"
     ANALYZING = "analyzing"
-    PROCESSING = "processing"
+    PROCESSING = "processing" 
     COMPLETE = "complete"
     ERROR = "error"
 
 @dataclass
 class ProcessingProgress:
     stage: ProcessingStage
-    progress: float  # 0-100
+    progress: float
     message: str
     details: Dict = None
 
@@ -25,7 +25,8 @@ class DocumentProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Use gemini-1.5-flash-8b for better document processing
+        self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
         self.upload_dir = Path('uploads')
         self.upload_dir.mkdir(exist_ok=True)
 
@@ -37,49 +38,47 @@ class DocumentProcessor:
                 progress=0,
                 message="Starting document upload"
             )
+
+            # Upload file using Gemini's built-in file handling
+            file_obj = genai.upload_file(file_path)
             
-            # Read file content
-            with open(file_path, 'rb') as f:
-                content = f.read()
-                
             yield ProcessingProgress(
                 stage=ProcessingStage.UPLOADING,
                 progress=100,
                 message="Document upload complete"
             )
 
+            # Analysis stage
             yield ProcessingProgress(
                 stage=ProcessingStage.ANALYZING,
                 progress=0,
                 message="Analyzing document content"
             )
 
-            # Process content with Gemini in chunks
-            chunk_size = 20000  # Process 20KB at a time
-            chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+            # Extract text content using Gemini's document processing
+            prompt = '''Extract all text content from this document, properly formatted into paragraphs.
+            Return only the clean text content, without any formatting markers, page numbers, or headers.
+            Split into natural paragraphs based on content.'''
+
+            response = self.model.generate_content(
+                [prompt, file_obj],
+                stream=True
+            )
+
             all_paragraphs = []
-            
-            for i, chunk in enumerate(chunks):
-                progress = (i / len(chunks)) * 100
-                yield ProcessingProgress(
-                    stage=ProcessingStage.PROCESSING,
-                    progress=progress,
-                    message=f"Processing chunk {i + 1} of {len(chunks)}"
-                )
-                
-                try:
-                    # Updated prompt to handle chunks
-                    prompt = "Extract clean, readable text from this document chunk. Return only the text content, properly formatted into paragraphs."
-                    response = self.model.generate_content([prompt, chunk])
-                    
-                    if response and response.text:
-                        # Clean and validate the text
-                        text = response.text.strip()
+            for chunk in response:
+                if chunk and chunk.text:
+                    # Clean and validate chunk text
+                    text = chunk.text.strip()
+                    if text:
                         paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
                         all_paragraphs.extend(paragraphs)
-                except Exception as chunk_error:
-                    self.logger.error(f"Error processing chunk {i}: {str(chunk_error)}")
-                    continue
+
+                        yield ProcessingProgress(
+                            stage=ProcessingStage.PROCESSING,
+                            progress=50,  # Approximate progress
+                            message=f"Processing content... ({len(all_paragraphs)} paragraphs found)"
+                        )
 
             if not all_paragraphs:
                 raise Exception("No valid text content extracted from document")
@@ -108,3 +107,10 @@ class DocumentProcessor:
                 message=f"Error: {str(e)}"
             )
             raise
+        finally:
+            # Clean up uploaded file
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                self.logger.error(f"Error cleaning up file: {str(e)}")
