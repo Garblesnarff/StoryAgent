@@ -110,6 +110,8 @@ def upload_document():
                         } for p in result['paragraphs']
                     ]
                 }
+                # Force session save
+                session.modified = True
                 
                 yield json.dumps({
                     'status': 'complete',
