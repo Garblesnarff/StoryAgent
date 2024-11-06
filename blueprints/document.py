@@ -20,23 +20,30 @@ def allowed_file(filename):
 
 @doc_bp.route('/upload', methods=['POST'])
 def upload_document():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-        
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-        
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'Invalid file type'}), 400
-        
     try:
+        if 'file' not in request.files:
+            logger.error("No file provided in request")
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        logger.info(f"Received file upload request: {file.filename}")
+        
+        if file.filename == '':
+            logger.error("Empty filename provided")
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            logger.error(f"Invalid file type: {file.filename}")
+            return jsonify({'error': 'Invalid file type'}), 400
+        
         filename = secure_filename(file.filename)
         file_path = UPLOAD_FOLDER / filename
+        logger.info(f"Saving file to: {file_path}")
         file.save(file_path)
 
         def generate():
             try:
+                logger.info("Starting document processing stream")
                 for progress in doc_processor.process_document(str(file_path)):
                     try:
                         progress_dict = {
@@ -46,7 +53,7 @@ def upload_document():
                         }
                         
                         if progress.stage.value == 'complete' and progress.details:
-                            # Store story data in session
+                            logger.info("Processing complete, storing data in session")
                             session['story_data'] = {
                                 'source': 'document',
                                 'filename': filename,
@@ -56,28 +63,33 @@ def upload_document():
                                     'audio_url': None
                                 } for p in progress.details['paragraphs']]
                             }
+                            logger.info(f"Stored {len(session['story_data']['paragraphs'])} paragraphs in session")
                             progress_dict['redirect'] = '/story/edit'
                         
                         json_data = json.dumps(progress_dict, ensure_ascii=False, default=str)
+                        logger.debug(f"Sending progress update: {json_data}")
                         yield f"data: {json_data}\n\n"
 
                     except Exception as json_error:
-                        logger.error(f"Error encoding progress: {str(json_error)}")
+                        logger.error(f"Error encoding progress: {str(json_error)}", exc_info=True)
                         yield f"data: {json.dumps({'status': 'error', 'message': str(json_error)})}\n\n"
                         
             except Exception as e:
+                logger.error(f"Error in processing stream: {str(e)}", exc_info=True)
                 yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
             finally:
                 if os.path.exists(file_path):
+                    logger.info(f"Cleaning up uploaded file: {file_path}")
                     os.remove(file_path)
 
+        logger.info("Initiating streaming response")
         return Response(
             stream_with_context(generate()),
             mimetype='text/event-stream'
         )
         
     except Exception as e:
-        logger.error(f"Error handling upload: {str(e)}")
+        logger.error(f"Error handling upload: {str(e)}", exc_info=True)
         if os.path.exists(file_path):
             os.remove(file_path)
         return jsonify({'error': str(e)}), 500
