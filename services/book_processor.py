@@ -5,13 +5,10 @@ from ebooklib import epub
 from bs4 import BeautifulSoup
 import os
 import re
-import google.generativeai as genai
 
 class BookProcessor:
     def __init__(self):
-        # Initialize Gemini
-        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-1.0-pro')
+        pass
         
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
@@ -69,7 +66,6 @@ class BookProcessor:
         return '\n\n'.join(paragraphs)
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process extracted text into structured chapters with metadata."""
         try:
             # Clean the text
             text = self._clean_text(text)
@@ -83,31 +79,29 @@ class BookProcessor:
             
             processed_chapters = []
             for chapter in chapters:
-                # Use Gemini to analyze the chapter
-                prompt = f"""
-                Analyze this chapter text and provide:
-                1. A cleaned, well-formatted version of the text
-                2. A brief description for image generation
-                3. The emotional tone for audio narration
-
-                Text:
-                {chapter[:1000]}  # Process first 1000 chars to stay within limits
-                """
-                
-                response = self.model.generate_content(prompt)
-                if response.text:
-                    parts = response.text.split('\n\n')
+                if chapter.strip():
+                    # Store chapter without generating additional metadata
                     processed = {
-                        'text': parts[0] if len(parts) > 0 else chapter,
-                        'scene_description': parts[1] if len(parts) > 1 else '',
-                        'emotional_tone': parts[2] if len(parts) > 2 else 'neutral',
+                        'text': chapter.strip(),
                         'image_url': None,
                         'audio_url': None
                     }
                     processed_chapters.append(processed)
-                    
-            return processed_chapters
             
+            # If no chapters were found, split by paragraphs
+            if not processed_chapters:
+                paragraphs = [p for p in text.split('\n\n') if p.strip()][:10]
+                processed_chapters = [
+                    {
+                        'text': p.strip(),
+                        'image_url': None,
+                        'audio_url': None
+                    }
+                    for p in paragraphs
+                ]
+            
+            return processed_chapters
+                
         except Exception as e:
             print(f"Error processing text: {str(e)}")
             return []
