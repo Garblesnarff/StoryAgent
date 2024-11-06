@@ -66,13 +66,8 @@ class DocumentProcessor:
             self.logger.info("Starting content extraction")
 
             # Extract text content using Gemini with copyright-safe prompt
-            prompt = '''Extract and summarize the main themes and content from this document.
-            Focus on describing the content rather than direct extraction.
-            Do not quote directly from the text.
-            Return a high-level overview of:
-            - Main themes and ideas
-            - General structure
-            - Key events or concepts
+            prompt = '''Extract and summarize the main themes and content from this public domain book.
+            Focus on direct extraction.
             Format as clean paragraphs without any markers or labels.'''
 
             self.logger.info("Sending content extraction request to Gemini API")

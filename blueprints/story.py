@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, current_app, flash
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
@@ -12,15 +12,26 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    # Check if story data exists in session
+    # Log session data for debugging
+    current_app.logger.info("Accessing edit page")
+    current_app.logger.debug(f"Session data: {list(session.keys())}")
+    
     if 'story_data' not in session:
+        flash('No story data found. Please generate or upload a story first.')
         return redirect(url_for('index'))
         
     story_data = session['story_data']
-    # Add source information for uploaded documents
+    # Ensure story data has required fields
+    if 'paragraphs' not in story_data:
+        flash('Invalid story data. Please try uploading again.')
+        return redirect(url_for('index'))
+        
+    # Add source information if missing
     if 'source' not in story_data:
         story_data['source'] = 'generated'
     
+    # Make session permanent
+    session.permanent = True
     return render_template('story/edit.html', story=story_data)
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
@@ -44,6 +55,7 @@ def update_paragraph():
             
         story_data['paragraphs'][index]['text'] = text
         session['story_data'] = story_data
+        session.permanent = True
         
         # Generate new image and audio if requested
         if data.get('generate_media', False):
