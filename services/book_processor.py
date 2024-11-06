@@ -5,15 +5,13 @@ from ebooklib import epub
 from bs4 import BeautifulSoup
 import os
 import re
-from services.text_generator import TextGenerator
-from services.image_generator import ImageGenerator
-from services.hume_audio_generator import HumeAudioGenerator
+import google.generativeai as genai
 
 class BookProcessor:
     def __init__(self):
-        self.text_generator = TextGenerator()
-        self.image_generator = ImageGenerator()
-        self.audio_generator = HumeAudioGenerator()
+        # Initialize Gemini
+        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+        self.model = genai.GenerativeModel('gemini-1.0-pro')
         
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
@@ -71,29 +69,45 @@ class BookProcessor:
         return '\n\n'.join(paragraphs)
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process extracted text into structured paragraphs with media."""
+        """Process extracted text into structured chapters with metadata."""
         try:
             # Clean the text
             text = self._clean_text(text)
             
-            # Split into paragraphs and process a maximum of 10
-            paragraphs = [p for p in text.split('\n\n') if p.strip()][:10]
+            # Split into chapters using common chapter markers
+            chapter_pattern = r'(?i)(?:chapter|book|part)\s+(?:[IVX]+|\d+|\w+)(?:\s*[-:]\s*\w+)?'
+            chapters = re.split(chapter_pattern, text)
             
-            processed_paragraphs = []
-            for paragraph in paragraphs:
-                # Clean each paragraph individually
-                cleaned_text = self.text_generator.clean_paragraph(paragraph)
-                if cleaned_text:
-                    # Generate media for the paragraph
-                    processed = {
-                        'text': cleaned_text,
-                        'image_url': self.image_generator.generate_image(cleaned_text),
-                        'audio_url': self.audio_generator.generate_audio(cleaned_text)
-                    }
-                    processed_paragraphs.append(processed)
-                    
-            return processed_paragraphs
+            # Remove empty chapters and limit to first 10
+            chapters = [ch.strip() for ch in chapters if ch.strip()][:10]
+            
+            processed_chapters = []
+            for chapter in chapters:
+                # Use Gemini to analyze the chapter
+                prompt = f"""
+                Analyze this chapter text and provide:
+                1. A cleaned, well-formatted version of the text
+                2. A brief description for image generation
+                3. The emotional tone for audio narration
 
+                Text:
+                {chapter[:1000]}  # Process first 1000 chars to stay within limits
+                """
+                
+                response = self.model.generate_content(prompt)
+                if response.text:
+                    parts = response.text.split('\n\n')
+                    processed = {
+                        'text': parts[0] if len(parts) > 0 else chapter,
+                        'scene_description': parts[1] if len(parts) > 1 else '',
+                        'emotional_tone': parts[2] if len(parts) > 2 else 'neutral',
+                        'image_url': None,
+                        'audio_url': None
+                    }
+                    processed_chapters.append(processed)
+                    
+            return processed_chapters
+            
         except Exception as e:
             print(f"Error processing text: {str(e)}")
             return []
