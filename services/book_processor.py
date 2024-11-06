@@ -5,10 +5,13 @@ from ebooklib import epub
 from bs4 import BeautifulSoup
 import os
 import re
+import google.generativeai as genai
 
 class BookProcessor:
     def __init__(self):
-        pass
+        # Initialize Gemini
+        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+        self.model = genai.GenerativeModel('gemini-1.5-pro')
         
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
@@ -63,29 +66,30 @@ class BookProcessor:
         return text.strip()
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process extracted text into structured paragraphs with metadata."""
         try:
-            # Clean the text
+            # Clean the text initially
             text = self._clean_text(text)
             
-            # Find chapters using regex
-            chapter_pattern = r'(?i)(?:chapter|book|part)\s+(?:[IVX]+|\d+|\w+)(?:\s*[-:]\s*[\w\s]+)?'
-            chapter_matches = list(re.finditer(chapter_pattern, text))
+            # Use Gemini to process and clean the text
+            prompt = f'''
+            Process this book text and extract only the actual story content. 
+            Remove any metadata, page numbers, chapter markers, and other non-story elements.
+            Split into natural paragraphs while preserving the story flow.
+            Return only the clean story text.
             
-            if not chapter_matches:
-                # If no chapters found, treat entire text as one chapter
-                paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-                return [{'text': p, 'image_url': None, 'audio_url': None} for p in paragraphs[:10]]
+            Text to process:
+            {text[:2000]}  # Process first portion to get started
+            '''
             
-            # Get first chapter's content
-            chapter_start = chapter_matches[0].start()
-            next_chapter_start = chapter_matches[1].start() if len(chapter_matches) > 1 else len(text)
-            first_chapter = text[chapter_start:next_chapter_start].strip()
+            # Get clean text from Gemini
+            response = self.model.generate_content(prompt)
             
-            # Remove chapter heading
-            first_chapter = re.sub(chapter_pattern, '', first_chapter, count=1).strip()
-            
-            # Split first chapter into paragraphs
-            paragraphs = [p.strip() for p in first_chapter.split('\n\n') if p.strip()]
+            if not response.text:
+                return []
+                
+            # Split into paragraphs
+            paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
             
             # Create paragraph entries
             processed_paragraphs = []
