@@ -73,13 +73,15 @@ class BookProcessor:
             
             # Use Gemini to process and clean the text
             prompt = f'''
-            Process this book text and extract only the actual story content. 
-            Remove any metadata, page numbers, chapter markers, and other non-story elements.
-            Split into natural paragraphs while preserving the story flow.
-            Return only the clean story text.
+            Process this book text and extract the first chapter's content.
+            1. Identify and extract the complete first chapter
+            2. Split it into natural paragraphs
+            3. Remove any metadata, page numbers, or markers
+            4. Preserve all the original story text and paragraph breaks
+            5. Return the complete chapter text split into paragraphs
             
             Text to process:
-            {text[:2000]}  # Process first portion to get started
+            {text}
             '''
             
             # Get clean text from Gemini
@@ -91,9 +93,9 @@ class BookProcessor:
             # Split into paragraphs
             paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
             
-            # Create paragraph entries
+            # Create paragraph entries for all paragraphs
             processed_paragraphs = []
-            for p in paragraphs[:10]:  # Limit to first 10 paragraphs
+            for p in paragraphs:
                 if p:
                     processed = {
                         'text': p,
