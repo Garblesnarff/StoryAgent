@@ -54,27 +54,43 @@ class DocumentProcessor:
                 message="Analyzing document content"
             )
 
-            # Process content with Gemini - Fixed API call
-            prompt = "Extract and clean text from this document, split into paragraphs."
-            response = self.model.generate_content([prompt, content])
+            # Process content with Gemini in chunks
+            chunk_size = 20000  # Process 20KB at a time
+            chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+            all_paragraphs = []
             
-            if not response or not response.text:
-                raise Exception("Failed to process document content")
+            for i, chunk in enumerate(chunks):
+                progress = (i / len(chunks)) * 100
+                yield ProcessingProgress(
+                    stage=ProcessingStage.PROCESSING,
+                    progress=progress,
+                    message=f"Processing chunk {i + 1} of {len(chunks)}"
+                )
+                
+                try:
+                    # Updated prompt to handle chunks
+                    prompt = "Extract clean, readable text from this document chunk. Return only the text content, properly formatted into paragraphs."
+                    response = self.model.generate_content([prompt, chunk])
+                    
+                    if response and response.text:
+                        # Clean and validate the text
+                        text = response.text.strip()
+                        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+                        all_paragraphs.extend(paragraphs)
+                except Exception as chunk_error:
+                    self.logger.error(f"Error processing chunk {i}: {str(chunk_error)}")
+                    continue
 
-            # Clean and validate the extracted text
-            text = response.text.strip()
-            paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-            
-            if not paragraphs:
-                raise Exception("No valid text content found in document")
+            if not all_paragraphs:
+                raise Exception("No valid text content extracted from document")
 
-            # Format paragraphs for story generation
+            # Format story data
             story_data = {
                 'paragraphs': [{
                     'text': p,
                     'image_url': None,
                     'audio_url': None
-                } for p in paragraphs if len(p.strip()) > 0]
+                } for p in all_paragraphs if len(p.strip()) > 0]
             }
 
             yield ProcessingProgress(
