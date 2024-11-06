@@ -1,22 +1,16 @@
 import os
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 import secrets
 from datetime import datetime
+from database import db
 
-from services.text_generator import TextGenerator
-
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
-app.secret_key = secrets.token_hex(16)  # Add secret key for session management
+app.secret_key = secrets.token_hex(16)
 db.init_app(app)
 
 # Initialize services
+from services.text_generator import TextGenerator
 text_service = TextGenerator()
 
 # Register blueprints

@@ -4,8 +4,12 @@ from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from services.book_processor import BookProcessor
 from services.regeneration_service import RegenerationService
+from database import db
 import os
+import uuid
+from datetime import datetime
 from werkzeug.utils import secure_filename
+from models import TempBookData
 
 story_bp = Blueprint('story', __name__)
 text_service = TextGenerator()
@@ -49,10 +53,22 @@ def upload_file():
             if not paragraphs:
                 raise Exception("Failed to process file")
                 
-            # Store processed paragraphs in session
+            # Store data in temp table
+            temp_id = str(uuid.uuid4())
+            temp_data = TempBookData(
+                id=temp_id,
+                data={
+                    'source_file': filename,
+                    'paragraphs': paragraphs
+                }
+            )
+            db.session.add(temp_data)
+            db.session.commit()
+            
+            # Store only the reference in session
             session['story_data'] = {
-                'source_file': filename,
-                'paragraphs': paragraphs
+                'temp_id': temp_id,
+                'source_file': filename
             }
             
             # Clean up uploaded file
@@ -72,15 +88,21 @@ def upload_file():
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    # Check if story data exists in session
     if 'story_data' not in session:
         return redirect(url_for('index'))
-    return render_template('story/edit.html', story=session['story_data'])
+        
+    # Get full data from temp storage
+    temp_id = session['story_data'].get('temp_id')
+    if temp_id:
+        temp_data = TempBookData.query.get(temp_id)
+        if temp_data:
+            return render_template('story/edit.html', story=temp_data.data)
+            
+    return redirect(url_for('index'))
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:
-        # Check if story data exists in session
         if 'story_data' not in session:
             return jsonify({'error': 'No story data found'}), 404
 
@@ -90,24 +112,35 @@ def update_paragraph():
         
         if not text or index is None:
             return jsonify({'error': 'Invalid data provided'}), 400
+        
+        # Get data from temp storage
+        temp_id = session['story_data'].get('temp_id')
+        if not temp_id:
+            return jsonify({'error': 'No temp data found'}), 404
             
-        # Update story in session
-        story_data = session['story_data']
+        temp_data = TempBookData.query.get(temp_id)
+        if not temp_data:
+            return jsonify({'error': 'Temp data not found'}), 404
+            
+        # Update paragraph
+        story_data = temp_data.data
         if index >= len(story_data['paragraphs']):
             return jsonify({'error': 'Invalid paragraph index'}), 400
             
         story_data['paragraphs'][index]['text'] = text
-        session['story_data'] = story_data
+        temp_data.data = story_data
+        db.session.commit()
         
         # Generate new image and audio if requested
         if data.get('generate_media', False):
             image_url = image_service.generate_image(text)
             audio_url = audio_service.generate_audio(text)
             
-            # Update media URLs in session
+            # Update media URLs in temp data
             story_data['paragraphs'][index]['image_url'] = image_url
             story_data['paragraphs'][index]['audio_url'] = audio_url
-            session['story_data'] = story_data
+            temp_data.data = story_data
+            db.session.commit()
             
             return jsonify({
                 'success': True,

@@ -1,4 +1,6 @@
-from app import db
+from database import db
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -20,3 +22,8 @@ class Story(db.Model):
     image_url = db.Column(db.String(255))
     audio_url = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+class TempBookData(db.Model):
+    id = db.Column(db.String(36), primary_key=True)
+    data = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
