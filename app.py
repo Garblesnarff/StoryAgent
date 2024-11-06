@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, session, jsonify, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from services.text_generator import TextGenerator
 
@@ -14,11 +14,6 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)  # Add secret key for session management
-
-# Configure session handling
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
-app.config['SESSION_TYPE'] = 'filesystem'
-
 db.init_app(app)
 
 # Initialize services
@@ -27,11 +22,9 @@ text_service = TextGenerator()
 # Register blueprints
 from blueprints.story import story_bp
 from blueprints.generation import generation_bp
-from blueprints.document import doc_bp
 
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
-app.register_blueprint(doc_bp, url_prefix='/document')
 
 with app.app_context():
     import models
@@ -67,14 +60,12 @@ def generate_story():
             return jsonify({'error': 'Failed to generate story'}), 500
             
         # Store story data in session with metadata
-        session.permanent = True
         session['story_data'] = {
             'prompt': prompt,
             'genre': genre,
             'mood': mood,
             'target_audience': target_audience,
             'created_at': str(datetime.now()),
-            'source': 'generated',
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
         }
         
@@ -110,21 +101,14 @@ def forbidden(e):
 
 @app.before_request
 def check_story_data():
-    # Skip checks for static files and the home/generate/document routes
+    # Skip checks for static files and the home/generate routes
     if request.path.startswith('/static') or request.path == '/' or \
-       request.path == '/generate_story' or request.path.startswith('/document/'):
+       request.path == '/generate_story':
         return
         
     # Check if story data exists for protected routes
     if 'story_data' not in session and \
        (request.path.startswith('/story/') or request.path.startswith('/save')):
-        # Log session state for debugging
-        app.logger.info(f"Session data missing for {request.path}")
-        app.logger.debug(f"Current session: {list(session.keys())}")
-        
-        if request.path == '/story/edit':
-            flash('No story data found. Please generate or upload a story first.')
-            return redirect(url_for('index'))
         return jsonify({'error': 'Please generate a story first'}), 403
 
 if __name__ == '__main__':
