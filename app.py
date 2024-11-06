@@ -101,9 +101,11 @@ def forbidden(e):
 
 @app.before_request
 def check_story_data():
-    # Skip checks for static files and the home/generate routes
-    if request.path.startswith('/static') or request.path == '/' or \
-       request.path == '/generate_story':
+    # Skip checks for static files and allowed routes
+    if request.path.startswith('/static') or \
+       request.path == '/' or \
+       request.path == '/generate_story' or \
+       request.path == '/story/upload':  # Add upload route to exclusions
         return
         
     # Check if story data exists for protected routes
