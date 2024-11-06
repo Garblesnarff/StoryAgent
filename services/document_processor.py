@@ -4,9 +4,8 @@ import os
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass
-from typing import Dict, AsyncGenerator
+from typing import Dict, Generator
 import json
-import asyncio
 
 class ProcessingStage(Enum):
     UPLOADING = "uploading"
@@ -26,11 +25,11 @@ class DocumentProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-1.0-pro')
+        self.model = genai.GenerativeModel('gemini-pro')
         self.upload_dir = Path('uploads')
         self.upload_dir.mkdir(exist_ok=True)
 
-    async def process_document(self, file_path: str) -> AsyncGenerator[ProcessingProgress, None]:
+    def process_document(self, file_path: str) -> Generator[ProcessingProgress, None, None]:
         """Process document with progress updates"""
         try:
             # Upload stage
@@ -40,59 +39,39 @@ class DocumentProcessor:
                 message="Starting document upload"
             )
 
-            uploaded_file = genai.upload_file(Path(file_path))
-            
+            # Use synchronous file upload
+            with open(file_path, 'rb') as f:
+                content = f.read()
+                
             yield ProcessingProgress(
                 stage=ProcessingStage.UPLOADING,
                 progress=100,
                 message="Document upload complete"
             )
 
-            # Analysis stage
+            # Process content synchronously
             yield ProcessingProgress(
                 stage=ProcessingStage.ANALYZING,
                 progress=0,
                 message="Analyzing document content"
             )
 
-            # Process document content
-            prompt = """Extract the main story content from this document. 
-            Break it into distinct paragraphs suitable for narration and visualization.
-            For each paragraph:
-            1. Clean and format the text
-            2. Suggest an image generation prompt
-            3. Add narration guidance for voice generation
-            
-            Format the response as JSON with an array of paragraphs."""
-
-            response = await self.model.generate_content([prompt, uploaded_file])
+            response = self.model.generate_content(
+                ["Extract and clean the text content from this document, split into paragraphs.", content]
+            )
             
             if not response:
                 raise Exception("Failed to process document content")
 
-            try:
-                content_data = json.loads(response.text)
-            except json.JSONDecodeError:
-                # Handle non-JSON response by splitting into paragraphs
-                paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
-                content_data = {
-                    'paragraphs': [{
-                        'text': p,
-                        'image_prompt': f"Create an illustrative image for the text: {p}",
-                        'narration_guidance': "Narrate with natural pacing and clear enunciation"
-                    } for p in paragraphs]
-                }
-
-            yield ProcessingProgress(
-                stage=ProcessingStage.PROCESSING,
-                progress=100,
-                message="Document processing complete",
-                details={'paragraphs': content_data['paragraphs']}
-            )
-
-            # Clean up uploaded file
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # Parse response and format paragraphs
+            paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
+            content_data = {
+                'paragraphs': [{
+                    'text': p,
+                    'image_prompt': f"Create an illustrative image for: {p[:100]}...",
+                    'narration_guidance': "Narrate naturally with clear enunciation"
+                } for p in paragraphs]
+            }
 
             yield ProcessingProgress(
                 stage=ProcessingStage.COMPLETE,

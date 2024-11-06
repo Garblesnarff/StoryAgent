@@ -1,0 +1,36 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:11] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:11] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:11] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:14] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:14] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:14] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:35] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:36] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:53:36] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:57:19] "POST /document/upload HTTP/1.1" 500 -
+ERROR:werkzeug:Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 333, in execute
+    for data in application_iter:
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/wsgi.py", line 256, in __next__
+    return self._next()
+           ^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/wrappers/response.py", line 32, in _iter_encoded
+    for item in iterable:
+TypeError: 'function' object is not iterable
+INFO:werkzeug:172.31.196.37 - - [06/Nov/2024 03:57:30] "POST /document/upload HTTP/1.1" 500 -
+ERROR:werkzeug:Error on request:
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/serving.py", line 333, in execute
+    for data in application_iter:
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/wsgi.py", line 256, in __next__
+    return self._next()
+           ^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/wrappers/response.py", line 32, in _iter_encoded
+    for item in iterable:
+TypeError: 'function' object is not iterable

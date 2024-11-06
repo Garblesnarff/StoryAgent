@@ -17,7 +17,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @doc_bp.route('/upload', methods=['POST'])
-async def upload_document():
+def upload_document():
     """Handle document upload and processing"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
@@ -34,9 +34,11 @@ async def upload_document():
         file_path = UPLOAD_FOLDER / filename
         file.save(file_path)
 
-        async def generate_progress():
+        def generate():
             try:
-                async for progress in doc_processor.process_document(str(file_path)):
+                # Process document synchronously
+                processor = DocumentProcessor()
+                for progress in processor.process_document(str(file_path)):
                     progress_dict = {
                         'status': progress.stage.value,
                         'message': progress.message,
@@ -60,15 +62,15 @@ async def upload_document():
                 yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
             finally:
                 # Clean up uploaded file
-                if file_path.exists():
+                if os.path.exists(file_path):
                     os.remove(file_path)
 
         return Response(
-            stream_with_context(generate_progress()),
+            generate(),
             mimetype='text/event-stream'
         )
         
     except Exception as e:
-        if file_path.exists():
+        if os.path.exists(file_path):
             os.remove(file_path)
         return jsonify({'error': str(e)}), 500
