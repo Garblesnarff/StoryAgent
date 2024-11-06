@@ -21,4 +21,6 @@ dependencies = [
     "hume~=0.4.2",
     "sounddevice>=0.5.1",
     "websockets>=12.0",
+    "ebooklib>=0.18",
+    "beautifulsoup4>=4.12.3",
 ]

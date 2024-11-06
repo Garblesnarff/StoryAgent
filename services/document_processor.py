@@ -6,6 +6,10 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Dict, Generator
 import json
+import ebooklib
+from ebooklib import epub
+from bs4 import BeautifulSoup
+import tempfile
 
 class ProcessingStage(Enum):
     UPLOADING = "uploading"
@@ -25,19 +29,39 @@ class DocumentProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        # Use gemini-1.5-flash-8b for better document processing
         self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
         self.upload_dir = Path('uploads')
         self.upload_dir.mkdir(exist_ok=True)
 
+    def _extract_epub_text(self, epub_path):
+        book = epub.read_epub(epub_path)
+        chapters = []
+        for item in book.get_items():
+            if item.get_type() == ebooklib.ITEM_DOCUMENT:
+                soup = BeautifulSoup(item.get_content(), 'html.parser')
+                text = soup.get_text()
+                if text.strip():
+                    chapters.append(text)
+        return '\n\n'.join(chapters)
+
     def process_document(self, file_path: str) -> Generator[ProcessingProgress, None, None]:
+        temp_path = None
         try:
-            # Upload stage
             yield ProcessingProgress(
                 stage=ProcessingStage.UPLOADING,
                 progress=0,
                 message="Starting document upload"
             )
+
+            # Handle EPUB files by converting to text first
+            file_extension = Path(file_path).suffix.lower()
+            if file_extension == '.epub':
+                text_content = self._extract_epub_text(file_path)
+                # Create temporary text file
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+                    temp_file.write(text_content)
+                    temp_path = temp_file.name
+                file_path = temp_path
 
             # Upload file using Gemini's built-in file handling
             file_obj = genai.upload_file(file_path)
@@ -48,48 +72,35 @@ class DocumentProcessor:
                 message="Document upload complete"
             )
 
-            # Analysis stage
             yield ProcessingProgress(
                 stage=ProcessingStage.ANALYZING,
                 progress=0,
                 message="Analyzing document content"
             )
 
-            # Extract text content using Gemini's document processing
             prompt = '''Extract all text content from this document, properly formatted into paragraphs.
             Return only the clean text content, without any formatting markers, page numbers, or headers.
             Split into natural paragraphs based on content.'''
 
             response = self.model.generate_content(
-                [prompt, file_obj],
-                stream=True
+                [prompt, file_obj]
             )
 
-            all_paragraphs = []
-            for chunk in response:
-                if chunk and chunk.text:
-                    # Clean and validate chunk text
-                    text = chunk.text.strip()
-                    if text:
-                        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-                        all_paragraphs.extend(paragraphs)
+            if not response or not response.text:
+                raise Exception("Failed to extract content from document")
 
-                        yield ProcessingProgress(
-                            stage=ProcessingStage.PROCESSING,
-                            progress=50,  # Approximate progress
-                            message=f"Processing content... ({len(all_paragraphs)} paragraphs found)"
-                        )
+            # Parse response into paragraphs
+            paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
 
-            if not all_paragraphs:
+            if not paragraphs:
                 raise Exception("No valid text content extracted from document")
 
-            # Format story data
             story_data = {
                 'paragraphs': [{
                     'text': p,
                     'image_url': None,
                     'audio_url': None
-                } for p in all_paragraphs if len(p.strip()) > 0]
+                } for p in paragraphs if len(p.strip()) > 0]
             }
 
             yield ProcessingProgress(
@@ -108,9 +119,10 @@ class DocumentProcessor:
             )
             raise
         finally:
-            # Clean up uploaded file
             try:
                 if os.path.exists(file_path):
                     os.remove(file_path)
+                if temp_path and os.path.exists(temp_path):
+                    os.remove(temp_path)
             except Exception as e:
-                self.logger.error(f"Error cleaning up file: {str(e)}")
+                self.logger.error(f"Error cleaning up files: {str(e)}")

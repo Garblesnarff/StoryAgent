@@ -11,7 +11,7 @@ doc_processor = DocumentProcessor()
 logger = logging.getLogger(__name__)
 
 # Configure upload settings
-ALLOWED_EXTENSIONS = {'pdf', 'txt', 'epub', 'html'}
+ALLOWED_EXTENSIONS = {'pdf', 'txt', 'html', 'md', 'css', 'js', 'py', 'xml', 'rtf'}
 UPLOAD_FOLDER = Path('uploads')
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 
@@ -20,7 +20,6 @@ def allowed_file(filename):
 
 @doc_bp.route('/upload', methods=['POST'])
 def upload_document():
-    """Handle document upload and processing"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
         
@@ -40,7 +39,6 @@ def upload_document():
             try:
                 for progress in doc_processor.process_document(str(file_path)):
                     try:
-                        # Convert ProcessingProgress to dict with sanitization
                         progress_dict = {
                             'status': str(progress.stage.value),
                             'message': str(progress.message),
@@ -48,31 +46,27 @@ def upload_document():
                         }
                         
                         if progress.stage.value == 'complete' and progress.details:
-                            # Sanitize paragraph data
+                            # Store story data in session
                             session['story_data'] = {
+                                'source': 'document',
+                                'filename': filename,
                                 'paragraphs': [{
-                                    'text': str(p['text'])[:5000],  # Limit paragraph size
+                                    'text': str(p['text'])[:5000],
                                     'image_url': None,
                                     'audio_url': None
                                 } for p in progress.details['paragraphs']]
                             }
                             progress_dict['redirect'] = '/story/edit'
                         
-                        # Ensure proper JSON encoding with error handling
                         json_data = json.dumps(progress_dict, ensure_ascii=False, default=str)
                         yield f"data: {json_data}\n\n"
 
                     except Exception as json_error:
                         logger.error(f"Error encoding progress: {str(json_error)}")
-                        error_dict = {
-                            'status': 'error',
-                            'message': 'Error encoding progress data'
-                        }
-                        yield f"data: {json.dumps(error_dict)}\n\n"
+                        yield f"data: {json.dumps({'status': 'error', 'message': str(json_error)})}\n\n"
                         
             except Exception as e:
-                error_dict = {'status': 'error', 'message': str(e)}
-                yield f"data: {json.dumps(error_dict)}\n\n"
+                yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
             finally:
                 if os.path.exists(file_path):
                     os.remove(file_path)
