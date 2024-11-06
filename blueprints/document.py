@@ -38,31 +38,31 @@ def upload_document():
             try:
                 processor = DocumentProcessor()
                 for progress in processor.process_document(str(file_path)):
-                    # Convert ProcessingProgress to dict and ensure JSON-safe values
+                    # Convert ProcessingProgress to dict
                     progress_dict = {
                         'status': progress.stage.value,
                         'message': progress.message,
-                        'progress': float(progress.progress)  # Ensure numeric
+                        'progress': float(progress.progress)
                     }
                     
                     if progress.stage.value == 'complete' and progress.details:
-                        # Ensure details are JSON-safe
                         session['story_data'] = {
                             'paragraphs': [{
-                                'text': str(p['text']),  # Ensure string
+                                'text': str(p['text']),
                                 'image_url': None,
                                 'audio_url': None
                             } for p in progress.details['paragraphs']]
                         }
                         progress_dict['redirect'] = '/story/edit'
-                        
-                    # Use json.dumps with ensure_ascii=False for proper string handling
-                    yield f"data: {json.dumps(progress_dict, ensure_ascii=False)}\n\n"
+                    
+                    # Ensure proper JSON encoding
+                    response = f"data: {json.dumps(progress_dict, ensure_ascii=False, separators=(',', ':'))}\\n\\n"
+                    yield response
 
             except Exception as e:
-                yield f"data: {json.dumps({'status': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
+                error_dict = {'status': 'error', 'message': str(e)}
+                yield f"data: {json.dumps(error_dict, ensure_ascii=False)}\\n\\n"
             finally:
-                # Clean up uploaded file
                 if os.path.exists(file_path):
                     os.remove(file_path)
 
