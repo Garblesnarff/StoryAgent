@@ -76,10 +76,7 @@ def upload_document():
                 }'''
                 
                 # Generate content with error handling
-                response = model.generate_content([
-                    prompt,
-                    uploaded_file
-                ])
+                response = model.generate_content([prompt, uploaded_file])
                 
                 if not response.text:
                     raise Exception("Empty response from Gemini API")
@@ -96,21 +93,21 @@ def upload_document():
                         }]
                     }
                 
-                # Store in session
+                # Store in session with updated structure
                 session['story_data'] = {
                     'prompt': filename,
                     'created_at': str(datetime.now()),
                     'paragraphs': [
                         {
-                            'text': p['text'],
+                            'text': p.get('text', ''),
                             'image_url': None,
                             'audio_url': None,
-                            'image_prompt': p['image_prompt'],
-                            'narration_guidance': p['narration_guidance']
-                        } for p in result['paragraphs']
+                            'image_prompt': p.get('image_prompt', ''),
+                            'narration_guidance': p.get('narration_guidance', '')
+                        } for p in result.get('paragraphs', [])
                     ]
                 }
-                # Force session save
+                # Ensure session is saved
                 session.modified = True
                 
                 yield json.dumps({

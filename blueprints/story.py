@@ -12,12 +12,15 @@ regeneration_service = RegenerationService(image_service, audio_service)
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    # Check if story data exists in session
     story_data = session.get('story_data')
     if not story_data:
         return redirect(url_for('index'))
+    
+    # Ensure story data structure is complete
+    if 'paragraphs' not in story_data:
+        return redirect(url_for('index'))
         
-    # Ensure story data is properly saved
+    # Ensure session is saved
     session.modified = True
     return render_template('story/edit.html', story=story_data)
 
