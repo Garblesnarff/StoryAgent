@@ -36,37 +36,38 @@ def upload_document():
 
         def generate():
             try:
-                # Process document synchronously
                 processor = DocumentProcessor()
                 for progress in processor.process_document(str(file_path)):
+                    # Convert ProcessingProgress to dict and ensure JSON-safe values
                     progress_dict = {
                         'status': progress.stage.value,
                         'message': progress.message,
-                        'progress': progress.progress
+                        'progress': float(progress.progress)  # Ensure numeric
                     }
                     
                     if progress.stage.value == 'complete' and progress.details:
-                        # Store processed paragraphs in session
+                        # Ensure details are JSON-safe
                         session['story_data'] = {
                             'paragraphs': [{
-                                'text': p['text'],
+                                'text': str(p['text']),  # Ensure string
                                 'image_url': None,
                                 'audio_url': None
                             } for p in progress.details['paragraphs']]
                         }
                         progress_dict['redirect'] = '/story/edit'
                         
-                    yield f"data: {json.dumps(progress_dict)}\n\n"
+                    # Use json.dumps with ensure_ascii=False for proper string handling
+                    yield f"data: {json.dumps(progress_dict, ensure_ascii=False)}\n\n"
 
             except Exception as e:
-                yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
+                yield f"data: {json.dumps({'status': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
             finally:
                 # Clean up uploaded file
                 if os.path.exists(file_path):
                     os.remove(file_path)
 
         return Response(
-            generate(),
+            stream_with_context(generate()),
             mimetype='text/event-stream'
         )
         

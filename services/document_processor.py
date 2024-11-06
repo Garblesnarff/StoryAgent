@@ -30,7 +30,6 @@ class DocumentProcessor:
         self.upload_dir.mkdir(exist_ok=True)
 
     def process_document(self, file_path: str) -> Generator[ProcessingProgress, None, None]:
-        """Process document with progress updates"""
         try:
             # Upload stage
             yield ProcessingProgress(
@@ -56,21 +55,30 @@ class DocumentProcessor:
                 message="Analyzing document content"
             )
 
-            response = self.model.generate_content(
-                ["Extract and clean the text content from this document, split into paragraphs.", content]
-            )
+            # Add prompt to ensure proper text extraction and formatting
+            prompt = '''Extract clean, readable text from this document and format as paragraphs. 
+            Return the text without any markup, headers, or special characters.
+            Split into natural paragraphs based on content breaks.'''
+
+            response = self.model.generate_content([prompt, content])
             
-            if not response:
+            if not response or not response.text:
                 raise Exception("Failed to process document content")
 
-            # Parse response and format paragraphs
-            paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
+            # Clean and validate response text
+            cleaned_text = response.text.strip()
+            # Split into paragraphs and remove empty ones
+            paragraphs = [p.strip() for p in cleaned_text.split('\n\n') if p.strip()]
+            
+            if not paragraphs:
+                raise Exception("No valid text content found in document")
+
             content_data = {
                 'paragraphs': [{
                     'text': p,
-                    'image_prompt': f"Create an illustrative image for: {p[:100]}...",
+                    'image_prompt': f"Create an illustrative image for: {p[:100]}..." if len(p) > 0 else "Create a generic illustration",
                     'narration_guidance': "Narrate naturally with clear enunciation"
-                } for p in paragraphs]
+                } for p in paragraphs if len(p.strip()) > 0]
             }
 
             yield ProcessingProgress(
