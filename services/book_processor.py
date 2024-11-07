@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup
 import os
 import re
 import google.generativeai as genai
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class BookProcessor:
     def __init__(self):
@@ -15,119 +20,90 @@ class BookProcessor:
         
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
-        raw_text = self._extract_pdf_text(file_path)
-        return self._process_text(raw_text)
+        try:
+            raw_text = self._extract_pdf_text(file_path)
+            return self._process_text(raw_text)
+        except Exception as e:
+            logger.error(f"Error processing PDF: {str(e)}")
+            return []
     
     def process_epub(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from EPUB files."""
-        raw_text = self._extract_epub_text(file_path)
-        return self._process_text(raw_text)
+        try:
+            raw_text = self._extract_epub_text(file_path)
+            return self._process_text(raw_text)
+        except Exception as e:
+            logger.error(f"Error processing EPUB: {str(e)}")
+            return []
     
     def process_html(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from HTML files."""
-        with open(file_path, 'r', encoding='utf-8') as file:
-            soup = BeautifulSoup(file, 'html.parser')
-            # Remove scripts, styles, and other non-content elements
-            for tag in soup(['script', 'style', 'meta', 'link']):
-                tag.decompose()
-            raw_text = soup.get_text()
-            return self._process_text(raw_text)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                soup = BeautifulSoup(file, 'html.parser')
+                # Remove scripts, styles, and other non-content elements
+                for tag in soup(['script', 'style', 'meta', 'link']):
+                    tag.decompose()
+                raw_text = soup.get_text()
+                return self._process_text(raw_text)
+        except Exception as e:
+            logger.error(f"Error processing HTML: {str(e)}")
+            return []
 
     def _extract_pdf_text(self, pdf_path: str) -> str:
         """Extract text from PDF file."""
         with open(pdf_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
-            text = ""
+            text = []
             for page in reader.pages:
-                text += page.extract_text() + "\n"
-            return text
+                text.append(page.extract_text())
+            return "\n".join(text)
 
     def _extract_epub_text(self, epub_path: str) -> str:
         """Extract text from EPUB file."""
         book = epub.read_epub(epub_path)
-        text = ""
+        text = []
         for item in book.get_items():
             if item.get_type() == ebooklib.ITEM_DOCUMENT:
                 soup = BeautifulSoup(item.get_content(), 'html.parser')
-                text += soup.get_text() + "\n"
-        return text
+                text.append(soup.get_text())
+        return "\n".join(text)
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process extracted text into structured paragraphs."""
         try:
             # Clean the text initially
             text = self._clean_text(text)
             
-            # Use Gemini to identify chapter boundaries and split text
-            prompt = f'''
-            Find and extract chapters from this text. For each chapter:
-            1. Keep the exact original text
-            2. Preserve all original punctuation and formatting
-            3. Do not summarize or rewrite the content
-            4. Split into original paragraphs
-            5. Remove only chapter markers and page numbers
-            
-            Return the raw text exactly as it appears in the book, split into its natural paragraphs.
-            
-            Text to process:
-            {text[:8000]}
-            '''
-            
-            response = self.model.generate_content(prompt)
-            processed_text = response.text
-            
-            # Split into paragraphs and clean each one
+            # Process text in chunks to avoid token limits
+            chunks = self._split_into_chunks(text, max_length=4000)
             paragraphs = []
             
-            # First try splitting by double newlines (standard paragraph breaks)
-            raw_paragraphs = processed_text.split('\n\n')
-            
-            for raw_paragraph in raw_paragraphs:
-                if raw_paragraph.strip():
-                    clean_paragraph = self._clean_paragraph(raw_paragraph)
-                    if clean_paragraph and len(clean_paragraph) > 30:  # Only keep substantial paragraphs
-                        paragraphs.append({
-                            'text': clean_paragraph,
-                            'image_url': None,
-                            'audio_url': None
-                        })
-            
-            # If no paragraphs found, try basic text splitting
-            if not paragraphs:
-                # Split by single newlines and look for paragraph-like chunks
-                text_chunks = text.split('\n')
-                current_paragraph = []
+            for chunk in chunks:
+                # Use Gemini to process each chunk
+                response = self.model.generate_content(
+                    "Split this text into meaningful paragraphs while preserving the original content. "
+                    "Remove any chapter markers, numbers, or formatting. Each paragraph should be a "
+                    "complete thought or scene.\n\nText:\n" + chunk
+                )
                 
-                for chunk in text_chunks:
-                    chunk = chunk.strip()
-                    if chunk:
-                        current_paragraph.append(chunk)
-                    elif current_paragraph:
-                        # Join accumulated lines and clean
-                        paragraph_text = ' '.join(current_paragraph)
-                        clean_paragraph = self._clean_paragraph(paragraph_text)
-                        if clean_paragraph and len(clean_paragraph) > 30:
+                # Process the response
+                if response.text:
+                    # Split into paragraphs and clean each one
+                    chunk_paragraphs = [p.strip() for p in response.text.split('\n\n') if p.strip()]
+                    for p in chunk_paragraphs:
+                        clean_p = self._clean_paragraph(p)
+                        if clean_p and len(clean_p) > 30:  # Only keep substantial paragraphs
                             paragraphs.append({
-                                'text': clean_paragraph,
+                                'text': clean_p,
                                 'image_url': None,
                                 'audio_url': None
                             })
-                        current_paragraph = []
-                
-                # Handle any remaining paragraph
-                if current_paragraph:
-                    paragraph_text = ' '.join(current_paragraph)
-                    clean_paragraph = self._clean_paragraph(paragraph_text)
-                    if clean_paragraph and len(clean_paragraph) > 30:
-                        paragraphs.append({
-                            'text': clean_paragraph,
-                            'image_url': None,
-                            'audio_url': None
-                        })
             
-            return paragraphs
+            return paragraphs[:20]  # Limit to 20 paragraphs for performance
                 
         except Exception as e:
-            print(f"Error processing text: {str(e)}")
+            logger.error(f"Error processing text: {str(e)}")
             return []
 
     def _clean_text(self, text: str) -> str:
@@ -136,7 +112,7 @@ class BookProcessor:
         text = re.sub(r'\s+', ' ', text)
         # Remove page numbers
         text = re.sub(r'\b\d+\b(?=\s*$)', '', text)
-        # Remove headers and footers (common in PDFs)
+        # Remove headers and footers
         text = re.sub(r'^\s*(?:chapter|page)\s+\d+\s*$', '', text, flags=re.MULTILINE | re.IGNORECASE)
         # Normalize quotes and dashes
         text = text.replace('"', '"').replace('"', '"')
@@ -144,6 +120,10 @@ class BookProcessor:
         return text.strip()
 
     def _clean_paragraph(self, text: str) -> str:
+        """Clean individual paragraphs."""
+        if not text:
+            return ''
+            
         # Remove leading/trailing whitespace
         text = text.strip()
         
@@ -158,6 +138,27 @@ class BookProcessor:
         
         # Clean up punctuation and spacing
         text = ' '.join(text.split())
-        text = text.strip()
         
-        return text if len(text) > 30 else ''  # Only return substantial paragraphs
+        return text if len(text) > 30 else ''
+
+    def _split_into_chunks(self, text: str, max_length: int = 4000) -> List[str]:
+        """Split text into manageable chunks."""
+        words = text.split()
+        chunks = []
+        current_chunk = []
+        current_length = 0
+        
+        for word in words:
+            word_length = len(word) + 1  # +1 for space
+            if current_length + word_length > max_length:
+                chunks.append(' '.join(current_chunk))
+                current_chunk = [word]
+                current_length = word_length
+            else:
+                current_chunk.append(word)
+                current_length += word_length
+                
+        if current_chunk:
+            chunks.append(' '.join(current_chunk))
+            
+        return chunks
