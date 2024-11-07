@@ -3,15 +3,31 @@ from flask import Flask, render_template, request, session, jsonify, redirect, u
 import secrets
 from datetime import datetime
 from database import db
+import logging
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)
+
+# Configure upload settings
+UPLOAD_FOLDER = 'uploads'
+MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max file size
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize database
 db.init_app(app)
 
 # Initialize services
 from services.text_generator import TextGenerator
+from services.book_processor import BookProcessor
 text_service = TextGenerator()
+book_processor = BookProcessor()
 
 # Register blueprints
 from blueprints.story import story_bp
@@ -66,7 +82,7 @@ def generate_story():
         return jsonify({'success': True, 'redirect': '/story/edit'})
         
     except Exception as e:
-        app.logger.error(f"Error generating story: {str(e)}")
+        logger.error(f"Error generating story: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/save_story', methods=['POST'])
@@ -78,7 +94,7 @@ def save_story():
         # TODO: Implement story saving logic to database
         return jsonify({'success': True})
     except Exception as e:
-        app.logger.error(f"Error saving story: {str(e)}")
+        logger.error(f"Error saving story: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)
@@ -92,6 +108,10 @@ def server_error(e):
 @app.errorhandler(403)
 def forbidden(e):
     return jsonify({'error': 'Please start by creating a new story on the home page'}), 403
+
+@app.errorhandler(413)
+def request_entity_too_large(e):
+    return jsonify({'error': 'File too large. Maximum size is 50MB.'}), 413
 
 @app.before_request
 def check_story_data():
@@ -108,4 +128,4 @@ def check_story_data():
         return jsonify({'error': 'Please generate a story first'}), 403
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=True)
