@@ -48,12 +48,25 @@ def regenerate_image():
         if not image_url:
             return jsonify({'error': 'Failed to generate image'}), 500
             
-        # Update story data if index provided
-        if index is not None and 'story_data' in session:
-            story_data = session['story_data']
-            if index < len(story_data['paragraphs']):
-                story_data['paragraphs'][index]['image_url'] = image_url
-                session['story_data'] = story_data
+        # Update data in appropriate storage
+        if index is not None:
+            story_data = session.get('story_data', {})
+            temp_id = story_data.get('temp_id')
+            
+            if temp_id:
+                # Update in temp storage
+                temp_data = TempBookData.query.get(temp_id)
+                if temp_data:
+                    book_data = temp_data.data
+                    if index < len(book_data['paragraphs']):
+                        book_data['paragraphs'][index]['image_url'] = image_url
+                        temp_data.data = book_data
+                        db.session.commit()
+            else:
+                # Update in session storage
+                if 'paragraphs' in story_data and index < len(story_data['paragraphs']):
+                    story_data['paragraphs'][index]['image_url'] = image_url
+                    session['story_data'] = story_data
         
         return jsonify({
             'success': True,
@@ -79,12 +92,25 @@ def regenerate_audio():
         if not audio_url:
             return jsonify({'error': 'Failed to generate audio'}), 500
             
-        # Update story data if index provided
-        if index is not None and 'story_data' in session:
-            story_data = session['story_data']
-            if index < len(story_data['paragraphs']):
-                story_data['paragraphs'][index]['audio_url'] = audio_url
-                session['story_data'] = story_data
+        # Update data in appropriate storage
+        if index is not None:
+            story_data = session.get('story_data', {})
+            temp_id = story_data.get('temp_id')
+            
+            if temp_id:
+                # Update in temp storage
+                temp_data = TempBookData.query.get(temp_id)
+                if temp_data:
+                    book_data = temp_data.data
+                    if index < len(book_data['paragraphs']):
+                        book_data['paragraphs'][index]['audio_url'] = audio_url
+                        temp_data.data = book_data
+                        db.session.commit()
+            else:
+                # Update in session storage
+                if 'paragraphs' in story_data and index < len(story_data['paragraphs']):
+                    story_data['paragraphs'][index]['audio_url'] = audio_url
+                    session['story_data'] = story_data
         
         return jsonify({
             'success': True,
