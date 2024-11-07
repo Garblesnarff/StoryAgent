@@ -3,6 +3,7 @@ import PyPDF2
 import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
+import google.generativeai as genai
 import os
 import re
 import logging
@@ -20,6 +21,11 @@ class BookProcessor:
         self.chunk_size = 8000  # Characters per chunk for API processing
         self.max_file_size = 50 * 1024 * 1024  # 50MB limit
         self.max_paragraphs = 10  # Maximum number of paragraphs to process
+        self.api_key = os.environ.get('GEMINI_API_KEY')
+        
+        # Configure Gemini
+        genai.configure(api_key=self.api_key)
+        self.model = genai.GenerativeModel('gemini-1.5-pro')
         
     def process_file(self, file) -> Dict[str, any]:
         """Process uploaded file based on its type."""
@@ -146,41 +152,14 @@ class BookProcessor:
 
     def _clean_text(self, text: str) -> str:
         """Clean and normalize text."""
-        # Remove license agreements and legal text
-        text = re.sub(r'(?i)(?:copyright|all rights reserved|license agreement).*?\n', '', text)
-        
-        # Remove common metadata sections
-        text = re.sub(r'(?i)(?:table of contents|acknowledgments|about the author|dedication).*?\n', '', text)
-        
-        # Remove version information and technical details
-        text = re.sub(r'(?i)(?:version|edition|isbn|published by).*?\n', '', text)
-        
-        # Clean up formatting and whitespace
+        # Remove common metadata sections and formatting
         text = re.sub(r'\s+', ' ', text)
-        text = re.sub(r'\d+(?=\s*$)', '', text)
         text = text.replace('"', '"').replace('"', '"')
         text = text.replace('--', '—')
-        
         return text.strip()
 
     def _is_story_content(self, text: str) -> bool:
         """Check if text is story content rather than metadata or other non-story text."""
-        # Check for common non-story indicators
-        non_story_patterns = [
-            r'(?i)copyright',
-            r'(?i)all rights reserved',
-            r'(?i)license agreement',
-            r'(?i)table of contents',
-            r'(?i)acknowledgments',
-            r'(?i)about the author',
-            r'(?i)isbn',
-            r'(?i)published by'
-        ]
-        
-        for pattern in non_story_patterns:
-            if re.search(pattern, text):
-                return False
-                
         # Check minimum length and sentence structure
         if len(text.split()) < 10:  # Skip very short segments
             return False
@@ -192,17 +171,33 @@ class BookProcessor:
         return True
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process extracted text into structured paragraphs with metadata."""
         try:
-            # Clean the text
+            # Clean the text initially
             text = self._clean_text(text)
+            
+            # Use Gemini to identify story start and process text
+            prompt = f'''
+            Analyze this book text and:
+            1. Identify where the actual story narrative begins
+            2. Remove any preamble, license info, or metadata
+            3. Extract only the story content
+            4. Split into proper story paragraphs
+            5. Start from the first actual story paragraph
+            
+            Text to process:
+            {text[:8000]}
+            '''
+            
+            # Get story content from Gemini
+            response = self.model.generate_content(prompt)
+            story_text = response.text
             
             # Split into sentences
             sentence_pattern = r'(?<=[.!?])\s+'
-            sentences = re.split(sentence_pattern, text)
+            sentences = re.split(sentence_pattern, story_text)
             sentences = [s.strip() for s in sentences if s.strip()]
             
-            # Group into 2-sentence chunks and filter
+            # Group into 2-sentence chunks
             chunks = []
             for i in range(0, len(sentences), 2):
                 if i + 1 < len(sentences):
