@@ -57,17 +57,16 @@ class BookProcessor:
             # Clean the text initially
             text = self._clean_text(text)
             
-            # Use Gemini to process and split the text into paragraphs
+            # Use Gemini to identify chapter boundaries and split text
             prompt = f'''
-            Process this text into separate paragraphs. For each paragraph:
-            1. Preserve the natural paragraph breaks and flow
-            2. Keep complete sentences together
-            3. Maintain logical thought progression
-            4. Remove any metadata, headers, or markers
-            5. Return only clean, narrative text
-            6. Split long sections into reasonable paragraph lengths
+            Find and extract chapters from this text. For each chapter:
+            1. Keep the exact original text
+            2. Preserve all original punctuation and formatting
+            3. Do not summarize or rewrite the content
+            4. Split into original paragraphs
+            5. Remove only chapter markers and page numbers
             
-            Format each paragraph as natural prose, without any special markers or numbering.
+            Return the raw text exactly as it appears in the book, split into its natural paragraphs.
             
             Text to process:
             {text[:8000]}
@@ -78,7 +77,11 @@ class BookProcessor:
             
             # Split into paragraphs and clean each one
             paragraphs = []
-            for raw_paragraph in processed_text.split('\n\n'):
+            
+            # First try splitting by double newlines (standard paragraph breaks)
+            raw_paragraphs = processed_text.split('\n\n')
+            
+            for raw_paragraph in raw_paragraphs:
                 if raw_paragraph.strip():
                     clean_paragraph = self._clean_paragraph(raw_paragraph)
                     if clean_paragraph and len(clean_paragraph) > 30:  # Only keep substantial paragraphs
@@ -88,21 +91,41 @@ class BookProcessor:
                             'audio_url': None
                         })
             
-            # Ensure we have at least some paragraphs
+            # If no paragraphs found, try basic text splitting
             if not paragraphs:
-                # Fallback to basic splitting if Gemini processing failed
-                for raw_paragraph in text.split('\n\n'):
-                    if raw_paragraph.strip():
-                        clean_paragraph = self._clean_paragraph(raw_paragraph)
+                # Split by single newlines and look for paragraph-like chunks
+                text_chunks = text.split('\n')
+                current_paragraph = []
+                
+                for chunk in text_chunks:
+                    chunk = chunk.strip()
+                    if chunk:
+                        current_paragraph.append(chunk)
+                    elif current_paragraph:
+                        # Join accumulated lines and clean
+                        paragraph_text = ' '.join(current_paragraph)
+                        clean_paragraph = self._clean_paragraph(paragraph_text)
                         if clean_paragraph and len(clean_paragraph) > 30:
                             paragraphs.append({
                                 'text': clean_paragraph,
                                 'image_url': None,
                                 'audio_url': None
                             })
+                        current_paragraph = []
+                
+                # Handle any remaining paragraph
+                if current_paragraph:
+                    paragraph_text = ' '.join(current_paragraph)
+                    clean_paragraph = self._clean_paragraph(paragraph_text)
+                    if clean_paragraph and len(clean_paragraph) > 30:
+                        paragraphs.append({
+                            'text': clean_paragraph,
+                            'image_url': None,
+                            'audio_url': None
+                        })
             
             return paragraphs
-                    
+                
         except Exception as e:
             print(f"Error processing text: {str(e)}")
             return []
