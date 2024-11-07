@@ -11,7 +11,7 @@ class BookProcessor:
     def __init__(self):
         # Initialize Gemini
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-1.5-pro')
+        self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
         
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
@@ -57,16 +57,17 @@ class BookProcessor:
             # Clean the text initially
             text = self._clean_text(text)
             
-            # Use Gemini to identify chapter boundaries and split text
+            # Use Gemini to process the text and split into paragraphs
             prompt = f'''
-            Find and extract chapters from this text. For each chapter:
+            Process this text into individual paragraphs. For each paragraph:
             1. Keep the exact original text
-            2. Preserve all original punctuation and formatting
-            3. Do not summarize or rewrite the content
-            4. Split into original paragraphs
-            5. Remove only chapter markers and page numbers
+            2. Preserve punctuation and formatting
+            3. Do not summarize or rewrite
+            4. Keep one complete thought per paragraph
+            5. Remove only headers and page numbers
             
-            Return the raw text exactly as it appears in the book, split into its natural paragraphs.
+            Split using natural paragraph breaks in the original text.
+            Return each paragraph exactly as it appears, without any modifications.
             
             Text to process:
             {text[:8000]}
@@ -75,16 +76,14 @@ class BookProcessor:
             response = self.model.generate_content(prompt)
             processed_text = response.text
             
-            # Split into paragraphs and clean each one
+            # Split into paragraphs
             paragraphs = []
-            
-            # First try splitting by double newlines (standard paragraph breaks)
             raw_paragraphs = processed_text.split('\n\n')
             
             for raw_paragraph in raw_paragraphs:
                 if raw_paragraph.strip():
                     clean_paragraph = self._clean_paragraph(raw_paragraph)
-                    if clean_paragraph and len(clean_paragraph) > 30:  # Only keep substantial paragraphs
+                    if clean_paragraph and len(clean_paragraph) > 30:
                         paragraphs.append({
                             'text': clean_paragraph,
                             'image_url': None,
