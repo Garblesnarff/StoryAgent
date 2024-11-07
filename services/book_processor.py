@@ -57,17 +57,21 @@ class BookProcessor:
             # Clean the text initially
             text = self._clean_text(text)
             
-            # Use Gemini to process the text and split into paragraphs
+            # Use Gemini to process the text and split into 2-sentence chunks
             prompt = f'''
-            Process this text into individual paragraphs. For each paragraph:
+            Process this text into 2-sentence chunks. For each chunk:
             1. Keep the exact original text
             2. Preserve punctuation and formatting
             3. Do not summarize or rewrite
-            4. Keep one complete thought per paragraph
-            5. Remove only headers and page numbers
+            4. Keep exactly 2 complete sentences per chunk
+            5. Remove headers and page numbers
+            6. Maintain the story's flow and context
             
-            Split using natural paragraph breaks in the original text.
-            Return each paragraph exactly as it appears, without any modifications.
+            Rules:
+            - Each chunk must contain exactly 2 sentences
+            - Split at natural sentence boundaries
+            - Preserve quotation marks and dialogue
+            - Keep sentences together that share context
             
             Text to process:
             {text[:8000]}
@@ -76,19 +80,23 @@ class BookProcessor:
             response = self.model.generate_content(prompt)
             processed_text = response.text
             
-            # Split into paragraphs
+            # Split into chunks and clean each one
             paragraphs = []
-            raw_paragraphs = processed_text.split('\n\n')
+            raw_chunks = processed_text.split('\n\n')
             
-            for raw_paragraph in raw_paragraphs:
-                if raw_paragraph.strip():
-                    clean_paragraph = self._clean_paragraph(raw_paragraph)
-                    if clean_paragraph and len(clean_paragraph) > 30:
-                        paragraphs.append({
-                            'text': clean_paragraph,
-                            'image_url': None,
-                            'audio_url': None
-                        })
+            for raw_chunk in raw_chunks:
+                if raw_chunk.strip():
+                    clean_chunk = self._clean_paragraph(raw_chunk)
+                    if clean_chunk:
+                        # Verify we have exactly 2 sentences
+                        sentences = re.split(r'[.!?]+', clean_chunk)
+                        sentences = [s.strip() for s in sentences if s.strip()]
+                        if len(sentences) == 2:
+                            paragraphs.append({
+                                'text': clean_chunk,
+                                'image_url': None,
+                                'audio_url': None
+                            })
             
             # If no paragraphs found, try basic text splitting
             if not paragraphs:
@@ -122,7 +130,7 @@ class BookProcessor:
                             'image_url': None,
                             'audio_url': None
                         })
-            
+
             return paragraphs
                 
         except Exception as e:
@@ -143,6 +151,7 @@ class BookProcessor:
         return text.strip()
 
     def _clean_paragraph(self, text: str) -> str:
+        """Clean individual paragraph text."""
         # Remove leading/trailing whitespace
         text = text.strip()
         
@@ -157,6 +166,5 @@ class BookProcessor:
         
         # Clean up punctuation and spacing
         text = ' '.join(text.split())
-        text = text.strip()
         
-        return text if len(text) > 30 else ''  # Only return substantial paragraphs
+        return text.strip() if len(text) > 30 else ''  # Only return substantial paragraphs
