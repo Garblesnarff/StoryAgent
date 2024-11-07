@@ -4,6 +4,8 @@ import json
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
+from database import db
+from models import TempBookData
 
 generation_bp = Blueprint('generation', __name__)
 text_service = TextGenerator()
@@ -33,7 +35,14 @@ def generate_cards():
             if 'story_data' not in session:
                 raise Exception("No story data found in session")
                 
+            # Get story data from session or temp storage
             story_data = session['story_data']
+            temp_id = story_data.get('temp_id')
+            if temp_id:
+                temp_data = TempBookData.query.get(temp_id)
+                if temp_data:
+                    story_data = temp_data.data
+            
             paragraphs = story_data.get('paragraphs', [])
             
             yield send_json_message('log', "Starting card generation...")
@@ -43,9 +52,9 @@ def generate_cards():
                     continue
                     
                 progress = ((index + 1) / len(paragraphs) * 100)
-                current_message = f"Processing paragraph {index + 1}/{len(paragraphs)} ({progress:.0f}% complete)"
+                current_message = f"Processing paragraph {index + 1}/{len(paragraphs)}"
                 
-                # Generate image
+                # Generate image if needed
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
                     paragraph['image_url'] = image_service.generate_image(paragraph['text'])
@@ -58,7 +67,7 @@ def generate_cards():
                         'index': index
                     }, step='image')
                 
-                # Generate audio
+                # Generate audio if needed
                 if not paragraph.get('audio_url'):
                     yield send_json_message('log', f"Generating audio for paragraph {index + 1}...", step='audio')
                     paragraph['audio_url'] = audio_service.generate_audio(paragraph['text'])
@@ -71,15 +80,16 @@ def generate_cards():
                         'index': index
                     }, step='audio')
                 
-                # Update session data
-                session['story_data'] = story_data
-                
-                # Ensure stream is flushed
-                sys.stdout.flush()
+                # Update storage
+                if temp_id and temp_data:
+                    temp_data.data = story_data
+                    db.session.commit()
+                else:
+                    session['story_data'] = story_data
                 
             yield send_json_message('complete', "Card generation complete!", step='complete')
             
         except Exception as e:
             yield send_json_message('error', str(e))
-
+    
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
