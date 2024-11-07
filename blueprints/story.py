@@ -6,10 +6,13 @@ from services.book_processor import BookProcessor
 from services.regeneration_service import RegenerationService
 from database import db
 import os
-import uuid
-from datetime import datetime
 from werkzeug.utils import secure_filename
 from models import TempBookData
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 story_bp = Blueprint('story', __name__)
 text_service = TextGenerator()
@@ -37,42 +40,14 @@ def upload_file():
         
     if file and allowed_file(file.filename):
         try:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(file_path)
+            # Process the file using BookProcessor service
+            result = book_processor.process_file(file)
             
-            # Process file based on type
-            ext = filename.rsplit('.', 1)[1].lower()
-            if ext == 'pdf':
-                paragraphs = book_processor.process_pdf(file_path)
-            elif ext == 'epub':
-                paragraphs = book_processor.process_epub(file_path)
-            else:  # html
-                paragraphs = book_processor.process_html(file_path)
-                
-            if not paragraphs:
-                raise Exception("Failed to process file")
-                
-            # Store data in temp table
-            temp_id = str(uuid.uuid4())
-            temp_data = TempBookData(
-                id=temp_id,
-                data={
-                    'source_file': filename,
-                    'paragraphs': paragraphs
-                }
-            )
-            db.session.add(temp_data)
-            db.session.commit()
-            
-            # Store only the reference in session
+            # Store necessary data in session
             session['story_data'] = {
-                'temp_id': temp_id,
-                'source_file': filename
+                'temp_id': result['temp_id'],
+                'source_file': result['source_file']
             }
-            
-            # Clean up uploaded file
-            os.remove(file_path)
             
             return jsonify({
                 'status': 'complete',
@@ -82,23 +57,33 @@ def upload_file():
             })
             
         except Exception as e:
+            logger.error(f"Error processing upload: {str(e)}")
             return jsonify({'error': str(e)}), 500
             
     return jsonify({'error': 'Invalid file type'}), 400
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
-    if 'story_data' not in session:
-        return redirect(url_for('index'))
-        
-    # Get full data from temp storage
-    temp_id = session['story_data'].get('temp_id')
-    if temp_id:
-        temp_data = TempBookData.query.get(temp_id)
-        if temp_data:
-            return render_template('story/edit.html', story=temp_data.data)
+    try:
+        if 'story_data' not in session:
+            return redirect(url_for('index'))
             
-    return redirect(url_for('index'))
+        # Get full data from temp storage
+        temp_id = session['story_data'].get('temp_id')
+        if not temp_id:
+            logger.error("No temp_id found in session")
+            return redirect(url_for('index'))
+            
+        temp_data = TempBookData.query.get(temp_id)
+        if not temp_data:
+            logger.error(f"No temp data found for ID: {temp_id}")
+            return redirect(url_for('index'))
+            
+        return render_template('story/edit.html', story=temp_data.data)
+        
+    except Exception as e:
+        logger.error(f"Error in edit route: {str(e)}")
+        return redirect(url_for('index'))
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
@@ -131,23 +116,31 @@ def update_paragraph():
         temp_data.data = story_data
         db.session.commit()
         
-        # Generate new image and audio if requested
+        # Generate new media if requested
         if data.get('generate_media', False):
-            image_url = image_service.generate_image(text)
-            audio_url = audio_service.generate_audio(text)
-            
-            # Update media URLs in temp data
-            story_data['paragraphs'][index]['image_url'] = image_url
-            story_data['paragraphs'][index]['audio_url'] = audio_url
-            temp_data.data = story_data
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'text': text,
-                'image_url': image_url,
-                'audio_url': audio_url
-            })
+            try:
+                image_url = image_service.generate_image(text)
+                audio_url = audio_service.generate_audio(text)
+                
+                # Update media URLs in temp data
+                story_data['paragraphs'][index]['image_url'] = image_url
+                story_data['paragraphs'][index]['audio_url'] = audio_url
+                temp_data.data = story_data
+                db.session.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'text': text,
+                    'image_url': image_url,
+                    'audio_url': audio_url
+                })
+            except Exception as media_error:
+                logger.error(f"Error generating media: {str(media_error)}")
+                return jsonify({
+                    'success': True,
+                    'text': text,
+                    'error': 'Failed to generate media'
+                })
         
         return jsonify({
             'success': True,
@@ -155,4 +148,5 @@ def update_paragraph():
         })
         
     except Exception as e:
+        logger.error(f"Error updating paragraph: {str(e)}")
         return jsonify({'error': str(e)}), 500

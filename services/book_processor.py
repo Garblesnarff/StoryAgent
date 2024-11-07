@@ -7,6 +7,9 @@ import os
 import re
 import logging
 from werkzeug.utils import secure_filename
+from database import db
+from models import TempBookData
+import uuid
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +21,7 @@ class BookProcessor:
         self.max_file_size = 50 * 1024 * 1024  # 50MB limit
         self.max_paragraphs = 10  # Maximum number of paragraphs to process
         
-    def process_file(self, file) -> List[Dict[str, str]]:
+    def process_file(self, file) -> Dict[str, any]:
         """Process uploaded file based on its type."""
         try:
             if not file:
@@ -51,7 +54,23 @@ class BookProcessor:
                 else:  # html
                     paragraphs = self.process_html(temp_path)
                     
-                return paragraphs
+                # Store processed data in temporary storage
+                temp_id = str(uuid.uuid4())
+                temp_data = TempBookData(
+                    id=temp_id,
+                    data={
+                        'source_file': filename,
+                        'paragraphs': paragraphs
+                    }
+                )
+                db.session.add(temp_data)
+                db.session.commit()
+                
+                return {
+                    'temp_id': temp_id,
+                    'source_file': filename,
+                    'paragraphs': paragraphs
+                }
                 
             finally:
                 # Clean up temp file
@@ -61,7 +80,7 @@ class BookProcessor:
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}")
             raise
-    
+
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
         try:
@@ -127,46 +146,74 @@ class BookProcessor:
 
     def _clean_text(self, text: str) -> str:
         """Clean and normalize text."""
-        # Remove excessive whitespace
+        # Remove license agreements and legal text
+        text = re.sub(r'(?i)(?:copyright|all rights reserved|license agreement).*?\n', '', text)
+        
+        # Remove common metadata sections
+        text = re.sub(r'(?i)(?:table of contents|acknowledgments|about the author|dedication).*?\n', '', text)
+        
+        # Remove version information and technical details
+        text = re.sub(r'(?i)(?:version|edition|isbn|published by).*?\n', '', text)
+        
+        # Clean up formatting and whitespace
         text = re.sub(r'\s+', ' ', text)
-        
-        # Remove page numbers and headers
-        text = re.sub(r'\b\d+\b(?=\s*$)', '', text)
-        text = re.sub(r'^\s*(?:chapter|page)\s+\d+\s*$', '', text, flags=re.MULTILINE | re.IGNORECASE)
-        
-        # Clean up special characters and formatting
-        text = re.sub(r'={3,}', '', text)  # Remove section separators
-        text = re.sub(r'\s*\[\d+\]\s*', '', text)  # Remove reference numbers
-        text = re.sub(r'(\w)- (\w)', r'\1\2', text)  # Fix hyphenated words
-        
-        # Normalize quotes and dashes
+        text = re.sub(r'\d+(?=\s*$)', '', text)
         text = text.replace('"', '"').replace('"', '"')
         text = text.replace('--', '—')
         
         return text.strip()
 
+    def _is_story_content(self, text: str) -> bool:
+        """Check if text is story content rather than metadata or other non-story text."""
+        # Check for common non-story indicators
+        non_story_patterns = [
+            r'(?i)copyright',
+            r'(?i)all rights reserved',
+            r'(?i)license agreement',
+            r'(?i)table of contents',
+            r'(?i)acknowledgments',
+            r'(?i)about the author',
+            r'(?i)isbn',
+            r'(?i)published by'
+        ]
+        
+        for pattern in non_story_patterns:
+            if re.search(pattern, text):
+                return False
+                
+        # Check minimum length and sentence structure
+        if len(text.split()) < 10:  # Skip very short segments
+            return False
+            
+        # Ensure text has proper sentence structure
+        if not re.search(r'[A-Z][^.!?]+[.!?]', text):
+            return False
+            
+        return True
+
     def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process extracted text into structured paragraphs with metadata."""
         try:
             # Clean the text
             text = self._clean_text(text)
             
-            # Split into sentences (handling various punctuation marks)
+            # Split into sentences
             sentence_pattern = r'(?<=[.!?])\s+'
             sentences = re.split(sentence_pattern, text)
             sentences = [s.strip() for s in sentences if s.strip()]
             
-            # Group into 2-sentence chunks
+            # Group into 2-sentence chunks and filter
             chunks = []
             for i in range(0, len(sentences), 2):
                 if i + 1 < len(sentences):
-                    # Combine two sentences
                     chunk_text = f"{sentences[i]} {sentences[i+1]}"
-                    chunks.append({
-                        'text': chunk_text,
-                        'image_url': None,
-                        'audio_url': None
-                    })
-                elif sentences[i]:  # Handle any remaining single sentence
+                    if self._is_story_content(chunk_text):
+                        chunks.append({
+                            'text': chunk_text,
+                            'image_url': None,
+                            'audio_url': None
+                        })
+                elif sentences[i] and self._is_story_content(sentences[i]):
                     chunks.append({
                         'text': sentences[i],
                         'image_url': None,
