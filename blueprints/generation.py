@@ -6,6 +6,11 @@ from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from database import db
 from models import TempBookData
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 generation_bp = Blueprint('generation', __name__)
 text_service = TextGenerator()
@@ -27,6 +32,68 @@ def generate():
     if 'story_data' not in session:
         return redirect(url_for('index'))
     return render_template('story/generate.html', story=session['story_data'])
+
+@generation_bp.route('/story/regenerate_image', methods=['POST'])
+def regenerate_image():
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        text = data['text']
+        index = data.get('index')
+        
+        # Generate new image
+        image_url = image_service.generate_image(text)
+        if not image_url:
+            return jsonify({'error': 'Failed to generate image'}), 500
+            
+        # Update story data if index provided
+        if index is not None and 'story_data' in session:
+            story_data = session['story_data']
+            if index < len(story_data['paragraphs']):
+                story_data['paragraphs'][index]['image_url'] = image_url
+                session['story_data'] = story_data
+        
+        return jsonify({
+            'success': True,
+            'image_url': image_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error regenerating image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@generation_bp.route('/story/regenerate_audio', methods=['POST'])
+def regenerate_audio():
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        text = data['text']
+        index = data.get('index')
+        
+        # Generate new audio
+        audio_url = audio_service.generate_audio(text)
+        if not audio_url:
+            return jsonify({'error': 'Failed to generate audio'}), 500
+            
+        # Update story data if index provided
+        if index is not None and 'story_data' in session:
+            story_data = session['story_data']
+            if index < len(story_data['paragraphs']):
+                story_data['paragraphs'][index]['audio_url'] = audio_url
+                session['story_data'] = story_data
+        
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error regenerating audio: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @generation_bp.route('/story/generate_cards', methods=['POST'])
 def generate_cards():
