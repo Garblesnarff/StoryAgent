@@ -53,24 +53,24 @@ class BookProcessor:
         return text
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process extracted text into structured paragraphs with metadata."""
         try:
             # Clean the text initially
             text = self._clean_text(text)
             
-            # Use Gemini to identify and extract the first chapter
+            # Use Gemini to process and split the text into paragraphs
             prompt = f'''
-            Extract and process the first chapter from this text.
-            Steps:
-            1. Identify the first complete chapter
-            2. Split it into natural paragraphs
-            3. Preserve all the content and flow
-            4. Remove any metadata or markers
-            5. Keep complete sentences and maintain context
-            6. Return all paragraphs from the chapter
+            Process this text into separate paragraphs. For each paragraph:
+            1. Preserve the natural paragraph breaks and flow
+            2. Keep complete sentences together
+            3. Maintain logical thought progression
+            4. Remove any metadata, headers, or markers
+            5. Return only clean, narrative text
+            6. Split long sections into reasonable paragraph lengths
+            
+            Format each paragraph as natural prose, without any special markers or numbering.
             
             Text to process:
-            {text[:8000]}  # Process larger portion to ensure we get the full chapter
+            {text[:8000]}
             '''
             
             response = self.model.generate_content(prompt)
@@ -79,16 +79,30 @@ class BookProcessor:
             # Split into paragraphs and clean each one
             paragraphs = []
             for raw_paragraph in processed_text.split('\n\n'):
-                clean_paragraph = self._clean_paragraph(raw_paragraph)
-                if clean_paragraph and len(clean_paragraph) > 30:  # Only keep substantial paragraphs
-                    paragraphs.append({
-                        'text': clean_paragraph,
-                        'image_url': None,
-                        'audio_url': None
-                    })
+                if raw_paragraph.strip():
+                    clean_paragraph = self._clean_paragraph(raw_paragraph)
+                    if clean_paragraph and len(clean_paragraph) > 30:  # Only keep substantial paragraphs
+                        paragraphs.append({
+                            'text': clean_paragraph,
+                            'image_url': None,
+                            'audio_url': None
+                        })
+            
+            # Ensure we have at least some paragraphs
+            if not paragraphs:
+                # Fallback to basic splitting if Gemini processing failed
+                for raw_paragraph in text.split('\n\n'):
+                    if raw_paragraph.strip():
+                        clean_paragraph = self._clean_paragraph(raw_paragraph)
+                        if clean_paragraph and len(clean_paragraph) > 30:
+                            paragraphs.append({
+                                'text': clean_paragraph,
+                                'image_url': None,
+                                'audio_url': None
+                            })
             
             return paragraphs
-                
+                    
         except Exception as e:
             print(f"Error processing text: {str(e)}")
             return []
