@@ -6,12 +6,20 @@ from bs4 import BeautifulSoup
 import os
 import re
 import google.generativeai as genai
+import nltk
+from nltk.tokenize import sent_tokenize
 
 class BookProcessor:
     def __init__(self):
         # Initialize Gemini
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
         self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
+        
+        # Download NLTK data for sentence tokenization
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            nltk.download('punkt')
         
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
@@ -52,103 +60,103 @@ class BookProcessor:
                 text += soup.get_text() + "\n"
         return text
 
-    def _process_text(self, text: str) -> List[Dict[str, str]]:
-        try:
-            # Clean the text initially
-            text = self._clean_text(text)
-            
-            # Use Gemini to process the text and split into 2-sentence chunks
-            prompt = f'''
-            Process this text into 2-sentence chunks. For each chunk:
-            1. Keep the exact original text
-            2. Preserve punctuation and formatting
-            3. Do not summarize or rewrite
-            4. Keep exactly 2 complete sentences per chunk
-            5. Remove headers and page numbers
-            6. Maintain the story's flow and context
-            
-            Rules:
-            - Each chunk must contain exactly 2 sentences
-            - Split at natural sentence boundaries
-            - Preserve quotation marks and dialogue
-            - Keep sentences together that share context
-            
-            Text to process:
-            {text[:8000]}
-            '''
-            
-            response = self.model.generate_content(prompt)
-            processed_text = response.text
-            
-            # Split into chunks and clean each one
-            paragraphs = []
-            raw_chunks = processed_text.split('\n\n')
-            
-            for raw_chunk in raw_chunks:
-                if raw_chunk.strip():
-                    clean_chunk = self._clean_paragraph(raw_chunk)
-                    if clean_chunk:
-                        # Verify we have exactly 2 sentences
-                        sentences = re.split(r'[.!?]+', clean_chunk)
-                        sentences = [s.strip() for s in sentences if s.strip()]
-                        if len(sentences) == 2:
-                            paragraphs.append({
-                                'text': clean_chunk,
-                                'image_url': None,
-                                'audio_url': None
-                            })
-            
-            # If no paragraphs found, try basic text splitting
-            if not paragraphs:
-                # Split by single newlines and look for paragraph-like chunks
-                text_chunks = text.split('\n')
-                current_paragraph = []
-                
-                for chunk in text_chunks:
-                    chunk = chunk.strip()
-                    if chunk:
-                        current_paragraph.append(chunk)
-                    elif current_paragraph:
-                        # Join accumulated lines and clean
-                        paragraph_text = ' '.join(current_paragraph)
-                        clean_paragraph = self._clean_paragraph(paragraph_text)
-                        if clean_paragraph and len(clean_paragraph) > 30:
-                            paragraphs.append({
-                                'text': clean_paragraph,
-                                'image_url': None,
-                                'audio_url': None
-                            })
-                        current_paragraph = []
-                
-                # Handle any remaining paragraph
-                if current_paragraph:
-                    paragraph_text = ' '.join(current_paragraph)
-                    clean_paragraph = self._clean_paragraph(paragraph_text)
-                    if clean_paragraph and len(clean_paragraph) > 30:
-                        paragraphs.append({
-                            'text': clean_paragraph,
-                            'image_url': None,
-                            'audio_url': None
-                        })
-
-            return paragraphs
-                
-        except Exception as e:
-            print(f"Error processing text: {str(e)}")
-            return []
-
     def _clean_text(self, text: str) -> str:
         """Clean and normalize text."""
         # Remove excessive whitespace
         text = re.sub(r'\s+', ' ', text)
+        
         # Remove page numbers
         text = re.sub(r'\b\d+\b(?=\s*$)', '', text)
+        
         # Remove headers and footers (common in PDFs)
         text = re.sub(r'^\s*(?:chapter|page)\s+\d+\s*$', '', text, flags=re.MULTILINE | re.IGNORECASE)
+        
+        # Clean up special characters
+        text = text.replace('_', '')
+        text = re.sub(r'={3,}', '', text)  # Remove section separators
+        
         # Normalize quotes and dashes
         text = text.replace('"', '"').replace('"', '"')
         text = text.replace('--', '—')
+        text = re.sub(r'\s*\[\d+\]\s*', '', text)  # Remove reference numbers
+        
+        # Fix common OCR issues
+        text = re.sub(r'(\w)- (\w)', r'\1\2', text)  # Fix hyphenated words
+        
         return text.strip()
+
+    def _is_valid_sentence(self, sentence: str) -> bool:
+        """Check if a sentence is valid and meaningful."""
+        # Remove whitespace and check minimum length
+        cleaned = sentence.strip()
+        if len(cleaned) < 20:  # Minimum meaningful sentence length
+            return False
+            
+        # Check if it contains actual words (not just numbers or symbols)
+        if not re.search(r'[a-zA-Z]{2,}', cleaned):
+            return False
+            
+        # Check for balanced quotes and parentheses
+        quotes = cleaned.count('"') + cleaned.count('"') + cleaned.count('"')
+        if quotes % 2 != 0:
+            return False
+            
+        parens = cleaned.count('(') - cleaned.count(')')
+        if parens != 0:
+            return False
+            
+        return True
+
+    def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process extracted text into two-sentence chunks."""
+        try:
+            # Clean the text first
+            text = self._clean_text(text)
+            
+            # Use NLTK to split into sentences with proper boundary detection
+            sentences = sent_tokenize(text)
+            
+            # Filter valid sentences
+            valid_sentences = [s.strip() for s in sentences if self._is_valid_sentence(s)]
+            
+            # Create chunks of two sentences
+            chunks = []
+            for i in range(0, len(valid_sentences)-1, 2):
+                # Get the next two sentences
+                first_sentence = valid_sentences[i].strip()
+                second_sentence = valid_sentences[i+1].strip()
+                
+                # Only create chunk if both sentences are valid
+                if first_sentence and second_sentence:
+                    # Join sentences with proper spacing
+                    chunk_text = f"{first_sentence} {second_sentence}"
+                    
+                    # Create the paragraph object
+                    chunks.append({
+                        'text': chunk_text,
+                        'image_url': None,
+                        'audio_url': None
+                    })
+            
+            # Handle the last sentence if there's an odd number
+            if len(valid_sentences) % 2 != 0 and valid_sentences[-1]:
+                last_sentence = valid_sentences[-1].strip()
+                if len(chunks) > 0:
+                    # Append to the last chunk if possible
+                    chunks[-1]['text'] += f" {last_sentence}"
+                else:
+                    # Create a new chunk if it's the only sentence
+                    chunks.append({
+                        'text': last_sentence,
+                        'image_url': None,
+                        'audio_url': None
+                    })
+            
+            return chunks
+            
+        except Exception as e:
+            print(f"Error processing text: {str(e)}")
+            return []
 
     def _clean_paragraph(self, text: str) -> str:
         """Clean individual paragraph text."""
