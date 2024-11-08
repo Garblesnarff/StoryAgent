@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <h1 class="display-4 mb-5 text-center">Style Your Story</h1>
+    
+    <div class="customization-container">
+        <div id="node-editor" class="node-editor-container mb-4"></div>
+        
+        <div class="style-controls">
+            {% for paragraph in story.paragraphs %}
+            <div class="paragraph-style mb-4" data-index="{{ loop.index0 }}">
+                <h3 class="h5 mb-3">Paragraph {{ loop.index }}</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Image Style</label>
+                            <select class="form-select image-style">
+                                <option value="realistic">Realistic</option>
+                                <option value="artistic">Artistic</option>
+                                <option value="abstract">Abstract</option>
+                                <option value="minimalist">Minimalist</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Voice Style</label>
+                            <select class="form-select voice-style">
+                                <option value="neutral">Neutral</option>
+                                <option value="dramatic">Dramatic</option>
+                                <option value="emotional">Emotional</option>
+                                <option value="whimsical">Whimsical</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mood Enhancement</label>
+                            <select class="form-select mood-enhancement">
+                                <option value="none">None</option>
+                                <option value="happy">Happy</option>
+                                <option value="mysterious">Mysterious</option>
+                                <option value="suspenseful">Suspenseful</option>
+                                <option value="romantic">Romantic</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-center gap-3 mt-4">
+        <a href="/story/edit" class="btn btn-secondary">Back to Edit</a>
+        <button id="save-customization" class="btn btn-primary">Generate Cards</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/customize.js') }}"></script>
+{% endblock %}

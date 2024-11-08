@@ -42,9 +42,10 @@ def regenerate_image():
             
         text = data['text']
         index = data.get('index')
+        image_style = data.get('style', 'realistic')
         
         # Generate new image
-        image_url = image_service.generate_image(text)
+        image_url = image_service.generate_image(text, style=image_style)
         if not image_url:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -86,9 +87,10 @@ def regenerate_audio():
             
         text = data['text']
         index = data.get('index')
+        voice_style = data.get('style', 'neutral')
         
         # Generate new audio
-        audio_url = audio_service.generate_audio(text)
+        audio_url = audio_service.generate_audio(text, style=voice_style)
         if not audio_url:
             return jsonify({'error': 'Failed to generate audio'}), 500
             
@@ -147,10 +149,14 @@ def generate_cards():
                 progress = ((index + 1) / len(paragraphs) * 100)
                 current_message = f"Processing paragraph {index + 1}/{len(paragraphs)}"
                 
-                # Generate image if needed
+                # Generate image if needed with style
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
-                    paragraph['image_url'] = image_service.generate_image(paragraph['text'])
+                    image_style = paragraph.get('image_style', 'realistic')
+                    paragraph['image_url'] = image_service.generate_image(
+                        paragraph['text'],
+                        style=image_style
+                    )
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {
@@ -160,10 +166,14 @@ def generate_cards():
                         'index': index
                     }, step='image')
                 
-                # Generate audio if needed
+                # Generate audio if needed with style
                 if not paragraph.get('audio_url'):
                     yield send_json_message('log', f"Generating audio for paragraph {index + 1}...", step='audio')
-                    paragraph['audio_url'] = audio_service.generate_audio(paragraph['text'])
+                    voice_style = paragraph.get('voice_style', 'neutral')
+                    paragraph['audio_url'] = audio_service.generate_audio(
+                        paragraph['text'],
+                        style=voice_style
+                    )
                     
                     # Send final update after audio generation
                     yield send_json_message('paragraph', {

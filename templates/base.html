@@ -15,7 +15,8 @@
             <div class="progress-nav">
                 <div class="nav-item {% if request.endpoint == 'index' %}active{% endif %}" id="prompt-stage">1. Story Prompt</div>
                 <div class="nav-item {% if request.endpoint == 'story.edit' %}active{% endif %}" id="edit-stage">2. Story Edit</div>
-                <div class="nav-item {% if request.endpoint == 'generation.generate' %}active{% endif %}" id="generate-stage">3. Card Generation</div>
+                <div class="nav-item {% if request.endpoint == 'story.customize' %}active{% endif %}" id="customize-stage">3. Style Customization</div>
+                <div class="nav-item {% if request.endpoint == 'generation.generate' %}active{% endif %}" id="generate-stage">4. Card Generation</div>
             </div>
             <div class="nav-actions">
                 {% if request.endpoint == 'generation.generate' %}

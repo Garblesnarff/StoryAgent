@@ -7,7 +7,7 @@ from services.regeneration_service import RegenerationService
 from database import db
 import os
 from werkzeug.utils import secure_filename
-from models import TempBookData
+from models import TempBookData, StyleCustomization
 import logging
 
 # Set up logging
@@ -85,6 +85,12 @@ def edit():
         logger.error(f"Error in edit route: {str(e)}")
         return redirect(url_for('index'))
 
+@story_bp.route('/story/customize', methods=['GET'])
+def customize_story():
+    if 'story_data' not in session:
+        return redirect(url_for('index'))
+    return render_template('story/customize.html', story=session['story_data'])
+
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:
@@ -149,4 +155,40 @@ def update_paragraph():
         
     except Exception as e:
         logger.error(f"Error updating paragraph: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@story_bp.route('/story/update_style', methods=['POST'])
+def update_style():
+    try:
+        if 'story_data' not in session:
+            return jsonify({'error': 'No story data found'}), 404
+            
+        data = request.get_json()
+        story_data = session['story_data']
+        temp_id = story_data.get('temp_id')
+        
+        # Update styles in session data
+        for paragraph_style in data['paragraphs']:
+            index = paragraph_style['index']
+            if index < len(story_data['paragraphs']):
+                story_data['paragraphs'][index].update({
+                    'image_style': paragraph_style['image_style'],
+                    'voice_style': paragraph_style['voice_style'],
+                    'mood_enhancement': paragraph_style['mood_enhancement']
+                })
+        
+        # Update temp storage if using uploaded book
+        if temp_id:
+            temp_data = TempBookData.query.get(temp_id)
+            if temp_data:
+                temp_data.data = story_data
+                db.session.commit()
+        
+        # Store updated data back in session
+        session['story_data'] = story_data
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error updating style: {str(e)}")
         return jsonify({'error': str(e)}), 500
