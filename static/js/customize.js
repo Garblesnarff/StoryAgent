@@ -1,45 +1,15 @@
-// Initialize React Flow
-const nodeTypes = {
-    paragraph: ParagraphNode,
-    effect: EffectNode
-};
+// Node editor components
+const NodeEditor = React.createClass({
+    getInitialState() {
+        return {
+            nodes: [],
+            edges: []
+        };
+    },
 
-function ParagraphNode({ data }) {
-    return (
-        <div className="paragraph-node">
-            <div className="node-header">Paragraph {data.index + 1}</div>
-            <div className="node-content">{data.text.substring(0, 100)}...</div>
-        </div>
-    );
-}
-
-function EffectNode({ data }) {
-    return (
-        <div className="effect-node">
-            <div className="node-header">{data.type}</div>
-            <select className="node-select" onChange={data.onChange}>
-                {data.options.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-            </select>
-        </div>
-    );
-}
-
-function handleStyleChange(index, styleType, value) {
-    const styleData = window.styleData || { paragraphs: [] };
-    if (!styleData.paragraphs[index]) {
-        styleData.paragraphs[index] = { index };
-    }
-    styleData.paragraphs[index][styleType] = value;
-    window.styleData = styleData;
-}
-
-function NodeEditor({ paragraphs }) {
-    const [nodes, setNodes] = React.useState([]);
-    const [edges, setEdges] = React.useState([]);
-
-    React.useEffect(() => {
+    componentDidMount() {
+        const paragraphs = this.props.paragraphs;
+        
         // Create paragraph nodes
         const paragraphNodes = paragraphs.map((p, i) => ({
             id: `p-${i}`,
@@ -49,38 +19,36 @@ function NodeEditor({ paragraphs }) {
         }));
 
         // Create effect nodes
-        const effectNodes = paragraphs.map((p, i) => {
-            return [
-                {
-                    id: `img-${i}`,
-                    type: 'effect',
-                    position: { x: 400, y: i * 200 },
-                    data: {
-                        type: 'Image Style',
-                        options: [
-                            { value: 'realistic', label: 'Realistic' },
-                            { value: 'artistic', label: 'Artistic' },
-                            { value: 'fantasy', label: 'Fantasy' }
-                        ],
-                        onChange: (e) => handleStyleChange(i, 'image_style', e.target.value)
-                    }
-                },
-                {
-                    id: `voice-${i}`,
-                    type: 'effect',
-                    position: { x: 600, y: i * 200 },
-                    data: {
-                        type: 'Voice Style',
-                        options: [
-                            { value: 'neutral', label: 'Neutral' },
-                            { value: 'dramatic', label: 'Dramatic' },
-                            { value: 'emotional', label: 'Emotional' }
-                        ],
-                        onChange: (e) => handleStyleChange(i, 'voice_style', e.target.value)
-                    }
+        const effectNodes = paragraphs.map((p, i) => [
+            {
+                id: `img-${i}`,
+                type: 'effect',
+                position: { x: 400, y: i * 200 },
+                data: {
+                    type: 'Image Style',
+                    options: [
+                        { value: 'realistic', label: 'Realistic' },
+                        { value: 'artistic', label: 'Artistic' },
+                        { value: 'fantasy', label: 'Fantasy' }
+                    ],
+                    onChange: (e) => this.handleStyleChange(i, 'image_style', e.target.value)
                 }
-            ];
-        }).flat();
+            },
+            {
+                id: `voice-${i}`,
+                type: 'effect',
+                position: { x: 600, y: i * 200 },
+                data: {
+                    type: 'Voice Style',
+                    options: [
+                        { value: 'neutral', label: 'Neutral' },
+                        { value: 'dramatic', label: 'Dramatic' },
+                        { value: 'emotional', label: 'Emotional' }
+                    ],
+                    onChange: (e) => this.handleStyleChange(i, 'voice_style', e.target.value)
+                }
+            }
+        ]).flat();
 
         // Create edges
         const edges = paragraphs.map((p, i) => [
@@ -98,29 +66,88 @@ function NodeEditor({ paragraphs }) {
             }
         ]).flat();
 
-        setNodes([...paragraphNodes, ...effectNodes]);
-        setEdges(edges);
-    }, [paragraphs]);
+        this.setState({
+            nodes: [...paragraphNodes, ...effectNodes],
+            edges: edges
+        });
+    },
 
-    return (
-        <div style={{ width: '100%', height: '400px' }}>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                fitView
-            />
-        </div>
-    );
-}
+    handleStyleChange(index, styleType, value) {
+        window.styleData = window.styleData || { paragraphs: [] };
+        if (!window.styleData.paragraphs[index]) {
+            window.styleData.paragraphs[index] = { index };
+        }
+        window.styleData.paragraphs[index][styleType] = value;
+    },
 
-// Initialize the editor when the page loads
+    render() {
+        return React.createElement('div', 
+            { style: { width: '100%', height: '400px' } },
+            React.createElement(ReactFlow, {
+                nodes: this.state.nodes,
+                edges: this.state.edges,
+                nodeTypes: {
+                    paragraph: ParagraphNode,
+                    effect: EffectNode
+                },
+                fitView: true
+            })
+        );
+    }
+});
+
+const ParagraphNode = React.createClass({
+    render() {
+        const { data } = this.props;
+        return React.createElement('div', 
+            { className: 'paragraph-node' },
+            React.createElement('div', 
+                { className: 'node-header' },
+                `Paragraph ${data.index + 1}`
+            ),
+            React.createElement('div', 
+                { className: 'node-content' },
+                `${data.text.substring(0, 100)}...`
+            )
+        );
+    }
+});
+
+const EffectNode = React.createClass({
+    render() {
+        const { data } = this.props;
+        return React.createElement('div',
+            { className: 'effect-node' },
+            React.createElement('div',
+                { className: 'node-header' },
+                data.type
+            ),
+            React.createElement('select',
+                {
+                    className: 'node-select',
+                    onChange: data.onChange
+                },
+                data.options.map(opt =>
+                    React.createElement('option',
+                        {
+                            key: opt.value,
+                            value: opt.value
+                        },
+                        opt.label
+                    )
+                )
+            )
+        );
+    }
+});
+
+// Initialize when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('node-editor');
     const storyData = JSON.parse(container.dataset.story);
     
     ReactDOM.render(
-        <NodeEditor paragraphs={storyData.paragraphs} />,
+        React.createElement(NodeEditor, { paragraphs: storyData.paragraphs }),
         container
     );
     
