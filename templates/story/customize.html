@@ -16,12 +16,9 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- ReactFlow dependencies must be loaded in order -->
-<link href="https://unpkg.com/@reactflow/background@11.3.3/dist/style.css" rel="stylesheet" />
-<link href="https://unpkg.com/@reactflow/controls@11.3.3/dist/style.css" rel="stylesheet" />
-<link href="https://unpkg.com/@reactflow/core@11.3.3/dist/style.css" rel="stylesheet" />
-<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/reactflow@11.3.3/dist/umd/index.js"></script>
-<script src="{{ url_for('static', filename='js/customize.js') }}"></script>
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/reactflow@11.3.3/dist/reactflow.umd.js"></script>
+<link href="https://unpkg.com/reactflow@11.3.3/dist/style.css" rel="stylesheet" />
+<script type="text/javascript" src="{{ url_for('static', filename='js/customize.js') }}"></script>
 {% endblock %}
