@@ -30,97 +30,115 @@ class ErrorBoundary extends React.Component {
 function NodeEditor({ storyData }) {
     const [nodes, setNodes] = React.useState([]);
     const [edges, setEdges] = React.useState([]);
+    const [initialized, setInitialized] = React.useState(false);
 
     React.useEffect(() => {
-        const paragraphNodes = storyData.paragraphs.map((paragraph, index) => ({
-            id: `p${index}`,
-            type: 'default',
-            position: { x: 100, y: index * 200 },
-            data: {
-                label: React.createElement('div', { className: 'paragraph-node' },
-                    React.createElement('div', { className: 'node-header' },
-                        `Paragraph ${index + 1}`
-                    ),
-                    React.createElement('div', { className: 'node-content' },
-                        paragraph.text.substring(0, 100) + '...'
-                    )
-                )
-            }
-        }));
+        if (!storyData?.paragraphs?.length) {
+            console.error('Invalid story data structure');
+            return;
+        }
 
-        const styleNodes = storyData.paragraphs.map((paragraph, index) => ({
-            id: `style${index}`,
-            type: 'default',
-            position: { x: 500, y: index * 200 },
-            data: {
-                label: React.createElement('div', { className: 'effect-node' },
-                    React.createElement('div', { className: 'node-header' }, 'Style Options'),
-                    React.createElement('div', null, [
-                        React.createElement('div', { key: 'image-style', className: 'node-select-group' }, [
-                            React.createElement('label', { className: 'node-select-label' }, 'Image Style'),
-                            React.createElement('select', {
-                                className: 'node-select',
-                                defaultValue: paragraph.image_style || 'realistic',
-                                onChange: (e) => {
-                                    window.styleData = window.styleData || { paragraphs: [] };
-                                    window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                                    window.styleData.paragraphs[index].image_style = e.target.value;
-                                }
-                            }, [
-                                React.createElement('option', { value: 'realistic' }, 'Realistic'),
-                                React.createElement('option', { value: 'artistic' }, 'Artistic'),
-                                React.createElement('option', { value: 'fantasy' }, 'Fantasy')
-                            ])
-                        ]),
-                        React.createElement('div', { key: 'voice-style', className: 'node-select-group' }, [
-                            React.createElement('label', { className: 'node-select-label' }, 'Voice Style'),
-                            React.createElement('select', {
-                                className: 'node-select',
-                                defaultValue: paragraph.voice_style || 'neutral',
-                                onChange: (e) => {
-                                    window.styleData = window.styleData || { paragraphs: [] };
-                                    window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                                    window.styleData.paragraphs[index].voice_style = e.target.value;
-                                }
-                            }, [
-                                React.createElement('option', { value: 'neutral' }, 'Neutral'),
-                                React.createElement('option', { value: 'dramatic' }, 'Dramatic'),
-                                React.createElement('option', { value: 'cheerful' }, 'Cheerful')
-                            ])
-                        ]),
-                        React.createElement('div', { key: 'mood-enhancement', className: 'node-select-group' }, [
-                            React.createElement('label', { className: 'node-select-label' }, 'Mood Enhancement'),
-                            React.createElement('select', {
-                                className: 'node-select',
-                                defaultValue: paragraph.mood_enhancement || 'none',
-                                onChange: (e) => {
-                                    window.styleData = window.styleData || { paragraphs: [] };
-                                    window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                                    window.styleData.paragraphs[index].mood_enhancement = e.target.value;
-                                }
-                            }, [
-                                React.createElement('option', { value: 'none' }, 'None'),
-                                React.createElement('option', { value: 'intense' }, 'Intense'),
-                                React.createElement('option', { value: 'subtle' }, 'Subtle'),
-                                React.createElement('option', { value: 'dreamy' }, 'Dreamy')
+        try {
+            const paragraphNodes = storyData.paragraphs.map((paragraph, index) => ({
+                id: `p${index}`,
+                type: 'default',
+                position: { x: 100, y: index * 200 },
+                data: {
+                    label: React.createElement('div', { className: 'paragraph-node' },
+                        React.createElement('div', { className: 'node-header' },
+                            `Paragraph ${index + 1}`
+                        ),
+                        React.createElement('div', { className: 'node-content' },
+                            paragraph.text?.substring(0, 100) + '...' || 'No content available'
+                        )
+                    )
+                }
+            }));
+
+            const styleNodes = storyData.paragraphs.map((paragraph, index) => ({
+                id: `style${index}`,
+                type: 'default',
+                position: { x: 500, y: index * 200 },
+                data: {
+                    label: React.createElement('div', { className: 'effect-node' },
+                        React.createElement('div', { className: 'node-header' }, 'Style Options'),
+                        React.createElement('div', null, [
+                            React.createElement('div', { key: 'image-style', className: 'node-select-group' }, [
+                                React.createElement('label', { className: 'node-select-label' }, 'Image Style'),
+                                React.createElement('select', {
+                                    className: 'node-select',
+                                    defaultValue: paragraph.image_style || 'realistic',
+                                    onChange: (e) => {
+                                        window.styleData = window.styleData || { paragraphs: [] };
+                                        window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
+                                        window.styleData.paragraphs[index].image_style = e.target.value;
+                                    }
+                                }, [
+                                    React.createElement('option', { value: 'realistic' }, 'Realistic'),
+                                    React.createElement('option', { value: 'artistic' }, 'Artistic'),
+                                    React.createElement('option', { value: 'fantasy' }, 'Fantasy')
+                                ])
+                            ]),
+                            React.createElement('div', { key: 'voice-style', className: 'node-select-group' }, [
+                                React.createElement('label', { className: 'node-select-label' }, 'Voice Style'),
+                                React.createElement('select', {
+                                    className: 'node-select',
+                                    defaultValue: paragraph.voice_style || 'neutral',
+                                    onChange: (e) => {
+                                        window.styleData = window.styleData || { paragraphs: [] };
+                                        window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
+                                        window.styleData.paragraphs[index].voice_style = e.target.value;
+                                    }
+                                }, [
+                                    React.createElement('option', { value: 'neutral' }, 'Neutral'),
+                                    React.createElement('option', { value: 'dramatic' }, 'Dramatic'),
+                                    React.createElement('option', { value: 'cheerful' }, 'Cheerful')
+                                ])
+                            ]),
+                            React.createElement('div', { key: 'mood-enhancement', className: 'node-select-group' }, [
+                                React.createElement('label', { className: 'node-select-label' }, 'Mood Enhancement'),
+                                React.createElement('select', {
+                                    className: 'node-select',
+                                    defaultValue: paragraph.mood_enhancement || 'none',
+                                    onChange: (e) => {
+                                        window.styleData = window.styleData || { paragraphs: [] };
+                                        window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
+                                        window.styleData.paragraphs[index].mood_enhancement = e.target.value;
+                                    }
+                                }, [
+                                    React.createElement('option', { value: 'none' }, 'None'),
+                                    React.createElement('option', { value: 'intense' }, 'Intense'),
+                                    React.createElement('option', { value: 'subtle' }, 'Subtle'),
+                                    React.createElement('option', { value: 'dreamy' }, 'Dreamy')
+                                ])
                             ])
                         ])
-                    ])
-                )
-            }
-        }));
+                    )
+                }
+            }));
 
-        const newEdges = storyData.paragraphs.map((_, index) => ({
-            id: `e${index}`,
-            source: `p${index}`,
-            target: `style${index}`,
-            type: 'smoothstep',
-            animated: true
-        }));
+            const newEdges = storyData.paragraphs.map((_, index) => ({
+                id: `e${index}`,
+                source: `p${index}`,
+                target: `style${index}`,
+                type: 'smoothstep',
+                animated: true
+            }));
 
-        setNodes([...paragraphNodes, ...styleNodes]);
-        setEdges(newEdges);
+            setNodes([...paragraphNodes, ...styleNodes]);
+            setEdges(newEdges);
+            setInitialized(true);
+        } catch (error) {
+            console.error('Error initializing nodes:', error);
+            throw new Error(`Failed to initialize nodes: ${error.message}`);
+        }
     }, [storyData]);
+
+    if (!initialized) {
+        return React.createElement('div', { className: 'alert alert-info' },
+            'Initializing node editor...'
+        );
+    }
 
     return React.createElement(window.ReactFlow.ReactFlowProvider, null,
         React.createElement(window.ReactFlow.ReactFlow, {
@@ -194,12 +212,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Parse story data
+    // Parse story data with better error handling
     let storyData;
     try {
-        storyData = JSON.parse(container.dataset.story);
-        if (!storyData || !storyData.paragraphs) {
-            throw new Error('Invalid story data format');
+        const rawData = container.dataset.story;
+        if (!rawData) {
+            throw new Error('No story data found');
+        }
+        storyData = JSON.parse(rawData);
+        if (!storyData || !Array.isArray(storyData.paragraphs)) {
+            throw new Error('Invalid story data format: Expected array of paragraphs');
         }
     } catch (error) {
         console.error('Failed to parse story data:', error);
@@ -207,6 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="alert alert-danger">
                 <h4 class="alert-heading">Failed to load story data</h4>
                 <p>${error.message}</p>
+                <hr>
+                <p class="mb-0">Please make sure you have a valid story selected.</p>
             </div>
         `;
         return;
@@ -227,31 +251,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="alert alert-danger">
                     <h4 class="alert-heading">Failed to initialize node editor</h4>
                     <p>${error.message}</p>
+                    <hr>
+                    <p class="mb-0">Please try refreshing the page or contact support if the issue persists.</p>
                 </div>
             `;
         }
     };
 
-    // Check for ReactFlow with timeout
-    let attempts = 0;
-    const maxAttempts = 50;
-    const checkInterval = 100;
-
-    const checkReactFlow = setInterval(() => {
-        attempts++;
-        if (window.ReactFlow) {
-            clearInterval(checkReactFlow);
-            console.log('ReactFlow loaded successfully');
-            initializeEditor();
-        } else if (attempts >= maxAttempts) {
-            clearInterval(checkReactFlow);
-            console.error('ReactFlow failed to load');
-            root.innerHTML = `
-                <div class="alert alert-danger">
-                    <h4 class="alert-heading">Failed to load ReactFlow</h4>
-                    <p>The required library could not be loaded. Please check your internet connection and try again.</p>
-                </div>
-            `;
-        }
-    }, checkInterval);
+    // Initialize immediately since we're using node_modules now
+    initializeEditor();
 });
