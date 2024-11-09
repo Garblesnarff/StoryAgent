@@ -1,17 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const initializeEditor = () => {
+    // Wait for all scripts to load
+    setTimeout(() => {
         const container = document.getElementById('node-editor');
-        if (!container) {
-            console.error('Node editor container not found');
-            return;
-        }
+        if (!container) return;
 
         try {
-            // Verify ReactFlow is loaded
-            if (!window.ReactFlow) {
-                throw new Error('ReactFlow not loaded. Please refresh the page.');
-            }
-
+            // Parse story data
             const storyData = JSON.parse(container.dataset.story);
             
             // Create root element
@@ -20,22 +14,22 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.height = '100%';
             container.appendChild(root);
 
-            // Node components
-            const ParagraphNode = ({ data }) => {
-                return React.createElement('div',
+            // Create node components
+            function ParagraphNode({ data }) {
+                return React.createElement('div', 
                     { className: 'paragraph-node' },
-                    React.createElement('div',
-                        { className: 'node-header' },
+                    React.createElement('div', 
+                        { className: 'node-header' }, 
                         `Paragraph ${data.index + 1}`
                     ),
-                    React.createElement('div',
-                        { className: 'node-content' },
+                    React.createElement('div', 
+                        { className: 'node-content' }, 
                         data.text.substring(0, 100) + '...'
                     )
                 );
-            };
+            }
 
-            const EffectNode = ({ data }) => {
+            function EffectNode({ data }) {
                 return React.createElement('div',
                     { className: 'effect-node' },
                     React.createElement('div',
@@ -56,22 +50,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         )
                     )
                 );
-            };
+            }
 
-            // Initialize style data
-            window.styleData = {
-                paragraphs: storyData.paragraphs.map((p, index) => ({
-                    index,
-                    image_style: p.image_style || 'realistic',
-                    voice_style: p.voice_style || 'neutral'
-                }))
-            };
-
-            // Create nodes
+            // Initialize nodes and edges
             const nodes = [];
             const edges = [];
+            
+            // Initialize style data
+            window.styleData = { paragraphs: [] };
 
+            // Create nodes for each paragraph
             storyData.paragraphs.forEach((p, i) => {
+                window.styleData.paragraphs[i] = {
+                    index: i,
+                    image_style: p.image_style || 'realistic',
+                    voice_style: p.voice_style || 'neutral'
+                };
+
                 // Add paragraph node
                 nodes.push({
                     id: `p-${i}`,
@@ -80,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: { index: i, text: p.text }
                 });
 
-                // Add image style node
+                // Add effect nodes
                 nodes.push({
                     id: `img-${i}`,
                     type: 'effect',
@@ -100,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Add voice style node
                 nodes.push({
                     id: `voice-${i}`,
                     type: 'effect',
@@ -126,24 +120,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         id: `p${i}-img${i}`,
                         source: `p-${i}`,
                         target: `img-${i}`,
-                        type: 'smoothstep'
+                        type: 'default'
                     },
                     {
                         id: `p${i}-voice${i}`,
                         source: `p-${i}`,
                         target: `voice-${i}`,
-                        type: 'smoothstep'
+                        type: 'default'
                     }
                 );
             });
 
-            // Create flow component
+            // Create the flow component
             const Flow = () => {
                 const [reactNodes, setNodes] = React.useState(nodes);
                 const [reactEdges, setEdges] = React.useState(edges);
 
                 return React.createElement(ReactFlow.ReactFlowProvider, null,
-                    React.createElement(ReactFlow.ReactFlow, {
+                    React.createElement(ReactFlow.default, {
                         nodes: reactNodes,
                         edges: reactEdges,
                         nodeTypes: {
@@ -155,20 +149,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         maxZoom: 1.5,
                         nodesDraggable: true,
                         nodesConnectable: false,
-                        elementsSelectable: true,
-                        onNodesChange: (changes) => {
-                            setNodes((nds) => ReactFlow.applyNodeChanges(changes, nds));
-                        },
-                        onEdgesChange: (changes) => {
-                            setEdges((eds) => ReactFlow.applyEdgeChanges(changes, eds));
-                        }
-                    }),
+                        elementsSelectable: true
+                    },
                     React.createElement(ReactFlow.Background, {
                         color: '#aaa',
                         gap: 16,
                         size: 1
                     }),
-                    React.createElement(ReactFlow.Controls)
+                    React.createElement(ReactFlow.Controls))
                 );
             };
 
@@ -224,8 +212,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p class="mb-0">Please try refreshing the page. If the problem persists, contact support.</p>
             </div>`;
         }
-    };
-
-    // Delay initialization to ensure all scripts are loaded
-    setTimeout(initializeEditor, 500);
+    }, 1000); // Wait 1 second for all scripts to load
 });
