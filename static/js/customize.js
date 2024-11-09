@@ -9,11 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     root.style.height = '100%';
     container.appendChild(root);
     
-    // Initialize ReactFlow
-    const ReactFlowProvider = ReactFlow.ReactFlowProvider;
-    const ReactFlowInstance = ReactFlow.ReactFlow;
+    // Get ReactFlow from the global scope
+    const { ReactFlowProvider, ReactFlow, Background, Controls } = window.ReactFlow;
     
-    // Define node components
+    // Node components remain the same
     const ParagraphNode = ({ data }) => {
         return React.createElement('div', 
             { className: 'paragraph-node' },
@@ -52,6 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 )
             )
         );
+    };
+
+    const nodeTypes = {
+        paragraph: ParagraphNode,
+        effect: EffectNode
     };
 
     // Create main editor component
@@ -127,27 +131,30 @@ document.addEventListener('DOMContentLoaded', () => {
             window.styleData.paragraphs[index][styleType] = value;
         };
 
-        return React.createElement(ReactFlowInstance, {
-            nodes: nodes,
-            edges: edges,
-            nodeTypes: {
-                paragraph: ParagraphNode,
-                effect: EffectNode
+        return React.createElement(ReactFlowProvider, null,
+            React.createElement(ReactFlow, {
+                nodes: nodes,
+                edges: edges,
+                nodeTypes: nodeTypes,
+                fitView: true,
+                minZoom: 0.5,
+                maxZoom: 1.5,
+                nodesDraggable: true,
+                nodesConnectable: false,
+                elementsSelectable: true
             },
-            fitView: true,
-            minZoom: 0.5,
-            maxZoom: 1.5,
-            nodesDraggable: true,
-            nodesConnectable: false,
-            elementsSelectable: true
-        });
+            React.createElement(Background, {
+                color: '#aaa',
+                gap: 16,
+                size: 1
+            }),
+            React.createElement(Controls))
+        );
     };
 
-    // Render editor with ReactFlow provider
+    // Render editor
     ReactDOM.render(
-        React.createElement(ReactFlowProvider, null,
-            React.createElement(NodeEditor)
-        ),
+        React.createElement(NodeEditor),
         root
     );
     
