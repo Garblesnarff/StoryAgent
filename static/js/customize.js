@@ -1,15 +1,31 @@
-// Node editor components
-const NodeEditor = React.createClass({
-    getInitialState() {
-        return {
-            nodes: [],
-            edges: []
-        };
-    },
+// customize.js
+const ParagraphNode = ({ data }) => {
+    return (
+        <div className="paragraph-node">
+            <div className="node-header">Paragraph {data.index + 1}</div>
+            <div className="node-content">{data.text.substring(0, 100)}...</div>
+        </div>
+    );
+};
 
-    componentDidMount() {
-        const paragraphs = this.props.paragraphs;
-        
+const EffectNode = ({ data }) => {
+    return (
+        <div className="effect-node">
+            <div className="node-header">{data.type}</div>
+            <select className="node-select" onChange={data.onChange}>
+                {data.options.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+            </select>
+        </div>
+    );
+};
+
+const NodeEditor = ({ paragraphs }) => {
+    const [nodes, setNodes] = React.useState([]);
+    const [edges, setEdges] = React.useState([]);
+    
+    React.useEffect(() => {
         // Create paragraph nodes
         const paragraphNodes = paragraphs.map((p, i) => ({
             id: `p-${i}`,
@@ -19,7 +35,7 @@ const NodeEditor = React.createClass({
         }));
 
         // Create effect nodes
-        const effectNodes = paragraphs.map((p, i) => [
+        const effectNodes = paragraphs.flatMap((p, i) => [
             {
                 id: `img-${i}`,
                 type: 'effect',
@@ -31,7 +47,7 @@ const NodeEditor = React.createClass({
                         { value: 'artistic', label: 'Artistic' },
                         { value: 'fantasy', label: 'Fantasy' }
                     ],
-                    onChange: (e) => this.handleStyleChange(i, 'image_style', e.target.value)
+                    onChange: (e) => handleStyleChange(i, 'image_style', e.target.value)
                 }
             },
             {
@@ -45,13 +61,13 @@ const NodeEditor = React.createClass({
                         { value: 'dramatic', label: 'Dramatic' },
                         { value: 'emotional', label: 'Emotional' }
                     ],
-                    onChange: (e) => this.handleStyleChange(i, 'voice_style', e.target.value)
+                    onChange: (e) => handleStyleChange(i, 'voice_style', e.target.value)
                 }
             }
-        ]).flat();
+        ]);
 
         // Create edges
-        const edges = paragraphs.map((p, i) => [
+        const edges = paragraphs.flatMap((p, i) => [
             {
                 id: `p${i}-img${i}`,
                 source: `p-${i}`,
@@ -64,82 +80,39 @@ const NodeEditor = React.createClass({
                 target: `voice-${i}`,
                 type: 'smoothstep'
             }
-        ]).flat();
+        ]);
 
-        this.setState({
-            nodes: [...paragraphNodes, ...effectNodes],
-            edges: edges
-        });
-    },
+        setNodes([...paragraphNodes, ...effectNodes]);
+        setEdges(edges);
+    }, [paragraphs]);
 
-    handleStyleChange(index, styleType, value) {
+    const handleStyleChange = (index, styleType, value) => {
         window.styleData = window.styleData || { paragraphs: [] };
         if (!window.styleData.paragraphs[index]) {
             window.styleData.paragraphs[index] = { index };
         }
         window.styleData.paragraphs[index][styleType] = value;
-    },
+    };
 
-    render() {
-        return React.createElement('div', 
-            { style: { width: '100%', height: '400px' } },
-            React.createElement(ReactFlow, {
-                nodes: this.state.nodes,
-                edges: this.state.edges,
-                nodeTypes: {
+    return (
+        <div style={{ width: '100%', height: '100%' }}>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={{
                     paragraph: ParagraphNode,
                     effect: EffectNode
-                },
-                fitView: true
-            })
-        );
-    }
-});
-
-const ParagraphNode = React.createClass({
-    render() {
-        const { data } = this.props;
-        return React.createElement('div', 
-            { className: 'paragraph-node' },
-            React.createElement('div', 
-                { className: 'node-header' },
-                `Paragraph ${data.index + 1}`
-            ),
-            React.createElement('div', 
-                { className: 'node-content' },
-                `${data.text.substring(0, 100)}...`
-            )
-        );
-    }
-});
-
-const EffectNode = React.createClass({
-    render() {
-        const { data } = this.props;
-        return React.createElement('div',
-            { className: 'effect-node' },
-            React.createElement('div',
-                { className: 'node-header' },
-                data.type
-            ),
-            React.createElement('select',
-                {
-                    className: 'node-select',
-                    onChange: data.onChange
-                },
-                data.options.map(opt =>
-                    React.createElement('option',
-                        {
-                            key: opt.value,
-                            value: opt.value
-                        },
-                        opt.label
-                    )
-                )
-            )
-        );
-    }
-});
+                }}
+                fitView
+                minZoom={0.5}
+                maxZoom={1.5}
+                nodesDraggable={true}
+                nodesConnectable={false}
+                elementsSelectable={true}
+            />
+        </div>
+    );
+};
 
 // Initialize when the page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -147,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyData = JSON.parse(container.dataset.story);
     
     ReactDOM.render(
-        React.createElement(NodeEditor, { paragraphs: storyData.paragraphs }),
+        <NodeEditor paragraphs={storyData.paragraphs} />,
         container
     );
     
