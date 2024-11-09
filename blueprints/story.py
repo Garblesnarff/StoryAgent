@@ -46,7 +46,8 @@ def upload_file():
             # Store necessary data in session
             session['story_data'] = {
                 'temp_id': result['temp_id'],
-                'source_file': result['source_file']
+                'source_file': result['source_file'],
+                'paragraphs': result.get('paragraphs', [])
             }
             
             return jsonify({
@@ -87,9 +88,36 @@ def edit():
 
 @story_bp.route('/story/customize', methods=['GET'])
 def customize_story():
-    if 'story_data' not in session:
-        return redirect(url_for('index'))
-    return render_template('story/customize.html', story=session['story_data'])
+    try:
+        # Check if story data exists in session
+        if 'story_data' not in session:
+            logger.error("No story data in session")
+            return jsonify({'error': 'Please generate a story first'}), 403
+
+        story_data = session['story_data']
+        
+        # Validate story data structure
+        if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
+            logger.error("Invalid story data structure")
+            return jsonify({'error': 'Invalid story data structure'}), 403
+
+        # Get data from temp storage if available
+        temp_id = story_data.get('temp_id')
+        if temp_id:
+            temp_data = TempBookData.query.get(temp_id)
+            if temp_data:
+                story_data = temp_data.data
+
+        # Ensure paragraphs exist
+        if not story_data.get('paragraphs'):
+            logger.error("No paragraphs found in story data")
+            return jsonify({'error': 'No story content found'}), 403
+
+        return render_template('story/customize.html', story=story_data)
+
+    except Exception as e:
+        logger.error(f"Error in customize route: {str(e)}")
+        return jsonify({'error': 'Server error occurred'}), 500
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
@@ -164,17 +192,23 @@ def update_style():
             return jsonify({'error': 'No story data found'}), 404
             
         data = request.get_json()
+        if not data or 'paragraphs' not in data:
+            return jsonify({'error': 'Invalid style data'}), 400
+
         story_data = session['story_data']
         temp_id = story_data.get('temp_id')
         
         # Update styles in session data
         for paragraph_style in data['paragraphs']:
-            index = paragraph_style['index']
+            index = paragraph_style.get('index')
+            if index is None:
+                continue
+                
             if index < len(story_data['paragraphs']):
                 story_data['paragraphs'][index].update({
-                    'image_style': paragraph_style['image_style'],
-                    'voice_style': paragraph_style['voice_style'],
-                    'mood_enhancement': paragraph_style['mood_enhancement']
+                    'image_style': paragraph_style.get('image_style', 'realistic'),
+                    'voice_style': paragraph_style.get('voice_style', 'neutral'),
+                    'mood_enhancement': paragraph_style.get('mood_enhancement', 'none')
                 })
         
         # Update temp storage if using uploaded book
@@ -186,6 +220,7 @@ def update_style():
         
         # Store updated data back in session
         session['story_data'] = story_data
+        session.modified = True
         
         return jsonify({'success': True})
         

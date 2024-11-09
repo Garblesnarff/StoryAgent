@@ -28,6 +28,11 @@ class ErrorBoundary extends React.Component {
 
 // Node editor component
 function NodeEditor({ storyData }) {
+    if (!window.React || !window.ReactFlow) {
+        console.error('Required libraries not loaded');
+        throw new Error('Required libraries not loaded. Please refresh the page.');
+    }
+
     const [nodes, setNodes] = React.useState([]);
     const [edges, setEdges] = React.useState([]);
     const [initialized, setInitialized] = React.useState(false);
@@ -39,6 +44,7 @@ function NodeEditor({ storyData }) {
         }
 
         try {
+            console.log('Initializing nodes with story data:', storyData);
             const paragraphNodes = storyData.paragraphs.map((paragraph, index) => ({
                 id: `p${index}`,
                 type: 'default',
@@ -125,6 +131,7 @@ function NodeEditor({ storyData }) {
                 animated: true
             }));
 
+            console.log('Setting up nodes and edges:', { paragraphNodes, styleNodes, newEdges });
             setNodes([...paragraphNodes, ...styleNodes]);
             setEdges(newEdges);
             setInitialized(true);
@@ -140,8 +147,8 @@ function NodeEditor({ storyData }) {
         );
     }
 
-    return React.createElement(window.ReactFlow.ReactFlowProvider, null,
-        React.createElement(window.ReactFlow.ReactFlow, {
+    return React.createElement(ReactFlow.ReactFlowProvider, null,
+        React.createElement(ReactFlow.ReactFlow, {
             nodes,
             edges,
             fitView: true,
@@ -149,17 +156,35 @@ function NodeEditor({ storyData }) {
             nodesConnectable: false,
             defaultViewport: { x: 0, y: 0, zoom: 0.75 }
         },
-        React.createElement(window.ReactFlow.Background, {
+        React.createElement(ReactFlow.Background, {
             color: '#aaa',
             gap: 16,
             size: 1
         }),
-        React.createElement(window.ReactFlow.Controls))
+        React.createElement(ReactFlow.Controls))
     );
 }
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded, checking dependencies...');
+    
+    // Check for required dependencies
+    if (!window.React) {
+        console.error('React not loaded');
+        return;
+    }
+    
+    if (!window.ReactDOM) {
+        console.error('ReactDOM not loaded');
+        return;
+    }
+    
+    if (!window.ReactFlow) {
+        console.error('ReactFlow not loaded');
+        return;
+    }
+
     const container = document.getElementById('node-editor');
     if (!container) {
         console.error('Node editor container not found');
@@ -223,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!storyData || !Array.isArray(storyData.paragraphs)) {
             throw new Error('Invalid story data format: Expected array of paragraphs');
         }
+        console.log('Successfully parsed story data:', storyData);
     } catch (error) {
         console.error('Failed to parse story data:', error);
         root.innerHTML = `
@@ -239,12 +265,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize editor with proper error handling
     const initializeEditor = () => {
         try {
+            console.log('Initializing React components...');
             ReactDOM.render(
                 React.createElement(ErrorBoundary, null,
                     React.createElement(NodeEditor, { storyData })
                 ),
                 root
             );
+            console.log('React components initialized successfully');
         } catch (error) {
             console.error('Failed to initialize node editor:', error);
             root.innerHTML = `
@@ -258,6 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Initialize immediately since we're using node_modules now
+    // Initialize editor immediately
     initializeEditor();
 });
