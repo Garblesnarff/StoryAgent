@@ -16,9 +16,10 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Load React and ReactFlow in correct order -->
 <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/reactflow@11.3.3/dist/reactflow.umd.js"></script>
 <link href="https://unpkg.com/reactflow@11.3.3/dist/style.css" rel="stylesheet" />
-<script type="text/javascript" src="{{ url_for('static', filename='js/customize.js') }}"></script>
+<script src="https://unpkg.com/reactflow@11.3.3/dist/umd/reactflow.min.js"></script>
+<script src="{{ url_for('static', filename='js/customize.js') }}" type="text/javascript"></script>
 {% endblock %}
