@@ -3,64 +3,48 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
 
     try {
-        // Parse story data with error handling
-        let storyData;
-        try {
-            storyData = JSON.parse(container.dataset.story);
-            if (!storyData || !storyData.paragraphs) {
-                throw new Error('Invalid story data format');
-            }
-        } catch (parseError) {
-            throw new Error(`Failed to parse story data: ${parseError.message}`);
+        // Parse story data
+        const storyData = JSON.parse(container.dataset.story);
+        if (!storyData || !storyData.paragraphs) {
+            throw new Error('Invalid story data format');
         }
 
-        // Create root element
-        const root = document.createElement('div');
-        root.style.width = '100%';
-        root.style.height = '100%';
-        container.appendChild(root);
+        // Initialize React components
+        const { ReactFlowProvider, ReactFlow, Background, Controls } = window.ReactFlow;
 
-        // Initialize ReactFlow
-        const reactFlowInstance = window.ReactFlow;
-        if (!reactFlowInstance) {
-            throw new Error('ReactFlow not properly loaded');
-        }
-
-        // Create nodes
-        const nodes = [];
-        const edges = [];
-
-        // Add paragraph nodes
-        storyData.paragraphs.forEach((paragraph, index) => {
-            nodes.push({
+        // Create nodes array
+        const nodes = storyData.paragraphs.flatMap((paragraph, index) => [
+            {
                 id: `p${index}`,
                 type: 'default',
-                position: { x: 100, y: index * 150 },
-                data: { 
+                position: { x: 100, y: index * 200 },
+                data: {
                     label: React.createElement('div', { className: 'paragraph-node' },
-                        React.createElement('div', { className: 'node-header' }, 
+                        React.createElement('div', { className: 'node-header' },
                             `Paragraph ${index + 1}`
                         ),
-                        React.createElement('div', { className: 'node-content' }, 
+                        React.createElement('div', { className: 'node-content' },
                             paragraph.text.substring(0, 100) + '...'
                         )
                     )
                 }
-            });
-
-            // Add style nodes
-            nodes.push({
+            },
+            {
                 id: `style${index}`,
                 type: 'default',
-                position: { x: 400, y: index * 150 },
+                position: { x: 400, y: index * 200 },
                 data: {
                     label: React.createElement('div', { className: 'effect-node' },
-                        React.createElement('div', { className: 'node-header' }, 'Styles'),
+                        React.createElement('div', { className: 'node-header' },
+                            'Style Options'
+                        ),
                         React.createElement('select', {
                             className: 'node-select',
-                            defaultValue: paragraph.image_style || 'realistic',
+                            defaultValue: 'realistic',
                             onChange: (e) => {
-                                if (!window.styleData) window.styleData = { paragraphs: [] };
+                                if (!window.styleData) {
+                                    window.styleData = { paragraphs: [] };
+                                }
                                 if (!window.styleData.paragraphs[index]) {
                                     window.styleData.paragraphs[index] = { index };
                                 }
@@ -73,58 +57,57 @@ document.addEventListener('DOMContentLoaded', () => {
                         ])
                     )
                 }
-            });
+            }
+        ]);
 
-            // Add connecting edge
-            edges.push({
-                id: `e${index}`,
-                source: `p${index}`,
-                target: `style${index}`,
-                type: 'smoothstep'
-            });
-        });
+        // Create edges array
+        const edges = storyData.paragraphs.map((_, index) => ({
+            id: `e${index}`,
+            source: `p${index}`,
+            target: `style${index}`,
+            type: 'smoothstep',
+            animated: true
+        }));
 
-        // Create and render the flow
-        const Flow = () => {
-            const [flowInstance, setFlowInstance] = React.useState(null);
-
-            return React.createElement(reactFlowInstance.ReactFlowProvider, null,
-                React.createElement(reactFlowInstance.ReactFlow, {
+        // Create Flow component
+        function Flow() {
+            return React.createElement(ReactFlowProvider, null,
+                React.createElement(ReactFlow, {
                     nodes: nodes,
                     edges: edges,
-                    onInit: setFlowInstance,
                     fitView: true,
-                    minZoom: 0.5,
-                    maxZoom: 1.5
+                    nodesDraggable: true,
+                    nodesConnectable: false
                 },
-                React.createElement(reactFlowInstance.Background, {
+                React.createElement(Background, {
                     color: '#aaa',
                     gap: 16,
                     size: 1
                 }),
-                React.createElement(reactFlowInstance.Controls))
+                React.createElement(Controls))
             );
-        };
+        }
 
-        // Render the flow
-        ReactDOM.render(React.createElement(Flow), root);
+        // Mount the component
+        ReactDOM.render(
+            React.createElement(Flow),
+            container
+        );
 
-        // Setup save button handler
+        // Setup save button
         const saveButton = document.getElementById('save-customization');
         if (saveButton) {
             saveButton.addEventListener('click', async () => {
                 try {
-                    if (!window.styleData || !window.styleData.paragraphs) {
-                        throw new Error('No style data available');
-                    }
-
                     saveButton.disabled = true;
                     saveButton.textContent = 'Saving...';
 
                     const response = await fetch('/story/update_style', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(window.styleData)
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(window.styleData || { paragraphs: [] })
                     });
 
                     if (!response.ok) {
@@ -146,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-
     } catch (error) {
         console.error('Failed to initialize node editor:', error);
         container.innerHTML = `
