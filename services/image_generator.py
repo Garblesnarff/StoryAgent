@@ -12,6 +12,16 @@ class ImageGenerator:
         # Rate limiting settings
         self.image_generation_queue = deque(maxlen=6)
         self.IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
+
+    def _style_to_prompt_modifier(self, text, style='realistic'):
+        """Convert style parameter to prompt modifier"""
+        style_modifiers = {
+            'realistic': 'Photorealistic, detailed, natural lighting',
+            'artistic': 'Artistic interpretation, painterly style, expressive',
+            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
+        }
+        modifier = style_modifiers.get(style, style_modifiers['realistic'])
+        return f"An image representing: {text[:100]}. {modifier}"
         
     def generate_image(self, text):
         try:
@@ -25,8 +35,9 @@ class ImageGenerator:
                 time.sleep(wait_time)
             
             # Generate image using Together AI
+            enhanced_prompt = self._style_to_prompt_modifier(text)
             image_response = self.client.images.generate(
-                prompt=f"An image representing: {text[:100]}",  # Use first 100 characters as prompt
+                prompt=enhanced_prompt,
                 model="black-forest-labs/FLUX.1-schnell-Free",
                 width=512,
                 height=512,
