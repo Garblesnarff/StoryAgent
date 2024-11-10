@@ -40,9 +40,10 @@ def regenerate_image():
             
         text = data['text']
         index = data.get('index')
+        style = data.get('style', 'realistic')
         
-        # Generate new image with enhanced prompt
-        image_url = image_service.generate_image(text)
+        # Generate new image with style
+        image_url = image_service.generate_image(text, style=style)
         if not image_url:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -102,10 +103,11 @@ def generate_cards():
                 progress = ((index + 1) / len(paragraphs) * 100)
                 current_message = f"Processing paragraph {index + 1}/{len(paragraphs)}"
                 
-                # Generate image if needed with style from paragraph data
+                # Generate image if needed with style
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
-                    paragraph['image_url'] = image_service.generate_image(paragraph['text'])
+                    image_style = paragraph.get('image_style', 'realistic')
+                    paragraph['image_url'] = image_service.generate_image(paragraph['text'], style=image_style)
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {

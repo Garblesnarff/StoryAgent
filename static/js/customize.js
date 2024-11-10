@@ -1,6 +1,3 @@
-import { ReactFlow, Controls, Background } from '@reactflow/core';
-import '@reactflow/core/dist/style.css';
-
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('node-editor');
     const paragraphNodesContainer = document.getElementById('paragraph-nodes');
@@ -22,92 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Invalid story data format: Expected array of paragraphs');
         }
 
-        // Initialize ReactFlow
-        const nodes = storyData.paragraphs.map((paragraph, index) => ({
-            id: `paragraph-${index}`,
-            type: 'paragraphNode',
-            position: { x: 250 * (index % 3), y: 300 * Math.floor(index / 3) },
-            data: {
-                text: paragraph.text,
-                index: index,
-                image_style: paragraph.image_style || 'realistic'
-            }
-        }));
-
-        // Initialize style data
+        // Initialize style data with proper structure for all paragraphs
         window.styleData = {
             paragraphs: storyData.paragraphs.map((paragraph, index) => ({
                 index,
                 image_style: paragraph.image_style || 'realistic'
             }))
         };
-
-        // Custom Node Component
-        const ParagraphNode = ({ data }) => {
-            return `
-                <div class="paragraph-node">
-                    <div class="node-header">Paragraph ${data.index + 1}</div>
-                    <div class="node-content">${data.text.substring(0, 100)}...</div>
-                    <div class="node-controls">
-                        <select class="node-select" data-type="image_style" data-index="${data.index}">
-                            <option value="realistic" ${data.image_style === 'realistic' ? 'selected' : ''}>Realistic</option>
-                            <option value="artistic" ${data.image_style === 'artistic' ? 'selected' : ''}>Artistic</option>
-                            <option value="fantasy" ${data.image_style === 'fantasy' ? 'selected' : ''}>Fantasy</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Initialize ReactFlow
-        const reactFlow = new ReactFlow({
-            container: paragraphNodesContainer,
-            nodes: nodes,
-            nodeTypes: {
-                paragraphNode: ParagraphNode
-            },
-            defaultViewport: { x: 0, y: 0, zoom: 1 },
-            minZoom: 0.5,
-            maxZoom: 2,
-            snapToGrid: true,
-            snapGrid: [20, 20],
-            onNodeDragStop: (event, node) => {
-                console.log('Node position updated:', node);
-            },
-            onConnect: (params) => {
-                console.log('Connection created:', params);
-            }
-        });
-
-        // Add background and controls
-        reactFlow.addChild(new Background());
-        reactFlow.addChild(new Controls());
-
-        // Add event listeners to selects
-        document.querySelectorAll('.node-select').forEach(select => {
-            select.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                const type = e.target.dataset.type;
-                
-                // Update style data
-                if (!window.styleData.paragraphs[index]) {
-                    window.styleData.paragraphs[index] = {
-                        index,
-                        image_style: 'realistic'
-                    };
-                }
-                
-                window.styleData.paragraphs[index] = {
-                    ...window.styleData.paragraphs[index],
-                    [type]: e.target.value
-                };
-                
-                console.log('Style updated:', window.styleData);
-            });
-        });
-
     } catch (error) {
-        console.error('Failed to initialize node editor:', error);
+        console.error('Failed to parse story data:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
                 <h4 class="alert-heading">Failed to load story data</h4>
@@ -118,6 +38,55 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         return;
     }
+
+    // Create paragraph nodes
+    const paragraphNodes = storyData.paragraphs.map((paragraph, index) => {
+        const card = document.createElement('div');
+        card.className = 'card paragraph-node';
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="node-header">Paragraph ${index + 1}</div>
+                <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
+                <div class="node-controls">
+                    <select class="node-select" data-type="image_style" data-index="${index}">
+                        <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic</option>
+                        <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic</option>
+                        <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        // Add event listeners to selects
+        const selects = card.querySelectorAll('.node-select');
+        selects.forEach(select => {
+            select.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const type = e.target.dataset.type;
+                
+                // Ensure the paragraph data exists
+                if (!window.styleData.paragraphs[index]) {
+                    window.styleData.paragraphs[index] = {
+                        index,
+                        image_style: 'realistic'
+                    };
+                }
+                
+                // Update while preserving other properties
+                window.styleData.paragraphs[index] = {
+                    ...window.styleData.paragraphs[index],
+                    [type]: e.target.value
+                };
+                
+                console.log('Style updated:', window.styleData);
+            });
+        });
+
+        return card;
+    });
+
+    // Add nodes to container
+    paragraphNodesContainer.append(...paragraphNodes);
 
     // Setup save functionality
     const saveButton = document.getElementById('save-customization');
