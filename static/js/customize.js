@@ -23,8 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.styleData = {
             paragraphs: storyData.paragraphs.map((paragraph, index) => ({
                 index,
-                image_style: paragraph.image_style || 'realistic',
-                voice_style: paragraph.voice_style || 'neutral'
+                image_style: paragraph.image_style || 'realistic'
             }))
         };
     } catch (error) {
@@ -54,11 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic</option>
                         <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy</option>
                     </select>
-                    <select class="node-select" data-type="voice_style" data-index="${index}">
-                        <option value="neutral" ${(paragraph.voice_style || 'neutral') === 'neutral' ? 'selected' : ''}>Neutral</option>
-                        <option value="dramatic" ${(paragraph.voice_style || 'neutral') === 'dramatic' ? 'selected' : ''}>Dramatic</option>
-                        <option value="cheerful" ${(paragraph.voice_style || 'neutral') === 'cheerful' ? 'selected' : ''}>Cheerful</option>
-                    </select>
                 </div>
             </div>
         `;
@@ -74,8 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!window.styleData.paragraphs[index]) {
                     window.styleData.paragraphs[index] = {
                         index,
-                        image_style: 'realistic',
-                        voice_style: 'neutral'
+                        image_style: 'realistic'
                     };
                 }
                 
