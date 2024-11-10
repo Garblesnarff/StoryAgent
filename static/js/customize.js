@@ -43,12 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="node-header">Paragraph ${index + 1}</div>
                 <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
                 <div class="node-controls">
-                    <select class="node-select" data-type="image-style" data-index="${index}">
+                    <select class="node-select" data-type="image_style" data-index="${index}">
                         <option value="realistic" ${paragraph.image_style === 'realistic' ? 'selected' : ''}>Realistic</option>
                         <option value="artistic" ${paragraph.image_style === 'artistic' ? 'selected' : ''}>Artistic</option>
                         <option value="fantasy" ${paragraph.image_style === 'fantasy' ? 'selected' : ''}>Fantasy</option>
                     </select>
-                    <select class="node-select" data-type="voice-style" data-index="${index}">
+                    <select class="node-select" data-type="voice_style" data-index="${index}">
                         <option value="neutral" ${paragraph.voice_style === 'neutral' ? 'selected' : ''}>Neutral</option>
                         <option value="dramatic" ${paragraph.voice_style === 'dramatic' ? 'selected' : ''}>Dramatic</option>
                         <option value="cheerful" ${paragraph.voice_style === 'cheerful' ? 'selected' : ''}>Cheerful</option>
@@ -64,8 +64,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const index = parseInt(e.target.dataset.index);
                 const type = e.target.dataset.type;
                 
+                // Initialize paragraph data if needed
                 window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                window.styleData.paragraphs[index][type] = e.target.value;
+                
+                // Use the correct property names matching backend
+                switch(type) {
+                    case 'image_style':
+                        window.styleData.paragraphs[index].image_style = e.target.value;
+                        break;
+                    case 'voice_style':
+                        window.styleData.paragraphs[index].voice_style = e.target.value;
+                        break;
+                }
                 
                 console.log('Style updated:', window.styleData);
             });
@@ -97,19 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(window.styleData)
                 });
 
+                const data = await response.json();
+                
                 if (!response.ok) {
-                    throw new Error('Failed to save customization');
+                    throw new Error(data.error || 'Failed to save customization');
                 }
 
-                const data = await response.json();
                 if (data.success) {
                     window.location.href = '/story/generate';
                 } else {
-                    throw new Error(data.error || 'Failed to save customization');
+                    throw new Error(data.error || 'Server returned unsuccessful response');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert(error.message);
+                console.error('Error saving customization:', error);
+                alert(error.message || 'Failed to save customization');
             } finally {
                 saveButton.disabled = false;
                 saveButton.innerHTML = 'Generate Cards';
