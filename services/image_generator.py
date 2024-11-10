@@ -14,14 +14,34 @@ class ImageGenerator:
         self.IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 
     def _style_to_prompt_modifier(self, text, style='realistic'):
-        """Convert style parameter to prompt modifier"""
-        style_modifiers = {
-            'realistic': 'Photorealistic, detailed, natural lighting',
-            'artistic': 'Artistic interpretation, painterly style, expressive',
-            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
-        }
-        modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        return f"An image representing: {text[:100]}. {modifier}"
+        """Convert style parameter to enhanced prompt with specific style elements"""
+        base_text = text[:200]  # Get first 200 chars of text for context
+        
+        if style == 'realistic':
+            return (
+                f"A scene showing {base_text}, captured with a professional DSLR camera. "
+                f"The scene features detailed elements with natural lighting and ambient atmosphere. "
+                f"The image has a photorealistic feel, emphasizing textures and materials. "
+                f"Include details like surface reflections and environmental details to enhance realism."
+            )
+        elif style == 'artistic':
+            return (
+                f"Create an impressionistic interpretation of: {base_text}. "
+                f"Use a color palette dominated by rich, harmonious colors to convey the scene's emotion. "
+                f"The composition should focus on the main elements, with expressive brushstrokes "
+                f"and artistic lighting to add visual interest. Incorporate creative artistic elements "
+                f"for a distinctive painted look."
+            )
+        elif style == 'fantasy':
+            return (
+                f"Imagine a fantastical interpretation of: {base_text}. "
+                f"The scene depicts the action in a magical setting with otherworldly elements. "
+                f"Surround the scene with mystical details and ethereal lighting effects. "
+                f"Use a color scheme of iridescent colors with glowing accents to create "
+                f"a mystical ambiance. Add fantasy elements to enhance the otherworldly feel."
+            )
+        else:
+            return f"An image representing: {base_text}"
         
     def generate_image(self, text, style='realistic'):
         try:
