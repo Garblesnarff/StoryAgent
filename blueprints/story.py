@@ -192,33 +192,37 @@ def update_style():
             return jsonify({'error': 'No story data found'}), 404
             
         data = request.get_json()
-        if not data or 'paragraphs' not in data:
-            return jsonify({'error': 'Invalid style data'}), 400
+        if not data or not isinstance(data.get('paragraphs'), list):
+            return jsonify({'error': 'Invalid style data format'}), 400
 
         story_data = session['story_data']
-        temp_id = story_data.get('temp_id')
-        
-        # Update styles in session data
+        if not isinstance(story_data, dict):
+            return jsonify({'error': 'Invalid story data in session'}), 500
+            
+        # Ensure paragraphs exist
+        if 'paragraphs' not in story_data:
+            story_data['paragraphs'] = []
+            
+        # Update styles with proper error checking
         for paragraph_style in data['paragraphs']:
-            index = paragraph_style.get('index')
-            if index is None:
+            if not isinstance(paragraph_style, dict):
                 continue
                 
-            if index < len(story_data['paragraphs']):
-                story_data['paragraphs'][index].update({
-                    'image_style': paragraph_style.get('image_style', 'realistic'),
-                    'voice_style': paragraph_style.get('voice_style', 'neutral'),
-                    'mood_enhancement': paragraph_style.get('mood_enhancement', 'none')
-                })
+            index = paragraph_style.get('index')
+            if index is None or not isinstance(index, int):
+                continue
+                
+            # Extend paragraphs array if needed
+            while len(story_data['paragraphs']) <= index:
+                story_data['paragraphs'].append({})
+                
+            # Update style properties
+            story_data['paragraphs'][index].update({
+                'image_style': paragraph_style.get('image_style', 'realistic'),
+                'voice_style': paragraph_style.get('voice_style', 'neutral')
+            })
         
-        # Update temp storage if using uploaded book
-        if temp_id:
-            temp_data = TempBookData.query.get(temp_id)
-            if temp_data:
-                temp_data.data = story_data
-                db.session.commit()
-        
-        # Store updated data back in session
+        # Store updated data in session
         session['story_data'] = story_data
         session.modified = True
         

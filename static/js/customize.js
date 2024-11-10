@@ -7,10 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Initialize style data storage
-    window.styleData = { paragraphs: [] };
-
-    // Parse story data
+    // Parse story data and initialize style data storage
     let storyData;
     try {
         const rawData = container.dataset.story;
@@ -21,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!storyData || !Array.isArray(storyData.paragraphs)) {
             throw new Error('Invalid story data format: Expected array of paragraphs');
         }
+
+        // Initialize style data with proper structure for all paragraphs
+        window.styleData = {
+            paragraphs: storyData.paragraphs.map((paragraph, index) => ({
+                index,
+                image_style: paragraph.image_style || 'realistic',
+                voice_style: paragraph.voice_style || 'neutral'
+            }))
+        };
     } catch (error) {
         console.error('Failed to parse story data:', error);
         container.innerHTML = `
@@ -44,14 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
                 <div class="node-controls">
                     <select class="node-select" data-type="image_style" data-index="${index}">
-                        <option value="realistic" ${paragraph.image_style === 'realistic' ? 'selected' : ''}>Realistic</option>
-                        <option value="artistic" ${paragraph.image_style === 'artistic' ? 'selected' : ''}>Artistic</option>
-                        <option value="fantasy" ${paragraph.image_style === 'fantasy' ? 'selected' : ''}>Fantasy</option>
+                        <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic</option>
+                        <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic</option>
+                        <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy</option>
                     </select>
                     <select class="node-select" data-type="voice_style" data-index="${index}">
-                        <option value="neutral" ${paragraph.voice_style === 'neutral' ? 'selected' : ''}>Neutral</option>
-                        <option value="dramatic" ${paragraph.voice_style === 'dramatic' ? 'selected' : ''}>Dramatic</option>
-                        <option value="cheerful" ${paragraph.voice_style === 'cheerful' ? 'selected' : ''}>Cheerful</option>
+                        <option value="neutral" ${(paragraph.voice_style || 'neutral') === 'neutral' ? 'selected' : ''}>Neutral</option>
+                        <option value="dramatic" ${(paragraph.voice_style || 'neutral') === 'dramatic' ? 'selected' : ''}>Dramatic</option>
+                        <option value="cheerful" ${(paragraph.voice_style || 'neutral') === 'cheerful' ? 'selected' : ''}>Cheerful</option>
                     </select>
                 </div>
             </div>
@@ -64,18 +70,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const index = parseInt(e.target.dataset.index);
                 const type = e.target.dataset.type;
                 
-                // Initialize paragraph data if needed
-                window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                
-                // Use the correct property names matching backend
-                switch(type) {
-                    case 'image_style':
-                        window.styleData.paragraphs[index].image_style = e.target.value;
-                        break;
-                    case 'voice_style':
-                        window.styleData.paragraphs[index].voice_style = e.target.value;
-                        break;
+                // Ensure the paragraph data exists
+                if (!window.styleData.paragraphs[index]) {
+                    window.styleData.paragraphs[index] = {
+                        index,
+                        image_style: 'realistic',
+                        voice_style: 'neutral'
+                    };
                 }
+                
+                // Update while preserving other properties
+                window.styleData.paragraphs[index] = {
+                    ...window.styleData.paragraphs[index],
+                    [type]: e.target.value
+                };
                 
                 console.log('Style updated:', window.styleData);
             });
@@ -98,6 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!window.styleData?.paragraphs?.length) {
                     throw new Error('No style changes to save');
                 }
+
+                // Remove any null values from paragraphs array
+                window.styleData.paragraphs = window.styleData.paragraphs.filter(p => p !== null);
 
                 const response = await fetch('/story/update_style', {
                     method: 'POST',
