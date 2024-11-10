@@ -1,230 +1,81 @@
-// Error boundary component for React
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error) {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        console.error('Node Editor Error:', error, errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return React.createElement('div', { className: 'alert alert-danger' },
-                React.createElement('h4', { className: 'alert-heading' }, 'Error Loading Node Editor'),
-                React.createElement('p', null, this.state.error?.message || 'An unknown error occurred'),
-                React.createElement('hr'),
-                React.createElement('p', { className: 'mb-0' }, 'Please try refreshing the page')
-            );
-        }
-        return this.props.children;
-    }
-}
-
-// Define ReactFlow components globally
-let Flow, FlowProvider, Background, Controls;
-
-// Initialize ReactFlow components
-function initializeReactFlow() {
-    // Check if ReactFlow is available in window
-    if (!window.ReactFlow) {
-        console.error('ReactFlow not loaded, checking @reactflow/core');
-        if (window['@reactflow/core']) {
-            window.ReactFlow = window['@reactflow/core'];
-        } else {
-            throw new Error('ReactFlow library not found');
-        }
-    }
-
-    // Initialize components with fallbacks
-    FlowProvider = window.ReactFlow.ReactFlowProvider || window.ReactFlow.Provider;
-    Flow = window.ReactFlow.ReactFlow || window.ReactFlow.default;
-    Background = window.ReactFlow.Background || (window.ReactFlow.default && window.ReactFlow.default.Background);
-    Controls = window.ReactFlow.Controls || (window.ReactFlow.default && window.ReactFlow.default.Controls);
-
-    if (!Flow || !FlowProvider) {
-        throw new Error('Required ReactFlow components not found');
-    }
-}
-
-// Node editor component
-function NodeEditor({ storyData }) {
-    const [nodes, setNodes] = React.useState([]);
-    const [edges, setEdges] = React.useState([]);
-    const [initialized, setInitialized] = React.useState(false);
-
-    React.useEffect(() => {
-        if (!storyData?.paragraphs?.length) {
-            console.error('Invalid story data structure');
-            return;
-        }
-
-        try {
-            console.log('Initializing nodes with story data:', storyData);
-            const paragraphNodes = storyData.paragraphs.map((paragraph, index) => ({
-                id: `p${index}`,
-                type: 'default',
-                position: { x: 100, y: index * 200 },
-                data: {
-                    label: React.createElement('div', { className: 'paragraph-node' },
-                        React.createElement('div', { className: 'node-header' },
-                            `Paragraph ${index + 1}`
-                        ),
-                        React.createElement('div', { className: 'node-content' },
-                            paragraph.text?.substring(0, 100) + '...' || 'No content available'
-                        )
-                    )
-                }
-            }));
-
-            const styleNodes = storyData.paragraphs.map((paragraph, index) => ({
-                id: `style${index}`,
-                type: 'default',
-                position: { x: 500, y: index * 200 },
-                data: {
-                    label: React.createElement('div', { className: 'effect-node' },
-                        React.createElement('div', { className: 'node-header' }, 'Style Options'),
-                        React.createElement('div', null, [
-                            React.createElement('div', { key: 'image-style', className: 'node-select-group' }, [
-                                React.createElement('label', { className: 'node-select-label' }, 'Image Style'),
-                                React.createElement('select', {
-                                    className: 'node-select',
-                                    defaultValue: paragraph.image_style || 'realistic',
-                                    onChange: (e) => {
-                                        window.styleData = window.styleData || { paragraphs: [] };
-                                        window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                                        window.styleData.paragraphs[index].image_style = e.target.value;
-                                    }
-                                }, [
-                                    React.createElement('option', { value: 'realistic' }, 'Realistic'),
-                                    React.createElement('option', { value: 'artistic' }, 'Artistic'),
-                                    React.createElement('option', { value: 'fantasy' }, 'Fantasy')
-                                ])
-                            ]),
-                            React.createElement('div', { key: 'voice-style', className: 'node-select-group' }, [
-                                React.createElement('label', { className: 'node-select-label' }, 'Voice Style'),
-                                React.createElement('select', {
-                                    className: 'node-select',
-                                    defaultValue: paragraph.voice_style || 'neutral',
-                                    onChange: (e) => {
-                                        window.styleData = window.styleData || { paragraphs: [] };
-                                        window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                                        window.styleData.paragraphs[index].voice_style = e.target.value;
-                                    }
-                                }, [
-                                    React.createElement('option', { value: 'neutral' }, 'Neutral'),
-                                    React.createElement('option', { value: 'dramatic' }, 'Dramatic'),
-                                    React.createElement('option', { value: 'cheerful' }, 'Cheerful')
-                                ])
-                            ]),
-                            React.createElement('div', { key: 'mood-enhancement', className: 'node-select-group' }, [
-                                React.createElement('label', { className: 'node-select-label' }, 'Mood Enhancement'),
-                                React.createElement('select', {
-                                    className: 'node-select',
-                                    defaultValue: paragraph.mood_enhancement || 'none',
-                                    onChange: (e) => {
-                                        window.styleData = window.styleData || { paragraphs: [] };
-                                        window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
-                                        window.styleData.paragraphs[index].mood_enhancement = e.target.value;
-                                    }
-                                }, [
-                                    React.createElement('option', { value: 'none' }, 'None'),
-                                    React.createElement('option', { value: 'intense' }, 'Intense'),
-                                    React.createElement('option', { value: 'subtle' }, 'Subtle'),
-                                    React.createElement('option', { value: 'dreamy' }, 'Dreamy')
-                                ])
-                            ])
-                        ])
-                    )
-                }
-            }));
-
-            const newEdges = storyData.paragraphs.map((_, index) => ({
-                id: `e${index}`,
-                source: `p${index}`,
-                target: `style${index}`,
-                type: 'smoothstep',
-                animated: true
-            }));
-
-            console.log('Setting up nodes and edges:', { paragraphNodes, styleNodes, newEdges });
-            setNodes([...paragraphNodes, ...styleNodes]);
-            setEdges(newEdges);
-            setInitialized(true);
-        } catch (error) {
-            console.error('Error initializing nodes:', error);
-            throw new Error(`Failed to initialize nodes: ${error.message}`);
-        }
-    }, [storyData]);
-
-    if (!initialized) {
-        return React.createElement('div', { className: 'alert alert-info' },
-            'Initializing node editor...'
-        );
-    }
-
-    return React.createElement(FlowProvider, null,
-        React.createElement(Flow, {
-            nodes,
-            edges,
-            fitView: true,
-            nodesDraggable: true,
-            nodesConnectable: false,
-            defaultViewport: { x: 0, y: 0, zoom: 0.75 }
-        },
-        React.createElement(Background, {
-            color: '#aaa',
-            gap: 16,
-            size: 1
-        }),
-        React.createElement(Controls))
-    );
-}
-
-// Initialize application
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded, checking dependencies...');
-    
-    // Check for required dependencies
-    const dependencies = {
-        'React': window.React,
-        'ReactDOM': window.ReactDOM
-    };
-
-    const missingDeps = Object.entries(dependencies)
-        .filter(([name, dep]) => !dep)
-        .map(([name]) => name);
-
-    if (missingDeps.length > 0) {
-        console.error(`Missing dependencies: ${missingDeps.join(', ')}`);
-        return;
-    }
-
-    // Initialize ReactFlow
-    try {
-        initializeReactFlow();
-        console.log('ReactFlow initialized successfully');
-    } catch (error) {
-        console.error('Failed to initialize ReactFlow:', error);
-        return;
-    }
-
     const container = document.getElementById('node-editor');
-    if (!container) {
-        console.error('Node editor container not found');
+    const paragraphNodesContainer = document.getElementById('paragraph-nodes');
+    
+    if (!container || !paragraphNodesContainer) {
+        console.error('Required containers not found');
         return;
     }
 
-    // Create root element
-    const root = document.createElement('div');
-    root.style.width = '100%';
-    root.style.height = '100%';
-    container.appendChild(root);
+    // Initialize style data storage
+    window.styleData = { paragraphs: [] };
+
+    // Parse story data
+    let storyData;
+    try {
+        const rawData = container.dataset.story;
+        if (!rawData) {
+            throw new Error('No story data found');
+        }
+        storyData = JSON.parse(rawData);
+        if (!storyData || !Array.isArray(storyData.paragraphs)) {
+            throw new Error('Invalid story data format: Expected array of paragraphs');
+        }
+    } catch (error) {
+        console.error('Failed to parse story data:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Failed to load story data</h4>
+                <p>${error.message}</p>
+                <hr>
+                <p class="mb-0">Please make sure you have a valid story selected.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Create paragraph nodes
+    const paragraphNodes = storyData.paragraphs.map((paragraph, index) => {
+        const card = document.createElement('div');
+        card.className = 'card paragraph-node';
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="node-header">Paragraph ${index + 1}</div>
+                <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
+                <div class="node-controls">
+                    <select class="node-select" data-type="image-style" data-index="${index}">
+                        <option value="realistic" ${paragraph.image_style === 'realistic' ? 'selected' : ''}>Realistic</option>
+                        <option value="artistic" ${paragraph.image_style === 'artistic' ? 'selected' : ''}>Artistic</option>
+                        <option value="fantasy" ${paragraph.image_style === 'fantasy' ? 'selected' : ''}>Fantasy</option>
+                    </select>
+                    <select class="node-select" data-type="voice-style" data-index="${index}">
+                        <option value="neutral" ${paragraph.voice_style === 'neutral' ? 'selected' : ''}>Neutral</option>
+                        <option value="dramatic" ${paragraph.voice_style === 'dramatic' ? 'selected' : ''}>Dramatic</option>
+                        <option value="cheerful" ${paragraph.voice_style === 'cheerful' ? 'selected' : ''}>Cheerful</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        // Add event listeners to selects
+        const selects = card.querySelectorAll('.node-select');
+        selects.forEach(select => {
+            select.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const type = e.target.dataset.type;
+                
+                window.styleData.paragraphs[index] = window.styleData.paragraphs[index] || { index };
+                window.styleData.paragraphs[index][type] = e.target.value;
+                
+                console.log('Style updated:', window.styleData);
+            });
+        });
+
+        return card;
+    });
+
+    // Add nodes to container
+    paragraphNodesContainer.append(...paragraphNodes);
 
     // Setup save functionality
     const saveButton = document.getElementById('save-customization');
@@ -265,56 +116,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Parse story data with better error handling
-    let storyData;
-    try {
-        const rawData = container.dataset.story;
-        if (!rawData) {
-            throw new Error('No story data found');
-        }
-        storyData = JSON.parse(rawData);
-        if (!storyData || !Array.isArray(storyData.paragraphs)) {
-            throw new Error('Invalid story data format: Expected array of paragraphs');
-        }
-        console.log('Successfully parsed story data:', storyData);
-    } catch (error) {
-        console.error('Failed to parse story data:', error);
-        root.innerHTML = `
-            <div class="alert alert-danger">
-                <h4 class="alert-heading">Failed to load story data</h4>
-                <p>${error.message}</p>
-                <hr>
-                <p class="mb-0">Please make sure you have a valid story selected.</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Initialize editor with proper error handling
-    const initializeEditor = () => {
-        try {
-            console.log('Initializing React components...');
-            ReactDOM.render(
-                React.createElement(ErrorBoundary, null,
-                    React.createElement(NodeEditor, { storyData })
-                ),
-                root
-            );
-            console.log('React components initialized successfully');
-        } catch (error) {
-            console.error('Failed to initialize node editor:', error);
-            root.innerHTML = `
-                <div class="alert alert-danger">
-                    <h4 class="alert-heading">Failed to initialize node editor</h4>
-                    <p>${error.message}</p>
-                    <hr>
-                    <p class="mb-0">Please try refreshing the page or contact support if the issue persists.</p>
-                </div>
-            `;
-        }
-    };
-
-    // Initialize editor immediately
-    initializeEditor();
 });
