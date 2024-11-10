@@ -26,13 +26,34 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-// Node editor component
-function NodeEditor({ storyData }) {
-    if (!window.React || !window.ReactFlow) {
-        console.error('Required libraries not loaded');
-        throw new Error('Required libraries not loaded. Please refresh the page.');
+// Define ReactFlow components globally
+let Flow, FlowProvider, Background, Controls;
+
+// Initialize ReactFlow components
+function initializeReactFlow() {
+    // Check if ReactFlow is available in window
+    if (!window.ReactFlow) {
+        console.error('ReactFlow not loaded, checking @reactflow/core');
+        if (window['@reactflow/core']) {
+            window.ReactFlow = window['@reactflow/core'];
+        } else {
+            throw new Error('ReactFlow library not found');
+        }
     }
 
+    // Initialize components with fallbacks
+    FlowProvider = window.ReactFlow.ReactFlowProvider || window.ReactFlow.Provider;
+    Flow = window.ReactFlow.ReactFlow || window.ReactFlow.default;
+    Background = window.ReactFlow.Background || (window.ReactFlow.default && window.ReactFlow.default.Background);
+    Controls = window.ReactFlow.Controls || (window.ReactFlow.default && window.ReactFlow.default.Controls);
+
+    if (!Flow || !FlowProvider) {
+        throw new Error('Required ReactFlow components not found');
+    }
+}
+
+// Node editor component
+function NodeEditor({ storyData }) {
     const [nodes, setNodes] = React.useState([]);
     const [edges, setEdges] = React.useState([]);
     const [initialized, setInitialized] = React.useState(false);
@@ -147,8 +168,8 @@ function NodeEditor({ storyData }) {
         );
     }
 
-    return React.createElement(ReactFlow.ReactFlowProvider, null,
-        React.createElement(ReactFlow.ReactFlow, {
+    return React.createElement(FlowProvider, null,
+        React.createElement(Flow, {
             nodes,
             edges,
             fitView: true,
@@ -156,12 +177,12 @@ function NodeEditor({ storyData }) {
             nodesConnectable: false,
             defaultViewport: { x: 0, y: 0, zoom: 0.75 }
         },
-        React.createElement(ReactFlow.Background, {
+        React.createElement(Background, {
             color: '#aaa',
             gap: 16,
             size: 1
         }),
-        React.createElement(ReactFlow.Controls))
+        React.createElement(Controls))
     );
 }
 
@@ -170,18 +191,26 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Content Loaded, checking dependencies...');
     
     // Check for required dependencies
-    if (!window.React) {
-        console.error('React not loaded');
+    const dependencies = {
+        'React': window.React,
+        'ReactDOM': window.ReactDOM
+    };
+
+    const missingDeps = Object.entries(dependencies)
+        .filter(([name, dep]) => !dep)
+        .map(([name]) => name);
+
+    if (missingDeps.length > 0) {
+        console.error(`Missing dependencies: ${missingDeps.join(', ')}`);
         return;
     }
-    
-    if (!window.ReactDOM) {
-        console.error('ReactDOM not loaded');
-        return;
-    }
-    
-    if (!window.ReactFlow) {
-        console.error('ReactFlow not loaded');
+
+    // Initialize ReactFlow
+    try {
+        initializeReactFlow();
+        console.log('ReactFlow initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize ReactFlow:', error);
         return;
     }
 
