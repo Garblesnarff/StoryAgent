@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+{% endblock %}
+
 {% block content %}
 <div class="content-wrapper">
     <h1 class="display-4 mb-5 text-center">Style Your Story</h1>
@@ -16,13 +20,19 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Load React first -->
+<!-- Base React -->
 <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
 
-<!-- ReactFlow dependencies -->
+<!-- ReactFlow Core and Components -->
+<script src="https://unpkg.com/@reactflow/core@11.7.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/@reactflow/background@11.7.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/@reactflow/controls@11.7.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/@reactflow/minimap@11.7.4/dist/umd/index.js"></script>
+
+<!-- ReactFlow Styles -->
+<link href="https://unpkg.com/reactflow@11.7.4/dist/base.css" rel="stylesheet" />
 <link href="https://unpkg.com/reactflow@11.7.4/dist/style.css" rel="stylesheet" />
-<script src="https://unpkg.com/reactflow@11.7.4/dist/umd/reactflow.min.js"></script>
 
 <!-- Custom script loaded last -->
 <script src="{{ url_for('static', filename='js/customize.js') }}" type="text/javascript"></script>
