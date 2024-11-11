@@ -6,12 +6,13 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'static/dist',
+    assetsDir: '',
     rollupOptions: {
       input: 'src/components/customize.jsx',
       output: {
-        entryFileNames: '[name].js',
+        entryFileNames: 'index.js',
         chunkFileNames: '[name].[hash].js',
-        assetFileNames: '[name].[hash].[ext]'
+        assetFileNames: 'index.[ext]'
       }
     }
   },

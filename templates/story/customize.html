@@ -1,24 +1,14 @@
 {% extends "base.html" %}
 
 {% block head %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/reactflow@11/dist/reactflow.min.js"></script>
-<link href="https://unpkg.com/reactflow@11/dist/style.css" rel="stylesheet" />
-<link href="{{ url_for('static', filename='dist/customize.css') }}" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="{{ url_for('static', filename='dist/index.css') }}" rel="stylesheet" />
 {% endblock %}
 
 {% block content %}
-<div class="content-wrapper">
-    <h1 class="display-4 mb-5 text-center">Style Your Story</h1>
-    
-    <div class="customization-container">
-        <div id="node-editor" class="node-editor-container" data-story='{{ story|tojson|safe }}'></div>
-    </div>
-</div>
+<div id="node-editor" class="node-editor-container" data-story='{{ story|tojson|safe }}'></div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='dist/customize.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='dist/index.js') }}"></script>
 {% endblock %}
