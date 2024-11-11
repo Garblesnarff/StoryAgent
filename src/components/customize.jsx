@@ -6,7 +6,8 @@ import ReactFlow, {
   MiniMap,
   useNodesState,
   useEdgesState,
-  Handle
+  Handle,
+  ReactFlowProvider
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ParagraphNode from './ParagraphNode';
@@ -132,9 +133,9 @@ function StoryFlow({ storyData }) {
   }, [nodes]);
 
   return (
-    <div className="story-flow-container">
+    <div className="story-flow-container" style={{ width: '100%', height: '80vh' }}>
       <LibraryPanel />
-      <div className="flow-wrapper">
+      <div className="flow-wrapper" style={{ flex: 1, height: '100%' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -148,6 +149,7 @@ function StoryFlow({ storyData }) {
           nodesConnectable={true}
           elementsSelectable={true}
           fitView
+          style={{ background: '#f8f9fa' }}
         >
           <Background />
           <Controls />
@@ -172,7 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const root = ReactDOM.createRoot(container);
     root.render(
       <React.StrictMode>
-        <StoryFlow storyData={storyData} />
+        <ReactFlowProvider>
+          <StoryFlow storyData={storyData} />
+        </ReactFlowProvider>
       </React.StrictMode>
     );
   } catch (error) {
