@@ -5,7 +5,8 @@ import ReactFlow, {
   Controls, 
   MiniMap,
   useNodesState,
-  useEdgesState
+  useEdgesState,
+  Handle
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ParagraphNode from './ParagraphNode';
@@ -41,12 +42,15 @@ function StoryFlow({ storyData }) {
     const initialNodes = storyData.paragraphs.map((para, index) => ({
       id: `paragraph-${index}`,
       type: 'paragraphNode',
-      position: { x: 100, y: index * 200 },
+      position: { x: 250, y: index * 250 },
       data: {
         ...para,
         index,
         onStyleChange,
+        imageStyle: para.image_style || 'realistic'
       },
+      draggable: true,
+      selectable: true
     }));
 
     const initialEdges = storyData.paragraphs
@@ -60,7 +64,7 @@ function StoryFlow({ storyData }) {
 
     setNodes(initialNodes);
     setEdges(initialEdges);
-  }, [storyData]);
+  }, [storyData, onStyleChange]);
 
   const onSave = useCallback(() => {
     const styleData = {
@@ -99,6 +103,11 @@ function StoryFlow({ storyData }) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
+        draggable={true}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        nodesDraggable={true}
+        nodesConnectable={true}
+        elementsSelectable={true}
         fitView
       >
         <Background />

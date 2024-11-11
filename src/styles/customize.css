@@ -1,9 +1,19 @@
 .paragraph-node {
-  padding: 10px;
-  border-radius: 5px;
+  padding: 15px;
+  border-radius: 8px;
   background: white;
   border: 1px solid #ccc;
   width: 300px;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.paragraph-node.selected {
+  box-shadow: 0 0 0 2px #ff00ff;
+}
+
+.paragraph-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .node-header {
@@ -28,10 +38,12 @@
 }
 
 .node-controls select {
-  flex: 1;
-  padding: 4px;
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
   border-radius: 4px;
   border: 1px solid #ddd;
+  cursor: pointer;
 }
 
 .save-controls {
@@ -39,4 +51,14 @@
   bottom: 20px;
   right: 20px;
   z-index: 5;
+}
+
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: #555;
+}
+
+.react-flow__handle:hover {
+  background: #ff00ff;
 }
