@@ -33,25 +33,7 @@
     opacity: 0.2;
 }
 
-/* Node editor styles */
-.customization-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-.node-editor-container {
-    width: 100%;
-    min-height: 600px;
-    background: var(--bs-dark);
-    border-radius: 10px;
-    border: 2px solid var(--bs-primary);
-    margin-bottom: 2rem;
-    position: relative;
-    overflow: auto;
-    padding: 20px;
-}
-
+/* ReactFlow specific styles */
 .react-flow {
     width: 100%;
     height: 100%;
@@ -86,11 +68,31 @@
     background: var(--bs-primary);
 }
 
+/* Node editor styles */
+.customization-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.node-editor-container {
+    width: 100%;
+    height: 800px;
+    background: var(--bs-dark);
+    border-radius: 10px;
+    border: 2px solid var(--bs-primary);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
 .paragraph-nodes {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     grid-gap: 20px;
     padding: 20px;
+    width: 100%;
+    height: 100%;
 }
 
 .paragraph-node {
