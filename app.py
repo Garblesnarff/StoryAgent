@@ -40,11 +40,32 @@ with app.app_context():
     import models
     db.create_all()
 
+def init_sample_story():
+    """Initialize sample story data for testing"""
+    return {
+        'prompt': 'Test story',
+        'genre': 'fantasy',
+        'mood': 'happy',
+        'target_audience': 'young_adult',
+        'created_at': str(datetime.now()),
+        'paragraphs': [
+            {
+                'text': 'This is a test paragraph one with some sample text to demonstrate the customization system.',
+                'image_style': 'realistic',
+                'image_url': None,
+                'voice_style': 'neutral'
+            },
+            {
+                'text': 'This is another test paragraph that will help us verify the node-based customization interface.',
+                'image_style': 'artistic',
+                'image_url': None,
+                'voice_style': 'dramatic'
+            }
+        ]
+    }
+
 @app.route('/')
 def index():
-    # Clear any existing story data when returning to home
-    if 'story_data' in session:
-        session.pop('story_data', None)
     return render_template('index.html')
 
 @app.route('/generate_story', methods=['POST'])
@@ -116,16 +137,21 @@ def request_entity_too_large(e):
 @app.before_request
 def check_story_data():
     # Skip checks for static files and allowed routes
-    if request.path.startswith('/static') or \
-       request.path == '/' or \
-       request.path == '/generate_story' or \
-       request.path == '/story/upload':  # Add upload route to exclusions
+    if (request.path.startswith('/static') or 
+        request.path == '/' or 
+        request.path == '/generate_story' or 
+        request.path == '/story/upload' or
+        request.path.startswith('/story/customize')):
         return
-        
-    # Check if story data exists for protected routes
-    if 'story_data' not in session and \
-       (request.path.startswith('/story/') or request.path.startswith('/save')):
-        return jsonify({'error': 'Please generate a story first'}), 403
+    
+    # Check if we need story data for story-related routes
+    if request.path.startswith('/story/'):
+        if 'story_data' not in session:
+            if request.path == '/story/customize':
+                session['story_data'] = init_sample_story()
+                logger.info("Initialized sample story data for customize page")
+            else:
+                return jsonify({'error': 'Please generate a story first'}), 403
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

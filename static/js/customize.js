@@ -1,169 +1,194 @@
-import ReactFlow from 'reactflow';
-import 'reactflow/dist/style.css';
-
 document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('node-editor');
-    const paragraphNodesContainer = document.getElementById('paragraph-nodes');
+    const flowRoot = document.getElementById('reactflow-root');
+    const saveButton = document.getElementById('save-customization');
     
-    if (!container || !paragraphNodesContainer) {
-        console.error('Required containers not found');
-        return;
-    }
-
-    // Parse story data and initialize style data storage
-    let storyData;
     try {
-        const rawData = container.dataset.story;
-        if (!rawData) {
-            throw new Error('No story data found');
-        }
-        storyData = JSON.parse(rawData);
-        if (!storyData || !Array.isArray(storyData.paragraphs)) {
-            throw new Error('Invalid story data format: Expected array of paragraphs');
+        // Get story data and validate
+        let storyData;
+        try {
+            storyData = JSON.parse(flowRoot.dataset.story || '{}');
+            if (!storyData.paragraphs || !Array.isArray(storyData.paragraphs)) {
+                throw new Error('Invalid story data format');
+            }
+        } catch (error) {
+            console.error('Failed to load story data:', error);
+            flowRoot.innerHTML = '<div class="alert alert-danger m-3">Failed to load story data. Please make sure you have a valid story selected.</div>';
+            return;
         }
 
-        // Initialize ReactFlow
+        // Create initial nodes from paragraphs with proper positioning
         const initialNodes = storyData.paragraphs.map((paragraph, index) => ({
             id: `paragraph-${index}`,
-            type: 'paragraphNode',
-            position: { x: 250 * (index % 3), y: 300 * Math.floor(index / 3) },
+            type: 'customNode',
+            position: { x: 250, y: index * 300 },
             data: {
-                text: paragraph.text,
-                index: index,
-                imageStyle: paragraph.image_style || 'realistic'
+                text: paragraph.text || '',
+                imageStyle: paragraph.image_style || 'realistic',
+                voiceStyle: paragraph.voice_style || 'neutral',
+                index: index
             }
         }));
 
-        const initialEdges = initialNodes.slice(1).map((node, index) => ({
-            id: `edge-${index}`,
-            source: `paragraph-${index}`,
-            target: node.id,
-            type: 'smoothstep'
-        }));
+        // Create Custom Node Component
+        function CustomNode({ data }) {
+            const [styles, setStyles] = React.useState({
+                imageStyle: data.imageStyle || 'realistic',
+                voiceStyle: data.voiceStyle || 'neutral'
+            });
 
-        // Custom node component
-        const ParagraphNode = ({ data }) => {
-            return (
-                <div className="paragraph-node">
-                    <div className="node-header">Paragraph {data.index + 1}</div>
-                    <div className="node-content">{data.text.substring(0, 100)}...</div>
-                    <div className="node-controls">
-                        <select 
-                            className="node-select" 
-                            value={data.imageStyle}
-                            onChange={(e) => updateNodeStyle(data.index, 'image_style', e.target.value)}
-                        >
-                            <option value="realistic">Realistic</option>
-                            <option value="artistic">Artistic</option>
-                            <option value="fantasy">Fantasy</option>
-                        </select>
-                    </div>
-                </div>
-            );
-        };
-
-        // Initialize ReactFlow
-        const flow = new ReactFlow({
-            container: paragraphNodesContainer,
-            nodes: initialNodes,
-            edges: initialEdges,
-            nodeTypes: {
-                paragraphNode: ParagraphNode
-            },
-            defaultEdgeOptions: {
-                type: 'smoothstep',
-                animated: true
-            },
-            fitView: true
-        });
-
-        // Style update handler
-        const updateNodeStyle = (index, type, value) => {
-            if (!window.styleData) {
-                window.styleData = {
-                    paragraphs: []
+            const handleStyleChange = (type, value) => {
+                const newStyles = {
+                    ...styles,
+                    [type]: value
                 };
-            }
-
-            // Ensure the paragraph data exists
-            if (!window.styleData.paragraphs[index]) {
-                window.styleData.paragraphs[index] = {
-                    index,
-                    image_style: 'realistic'
-                };
-            }
-
-            // Update while preserving other properties
-            window.styleData.paragraphs[index] = {
-                ...window.styleData.paragraphs[index],
-                [type]: value
+                setStyles(newStyles);
+                if (data) {
+                    data[type] = value;
+                }
             };
 
-            console.log('Style updated:', window.styleData);
-        };
-
-        // Initialize style data
-        window.styleData = {
-            paragraphs: storyData.paragraphs.map((paragraph, index) => ({
-                index,
-                image_style: paragraph.image_style || 'realistic'
-            }))
-        };
-
-    } catch (error) {
-        console.error('Failed to initialize ReactFlow:', error);
-        container.innerHTML = `
-            <div class="alert alert-danger">
-                <h4 class="alert-heading">Failed to load story data</h4>
-                <p>${error.message}</p>
-                <hr>
-                <p class="mb-0">Please make sure you have a valid story selected.</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Setup save functionality
-    const saveButton = document.getElementById('save-customization');
-    if (saveButton) {
-        saveButton.addEventListener('click', async () => {
-            try {
-                saveButton.disabled = true;
-                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
-
-                if (!window.styleData?.paragraphs?.length) {
-                    throw new Error('No style changes to save');
-                }
-
-                // Remove any null values from paragraphs array
-                window.styleData.paragraphs = window.styleData.paragraphs.filter(p => p !== null);
-
-                const response = await fetch('/story/update_style', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(window.styleData)
-                });
-
-                const data = await response.json();
+            return React.createElement('div', {
+                className: 'paragraph-node'
+            }, [
+                React.createElement('div', {
+                    key: 'header',
+                    className: 'node-header'
+                }, `Paragraph ${data.index + 1}`),
                 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to save customization');
-                }
+                React.createElement('div', {
+                    key: 'content',
+                    className: 'node-content'
+                }, data.text || 'No content available'),
+                
+                React.createElement('div', {
+                    key: 'controls',
+                    className: 'node-controls'
+                }, [
+                    React.createElement('div', {
+                        key: 'image-style',
+                        className: 'node-select-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'image-label',
+                            className: 'node-select-label'
+                        }, 'Image Style'),
+                        React.createElement('select', {
+                            key: 'image-select',
+                            className: 'node-select',
+                            value: styles.imageStyle,
+                            onChange: (e) => handleStyleChange('imageStyle', e.target.value)
+                        }, [
+                            React.createElement('option', { value: 'realistic', key: 'realistic' }, 'Realistic'),
+                            React.createElement('option', { value: 'artistic', key: 'artistic' }, 'Artistic'),
+                            React.createElement('option', { value: 'fantasy', key: 'fantasy' }, 'Fantasy')
+                        ])
+                    ]),
+                    
+                    React.createElement('div', {
+                        key: 'voice-style',
+                        className: 'node-select-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'voice-label',
+                            className: 'node-select-label'
+                        }, 'Voice Style'),
+                        React.createElement('select', {
+                            key: 'voice-select',
+                            className: 'node-select',
+                            value: styles.voiceStyle,
+                            onChange: (e) => handleStyleChange('voiceStyle', e.target.value)
+                        }, [
+                            React.createElement('option', { value: 'neutral', key: 'neutral' }, 'Neutral'),
+                            React.createElement('option', { value: 'dramatic', key: 'dramatic' }, 'Dramatic'),
+                            React.createElement('option', { value: 'cheerful', key: 'cheerful' }, 'Cheerful')
+                        ])
+                    ])
+                ])
+            ]);
+        }
 
-                if (data.success) {
-                    window.location.href = '/story/generate';
-                } else {
-                    throw new Error(data.error || 'Server returned unsuccessful response');
+        // Create Flow Component
+        function Flow() {
+            const [nodes, setNodes] = React.useState(initialNodes);
+            const nodeTypes = React.useMemo(() => ({
+                customNode: CustomNode
+            }), []);
+
+            const onNodesChange = React.useCallback(
+                (changes) => setNodes((nds) => window.ReactFlow.applyNodeChanges(changes, nds)),
+                []
+            );
+
+            return React.createElement(window.ReactFlow.default, {
+                nodes: nodes,
+                onNodesChange: onNodesChange,
+                nodeTypes: nodeTypes,
+                fitView: true,
+                defaultViewport: { x: 0, y: 0, zoom: 1 },
+                children: [
+                    React.createElement(window.ReactFlow.Controls),
+                    React.createElement(window.ReactFlow.Background, { color: '#aaa', gap: 16 })
+                ]
+            });
+        }
+
+        // Create and render main App component
+        function App() {
+            return React.createElement(window.ReactFlow.ReactFlowProvider, null,
+                React.createElement(Flow)
+            );
+        }
+
+        // Mount React application
+        window.ReactDOM.render(
+            React.createElement(App),
+            flowRoot
+        );
+        
+        // Save functionality
+        if (saveButton) {
+            saveButton.addEventListener('click', async () => {
+                try {
+                    saveButton.disabled = true;
+                    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                    
+                    const nodes = document.querySelectorAll('.paragraph-node');
+                    const styleData = {
+                        paragraphs: Array.from(nodes).map((node, index) => ({
+                            index: index,
+                            image_style: node.querySelector('select[class*="node-select"]:first-child').value,
+                            voice_style: node.querySelector('select[class*="node-select"]:last-child').value
+                        }))
+                    };
+                    
+                    const response = await fetch('/story/update_style', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(styleData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to save customization');
+                    }
+                    
+                    if (data.success) {
+                        window.location.href = '/story/generate';
+                    }
+                } catch (error) {
+                    console.error('Error saving customization:', error);
+                    alert(error.message || 'Failed to save customization');
+                } finally {
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = 'Save Changes';
                 }
-            } catch (error) {
-                console.error('Error saving customization:', error);
-                alert(error.message || 'Failed to save customization');
-            } finally {
-                saveButton.disabled = false;
-                saveButton.innerHTML = 'Generate Cards';
-            }
-        });
+            });
+        }
+    } catch (error) {
+        console.error('Failed to initialize story customization:', error);
+        flowRoot.innerHTML = '<div class="alert alert-danger m-3">An error occurred while initializing the customization interface.</div>';
     }
 });
