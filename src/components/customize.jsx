@@ -18,6 +18,24 @@ const nodeTypes = {
   paragraphNode: ParagraphNode,
 };
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="alert alert-danger">Something went wrong loading the editor.</div>;
+    }
+    return this.props.children;
+  }
+}
+
 function StoryFlow({ storyData }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -251,22 +269,24 @@ function StoryFlow({ storyData }) {
   );
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('node-editor');
-  if (!container) return;
-  
-  try {
-    const storyData = JSON.parse(container.dataset.story);
-    const root = ReactDOM.createRoot(container);
-    root.render(
-      <React.StrictMode>
-        <ReactFlowProvider>
-          <StoryFlow storyData={storyData} />
-        </ReactFlowProvider>
-      </React.StrictMode>
-    );
-  } catch (error) {
-    console.error('Failed to initialize React app:', error);
-    container.innerHTML = '<div class="alert alert-danger">Failed to load story customization</div>';
-  }
-});
+const container = document.getElementById('node-editor');
+if (container) {
+    const storyData = JSON.parse(container.dataset.story || '{}');
+    
+    // Ensure React and ReactFlow are available
+    if (window.React && window.ReactDOM && window.ReactFlow) {
+        const root = ReactDOM.createRoot(container);
+        root.render(
+            <React.StrictMode>
+                <ErrorBoundary>
+                    <ReactFlowProvider>
+                        <StoryFlow storyData={storyData} />
+                    </ReactFlowProvider>
+                </ErrorBoundary>
+            </React.StrictMode>
+        );
+    } else {
+        console.error('Required libraries not loaded');
+        container.innerHTML = '<div class="alert alert-danger">Failed to load required libraries</div>';
+    }
+}
