@@ -10,6 +10,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ParagraphNode from './ParagraphNode';
+import LibraryPanel from './LibraryPanel';
 
 const nodeTypes = {
   paragraphNode: ParagraphNode,
@@ -36,6 +37,40 @@ function StoryFlow({ storyData }) {
     );
   }, []);
 
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback((event) => {
+    event.preventDefault();
+    const effect = JSON.parse(event.dataTransfer.getData('application/json'));
+    
+    // Get the drop position relative to the viewport
+    const reactFlowBounds = document.querySelector('.react-flow').getBoundingClientRect();
+    const position = {
+      x: event.clientX - reactFlowBounds.left,
+      y: event.clientY - reactFlowBounds.top,
+    };
+
+    // Update the node that was dropped on
+    const droppedNode = nodes.find(node => {
+      const nodeRect = document.querySelector(`[data-id="${node.id}"]`)?.getBoundingClientRect();
+      if (!nodeRect) return false;
+      return (
+        position.x >= nodeRect.left - reactFlowBounds.left &&
+        position.x <= nodeRect.right - reactFlowBounds.left &&
+        position.y >= nodeRect.top - reactFlowBounds.top &&
+        position.y <= nodeRect.bottom - reactFlowBounds.top
+      );
+    });
+
+    if (droppedNode) {
+      const index = droppedNode.data.index;
+      onStyleChange(index, effect.category, effect.id);
+    }
+  }, [nodes, onStyleChange]);
+
   React.useEffect(() => {
     if (!storyData?.paragraphs) return;
 
@@ -47,7 +82,8 @@ function StoryFlow({ storyData }) {
         ...para,
         index,
         onStyleChange,
-        imageStyle: para.image_style || 'realistic'
+        imageStyle: para.image_style || 'realistic',
+        voiceStyle: para.voice_style || 'neutral'
       },
       draggable: true,
       selectable: true
@@ -96,28 +132,32 @@ function StoryFlow({ storyData }) {
   }, [nodes]);
 
   return (
-    <div style={{ width: '100%', height: '80vh' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
-        draggable={true}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        nodesDraggable={true}
-        nodesConnectable={true}
-        elementsSelectable={true}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
-      <div className="save-controls">
-        <button onClick={onSave} className="btn btn-primary">
-          Save and Generate
-        </button>
+    <div className="story-flow-container">
+      <LibraryPanel />
+      <div className="flow-wrapper">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          nodesDraggable={true}
+          nodesConnectable={true}
+          elementsSelectable={true}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
+        <div className="save-controls">
+          <button onClick={onSave} className="btn btn-primary">
+            Save and Generate
+          </button>
+        </div>
       </div>
     </div>
   );

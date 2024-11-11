@@ -1,3 +1,64 @@
+.story-flow-container {
+  display: flex;
+  width: 100%;
+  height: 80vh;
+}
+
+.flow-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.library-panel {
+  width: 250px;
+  background: white;
+  border-right: 1px solid #e0e0e0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.library-header {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.effects-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.effect-category h3 {
+  font-size: 1em;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.effect-item {
+  padding: 10px;
+  margin: 5px 0;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.effect-item:hover {
+  background: #eee;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.effect-item:active {
+  cursor: grabbing;
+}
+
 .paragraph-node {
   padding: 15px;
   border-radius: 8px;
@@ -61,4 +122,12 @@
 
 .react-flow__handle:hover {
   background: #ff00ff;
+}
+
+.effect-item.dragging {
+  opacity: 0.5;
+}
+
+.paragraph-node.drag-over {
+  border: 2px dashed #ff00ff;
 }
