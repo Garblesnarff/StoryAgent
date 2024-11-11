@@ -1,17 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'static/dist',
     rollupOptions: {
-      input: 'static/js/customize.jsx',
+      input: 'src/components/customize.jsx',
       output: {
-        entryFileNames: 'customize.js',
+        entryFileNames: '[name].js',
         chunkFileNames: '[name].[hash].js',
         assetFileNames: '[name].[hash].[ext]'
       }
+    }
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
     }
   }
 });
