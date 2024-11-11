@@ -14,33 +14,14 @@ class ImageGenerator:
         self.IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
 
     def _style_to_prompt_modifier(self, text, style='realistic'):
-        base_text = text[:200]  # Get first 200 chars of text for context
-        
-        if style == 'realistic':
-            return (
-                f"Photorealistic digital photograph of {base_text}. Shot on Canon EOS R5, "
-                f"natural daylight, 4K resolution, extreme detail, photojournalistic style. "
-                f"Hyperrealistic textures, accurate lighting and shadows, perfect focus, "
-                f"high dynamic range. Style of National Geographic photography."
-            )
-        elif style == 'artistic':
-            return (
-                f"Oil painting interpretation of: {base_text}. In the distinctive style of "
-                f"Van Gogh and Monet, with visible brushstrokes, vibrant impasto technique, "
-                f"bold colors and expressive artistic interpretation. Painted on canvas with "
-                f"thick oil paints, showing texture and movement. Impressionistic lighting "
-                f"and dreamlike atmosphere."
-            )
-        elif style == 'fantasy':
-            return (
-                f"High fantasy digital artwork of: {base_text}. In the style of legendary "
-                f"fantasy artists like Michael Whelan and Frank Frazetta. Magical atmosphere "
-                f"with glowing ethereal lights, mystical fog effects, iridescent colors. "
-                f"Dragons, floating crystals, and magical energy in the environment. "
-                f"Dramatic fantasy lighting with lens flares and god rays."
-            )
-        else:
-            return f"An image representing: {base_text}"
+        """Convert style parameter to prompt modifier"""
+        style_modifiers = {
+            'realistic': 'Photorealistic, detailed, natural lighting',
+            'artistic': 'Artistic interpretation, painterly style, expressive',
+            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
+        }
+        modifier = style_modifiers.get(style, style_modifiers['realistic'])
+        return f"An image representing: {text[:100]}. {modifier}"
         
     def generate_image(self, text, style='realistic'):
         try:

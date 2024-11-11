@@ -26,5 +26,4 @@ dependencies = [
     "beautifulsoup4>=4.12.3",
     "nltk>=3.9.1",
     "werkzeug>=3.0.4",
-    "sqlalchemy>=2.0.36",
 ]
