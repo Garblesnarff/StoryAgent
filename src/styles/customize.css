@@ -122,6 +122,25 @@
   z-index: 5;
 }
 
+.editor-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+}
+
+.editor-controls button {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.editor-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .react-flow__handle {
   width: 8px;
   height: 8px;

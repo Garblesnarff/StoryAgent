@@ -7,7 +7,8 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   Handle,
-  ReactFlowProvider
+  ReactFlowProvider,
+  useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ParagraphNode from './ParagraphNode';
@@ -20,10 +21,74 @@ const nodeTypes = {
 function StoryFlow({ storyData }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [history, setHistory] = useState({ past: [], future: [] });
+  const { setViewport } = useReactFlow();
+
+  // Function to save current state to history
+  const saveToHistory = useCallback((currentNodes) => {
+    setHistory(prev => ({
+      past: [...prev.past, currentNodes],
+      future: []
+    }));
+  }, []);
+
+  // Undo function
+  const undo = useCallback(() => {
+    setHistory(prev => {
+      if (prev.past.length === 0) return prev;
+      
+      const previous = prev.past[prev.past.length - 1];
+      const newPast = prev.past.slice(0, prev.past.length - 1);
+      
+      return {
+        past: newPast,
+        future: [nodes, ...prev.future]
+      };
+    });
+    
+    if (history.past.length > 0) {
+      setNodes(history.past[history.past.length - 1]);
+    }
+  }, [nodes, setNodes]);
+
+  // Redo function
+  const redo = useCallback(() => {
+    setHistory(prev => {
+      if (prev.future.length === 0) return prev;
+      
+      const next = prev.future[0];
+      const newFuture = prev.future.slice(1);
+      
+      return {
+        past: [...prev.past, nodes],
+        future: newFuture
+      };
+    });
+    
+    if (history.future.length > 0) {
+      setNodes(history.future[0]);
+    }
+  }, [nodes, setNodes]);
+
+  // Handle keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyPress = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+        if (event.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [undo, redo]);
 
   const onStyleChange = useCallback((index, type, value) => {
-    setNodes((nds) =>
-      nds.map((node) => {
+    setNodes((nds) => {
+      const newNodes = nds.map((node) => {
         if (node.id === `paragraph-${index}`) {
           return {
             ...node,
@@ -34,9 +99,15 @@ function StoryFlow({ storyData }) {
           };
         }
         return node;
-      })
-    );
-  }, []);
+      });
+      saveToHistory(newNodes);
+      return newNodes;
+    });
+  }, [saveToHistory]);
+
+  const onNodeDragStop = useCallback(() => {
+    saveToHistory(nodes);
+  }, [nodes, saveToHistory]);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -47,14 +118,12 @@ function StoryFlow({ storyData }) {
     event.preventDefault();
     const effect = JSON.parse(event.dataTransfer.getData('application/json'));
     
-    // Get the drop position relative to the viewport
     const reactFlowBounds = document.querySelector('.react-flow').getBoundingClientRect();
     const position = {
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
     };
 
-    // Update the node that was dropped on
     const droppedNode = nodes.find(node => {
       const nodeRect = document.querySelector(`[data-id="${node.id}"]`)?.getBoundingClientRect();
       if (!nodeRect) return false;
@@ -136,6 +205,22 @@ function StoryFlow({ storyData }) {
     <div className="story-flow-container" style={{ width: '100%', height: '80vh' }}>
       <LibraryPanel />
       <div className="flow-wrapper" style={{ flex: 1, height: '100%' }}>
+        <div className="editor-controls">
+          <button 
+            onClick={undo} 
+            disabled={history.past.length === 0}
+            className="btn btn-outline-secondary"
+          >
+            Undo
+          </button>
+          <button 
+            onClick={redo} 
+            disabled={history.future.length === 0}
+            className="btn btn-outline-secondary"
+          >
+            Redo
+          </button>
+        </div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -144,6 +229,7 @@ function StoryFlow({ storyData }) {
           nodeTypes={nodeTypes}
           onDragOver={onDragOver}
           onDrop={onDrop}
+          onNodeDragStop={onNodeDragStop}
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
           nodesDraggable={true}
           nodesConnectable={true}
