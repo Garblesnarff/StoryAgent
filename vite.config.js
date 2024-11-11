@@ -8,9 +8,9 @@ export default defineConfig({
     rollupOptions: {
       input: 'static/js/customize.jsx',
       output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
+        entryFileNames: 'customize.js',
+        chunkFileNames: '[name].[hash].js',
+        assetFileNames: '[name].[hash].[ext]'
       }
     }
   }
