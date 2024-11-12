@@ -43,7 +43,10 @@ def regenerate_image():
         style = data.get('style', 'realistic')
         
         # Generate new image with style
-        image_url = image_service.generate_image(text, style=style)
+        image_url = image_service.generate_image({
+            'text': text,
+            'style': style
+        })
         if not image_url:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -106,8 +109,10 @@ def generate_cards():
                 # Generate image if needed with style
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
-                    image_style = paragraph.get('image_style', 'realistic')
-                    paragraph['image_url'] = image_service.generate_image(paragraph['text'], style=image_style)
+                    paragraph['image_url'] = image_service.generate_image({
+                        'text': paragraph['text'],
+                        'style': paragraph.get('image_style', 'realistic')
+                    })
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {

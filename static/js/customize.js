@@ -64,18 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const index = parseInt(e.target.dataset.index);
                 const type = e.target.dataset.type;
                 
-                // Ensure the paragraph data exists
-                if (!window.styleData.paragraphs[index]) {
-                    window.styleData.paragraphs[index] = {
-                        index,
-                        image_style: 'realistic'
-                    };
-                }
-                
-                // Update while preserving other properties
+                // Update the style data with proper structure
                 window.styleData.paragraphs[index] = {
                     ...window.styleData.paragraphs[index],
-                    [type]: e.target.value
+                    index,
+                    image_style: e.target.value
                 };
                 
                 console.log('Style updated:', window.styleData);
