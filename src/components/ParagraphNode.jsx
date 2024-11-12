@@ -11,13 +11,17 @@ const ParagraphNode = ({ data, selected }) => {
   return (
     <div 
       className={`paragraph-node ${selected ? 'selected' : ''}`}
-      role="button"
-      tabIndex={0}
+      draggable={true}
     >
-      <Handle type="target" position="top" style={{ background: '#555' }} />
+      <Handle 
+        type="target" 
+        position="top" 
+        style={{ background: '#555' }}
+        isConnectable={true}
+      />
       <div className="node-header">Paragraph {data.index + 1}</div>
       <div className="node-content">
-        <p>{data.text.substring(0, 100)}...</p>
+        <p>{data.text?.substring(0, 100)}...</p>
         <div className="node-controls">
           <select 
             value={data.imageStyle || 'realistic'} 
@@ -29,7 +33,12 @@ const ParagraphNode = ({ data, selected }) => {
           </select>
         </div>
       </div>
-      <Handle type="source" position="bottom" style={{ background: '#555' }} />
+      <Handle 
+        type="source" 
+        position="bottom" 
+        style={{ background: '#555' }}
+        isConnectable={true}
+      />
     </div>
   );
 };

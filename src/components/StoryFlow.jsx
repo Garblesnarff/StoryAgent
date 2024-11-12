@@ -19,54 +19,56 @@ const nodeTypes = {
 function StoryFlow({ storyData }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [history, setHistory] = useState({ past: [], future: [] });
+  const [history, setHistory] = useState({ past: [], present: null, future: [] });
   const { setViewport } = useReactFlow();
 
   // Function to save current state to history
   const saveToHistory = useCallback((currentNodes) => {
     setHistory(prev => ({
-      past: [...prev.past, currentNodes],
+      past: [...prev.past, prev.present || nodes],
+      present: currentNodes,
       future: []
     }));
-  }, []);
+  }, [nodes]);
 
   // Undo function
   const undo = useCallback(() => {
     setHistory(prev => {
       if (prev.past.length === 0) return prev;
       
-      const previous = prev.past[prev.past.length - 1];
-      const newPast = prev.past.slice(0, prev.past.length - 1);
+      const newPast = prev.past.slice(0, -1);
+      const newPresent = prev.past[prev.past.length - 1];
       
       return {
         past: newPast,
-        future: [nodes, ...prev.future]
+        present: newPresent,
+        future: [prev.present, ...prev.future]
       };
     });
-    
-    if (history.past.length > 0) {
-      setNodes(history.past[history.past.length - 1]);
-    }
-  }, [nodes, setNodes]);
+  }, []);
 
   // Redo function
   const redo = useCallback(() => {
     setHistory(prev => {
       if (prev.future.length === 0) return prev;
       
-      const next = prev.future[0];
       const newFuture = prev.future.slice(1);
+      const newPresent = prev.future[0];
       
       return {
-        past: [...prev.past, nodes],
+        past: [...prev.past, prev.present],
+        present: newPresent,
         future: newFuture
       };
     });
-    
-    if (history.future.length > 0) {
-      setNodes(history.future[0]);
+  }, []);
+
+  // Effect to update nodes when history changes
+  React.useEffect(() => {
+    if (history.present !== null) {
+      setNodes(history.present);
     }
-  }, [nodes, setNodes]);
+  }, [history.present, setNodes]);
 
   // Handle keyboard shortcuts
   React.useEffect(() => {
@@ -103,7 +105,7 @@ function StoryFlow({ storyData }) {
     });
   }, [saveToHistory]);
 
-  const onNodeDragStop = useCallback(() => {
+  const onNodeDragStop = useCallback((event, node) => {
     saveToHistory(nodes);
   }, [nodes, saveToHistory]);
 
@@ -168,6 +170,7 @@ function StoryFlow({ storyData }) {
 
     setNodes(initialNodes);
     setEdges(initialEdges);
+    setHistory({ past: [], present: initialNodes, future: [] });
   }, [storyData, onStyleChange]);
 
   const onSave = useCallback(() => {
@@ -200,25 +203,9 @@ function StoryFlow({ storyData }) {
   }, [nodes]);
 
   return (
-    <div className="story-flow-container" style={{ width: '100%', height: '80vh' }}>
+    <div className="story-flow-container">
       <LibraryPanel />
-      <div className="flow-wrapper" style={{ flex: 1, height: '100%' }}>
-        <div className="editor-controls">
-          <button 
-            onClick={undo} 
-            disabled={history.past.length === 0}
-            className="btn btn-outline-secondary"
-          >
-            Undo
-          </button>
-          <button 
-            onClick={redo} 
-            disabled={history.future.length === 0}
-            className="btn btn-outline-secondary"
-          >
-            Redo
-          </button>
-        </div>
+      <div className="flow-wrapper">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -228,21 +215,25 @@ function StoryFlow({ storyData }) {
           onDragOver={onDragOver}
           onDrop={onDrop}
           onNodeDragStop={onNodeDragStop}
+          fitView
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          minZoom={0.1}
+          maxZoom={4}
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
-          fitView
-          style={{ background: '#f8f9fa' }}
+          proOptions={{ hideAttribution: true }}
         >
           <Background />
           <Controls />
           <MiniMap />
         </ReactFlow>
+        <div className="editor-controls">
+          <button onClick={undo} disabled={history.past.length === 0}>Undo</button>
+          <button onClick={redo} disabled={history.future.length === 0}>Redo</button>
+        </div>
         <div className="save-controls">
-          <button onClick={onSave} className="btn btn-primary">
-            Save and Generate
-          </button>
+          <button onClick={onSave}>Save and Generate</button>
         </div>
       </div>
     </div>
