@@ -1,11 +1,16 @@
-.story-flow-container {
-  display: flex;
-  width: 100vw;
+#node-editor {
+  width: 100%;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
   overflow: hidden;
+}
+
+.story-flow-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
 }
 
 .flow-wrapper {
@@ -20,6 +25,16 @@
   top: 0;
   left: 0;
   background: #f8f9fa;
+  flex: 1;
+}
+
+.react-flow__node {
+  cursor: grab;
+  pointer-events: all !important;
+}
+
+.react-flow__node:active {
+  cursor: grabbing;
 }
 
 .library-panel {
@@ -73,7 +88,7 @@
 }
 
 .paragraph-node {
-  min-width: 300px;
+  min-width: 250px;
   background: white;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -114,7 +129,7 @@
 .node-controls select {
   width: 100%;
   padding: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
   border-radius: 4px;
   border: 1px solid #ddd;
   cursor: pointer;

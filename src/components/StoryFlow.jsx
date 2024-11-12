@@ -5,7 +5,7 @@ import ReactFlow, {
   MiniMap,
   useNodesState,
   useEdgesState,
-  Handle,
+  applyNodeChanges,
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -21,6 +21,15 @@ function StoryFlow({ storyData }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [history, setHistory] = useState({ past: [], present: null, future: [] });
   const { setViewport } = useReactFlow();
+
+  // Function to handle node changes and update history
+  const handleNodesChange = useCallback((changes) => {
+    setNodes((nds) => {
+      const newNodes = applyNodeChanges(changes, nds);
+      saveToHistory(newNodes);
+      return newNodes;
+    });
+  }, [setNodes]);
 
   // Function to save current state to history
   const saveToHistory = useCallback((currentNodes) => {
@@ -86,6 +95,7 @@ function StoryFlow({ storyData }) {
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [undo, redo]);
 
+  // Handle style changes
   const onStyleChange = useCallback((index, type, value) => {
     setNodes((nds) => {
       const newNodes = nds.map((node) => {
@@ -105,9 +115,33 @@ function StoryFlow({ storyData }) {
     });
   }, [saveToHistory]);
 
-  const onNodeDragStop = useCallback((event, node) => {
-    saveToHistory(nodes);
-  }, [nodes, saveToHistory]);
+  // Initialize nodes from story data
+  React.useEffect(() => {
+    if (!storyData?.paragraphs) return;
+
+    const initialNodes = storyData.paragraphs.map((para, index) => ({
+      id: `paragraph-${index}`,
+      type: 'paragraphNode',
+      position: { x: 250, y: index * 200 },
+      data: {
+        ...para,
+        index,
+        onStyleChange,
+        imageStyle: para.image_style || 'realistic'
+      },
+      draggable: true,
+      selectable: true
+    }));
+
+    setNodes(initialNodes);
+    setHistory({ past: [], present: initialNodes, future: [] });
+    setEdges(storyData.paragraphs.slice(0, -1).map((_, index) => ({
+      id: `edge-${index}`,
+      source: `paragraph-${index}`,
+      target: `paragraph-${index + 1}`,
+      type: 'smoothstep'
+    })));
+  }, [storyData, onStyleChange, setNodes, setEdges]);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -140,38 +174,6 @@ function StoryFlow({ storyData }) {
       onStyleChange(index, effect.category, effect.id);
     }
   }, [nodes, onStyleChange]);
-
-  React.useEffect(() => {
-    if (!storyData?.paragraphs) return;
-
-    const initialNodes = storyData.paragraphs.map((para, index) => ({
-      id: `paragraph-${index}`,
-      type: 'paragraphNode',
-      position: { x: 250, y: index * 250 },
-      data: {
-        ...para,
-        index,
-        onStyleChange,
-        imageStyle: para.image_style || 'realistic',
-        voiceStyle: para.voice_style || 'neutral'
-      },
-      draggable: true,
-      selectable: true
-    }));
-
-    const initialEdges = storyData.paragraphs
-      .slice(0, -1)
-      .map((_, index) => ({
-        id: `edge-${index}`,
-        source: `paragraph-${index}`,
-        target: `paragraph-${index + 1}`,
-        type: 'smoothstep',
-      }));
-
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-    setHistory({ past: [], present: initialNodes, future: [] });
-  }, [storyData, onStyleChange]);
 
   const onSave = useCallback(() => {
     const styleData = {
@@ -209,12 +211,11 @@ function StoryFlow({ storyData }) {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          onNodeDragStop={onNodeDragStop}
           fitView
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
           minZoom={0.1}
