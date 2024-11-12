@@ -36,10 +36,12 @@ class ImageGenerator:
             
             # Extract style from enhanced text
             enhanced_text = text
+            style = 'realistic'
             if isinstance(text, dict):
+                style = text.get('style', 'realistic')
                 enhanced_text = self._style_to_prompt_modifier(
                     text['text'], 
-                    text.get('style', 'realistic')
+                    style
                 )
             else:
                 enhanced_text = self._style_to_prompt_modifier(text)
@@ -61,7 +63,11 @@ class ImageGenerator:
                 # Add timestamp to queue
                 self.image_generation_queue.append(datetime.now())
                 
-                return f"data:image/png;base64,{image_b64}"
+                return {
+                    'image_url': f"data:image/png;base64,{image_b64}",
+                    'prompt': enhanced_text,
+                    'style': style
+                }
             return None
             
         except Exception as e:
