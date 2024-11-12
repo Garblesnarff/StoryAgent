@@ -1,6 +1,3 @@
-import ReactFlow, { Background, Controls } from 'reactflow';
-import 'reactflow/dist/style.css';
-
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('node-editor');
     const paragraphNodesContainer = document.getElementById('paragraph-nodes');
@@ -26,91 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.styleData = {
             paragraphs: storyData.paragraphs.map((paragraph, index) => ({
                 index,
-                image_style: paragraph.image_style || 'realistic',
-                text: paragraph.text // Include text for reference
+                image_style: paragraph.image_style || 'realistic'
             }))
         };
-
-        // Initialize ReactFlow
-        const nodes = storyData.paragraphs.map((paragraph, index) => ({
-            id: `paragraph-${index}`,
-            type: 'paragraphNode',
-            position: { x: 250 * index, y: 100 },
-            data: {
-                text: paragraph.text,
-                index: index,
-                image_style: paragraph.image_style || 'realistic'
-            }
-        }));
-
-        const edges = nodes.slice(1).map((node, index) => ({
-            id: `edge-${index}`,
-            source: `paragraph-${index}`,
-            target: node.id,
-            type: 'smoothstep'
-        }));
-
-        // Custom Node Component
-        const ParagraphNode = ({ data }) => {
-            return (
-                <div className="paragraph-node">
-                    <div className="node-header">Paragraph {data.index + 1}</div>
-                    <div className="node-content">{data.text.substring(0, 100)}...</div>
-                    <div className="node-controls">
-                        <select 
-                            className="node-select" 
-                            value={data.image_style}
-                            onChange={(e) => updateStyle(data.index, 'image_style', e.target.value)}
-                        >
-                            <option value="realistic">Realistic</option>
-                            <option value="artistic">Artistic</option>
-                            <option value="fantasy">Fantasy</option>
-                        </select>
-                    </div>
-                </div>
-            );
-        };
-
-        const nodeTypes = {
-            paragraphNode: ParagraphNode
-        };
-
-        // Initialize ReactFlow
-        const flow = new ReactFlow({
-            nodes,
-            edges,
-            nodeTypes,
-            fitView: true,
-            elements: container,
-            defaultZoom: 1,
-            minZoom: 0.5,
-            maxZoom: 2,
-        });
-
-        // Add background and controls
-        new Background({ flow });
-        new Controls({ flow });
-
-        // Style update handler
-        const updateStyle = (index, type, value) => {
-            if (!window.styleData.paragraphs[index]) {
-                window.styleData.paragraphs[index] = {
-                    index,
-                    image_style: 'realistic',
-                    text: storyData.paragraphs[index].text
-                };
-            }
-            
-            window.styleData.paragraphs[index] = {
-                ...window.styleData.paragraphs[index],
-                [type]: value
-            };
-            
-            console.log('Style updated:', window.styleData);
-        };
-
     } catch (error) {
-        console.error('Failed to initialize ReactFlow:', error);
+        console.error('Failed to parse story data:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
                 <h4 class="alert-heading">Failed to load story data</h4>
@@ -121,6 +38,55 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         return;
     }
+
+    // Create paragraph nodes
+    const paragraphNodes = storyData.paragraphs.map((paragraph, index) => {
+        const card = document.createElement('div');
+        card.className = 'card paragraph-node';
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="node-header">Paragraph ${index + 1}</div>
+                <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
+                <div class="node-controls">
+                    <select class="node-select" data-type="image_style" data-index="${index}">
+                        <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic</option>
+                        <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic</option>
+                        <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        // Add event listeners to selects
+        const selects = card.querySelectorAll('.node-select');
+        selects.forEach(select => {
+            select.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const type = e.target.dataset.type;
+                
+                // Ensure the paragraph data exists
+                if (!window.styleData.paragraphs[index]) {
+                    window.styleData.paragraphs[index] = {
+                        index,
+                        image_style: 'realistic'
+                    };
+                }
+                
+                // Update while preserving other properties
+                window.styleData.paragraphs[index] = {
+                    ...window.styleData.paragraphs[index],
+                    [type]: e.target.value
+                };
+                
+                console.log('Style updated:', window.styleData);
+            });
+        });
+
+        return card;
+    });
+
+    // Add nodes to container
+    paragraphNodesContainer.append(...paragraphNodes);
 
     // Setup save functionality
     const saveButton = document.getElementById('save-customization');
