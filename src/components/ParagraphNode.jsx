@@ -2,15 +2,19 @@ import React from 'react';
 import { Handle } from 'reactflow';
 
 const ParagraphNode = ({ data, selected }) => {
-  const handleStyleChange = (type, value) => {
+  const handleStyleChange = React.useCallback((type, value) => {
     if (data.onStyleChange) {
       data.onStyleChange(data.index, type, value);
     }
-  };
+  }, [data]);
 
   return (
-    <div className={`paragraph-node ${selected ? 'selected' : ''}`}>
-      <Handle type="target" position="top" />
+    <div 
+      className={`paragraph-node ${selected ? 'selected' : ''}`}
+      role="button"
+      tabIndex={0}
+    >
+      <Handle type="target" position="top" style={{ background: '#555' }} />
       <div className="node-header">Paragraph {data.index + 1}</div>
       <div className="node-content">
         <p>{data.text.substring(0, 100)}...</p>
@@ -25,7 +29,7 @@ const ParagraphNode = ({ data, selected }) => {
           </select>
         </div>
       </div>
-      <Handle type="source" position="bottom" />
+      <Handle type="source" position="bottom" style={{ background: '#555' }} />
     </div>
   );
 };
