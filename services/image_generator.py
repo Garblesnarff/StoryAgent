@@ -35,21 +35,19 @@ class ImageGenerator:
                 wait_time = (self.image_generation_queue[0] + timedelta(seconds=self.IMAGE_RATE_LIMIT) - current_time).total_seconds()
                 time.sleep(wait_time)
             
-            # Extract style from enhanced text
+            # Extract style and text
             enhanced_text = text
             style = 'realistic'
             if isinstance(text, dict):
                 style = text.get('style', 'realistic')
-                enhanced_text = self._style_to_prompt_modifier(
-                    text['text'], 
-                    style
-                )
-            else:
-                enhanced_text = self._style_to_prompt_modifier(text)
+                enhanced_text = text['text']
+            
+            # Apply style modifier at the beginning of the prompt
+            modified_prompt = self._style_to_prompt_modifier(enhanced_text, style)
             
             # Generate image using Together AI
             image_response = self.client.images.generate(
-                prompt=enhanced_text,
+                prompt=modified_prompt,  # Use the modified prompt
                 model="black-forest-labs/FLUX.1-schnell-Free",
                 width=512,
                 height=512,
@@ -66,7 +64,7 @@ class ImageGenerator:
                 
                 return {
                     'image_url': f"data:image/png;base64,{image_b64}",
-                    'prompt': enhanced_text,
+                    'prompt': modified_prompt,  # Return the modified prompt
                     'style': style
                 }
             return None
