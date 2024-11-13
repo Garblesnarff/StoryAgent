@@ -16,13 +16,12 @@ class ImageGenerator:
     def _style_to_prompt_modifier(self, text, style='realistic'):
         """Convert style parameter to prompt modifier"""
         style_modifiers = {
-            'realistic': 'Photorealistic style, ultra detailed digital art, natural lighting, 4k uhd',
-            'artistic': 'Oil painting style, impressionist artwork, vibrant colors, expressive brushstrokes, artistic interpretation',
-            'fantasy': 'Fantasy digital art, magical atmosphere, ethereal lighting, mystical elements, dreamlike quality'
+            'realistic': 'Photorealistic, detailed, natural lighting',
+            'artistic': 'Artistic interpretation, painterly style, expressive',
+            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
         }
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        # Place the style modifier at the beginning and emphasize it
-        return f"{modifier}, create an image representing: {text[:100]}"
+        return f"An image representing: {text[:100]}. {modifier}"
         
     def generate_image(self, text, style='realistic'):
         try:
@@ -35,17 +34,12 @@ class ImageGenerator:
                 wait_time = (self.image_generation_queue[0] + timedelta(seconds=self.IMAGE_RATE_LIMIT) - current_time).total_seconds()
                 time.sleep(wait_time)
             
-            # Extract style and text from different input formats
-            if isinstance(text, dict):
-                style = text.get('style', 'realistic')
-                text = text['text']
-            
-            # Apply style modifier
-            modified_prompt = self._style_to_prompt_modifier(text, style)
+            # Generate enhanced prompt with style
+            enhanced_prompt = self._style_to_prompt_modifier(text, style)
             
             # Generate image using Together AI
             image_response = self.client.images.generate(
-                prompt=modified_prompt,
+                prompt=enhanced_prompt,
                 model="black-forest-labs/FLUX.1-schnell-Free",
                 width=512,
                 height=512,
@@ -60,11 +54,7 @@ class ImageGenerator:
                 # Add timestamp to queue
                 self.image_generation_queue.append(datetime.now())
                 
-                return {
-                    'image_url': f"data:image/png;base64,{image_b64}",
-                    'prompt': modified_prompt,
-                    'style': style
-                }
+                return f"data:image/png;base64,{image_b64}"
             return None
             
         except Exception as e:

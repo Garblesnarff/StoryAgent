@@ -12,21 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.style.opacity = '1';
         pageDiv.style.display = 'block';
         
-        // Create image container with hover effect
-        const imageContainer = paragraph.image_url ? `
-            <div class="image-container position-relative">
-                <img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">
-                ${paragraph.prompt ? `
-                    <div class="prompt-overlay">
-                        <div class="prompt-text">${paragraph.prompt}</div>
-                    </div>
-                ` : ''}
-            </div>
-        ` : '';
-        
         pageDiv.innerHTML = `
             <div class="card h-100">
-                ${imageContainer}
+                ${paragraph.image_url ? `<img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">` : ''}
                 <div class="card-body">
                     <p class="card-text">${paragraph.text || ''}</p>
                     <div class="d-flex gap-2 mt-3">
@@ -98,8 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     text: paragraph.text,
-                    index: parseInt(index),
-                    style: paragraph.image_style || 'realistic'
+                    index: parseInt(index)
                 })
             });
             
@@ -112,16 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`${type} regenerated successfully!`);
                 
                 if (type === 'image') {
-                    const imgContainer = pageDiv.querySelector('.image-container');
-                    if (imgContainer && data.image_url) {
-                        imgContainer.innerHTML = `
-                            <img src="${data.image_url}" class="card-img-top" alt="Paragraph image">
-                            ${data.prompt ? `
-                                <div class="prompt-overlay">
-                                    <div class="prompt-text">${data.prompt}</div>
-                                </div>
-                            ` : ''}
-                        `;
+                    const imgElement = pageDiv.querySelector('.card-img-top');
+                    if (imgElement && data.image_url) {
+                        // Create new image and swap once loaded
+                        const newImage = new Image();
+                        newImage.onload = () => {
+                            imgElement.src = data.image_url;
+                        };
+                        newImage.src = data.image_url;
                     }
                 } else {
                     const audioElement = pageDiv.querySelector('audio');
@@ -190,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function generateCards() {
         try {
+            // Show story output container immediately
             if (storyOutput) {
                 storyOutput.style.display = 'block';
                 storyOutput.classList.add('visible');
@@ -234,13 +220,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                         pageElement = createPageElement(data.data, index);
                                         if (pageElement) {
                                             paragraphCards.appendChild(pageElement);
+                                            // Force reflow to trigger animation
                                             pageElement.offsetHeight;
                                             pageElement.classList.add('visible');
                                         }
                                     } else {
+                                        // Update existing page
                                         const newPage = createPageElement(data.data, index);
                                         if (newPage) {
                                             pageElement.innerHTML = newPage.innerHTML;
+                                            // Reattach event listeners
                                             const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
                                             const regenerateAudioBtn = pageElement.querySelector('.regenerate-audio');
                                             regenerateImageBtn?.addEventListener('click', () => handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));

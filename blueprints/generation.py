@@ -43,12 +43,8 @@ def regenerate_image():
         style = data.get('style', 'realistic')
         
         # Generate new image with style
-        image_data = image_service.generate_image({
-            'text': text,
-            'style': style
-        })
-        
-        if not image_data:
+        image_url = image_service.generate_image(text, style=style)
+        if not image_url:
             return jsonify({'error': 'Failed to generate image'}), 500
             
         # Update data in appropriate storage
@@ -62,27 +58,18 @@ def regenerate_image():
                 if temp_data:
                     book_data = temp_data.data
                     if index < len(book_data['paragraphs']):
-                        book_data['paragraphs'][index].update({
-                            'image_url': image_data['image_url'],
-                            'prompt': image_data['prompt'],
-                            'image_style': image_data['style']
-                        })
+                        book_data['paragraphs'][index]['image_url'] = image_url
                         temp_data.data = book_data
                         db.session.commit()
             else:
                 # Update in session storage
                 if 'paragraphs' in story_data and index < len(story_data['paragraphs']):
-                    story_data['paragraphs'][index].update({
-                        'image_url': image_data['image_url'],
-                        'prompt': image_data['prompt'],
-                        'image_style': image_data['style']
-                    })
+                    story_data['paragraphs'][index]['image_url'] = image_url
                     session['story_data'] = story_data
         
         return jsonify({
             'success': True,
-            'image_url': image_data['image_url'],
-            'prompt': image_data['prompt']
+            'image_url': image_url
         })
         
     except Exception as e:
@@ -119,23 +106,13 @@ def generate_cards():
                 # Generate image if needed with style
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
-                    image_data = image_service.generate_image({
-                        'text': paragraph['text'],
-                        'style': paragraph.get('image_style', 'realistic')
-                    })
-                    
-                    if image_data:
-                        paragraph.update({
-                            'image_url': image_data['image_url'],
-                            'prompt': image_data['prompt']
-                        })
+                    image_style = paragraph.get('image_style', 'realistic')
+                    paragraph['image_url'] = image_service.generate_image(paragraph['text'], style=image_style)
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {
                         'text': paragraph['text'],
-                        'image_url': paragraph.get('image_url'),
-                        'prompt': paragraph.get('prompt'),
-                        'image_style': paragraph.get('image_style', 'realistic'),
+                        'image_url': paragraph['image_url'],
                         'index': index
                     }, step='image')
                 
