@@ -24,7 +24,7 @@ class ImageGenerator:
         # Place the style modifier at the beginning and emphasize it
         return f"{modifier}, create an image representing: {text[:100]}"
         
-    def generate_image(self, text):
+    def generate_image(self, text, style='realistic'):
         try:
             # Check rate limit
             current_time = datetime.now()
@@ -35,19 +35,17 @@ class ImageGenerator:
                 wait_time = (self.image_generation_queue[0] + timedelta(seconds=self.IMAGE_RATE_LIMIT) - current_time).total_seconds()
                 time.sleep(wait_time)
             
-            # Extract style and text
-            enhanced_text = text
-            style = 'realistic'
+            # Extract style and text from different input formats
             if isinstance(text, dict):
                 style = text.get('style', 'realistic')
-                enhanced_text = text['text']
+                text = text['text']
             
-            # Apply style modifier at the beginning of the prompt
-            modified_prompt = self._style_to_prompt_modifier(enhanced_text, style)
+            # Apply style modifier
+            modified_prompt = self._style_to_prompt_modifier(text, style)
             
             # Generate image using Together AI
             image_response = self.client.images.generate(
-                prompt=modified_prompt,  # Use the modified prompt
+                prompt=modified_prompt,
                 model="black-forest-labs/FLUX.1-schnell-Free",
                 width=512,
                 height=512,
@@ -64,7 +62,7 @@ class ImageGenerator:
                 
                 return {
                     'image_url': f"data:image/png;base64,{image_b64}",
-                    'prompt': modified_prompt,  # Return the modified prompt
+                    'prompt': modified_prompt,
                     'style': style
                 }
             return None
