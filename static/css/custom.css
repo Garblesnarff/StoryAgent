@@ -125,6 +125,37 @@
     text-overflow: ellipsis;
     margin-bottom: 16px;
     color: var(--bs-light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    max-height: 100px;
+}
+
+.node-content.expanded {
+    max-height: none;
+    white-space: normal;
+}
+
+.node-content:hover {
+    opacity: 0.8;
+}
+
+[data-prompt] {
+    position: relative;
+}
+
+[data-prompt]:hover::after {
+    content: attr(data-prompt);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-width: 300px;
+    z-index: 1000;
 }
 
 .node-select-group {
@@ -157,6 +188,7 @@
     padding: 8px;
     font-size: 0.9em;
     margin-bottom: 8px;
+    transition: all 0.3s ease;
 }
 
 .node-select:last-child {
@@ -165,5 +197,9 @@
 
 .node-select:focus {
     outline: none;
+    border-color: var(--bs-primary);
+}
+
+.node-select:hover {
     border-color: var(--bs-primary);
 }

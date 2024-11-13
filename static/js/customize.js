@@ -46,40 +46,41 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
             <div class="card-body">
                 <div class="node-header">Paragraph ${index + 1}</div>
-                <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
+                <div class="node-content" title="Click to expand">${paragraph.text.substring(0, 100)}...</div>
                 <div class="node-controls">
-                    <select class="node-select" data-type="image_style" data-index="${index}">
-                        <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic</option>
-                        <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic</option>
-                        <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy</option>
+                    <select class="node-select" data-type="image_style" data-index="${index}" data-prompt="${paragraph.prompt || ''}">
+                        <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic Photo</option>
+                        <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic Painting</option>
+                        <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy Illustration</option>
                     </select>
                 </div>
             </div>
         `;
 
+        // Add hover event listeners
+        const content = card.querySelector('.node-content');
+        content.addEventListener('click', () => {
+            content.classList.toggle('expanded');
+            content.textContent = content.classList.contains('expanded') ? 
+                paragraph.text : 
+                paragraph.text.substring(0, 100) + '...';
+        });
+
         // Add event listeners to selects
-        const selects = card.querySelectorAll('.node-select');
-        selects.forEach(select => {
-            select.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                const type = e.target.dataset.type;
-                
-                // Ensure the paragraph data exists
-                if (!window.styleData.paragraphs[index]) {
-                    window.styleData.paragraphs[index] = {
-                        index,
-                        image_style: 'realistic'
-                    };
-                }
-                
-                // Update while preserving other properties
-                window.styleData.paragraphs[index] = {
-                    ...window.styleData.paragraphs[index],
-                    [type]: e.target.value
-                };
-                
-                console.log('Style updated:', window.styleData);
-            });
+        const select = card.querySelector('.node-select');
+        select.addEventListener('change', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            const type = e.target.dataset.type;
+            const newStyle = e.target.value;
+            
+            // Update style data
+            window.styleData.paragraphs[index] = {
+                ...window.styleData.paragraphs[index],
+                index,
+                image_style: newStyle
+            };
+            
+            console.log('Style updated:', window.styleData);
         });
 
         return card;

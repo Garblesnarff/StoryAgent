@@ -12,19 +12,25 @@ class ImageGenerator:
         # Rate limiting settings
         self.image_generation_queue = deque(maxlen=6)
         self.IMAGE_RATE_LIMIT = 60  # 60 seconds (1 minute)
+        # Store last prompt for hover display
+        self.last_prompt = None
 
     def _style_to_prompt_modifier(self, text, style='realistic'):
         """Convert style parameter to prompt modifier"""
         style_modifiers = {
-            'realistic': 'Photorealistic, detailed, natural lighting',
-            'artistic': 'Artistic interpretation, painterly style, expressive',
-            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
+            'realistic': 'Photorealistic high-quality photograph with natural lighting, sharp focus, detailed textures, 4K resolution',
+            'artistic': 'Digital art masterpiece, vibrant colors, expressive brushstrokes, artistic interpretation, stylized composition',
+            'fantasy': 'Magical fantasy artwork, ethereal lighting, mystical atmosphere, dreamlike quality, surreal elements'
         }
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        return f"An image representing: {text[:100]}. {modifier}"
+        prompt = f"{text}. Style: {modifier}"
+        return prompt
         
     def generate_image(self, text):
         try:
+            # Store the prompt for hover display
+            self.last_prompt = text
+            
             # Check rate limit
             current_time = datetime.now()
             while self.image_generation_queue and current_time - self.image_generation_queue[0] > timedelta(seconds=self.IMAGE_RATE_LIMIT):
