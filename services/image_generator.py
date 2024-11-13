@@ -16,12 +16,13 @@ class ImageGenerator:
     def _style_to_prompt_modifier(self, text, style='realistic'):
         """Convert style parameter to prompt modifier"""
         style_modifiers = {
-            'realistic': 'Photorealistic, detailed, natural lighting',
-            'artistic': 'Artistic interpretation, painterly style, expressive',
-            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
+            'realistic': 'Photorealistic style, ultra detailed digital art, natural lighting, 4k uhd',
+            'artistic': 'Oil painting style, impressionist artwork, vibrant colors, expressive brushstrokes, artistic interpretation',
+            'fantasy': 'Fantasy digital art, magical atmosphere, ethereal lighting, mystical elements, dreamlike quality'
         }
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        return f"{modifier}, an image representing: {text[:100]}"
+        # Place the style modifier at the beginning and emphasize it
+        return f"{modifier}, create an image representing: {text[:100]}"
         
     def generate_image(self, text):
         try:
