@@ -23,7 +23,7 @@ class ImageGenerator:
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
         return f"An image representing: {text[:100]}. {modifier}"
         
-    def generate_image(self, text, style='realistic'):
+    def generate_image(self, text):
         try:
             # Check rate limit
             current_time = datetime.now()
@@ -34,12 +34,9 @@ class ImageGenerator:
                 wait_time = (self.image_generation_queue[0] + timedelta(seconds=self.IMAGE_RATE_LIMIT) - current_time).total_seconds()
                 time.sleep(wait_time)
             
-            # Generate enhanced prompt with style
-            enhanced_prompt = self._style_to_prompt_modifier(text, style)
-            
             # Generate image using Together AI
             image_response = self.client.images.generate(
-                prompt=enhanced_prompt,
+                prompt=text,  # Text should already be enhanced with style
                 model="black-forest-labs/FLUX.1-schnell-Free",
                 width=512,
                 height=512,

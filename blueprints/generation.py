@@ -42,8 +42,11 @@ def regenerate_image():
         index = data.get('index')
         style = data.get('style', 'realistic')
         
-        # Generate new image with style
-        image_url = image_service.generate_image(text, style=style)
+        # Generate enhanced text with style
+        enhanced_text = image_service._style_to_prompt_modifier(text, style=style)
+        
+        # Generate new image
+        image_url = image_service.generate_image(enhanced_text)
         if not image_url:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -107,7 +110,8 @@ def generate_cards():
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
                     image_style = paragraph.get('image_style', 'realistic')
-                    paragraph['image_url'] = image_service.generate_image(paragraph['text'], style=image_style)
+                    enhanced_text = image_service._style_to_prompt_modifier(paragraph['text'], style=image_style)
+                    paragraph['image_url'] = image_service.generate_image(enhanced_text)
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {
