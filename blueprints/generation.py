@@ -112,6 +112,7 @@ def generate_cards():
                     image_style = paragraph.get('image_style', 'realistic')
                     enhanced_text = image_service._style_to_prompt_modifier(paragraph['text'], style=image_style)
                     paragraph['image_url'] = image_service.generate_image(enhanced_text)
+                    paragraph['prompt'] = image_service.last_prompt  # Store the prompt
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {

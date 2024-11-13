@@ -139,6 +139,30 @@
     opacity: 0.8;
 }
 
+/* Add the new prompt display styles */
+.prompt-display {
+    position: relative;
+    display: inline-block;
+    margin-left: 8px;
+    cursor: help;
+}
+
+.prompt-display:hover::after {
+    content: attr(data-prompt);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-width: 300px;
+    z-index: 1000;
+}
+
 [data-prompt] {
     position: relative;
 }

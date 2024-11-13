@@ -18,13 +18,15 @@ class ImageGenerator:
     def _style_to_prompt_modifier(self, text, style='realistic'):
         """Convert style parameter to prompt modifier"""
         style_modifiers = {
-            'realistic': 'Photorealistic high-quality photograph with natural lighting, sharp focus, detailed textures, 4K resolution',
-            'artistic': 'Digital art masterpiece, vibrant colors, expressive brushstrokes, artistic interpretation, stylized composition',
-            'fantasy': 'Magical fantasy artwork, ethereal lighting, mystical atmosphere, dreamlike quality, surreal elements'
+            'realistic': 'Create a photorealistic photograph with natural lighting, professional camera quality, sharp focus, and high detail. Use documentary photography style with 4K resolution.',
+            'artistic': 'Create a digital painting with expressive brushstrokes, bold colors, and artistic composition. Use a contemporary digital art style with dramatic lighting and creative interpretation.',
+            'fantasy': 'Create a magical fantasy illustration with ethereal lighting, mystical atmosphere, and surreal elements. Include glowing effects, otherworldly colors, and dreamlike qualities.'
         }
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        prompt = f"{text}. Style: {modifier}"
-        return prompt
+        enhanced_prompt = f"{text}. {modifier}"
+        # Store the complete prompt for hover display
+        self.last_prompt = enhanced_prompt
+        return enhanced_prompt
         
     def generate_image(self, text):
         try:

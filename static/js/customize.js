@@ -48,11 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="node-header">Paragraph ${index + 1}</div>
                 <div class="node-content" title="Click to expand">${paragraph.text.substring(0, 100)}...</div>
                 <div class="node-controls">
-                    <select class="node-select" data-type="image_style" data-index="${index}" data-prompt="${paragraph.prompt || ''}">
+                    <select class="node-select" data-type="image_style" data-index="${index}">
                         <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic Photo</option>
                         <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic Painting</option>
                         <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy Illustration</option>
                     </select>
+                    <div class="prompt-display" data-prompt="${paragraph.prompt || 'Style: ' + (paragraph.image_style || 'realistic')}">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
                 </div>
             </div>
         `;
