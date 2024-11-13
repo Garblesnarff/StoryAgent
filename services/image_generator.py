@@ -21,7 +21,7 @@ class ImageGenerator:
             'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
         }
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        return f"An image representing: {text[:100]}. {modifier}"
+        return f"{modifier}, an image representing: {text[:100]}"
         
     def generate_image(self, text):
         try:
