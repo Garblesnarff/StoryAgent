@@ -42,19 +42,17 @@
 
 .node-editor-container {
     width: 100%;
-    min-height: 600px;
+    height: 800px;
     background: var(--bs-dark);
     border-radius: 10px;
     border: 2px solid var(--bs-primary);
     margin-bottom: 2rem;
     position: relative;
-    overflow: auto;
-    padding: 20px;
+    overflow: hidden;
 }
 
+/* ReactFlow specific styles */
 .react-flow {
-    width: 100%;
-    height: 100%;
     background-color: var(--bs-dark);
 }
 
@@ -67,6 +65,7 @@
 
 .react-flow__edge path {
     stroke: var(--bs-primary);
+    stroke-width: 2;
 }
 
 .react-flow__controls {
@@ -86,19 +85,13 @@
     background: var(--bs-primary);
 }
 
-.paragraph-nodes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    grid-gap: 20px;
-    padding: 20px;
-}
-
+/* Node styles */
 .paragraph-node {
     padding: 15px;
     border-radius: 8px;
     background: var(--bs-primary);
     color: white;
-    width: 250px;
+    width: 300px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
@@ -163,23 +156,27 @@
     z-index: 1000;
 }
 
-[data-prompt] {
+/* Add new card image container styles */
+.card-image-container {
     position: relative;
+    display: inline-block;
 }
 
-[data-prompt]:hover::after {
+.card-image-container:hover::after {
     content: attr(data-prompt);
     position: absolute;
     bottom: 100%;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.9);
     color: white;
-    padding: 5px 10px;
+    padding: 10px;
     border-radius: 4px;
     font-size: 12px;
     white-space: pre-wrap;
     max-width: 300px;
     z-index: 1000;
+    margin-bottom: 5px;
 }
 
 .node-select-group {
@@ -226,4 +223,28 @@
 
 .node-select:hover {
     border-color: var(--bs-primary);
+}
+
+/* Prompt display */
+.prompt-display {
+    position: relative;
+    display: inline-block;
+    margin-left: 8px;
+    cursor: help;
+}
+
+.prompt-display:hover::after {
+    content: attr(data-prompt);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-width: 300px;
+    z-index: 1000;
 }
