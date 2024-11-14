@@ -1,13 +1,25 @@
-import ReactFlow, { Background, Controls } from '@reactflow/core';
-import '@reactflow/core/dist/style.css';
-
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded, checking dependencies...');
+    
+    // Check required dependencies
+    if (!window.React) {
+        console.error('React not loaded');
+        return;
+    }
+    if (!window.ReactFlow) {
+        console.error('ReactFlow not loaded');
+        return;
+    }
+
     const container = document.getElementById('node-editor');
     if (!container) {
         console.error('Node editor container not found');
         return;
     }
 
+    // Use global ReactFlow namespace
+    const { ReactFlow, Background, Controls } = window.ReactFlow;
+    
     // Parse story data
     let storyData;
     try {
@@ -52,30 +64,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
 
     // Custom node type for paragraphs
-    const ParagraphNode = ({ data }) => {
-        return (
-            <div className="paragraph-node">
-                <div className="node-header">Paragraph {data.index + 1}</div>
-                <div className="node-content" title="Click to expand">
-                    {data.text.substring(0, 100)}...
-                </div>
-                <div className="node-controls">
-                    <select 
-                        className="node-select" 
-                        value={data.imageStyle}
-                        onChange={(e) => updateNodeStyle(data.index, e.target.value)}
-                    >
-                        <option value="realistic">Realistic Photo</option>
-                        <option value="artistic">Artistic Painting</option>
-                        <option value="fantasy">Fantasy Illustration</option>
-                    </select>
-                    <div className="prompt-display" data-prompt={data.prompt || `Style: ${data.imageStyle}`}>
-                        <i className="fas fa-info-circle"></i>
-                    </div>
-                </div>
-            </div>
+    const ParagraphNode = React.memo(({ data }) => {
+        return React.createElement('div', { className: 'paragraph-node' },
+            React.createElement('div', { className: 'node-header' }, `Paragraph ${data.index + 1}`),
+            React.createElement('div', { 
+                className: 'node-content',
+                title: 'Click to expand'
+            }, `${data.text.substring(0, 100)}...`),
+            React.createElement('div', { className: 'node-controls' },
+                React.createElement('select', {
+                    className: 'node-select',
+                    value: data.imageStyle,
+                    onChange: (e) => updateNodeStyle(data.index, e.target.value)
+                },
+                    React.createElement('option', { value: 'realistic' }, 'Realistic Photo'),
+                    React.createElement('option', { value: 'artistic' }, 'Artistic Painting'),
+                    React.createElement('option', { value: 'fantasy' }, 'Fantasy Illustration')
+                ),
+                React.createElement('div', {
+                    className: 'prompt-display',
+                    'data-prompt': data.prompt || `Style: ${data.imageStyle}`
+                },
+                    React.createElement('i', { className: 'fas fa-info-circle' })
+                )
+            )
         );
-    };
+    });
 
     // Node types configuration
     const nodeTypes = {
