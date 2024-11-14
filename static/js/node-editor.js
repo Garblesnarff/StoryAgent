@@ -26,7 +26,7 @@ function ParagraphNode({ data }) {
                         value={data.imageStyle}
                         onChange={(e) => {
                             console.log('Style changed:', {type: 'image', value: e.target.value, index: data.index});
-                            data.onStyleChange('image', e.target.value);
+                            data.onStyleChange(data.index, 'image', e.target.value);
                         }}>
                         <option value="realistic">Realistic</option>
                         <option value="artistic">Artistic</option>
@@ -73,9 +73,9 @@ function NodeEditor({ story, onStyleUpdate }) {
 
     const handleGenerateCard = useCallback(async (index) => {
         try {
-            // Get the current node data
-            const currentNode = nodes.find(n => n.id === `p${index}`);
-            if (!currentNode || !currentNode.data || !currentNode.data.text) {
+            // Get the current paragraph text from story data
+            const paragraphText = story.paragraphs[index]?.text;
+            if (!paragraphText) {
                 throw new Error('No text found for paragraph');
             }
 
@@ -90,8 +90,8 @@ function NodeEditor({ story, onStyleUpdate }) {
                 },
                 body: JSON.stringify({
                     index: index,
-                    text: currentNode.data.text,
-                    style: currentNode.data.imageStyle || 'realistic'
+                    text: paragraphText,
+                    style: nodes.find(n => n.id === `p${index}`)?.data?.imageStyle || 'realistic'
                 })
             });
 
@@ -143,10 +143,10 @@ function NodeEditor({ story, onStyleUpdate }) {
             ));
             alert(error.message || 'Failed to generate card');
         }
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes, story.paragraphs]);
 
     const handleStyleChange = useCallback((index, type, value) => {
-        // Update local node state
+        // Update local node state immediately
         setNodes(nodes => nodes.map(node => {
             if (node.id === `p${index}`) {
                 return {
@@ -160,19 +160,35 @@ function NodeEditor({ story, onStyleUpdate }) {
             return node;
         }));
         
+        // Create updated paragraphs data
+        const updatedParagraphs = story.paragraphs.map((p, i) => ({
+            ...p,
+            image_style: i === index ? value : (p.image_style || 'realistic')
+        }));
+        
         // Call parent update handler
-        const updatedParagraphs = story.paragraphs.map((p, i) => {
-            if (i === index) {
-                return {
-                    ...p,
-                    image_style: value
-                };
-            }
-            return p;
-        });
         onStyleUpdate(updatedParagraphs);
     }, [story, onStyleUpdate]);
 
+    // Sync node styles with story data
+    React.useEffect(() => {
+        if (!story?.paragraphs) return;
+
+        setNodes(nodes => nodes.map(node => {
+            const index = parseInt(node.id.replace('p', ''));
+            const paragraph = story.paragraphs[index];
+            return {
+                ...node,
+                data: {
+                    ...node.data,
+                    text: paragraph.text,
+                    imageStyle: paragraph.image_style || 'realistic'
+                }
+            };
+        }));
+    }, [story.paragraphs]);
+
+    // Initialize nodes from story data
     React.useEffect(() => {
         if (!story?.paragraphs) return;
 
