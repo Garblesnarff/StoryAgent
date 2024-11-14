@@ -42,17 +42,19 @@
 
 .node-editor-container {
     width: 100%;
-    height: 800px;
+    min-height: 600px;
     background: var(--bs-dark);
     border-radius: 10px;
     border: 2px solid var(--bs-primary);
     margin-bottom: 2rem;
     position: relative;
-    overflow: hidden;
+    overflow: auto;
+    padding: 20px;
 }
 
-/* ReactFlow specific styles */
 .react-flow {
+    width: 100%;
+    height: 100%;
     background-color: var(--bs-dark);
 }
 
@@ -65,7 +67,6 @@
 
 .react-flow__edge path {
     stroke: var(--bs-primary);
-    stroke-width: 2;
 }
 
 .react-flow__controls {
@@ -85,13 +86,19 @@
     background: var(--bs-primary);
 }
 
-/* Node styles */
+.paragraph-nodes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-gap: 20px;
+    padding: 20px;
+}
+
 .paragraph-node {
     padding: 15px;
     border-radius: 8px;
     background: var(--bs-primary);
     color: white;
-    width: 300px;
+    width: 250px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
@@ -118,65 +125,6 @@
     text-overflow: ellipsis;
     margin-bottom: 16px;
     color: var(--bs-light);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    max-height: 100px;
-}
-
-.node-content.expanded {
-    max-height: none;
-    white-space: normal;
-}
-
-.node-content:hover {
-    opacity: 0.8;
-}
-
-/* Add the new prompt display styles */
-.prompt-display {
-    position: relative;
-    display: inline-block;
-    margin-left: 8px;
-    cursor: help;
-}
-
-.prompt-display:hover::after {
-    content: attr(data-prompt);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: pre-wrap;
-    max-width: 300px;
-    z-index: 1000;
-}
-
-/* Add new card image container styles */
-.card-image-container {
-    position: relative;
-    display: inline-block;
-}
-
-.card-image-container:hover::after {
-    content: attr(data-prompt);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: pre-wrap;
-    max-width: 300px;
-    z-index: 1000;
-    margin-bottom: 5px;
 }
 
 .node-select-group {
@@ -209,7 +157,6 @@
     padding: 8px;
     font-size: 0.9em;
     margin-bottom: 8px;
-    transition: all 0.3s ease;
 }
 
 .node-select:last-child {
@@ -219,32 +166,4 @@
 .node-select:focus {
     outline: none;
     border-color: var(--bs-primary);
-}
-
-.node-select:hover {
-    border-color: var(--bs-primary);
-}
-
-/* Prompt display */
-.prompt-display {
-    position: relative;
-    display: inline-block;
-    margin-left: 8px;
-    cursor: help;
-}
-
-.prompt-display:hover::after {
-    content: attr(data-prompt);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: pre-wrap;
-    max-width: 300px;
-    z-index: 1000;
 }

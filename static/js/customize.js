@@ -1,26 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded, checking dependencies...');
-    
-    // Check required dependencies
-    if (!window.React) {
-        console.error('React not loaded');
-        return;
-    }
-    if (!window.ReactFlow) {
-        console.error('ReactFlow not loaded');
-        return;
-    }
-
     const container = document.getElementById('node-editor');
-    if (!container) {
-        console.error('Node editor container not found');
+    const paragraphNodesContainer = document.getElementById('paragraph-nodes');
+    
+    if (!container || !paragraphNodesContainer) {
+        console.error('Required containers not found');
         return;
     }
 
-    // Use global ReactFlow namespace
-    const { ReactFlow, Background, Controls } = window.ReactFlow;
-    
-    // Parse story data
+    // Parse story data and initialize style data storage
     let storyData;
     try {
         const rawData = container.dataset.story;
@@ -29,115 +16,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         storyData = JSON.parse(rawData);
         if (!storyData || !Array.isArray(storyData.paragraphs)) {
-            throw new Error('Invalid story data format');
+            throw new Error('Invalid story data format: Expected array of paragraphs');
         }
+
+        // Initialize style data with proper structure for all paragraphs
+        window.styleData = {
+            paragraphs: storyData.paragraphs.map((paragraph, index) => ({
+                index,
+                image_style: paragraph.image_style || 'realistic'
+            }))
+        };
     } catch (error) {
         console.error('Failed to parse story data:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
                 <h4 class="alert-heading">Failed to load story data</h4>
                 <p>${error.message}</p>
+                <hr>
+                <p class="mb-0">Please make sure you have a valid story selected.</p>
             </div>
         `;
         return;
     }
 
-    // Initialize nodes from paragraphs
-    const initialNodes = storyData.paragraphs.map((paragraph, index) => ({
-        id: `paragraph-${index}`,
-        type: 'paragraphNode',
-        position: { x: 250, y: index * 200 },
-        data: {
-            text: paragraph.text,
-            imageStyle: paragraph.image_style || 'realistic',
-            index: index,
-            prompt: paragraph.prompt || ''
-        }
-    }));
+    // Create paragraph nodes
+    const paragraphNodes = storyData.paragraphs.map((paragraph, index) => {
+        const card = document.createElement('div');
+        card.className = 'card paragraph-node';
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="node-header">Paragraph ${index + 1}</div>
+                <div class="node-content">${paragraph.text.substring(0, 100)}...</div>
+                <div class="node-controls">
+                    <select class="node-select" data-type="image_style" data-index="${index}">
+                        <option value="realistic" ${(paragraph.image_style || 'realistic') === 'realistic' ? 'selected' : ''}>Realistic</option>
+                        <option value="artistic" ${(paragraph.image_style || 'realistic') === 'artistic' ? 'selected' : ''}>Artistic</option>
+                        <option value="fantasy" ${(paragraph.image_style || 'realistic') === 'fantasy' ? 'selected' : ''}>Fantasy</option>
+                    </select>
+                </div>
+            </div>
+        `;
 
-    // Create edges connecting paragraphs sequentially
-    const initialEdges = storyData.paragraphs.slice(1).map((_, index) => ({
-        id: `edge-${index}`,
-        source: `paragraph-${index}`,
-        target: `paragraph-${index + 1}`,
-        type: 'smoothstep'
-    }));
+        // Add event listeners to selects
+        const selects = card.querySelectorAll('.node-select');
+        selects.forEach(select => {
+            select.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const type = e.target.dataset.type;
+                
+                // Ensure the paragraph data exists
+                if (!window.styleData.paragraphs[index]) {
+                    window.styleData.paragraphs[index] = {
+                        index,
+                        image_style: 'realistic'
+                    };
+                }
+                
+                // Update while preserving other properties
+                window.styleData.paragraphs[index] = {
+                    ...window.styleData.paragraphs[index],
+                    [type]: e.target.value
+                };
+                
+                console.log('Style updated:', window.styleData);
+            });
+        });
 
-    // Custom node type for paragraphs
-    const ParagraphNode = React.memo(({ data }) => {
-        return React.createElement('div', { className: 'paragraph-node' },
-            React.createElement('div', { className: 'node-header' }, `Paragraph ${data.index + 1}`),
-            React.createElement('div', { 
-                className: 'node-content',
-                title: 'Click to expand'
-            }, `${data.text.substring(0, 100)}...`),
-            React.createElement('div', { className: 'node-controls' },
-                React.createElement('select', {
-                    className: 'node-select',
-                    value: data.imageStyle,
-                    onChange: (e) => updateNodeStyle(data.index, e.target.value)
-                },
-                    React.createElement('option', { value: 'realistic' }, 'Realistic Photo'),
-                    React.createElement('option', { value: 'artistic' }, 'Artistic Painting'),
-                    React.createElement('option', { value: 'fantasy' }, 'Fantasy Illustration')
-                ),
-                React.createElement('div', {
-                    className: 'prompt-display',
-                    'data-prompt': data.prompt || `Style: ${data.imageStyle}`
-                },
-                    React.createElement('i', { className: 'fas fa-info-circle' })
-                )
-            )
-        );
+        return card;
     });
 
-    // Node types configuration
-    const nodeTypes = {
-        paragraphNode: ParagraphNode
-    };
-
-    // Initialize ReactFlow
-    const flow = new ReactFlow({
-        container,
-        nodes: initialNodes,
-        edges: initialEdges,
-        nodeTypes: nodeTypes,
-        fitView: true,
-        defaultZoom: 1,
-        minZoom: 0.5,
-        maxZoom: 2,
-        snapToGrid: true,
-        snapGrid: [15, 15]
-    });
-
-    // Add background and controls
-    flow.addPlugin(new Background({
-        color: '#aaa',
-        gap: 16,
-        size: 1
-    }));
-
-    flow.addPlugin(new Controls());
-
-    // Style update handler
-    function updateNodeStyle(index, newStyle) {
-        const node = flow.getNode(`paragraph-${index}`);
-        if (node) {
-            node.data = {
-                ...node.data,
-                imageStyle: newStyle
-            };
-            flow.setNodes([...flow.getNodes()]);
-            
-            // Update style data for saving
-            window.styleData = {
-                paragraphs: flow.getNodes().map(node => ({
-                    index: node.data.index,
-                    image_style: node.data.imageStyle
-                }))
-            };
-        }
-    }
+    // Add nodes to container
+    paragraphNodesContainer.append(...paragraphNodes);
 
     // Setup save functionality
     const saveButton = document.getElementById('save-customization');
@@ -145,7 +94,14 @@ document.addEventListener('DOMContentLoaded', () => {
         saveButton.addEventListener('click', async () => {
             try {
                 saveButton.disabled = true;
-                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+
+                if (!window.styleData?.paragraphs?.length) {
+                    throw new Error('No style changes to save');
+                }
+
+                // Remove any null values from paragraphs array
+                window.styleData.paragraphs = window.styleData.paragraphs.filter(p => p !== null);
 
                 const response = await fetch('/story/update_style', {
                     method: 'POST',
@@ -156,15 +112,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const data = await response.json();
+                
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to save customization');
                 }
 
                 if (data.success) {
                     window.location.href = '/story/generate';
+                } else {
+                    throw new Error(data.error || 'Server returned unsuccessful response');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error saving customization:', error);
                 alert(error.message || 'Failed to save customization');
             } finally {
                 saveButton.disabled = false;
