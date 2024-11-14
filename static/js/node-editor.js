@@ -42,11 +42,14 @@ function ParagraphNode({ data }) {
                 {data.imageUrl && (
                     <div className="node-preview mt-2">
                         <img src={data.imageUrl} alt="Generated preview" className="img-fluid rounded" />
+                        {data.audioUrl && console.log('Rendering audio player with URL:', data.audioUrl)}
                         {data.audioUrl && (
-                            <audio controls className="w-100 mt-2">
-                                <source src={data.audioUrl} type="audio/wav" />
-                                Your browser does not support the audio element.
-                            </audio>
+                            <div className="audio-player mt-2">
+                                <audio controls className="w-100">
+                                    <source src={data.audioUrl} type="audio/wav" />
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
                         )}
                     </div>
                 )}
@@ -120,18 +123,22 @@ function NodeEditor({ story, onStyleUpdate }) {
                     try {
                         const data = JSON.parse(line);
                         if (data.type === 'paragraph') {
-                            setNodes(nodes => nodes.map(node => 
-                                node.id === `p${index}` ? {
-                                    ...node, 
-                                    data: {
-                                        ...node.data,
-                                        imageUrl: data.data.image_url,
-                                        imagePrompt: data.data.image_prompt,
-                                        audioUrl: data.data.audio_url,
-                                        isGenerating: false
-                                    }
-                                } : node
-                            ));
+                            console.log('Received audio URL:', data.data.audio_url);
+                            setNodes(nodes => {
+                                console.log('Updating node with audio URL:', data.data.audio_url);
+                                return nodes.map(node => 
+                                    node.id === `p${index}` ? {
+                                        ...node, 
+                                        data: {
+                                            ...node.data,
+                                            imageUrl: data.data.image_url,
+                                            imagePrompt: data.data.image_prompt,
+                                            audioUrl: data.data.audio_url,
+                                            isGenerating: false
+                                        }
+                                    } : node
+                                );
+                            });
                         } else if (data.type === 'error') {
                             throw new Error(data.message);
                         }
@@ -184,7 +191,9 @@ function NodeEditor({ story, onStyleUpdate }) {
                 data: {
                     ...node.data,
                     text: paragraph.text,
-                    imageStyle: paragraph.image_style || 'realistic'
+                    imageStyle: paragraph.image_style || 'realistic',
+                    imageUrl: paragraph.image_url,
+                    audioUrl: paragraph.audio_url
                 }
             };
         }));
@@ -213,7 +222,7 @@ function NodeEditor({ story, onStyleUpdate }) {
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs]); // Only depend on paragraphs data
+    }, [story?.paragraphs]);
 
     const onConnect = useCallback((params) => 
         setEdges((eds) => addEdge(params, eds)), []);

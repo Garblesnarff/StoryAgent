@@ -197,3 +197,15 @@
     height: auto;
     object-fit: cover;
 }
+
+.audio-player {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.audio-player audio {
+    width: 100%;
+    min-height: 40px;
+}
