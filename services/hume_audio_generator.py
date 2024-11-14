@@ -17,21 +17,28 @@ class HumeAudioGenerator:
         self.audio_dir = os.path.join('static', 'audio')
         os.makedirs(self.audio_dir, exist_ok=True)
 
-        # Initialize connection parameters
-        base_url = "wss://api.hume.ai/v0/evi/chat"
-        config_id = os.environ.get('HUME_CONFIG_ID')
+        # Initialize connection parameters with proper format
+        base_url = "wss://api.hume.ai/v0/stream/cht"  # Updated endpoint
         api_key = os.environ.get('HUME_API_KEY')
+        config_id = os.environ.get('HUME_CONFIG_ID')
 
+        # Format URL with proper parameters
         params = [
+            f"api_key={api_key}",
             f"config_id={config_id}",
-            "evi_version=2",
-            f"api_key={api_key}"
+            "stream=true"
         ]
 
         self.ws_url = f"{base_url}?{'&'.join(params)}"
 
     async def _connect(self):
-        self.ws = await websockets.connect(self.ws_url)
+        extra_headers = {
+            'Authorization': f'Bearer {os.environ.get("HUME_API_KEY")}'
+        }
+        self.ws = await websockets.connect(
+            self.ws_url,
+            extra_headers=extra_headers
+        )
         metadata = await self.ws.recv()
         return json.loads(metadata)
 
