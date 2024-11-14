@@ -73,6 +73,12 @@ function NodeEditor({ story, onStyleUpdate }) {
 
     const handleGenerateCard = useCallback(async (index) => {
         try {
+            // Get the current node data
+            const currentNode = nodes.find(n => n.id === `p${index}`);
+            if (!currentNode || !currentNode.data || !currentNode.data.text) {
+                throw new Error('No text found for paragraph');
+            }
+
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
             ));
@@ -83,9 +89,9 @@ function NodeEditor({ story, onStyleUpdate }) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    index,
-                    text: nodes.find(n => n.id === `p${index}`)?.data.text,
-                    style: nodes.find(n => n.id === `p${index}`)?.data.imageStyle
+                    index: index,
+                    text: currentNode.data.text,
+                    style: currentNode.data.imageStyle || 'realistic'
                 })
             });
 
@@ -101,7 +107,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                 
                 buffer += decoder.decode(value, {stream: true});
                 const lines = buffer.split('\n');
-                buffer = lines.pop() || ''; // Keep the incomplete line in buffer
+                buffer = lines.pop() || '';
                 
                 for (const line of lines) {
                     if (!line.trim()) continue;
@@ -115,7 +121,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                                     data: {
                                         ...node.data,
                                         imageUrl: data.data.image_url,
-                                        audioUrl: data.data.audio_url,
+                                        imagePrompt: data.data.image_prompt,
                                         isGenerating: false
                                     }
                                 } : node
@@ -126,7 +132,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                     } catch (parseError) {
                         console.error('Error parsing JSON:', parseError);
                         console.debug('Problematic line:', line);
-                        continue; // Skip this line and try the next one
+                        continue;
                     }
                 }
             }
@@ -135,8 +141,9 @@ function NodeEditor({ story, onStyleUpdate }) {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
             ));
+            alert(error.message || 'Failed to generate card');
         }
-    }, [setNodes]);
+    }, [nodes, setNodes]);
 
     const handleStyleChange = useCallback((index, type, value) => {
         // Update local node state
