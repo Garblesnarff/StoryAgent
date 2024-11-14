@@ -30,23 +30,9 @@ class HumeAudioGenerator:
         self.ws_url = f"{base_url}?{'&'.join(params)}"
 
     async def _connect(self):
-        try:
-            # Add proper authentication headers
-            extra_headers = {
-                'Authorization': f'Bearer {os.environ.get("HUME_API_KEY")}',
-                'X-Secret-Key': os.environ.get("HUME_SECRET_KEY")  # Add secret key header
-            }
-            
-            self.ws = await websockets.connect(
-                self.ws_url,
-                extra_headers=extra_headers
-            )
-            metadata = await self.ws.recv()
-            logger.info("Connected to Hume websocket")
-            return json.loads(metadata)
-        except Exception as e:
-            logger.error(f"Connection error: {str(e)}")
-            raise
+        self.ws = await websockets.connect(self.ws_url)
+        metadata = await self.ws.recv()
+        return json.loads(metadata)
 
     async def _generate_audio_async(self, text):
         try:
