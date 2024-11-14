@@ -15,7 +15,7 @@ const nodeTypes = {
 
 function ParagraphNode({ data }) {
     return (
-        <div className={`paragraph-node ${data.imageStyle}-style`}>
+        <div className={`paragraph-node ${data.imageStyle || 'realistic'}-style`}>
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text.substring(0, 100)}...</div>
             <div className="node-controls">
@@ -24,7 +24,10 @@ function ParagraphNode({ data }) {
                     <select 
                         className="node-select"
                         value={data.imageStyle}
-                        onChange={(e) => data.onStyleChange('image', e.target.value)}>
+                        onChange={(e) => {
+                            console.log('Style changed:', {type: 'image', value: e.target.value, index: data.index});
+                            data.onStyleChange('image', e.target.value);
+                        }}>
                         <option value="realistic">Realistic</option>
                         <option value="artistic">Artistic</option>
                         <option value="fantasy">Fantasy</option>
@@ -57,6 +60,34 @@ function NodeEditor({ story, onStyleUpdate }) {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+    const handleStyleChange = useCallback((index, type, value) => {
+        // Update local node state
+        setNodes(nodes => nodes.map(node => {
+            if (node.id === `p${index}`) {
+                return {
+                    ...node,
+                    data: {
+                        ...node.data,
+                        imageStyle: value
+                    }
+                };
+            }
+            return node;
+        }));
+        
+        // Call parent update handler
+        const updatedParagraphs = story.paragraphs.map((p, i) => {
+            if (i === index) {
+                return {
+                    ...p,
+                    image_style: value
+                };
+            }
+            return p;
+        });
+        onStyleUpdate(updatedParagraphs);
+    }, [story, onStyleUpdate]);
+
     React.useEffect(() => {
         if (story?.paragraphs) {
             // Create nodes from paragraphs
@@ -68,20 +99,13 @@ function NodeEditor({ story, onStyleUpdate }) {
                     index,
                     text: para.text,
                     imageStyle: para.image_style || 'realistic',
-                    onStyleChange: (type, value) => {
-                        const updatedData = [...story.paragraphs];
-                        updatedData[index] = {
-                            ...updatedData[index],
-                            [`${type}_style`]: value
-                        };
-                        onStyleUpdate(updatedData);
-                    }
+                    onStyleChange: (type, value) => handleStyleChange(index, type, value)
                 }
             }));
 
             setNodes(paragraphNodes);
         }
-    }, [story]);
+    }, [story, handleStyleChange]);
 
     const onConnect = useCallback((params) => 
         setEdges((eds) => addEdge(params, eds)), []);
