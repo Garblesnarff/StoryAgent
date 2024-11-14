@@ -16,12 +16,12 @@ class ImageGenerator:
     def _style_to_prompt_modifier(self, text, style='realistic'):
         """Convert style parameter to prompt modifier"""
         style_modifiers = {
-            'realistic': 'Photorealistic, detailed, natural lighting',
-            'artistic': 'Artistic interpretation, painterly style, expressive',
-            'fantasy': 'Fantasy art style, magical atmosphere, ethereal lighting'
+            'realistic': 'A photorealistic image with natural lighting and detailed textures showing',
+            'artistic': 'An artistic interpretation with expressive brushstrokes and vibrant colors depicting',
+            'fantasy': 'A magical and ethereal fantasy scene with mystical elements portraying'
         }
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
-        return f"An image representing: {text[:100]}. {modifier}"
+        return f"{modifier}: {text}"
         
     def generate_image(self, text, style='realistic'):
         try:
@@ -34,7 +34,7 @@ class ImageGenerator:
                 wait_time = (self.image_generation_queue[0] + timedelta(seconds=self.IMAGE_RATE_LIMIT) - current_time).total_seconds()
                 time.sleep(wait_time)
             
-            # Generate enhanced prompt with style
+            # Create enhanced prompt with style
             enhanced_prompt = self._style_to_prompt_modifier(text, style)
             
             # Generate image using Together AI

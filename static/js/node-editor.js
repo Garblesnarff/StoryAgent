@@ -42,6 +42,12 @@ function ParagraphNode({ data }) {
                 {data.imageUrl && (
                     <div className="node-preview mt-2">
                         <img src={data.imageUrl} alt="Generated preview" className="img-fluid rounded" />
+                        {data.audioUrl && (
+                            <audio controls className="w-100 mt-2">
+                                <source src={data.audioUrl} type="audio/wav" />
+                                Your browser does not support the audio element.
+                            </audio>
+                        )}
                     </div>
                 )}
             </div>

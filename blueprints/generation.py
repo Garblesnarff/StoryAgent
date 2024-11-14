@@ -3,6 +3,7 @@ import sys
 import json
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
+from services.hume_audio_generator import HumeAudioGenerator
 from database import db
 from models import TempBookData
 import logging
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 generation_bp = Blueprint('generation', __name__)
 text_service = TextGenerator()
 image_service = ImageGenerator()
+audio_service = HumeAudioGenerator()
 
 def send_json_message(message_type, message_data, step=None):
     """Helper function to ensure consistent JSON message formatting"""
@@ -118,23 +120,30 @@ def generate_cards():
             if not result:
                 yield send_json_message('error', 'Failed to generate image')
                 return
+
+            # Generate audio
+            yield send_json_message('log', f"Generating audio...", step='audio')
+            audio_url = audio_service.generate_audio(text)
                 
             # Update storage and send response
             paragraph_data = {
                 'text': text,
                 'image_url': result['url'],
                 'image_prompt': result.get('prompt', ''),
+                'audio_url': audio_url,
                 'index': index
             }
             
             if temp_id and temp_data:
                 story_data['paragraphs'][index]['image_url'] = result['url']
                 story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')
+                story_data['paragraphs'][index]['audio_url'] = audio_url
                 temp_data.data = story_data
                 db.session.commit()
             else:
                 story_data['paragraphs'][index]['image_url'] = result['url']
                 story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')
+                story_data['paragraphs'][index]['audio_url'] = audio_url
                 session['story_data'] = story_data
             
             yield send_json_message('paragraph', paragraph_data)
