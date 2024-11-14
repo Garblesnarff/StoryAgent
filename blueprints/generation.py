@@ -43,8 +43,8 @@ def regenerate_image():
         style = data.get('style', 'realistic')
         
         # Generate new image with style
-        image_url = image_service.generate_image(text, style=style)
-        if not image_url:
+        result = image_service.generate_image(text, style=style)
+        if not result:
             return jsonify({'error': 'Failed to generate image'}), 500
             
         # Update data in appropriate storage
@@ -58,18 +58,21 @@ def regenerate_image():
                 if temp_data:
                     book_data = temp_data.data
                     if index < len(book_data['paragraphs']):
-                        book_data['paragraphs'][index]['image_url'] = image_url
+                        book_data['paragraphs'][index]['image_url'] = result['url']
+                        book_data['paragraphs'][index]['image_prompt'] = result['prompt']
                         temp_data.data = book_data
                         db.session.commit()
             else:
                 # Update in session storage
                 if 'paragraphs' in story_data and index < len(story_data['paragraphs']):
-                    story_data['paragraphs'][index]['image_url'] = image_url
+                    story_data['paragraphs'][index]['image_url'] = result['url']
+                    story_data['paragraphs'][index]['image_prompt'] = result['prompt']
                     session['story_data'] = story_data
         
         return jsonify({
             'success': True,
-            'image_url': image_url
+            'image_url': result['url'],
+            'image_prompt': result['prompt']
         })
         
     except Exception as e:
@@ -107,12 +110,15 @@ def generate_cards():
                 if not paragraph.get('image_url'):
                     yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
                     image_style = paragraph.get('image_style', 'realistic')
-                    paragraph['image_url'] = image_service.generate_image(paragraph['text'], style=image_style)
+                    result = image_service.generate_image(paragraph['text'], style=image_style)
+                    paragraph['image_url'] = result['url']
+                    paragraph['image_prompt'] = result['prompt']
                     
                     # Send immediate update after image generation
                     yield send_json_message('paragraph', {
                         'text': paragraph['text'],
                         'image_url': paragraph['image_url'],
+                        'image_prompt': paragraph['image_prompt'],
                         'index': index
                     }, step='image')
                 

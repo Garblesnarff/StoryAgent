@@ -4,6 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalPages = 0;
     let session = { story_data: { paragraphs: [] } };
     
+    // Initialize tooltips for all elements
+    function initTooltips(container = document) {
+        const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(tooltipTriggerEl => {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+    
     function createPageElement(paragraph, index) {
         if (!paragraph) return null;
         const pageDiv = document.createElement('div');
@@ -14,7 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         pageDiv.innerHTML = `
             <div class="card h-100">
-                ${paragraph.image_url ? `<img src="${paragraph.image_url}" class="card-img-top" alt="Paragraph image">` : ''}
+                ${paragraph.image_url ? `
+                <div class="card-image position-relative">
+                    <img src="${paragraph.image_url}" 
+                         class="card-img-top" 
+                         data-bs-toggle="tooltip" 
+                         data-bs-placement="top" 
+                         title="${paragraph.image_prompt || 'Generated image'}" 
+                         alt="Paragraph image">
+                </div>` : ''}
                 <div class="card-body">
                     <p class="card-text">${paragraph.text || ''}</p>
                     <div class="d-flex gap-2 mt-3">
@@ -29,39 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                         </button>
-                        <button class="btn btn-secondary regenerate-audio">
-                            <div class="d-flex align-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                    <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
-                                    <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
-                                    <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
-                                </svg>
-                                <span class="button-text">Regenerate Audio</span>
-                            </div>
-                            <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </button>
                     </div>
                 </div>
-                ${paragraph.audio_url ? `
-                <div class="card-footer">
-                    <audio controls src="${paragraph.audio_url}"></audio>
-                </div>` : ''}
             </div>
             <div class="alert alert-danger mt-2 d-none" role="alert"></div>
         `;
         
+        // Initialize tooltips for the new page
+        initTooltips(pageDiv);
+        
         // Add event listeners for regeneration buttons
         const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
-        const regenerateAudioBtn = pageDiv.querySelector('.regenerate-audio');
-        
         regenerateImageBtn?.addEventListener('click', async () => {
             await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
-        });
-        
-        regenerateAudioBtn?.addEventListener('click', async () => {
-            await handleRegeneration('audio', regenerateAudioBtn, pageDiv, paragraph, index);
         });
         
         return pageDiv;
@@ -73,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const alert = pageDiv.querySelector('.alert');
         
         try {
-            // Disable button and show spinner
             button.disabled = true;
             spinner.classList.remove('d-none');
             buttonText.textContent = `Regenerating ${type}...`;
@@ -86,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     text: paragraph.text,
-                    index: parseInt(index)
+                    index: parseInt(index),
+                    style: paragraph.image_style || 'realistic'
                 })
             });
             
@@ -96,23 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             if (data.success) {
-                console.log(`${type} regenerated successfully!`);
-                
                 if (type === 'image') {
                     const imgElement = pageDiv.querySelector('.card-img-top');
                     if (imgElement && data.image_url) {
-                        // Create new image and swap once loaded
                         const newImage = new Image();
                         newImage.onload = () => {
                             imgElement.src = data.image_url;
+                            imgElement.title = data.image_prompt;
+                            // Reinitialize tooltip with new content
+                            const tooltip = bootstrap.Tooltip.getInstance(imgElement);
+                            if (tooltip) {
+                                tooltip.dispose();
+                            }
+                            new bootstrap.Tooltip(imgElement);
                         };
                         newImage.src = data.image_url;
-                    }
-                } else {
-                    const audioElement = pageDiv.querySelector('audio');
-                    if (audioElement && data.audio_url) {
-                        audioElement.src = data.audio_url;
-                        audioElement.load(); // Reload the audio element
                     }
                 }
             } else {
@@ -124,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert.textContent = `Failed to regenerate ${type}. Please try again.`;
             alert.classList.remove('d-none');
         } finally {
-            // Re-enable button and hide spinner
             button.disabled = false;
             spinner.classList.add('d-none');
             buttonText.textContent = `Regenerate ${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -175,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function generateCards() {
         try {
-            // Show story output container immediately
             if (storyOutput) {
                 storyOutput.style.display = 'block';
                 storyOutput.classList.add('visible');
@@ -220,20 +212,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                         pageElement = createPageElement(data.data, index);
                                         if (pageElement) {
                                             paragraphCards.appendChild(pageElement);
-                                            // Force reflow to trigger animation
                                             pageElement.offsetHeight;
                                             pageElement.classList.add('visible');
                                         }
                                     } else {
-                                        // Update existing page
                                         const newPage = createPageElement(data.data, index);
                                         if (newPage) {
                                             pageElement.innerHTML = newPage.innerHTML;
+                                            // Initialize tooltips for updated content
+                                            initTooltips(pageElement);
+                                            
                                             // Reattach event listeners
                                             const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
-                                            const regenerateAudioBtn = pageElement.querySelector('.regenerate-audio');
-                                            regenerateImageBtn?.addEventListener('click', () => handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
-                                            regenerateAudioBtn?.addEventListener('click', () => handleRegeneration('audio', regenerateAudioBtn, pageElement, data.data, index));
+                                            regenerateImageBtn?.addEventListener('click', () => 
+                                                handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
                                         }
                                     }
                                     
@@ -258,34 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Initialize tooltips for initial content
+    initTooltips();
+    
     if (document.getElementById('paragraph-cards')) {
         generateCards();
     }
-    
-    const saveStoryBtn = document.getElementById('save-story');
-    saveStoryBtn?.addEventListener('click', async () => {
-        try {
-            console.log('Saving story...');
-            const response = await fetch('/save_story', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to save story');
-            }
-            
-            const data = await response.json();
-            if (data.success) {
-                console.log('Story saved successfully!');
-            } else {
-                throw new Error(data.error || 'Failed to save story');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to save story. Please try again.');
-        }
-    });
 });

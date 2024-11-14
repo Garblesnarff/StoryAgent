@@ -54,7 +54,10 @@ class ImageGenerator:
                 # Add timestamp to queue
                 self.image_generation_queue.append(datetime.now())
                 
-                return f"data:image/png;base64,{image_b64}"
+                return {
+                    'url': f"data:image/png;base64,{image_b64}",
+                    'prompt': enhanced_prompt
+                }
             return None
             
         except Exception as e:
