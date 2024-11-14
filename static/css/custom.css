@@ -178,3 +178,15 @@
     outline: none;
     border-color: var(--bs-primary);
 }
+
+.node-preview {
+    max-height: 150px;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.node-preview img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}

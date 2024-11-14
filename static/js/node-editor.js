@@ -33,6 +33,17 @@ function ParagraphNode({ data }) {
                         <option value="fantasy">Fantasy</option>
                     </select>
                 </div>
+                <button 
+                    className="btn btn-primary btn-sm w-100 mt-2" 
+                    onClick={() => data.onGenerateCard(data.index)}
+                    disabled={data.isGenerating}>
+                    {data.isGenerating ? 'Generating...' : 'Generate Card'}
+                </button>
+                {data.imageUrl && (
+                    <div className="node-preview mt-2">
+                        <img src={data.imageUrl} alt="Generated preview" className="img-fluid rounded" />
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -59,6 +70,61 @@ function EffectNode({ data }) {
 function NodeEditor({ story, onStyleUpdate }) {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+    const handleGenerateCard = useCallback(async (index) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    index,
+                    text: nodes.find(n => n.id === `p${index}`)?.data.text,
+                    style: nodes.find(n => n.id === `p${index}`)?.data.imageStyle
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate card');
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                const lines = decoder.decode(value, {stream: true}).split('\n');
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    const data = JSON.parse(line);
+                    if (data.type === 'paragraph') {
+                        setNodes(nodes => nodes.map(node => 
+                            node.id === `p${index}` ? {
+                                ...node, 
+                                data: {
+                                    ...node.data,
+                                    imageUrl: data.data.image_url,
+                                    audioUrl: data.data.audio_url,
+                                    isGenerating: false
+                                }
+                            } : node
+                        ));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+            ));
+        }
+    }, [setNodes]);
 
     const handleStyleChange = useCallback((index, type, value) => {
         // Update local node state
@@ -99,13 +165,17 @@ function NodeEditor({ story, onStyleUpdate }) {
                     index,
                     text: para.text,
                     imageStyle: para.image_style || 'realistic',
-                    onStyleChange: (type, value) => handleStyleChange(index, type, value)
+                    onStyleChange: (type, value) => handleStyleChange(index, type, value),
+                    onGenerateCard: handleGenerateCard,
+                    isGenerating: false,
+                    imageUrl: para.image_url,
+                    audioUrl: para.audio_url
                 }
             }));
 
             setNodes(paragraphNodes);
         }
-    }, [story, handleStyleChange]);
+    }, [story, handleStyleChange, handleGenerateCard]);
 
     const onConnect = useCallback((params) => 
         setEdges((eds) => addEdge(params, eds)), []);
