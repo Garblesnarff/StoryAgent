@@ -174,33 +174,35 @@ function NodeEditor({ story, onStyleUpdate }) {
     }, [story, onStyleUpdate]);
 
     React.useEffect(() => {
-        if (story?.paragraphs) {
-            // Create nodes from paragraphs
-            const paragraphNodes = story.paragraphs.map((para, index) => ({
-                id: `p${index}`,
-                type: 'paragraph',
-                position: { x: 250, y: index * 200 },
-                data: {
-                    index,
-                    text: para.text,
-                    imageStyle: para.image_style || 'realistic',
-                    onStyleChange: (type, value) => handleStyleChange(index, type, value),
-                    onGenerateCard: handleGenerateCard,
-                    isGenerating: false,
-                    imageUrl: para.image_url,
-                    audioUrl: para.audio_url
-                }
-            }));
+        if (!story?.paragraphs) return;
 
-            setNodes(paragraphNodes);
-        }
-    }, [story, handleStyleChange, handleGenerateCard]);
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            position: { 
+                x: (index % 2) * 300 + 50,
+                y: Math.floor(index / 2) * 250 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                imageStyle: para.image_style || 'realistic',
+                onStyleChange: handleStyleChange,
+                onGenerateCard: handleGenerateCard,
+                isGenerating: false,
+                imageUrl: para.image_url,
+                audioUrl: para.audio_url
+            }
+        }));
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs]); // Only depend on paragraphs data
 
     const onConnect = useCallback((params) => 
         setEdges((eds) => addEdge(params, eds)), []);
 
     return (
-        <div style={{ width: '100%', height: '600px' }}>
+        <div style={{ width: '100%', height: '600px', position: 'relative' }} className="node-editor-root">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -209,6 +211,10 @@ function NodeEditor({ story, onStyleUpdate }) {
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 fitView
+                style={{ background: 'var(--bs-dark)' }}
+                minZoom={0.1}
+                maxZoom={4}
+                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
                 <Background />
                 <Controls />
