@@ -79,7 +79,6 @@ function NodeEditor({ story, onStyleUpdate }) {
 
     const handleGenerateCard = useCallback(async (index) => {
         try {
-            // Get the current paragraph text from story data
             const paragraphText = story.paragraphs[index]?.text;
             if (!paragraphText) {
                 throw new Error('No text found for paragraph');
@@ -128,6 +127,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                                         ...node.data,
                                         imageUrl: data.data.image_url,
                                         imagePrompt: data.data.image_prompt,
+                                        audioUrl: data.data.audio_url,
                                         isGenerating: false
                                     }
                                 } : node
@@ -152,7 +152,6 @@ function NodeEditor({ story, onStyleUpdate }) {
     }, [nodes, setNodes, story.paragraphs]);
 
     const handleStyleChange = useCallback((index, type, value) => {
-        // Update local node state immediately
         setNodes(nodes => nodes.map(node => {
             if (node.id === `p${index}`) {
                 return {
@@ -166,17 +165,14 @@ function NodeEditor({ story, onStyleUpdate }) {
             return node;
         }));
         
-        // Create updated paragraphs data
         const updatedParagraphs = story.paragraphs.map((p, i) => ({
             ...p,
             image_style: i === index ? value : (p.image_style || 'realistic')
         }));
         
-        // Call parent update handler
         onStyleUpdate(updatedParagraphs);
     }, [story, onStyleUpdate]);
 
-    // Sync node styles with story data
     React.useEffect(() => {
         if (!story?.paragraphs) return;
 
@@ -194,7 +190,6 @@ function NodeEditor({ story, onStyleUpdate }) {
         }));
     }, [story.paragraphs]);
 
-    // Initialize nodes from story data
     React.useEffect(() => {
         if (!story?.paragraphs) return;
 
