@@ -93,28 +93,40 @@ function NodeEditor({ story, onStyleUpdate }) {
             
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
                 
-                const lines = decoder.decode(value, {stream: true}).split('\n');
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // Keep the incomplete line in buffer
+                
                 for (const line of lines) {
                     if (!line.trim()) continue;
                     
-                    const data = JSON.parse(line);
-                    if (data.type === 'paragraph') {
-                        setNodes(nodes => nodes.map(node => 
-                            node.id === `p${index}` ? {
-                                ...node, 
-                                data: {
-                                    ...node.data,
-                                    imageUrl: data.data.image_url,
-                                    audioUrl: data.data.audio_url,
-                                    isGenerating: false
-                                }
-                            } : node
-                        ));
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.type === 'paragraph') {
+                            setNodes(nodes => nodes.map(node => 
+                                node.id === `p${index}` ? {
+                                    ...node, 
+                                    data: {
+                                        ...node.data,
+                                        imageUrl: data.data.image_url,
+                                        audioUrl: data.data.audio_url,
+                                        isGenerating: false
+                                    }
+                                } : node
+                            ));
+                        } else if (data.type === 'error') {
+                            throw new Error(data.message);
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing JSON:', parseError);
+                        console.debug('Problematic line:', line);
+                        continue; // Skip this line and try the next one
                     }
                 }
             }

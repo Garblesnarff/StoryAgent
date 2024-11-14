@@ -23,7 +23,7 @@ def send_json_message(message_type, message_data, step=None):
     }
     if step:
         message['step'] = step
-    return json.dumps(message) + '\n'
+    return json.dumps(message).replace('\n', ' ') + '\n'
 
 @generation_bp.route('/story/generate', methods=['GET'])
 def generate():
@@ -83,8 +83,22 @@ def regenerate_image():
 def generate_cards():
     def generate():
         try:
+            data = request.get_json()
+            if not data:
+                yield send_json_message('error', 'Invalid request data')
+                return
+                
+            index = data.get('index')
+            text = data.get('text')
+            style = data.get('style', 'realistic')
+            
+            if index is None or not text:
+                yield send_json_message('error', 'Missing required parameters')
+                return
+            
             if 'story_data' not in session:
-                raise Exception("No story data found in session")
+                yield send_json_message('error', 'No story data found in session')
+                return
                 
             # Get story data from session or temp storage
             story_data = session['story_data']
@@ -95,43 +109,39 @@ def generate_cards():
                 if temp_data:
                     story_data = temp_data.data
             
-            paragraphs = story_data.get('paragraphs', [])
+            yield send_json_message('log', f"Generating card for paragraph {index + 1}...")
             
-            yield send_json_message('log', "Starting card generation...")
+            # Generate image with style
+            yield send_json_message('log', f"Generating image...", step='image')
+            result = image_service.generate_image(text, style=style)
             
-            for index, paragraph in enumerate(paragraphs):
-                if not paragraph['text'].strip():
-                    continue
-                    
-                progress = ((index + 1) / len(paragraphs) * 100)
-                current_message = f"Processing paragraph {index + 1}/{len(paragraphs)}"
+            if not result:
+                yield send_json_message('error', 'Failed to generate image')
+                return
                 
-                # Generate image if needed with style
-                if not paragraph.get('image_url'):
-                    yield send_json_message('log', f"Generating image for paragraph {index + 1}...", step='image')
-                    image_style = paragraph.get('image_style', 'realistic')
-                    result = image_service.generate_image(paragraph['text'], style=image_style)
-                    paragraph['image_url'] = result['url']
-                    paragraph['image_prompt'] = result['prompt']
-                    
-                    # Send immediate update after image generation
-                    yield send_json_message('paragraph', {
-                        'text': paragraph['text'],
-                        'image_url': paragraph['image_url'],
-                        'image_prompt': paragraph['image_prompt'],
-                        'index': index
-                    }, step='image')
-                
-                # Update storage
-                if temp_id and temp_data:
-                    temp_data.data = story_data
-                    db.session.commit()
-                else:
-                    session['story_data'] = story_data
-                
-            yield send_json_message('complete', "Card generation complete!", step='complete')
+            # Update storage and send response
+            paragraph_data = {
+                'text': text,
+                'image_url': result['url'],
+                'image_prompt': result.get('prompt', ''),
+                'index': index
+            }
+            
+            if temp_id and temp_data:
+                story_data['paragraphs'][index]['image_url'] = result['url']
+                story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')
+                temp_data.data = story_data
+                db.session.commit()
+            else:
+                story_data['paragraphs'][index]['image_url'] = result['url']
+                story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')
+                session['story_data'] = story_data
+            
+            yield send_json_message('paragraph', paragraph_data)
+            yield send_json_message('complete', "Card generation complete!")
             
         except Exception as e:
+            logger.error(f"Error generating cards: {str(e)}")
             yield send_json_message('error', str(e))
     
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
