@@ -23,11 +23,8 @@ function ParagraphNode({ data }) {
                     <label className="node-select-label">Image Style</label>
                     <select 
                         className="node-select"
-                        value={data.imageStyle}
-                        onChange={(e) => {
-                            console.log('Style changed:', {type: 'image', value: e.target.value, index: data.index});
-                            data.onStyleChange(data.index, 'image', e.target.value);
-                        }}>
+                        value={data.imageStyle || 'realistic'}
+                        onChange={(e) => data.onStyleChange(data.index, 'image', e.target.value)}>
                         <option value="realistic">Realistic</option>
                         <option value="artistic">Artistic</option>
                         <option value="fantasy">Fantasy</option>
@@ -42,15 +39,18 @@ function ParagraphNode({ data }) {
                 {data.imageUrl && (
                     <div className="node-preview mt-2">
                         <img src={data.imageUrl} alt="Generated preview" className="img-fluid rounded" />
-                        {data.audioUrl && console.log('Rendering audio player with URL:', data.audioUrl)}
-                        {data.audioUrl && (
-                            <div className="audio-player mt-2">
-                                <audio controls className="w-100">
-                                    <source src={data.audioUrl} type="audio/wav" />
-                                    Your browser does not support the audio element.
-                                </audio>
-                            </div>
-                        )}
+                    </div>
+                )}
+                {data.audioUrl && (
+                    <div className="audio-player mt-2">
+                        <audio 
+                            controls 
+                            className="w-100"
+                            key={data.audioUrl}
+                        >
+                            <source src={data.audioUrl} type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
                     </div>
                 )}
             </div>
@@ -183,25 +183,6 @@ function NodeEditor({ story, onStyleUpdate }) {
     React.useEffect(() => {
         if (!story?.paragraphs) return;
 
-        setNodes(nodes => nodes.map(node => {
-            const index = parseInt(node.id.replace('p', ''));
-            const paragraph = story.paragraphs[index];
-            return {
-                ...node,
-                data: {
-                    ...node.data,
-                    text: paragraph.text,
-                    imageStyle: paragraph.image_style || 'realistic',
-                    imageUrl: paragraph.image_url,
-                    audioUrl: paragraph.audio_url
-                }
-            };
-        }));
-    }, [story.paragraphs]);
-
-    React.useEffect(() => {
-        if (!story?.paragraphs) return;
-
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
             type: 'paragraph',
@@ -213,11 +194,11 @@ function NodeEditor({ story, onStyleUpdate }) {
                 index,
                 text: para.text,
                 imageStyle: para.image_style || 'realistic',
+                imageUrl: para.image_url,
+                audioUrl: para.audio_url,
                 onStyleChange: handleStyleChange,
                 onGenerateCard: handleGenerateCard,
-                isGenerating: false,
-                imageUrl: para.image_url,
-                audioUrl: para.audio_url
+                isGenerating: false
             }
         }));
 
