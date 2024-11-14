@@ -15,7 +15,7 @@ const nodeTypes = {
 
 function ParagraphNode({ data }) {
     return (
-        <div className="paragraph-node">
+        <div className={`paragraph-node ${data.imageStyle}-style`}>
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text.substring(0, 100)}...</div>
             <div className="node-controls">
@@ -28,17 +28,6 @@ function ParagraphNode({ data }) {
                         <option value="realistic">Realistic</option>
                         <option value="artistic">Artistic</option>
                         <option value="fantasy">Fantasy</option>
-                    </select>
-                </div>
-                <div className="node-select-group">
-                    <label className="node-select-label">Voice Style</label>
-                    <select 
-                        className="node-select"
-                        value={data.voiceStyle}
-                        onChange={(e) => data.onStyleChange('voice', e.target.value)}>
-                        <option value="neutral">Neutral</option>
-                        <option value="dramatic">Dramatic</option>
-                        <option value="cheerful">Cheerful</option>
                     </select>
                 </div>
             </div>
@@ -79,7 +68,6 @@ function NodeEditor({ story, onStyleUpdate }) {
                     index,
                     text: para.text,
                     imageStyle: para.image_style || 'realistic',
-                    voiceStyle: para.voice_style || 'neutral',
                     onStyleChange: (type, value) => {
                         const updatedData = [...story.paragraphs];
                         updatedData[index] = {

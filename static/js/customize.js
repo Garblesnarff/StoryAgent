@@ -50,8 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ 
                         paragraphs: updatedParagraphs.map((p, index) => ({
                             index,
-                            image_style: p.image_style || 'realistic',
-                            voice_style: p.voice_style || 'neutral'
+                            image_style: p.image_style || 'realistic'
                         }))
                     })
                 })

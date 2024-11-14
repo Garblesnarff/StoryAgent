@@ -96,11 +96,22 @@
 .paragraph-node {
     padding: 15px;
     border-radius: 8px;
-    background: var(--bs-primary);
     color: white;
     width: 250px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+}
+
+.paragraph-node.realistic-style {
+    background: linear-gradient(45deg, var(--bs-primary), #2c5282);
+}
+
+.paragraph-node.artistic-style {
+    background: linear-gradient(45deg, #805ad5, #d53f8c);
+}
+
+.paragraph-node.fantasy-style {
+    background: linear-gradient(45deg, #38b2ac, #4299e1);
 }
 
 .effect-node {
