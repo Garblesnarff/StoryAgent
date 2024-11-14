@@ -1,0 +1,119 @@
+import React, { useState, useCallback } from 'react';
+import ReactFlow, { 
+    Controls, 
+    Background,
+    useNodesState,
+    useEdgesState,
+    addEdge,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+
+const nodeTypes = {
+    paragraph: ParagraphNode,
+    effect: EffectNode
+};
+
+function ParagraphNode({ data }) {
+    return (
+        <div className="paragraph-node">
+            <div className="node-header">Paragraph {data.index + 1}</div>
+            <div className="node-content">{data.text.substring(0, 100)}...</div>
+            <div className="node-controls">
+                <div className="node-select-group">
+                    <label className="node-select-label">Image Style</label>
+                    <select 
+                        className="node-select"
+                        value={data.imageStyle}
+                        onChange={(e) => data.onStyleChange('image', e.target.value)}>
+                        <option value="realistic">Realistic</option>
+                        <option value="artistic">Artistic</option>
+                        <option value="fantasy">Fantasy</option>
+                    </select>
+                </div>
+                <div className="node-select-group">
+                    <label className="node-select-label">Voice Style</label>
+                    <select 
+                        className="node-select"
+                        value={data.voiceStyle}
+                        onChange={(e) => data.onStyleChange('voice', e.target.value)}>
+                        <option value="neutral">Neutral</option>
+                        <option value="dramatic">Dramatic</option>
+                        <option value="cheerful">Cheerful</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function EffectNode({ data }) {
+    return (
+        <div className="effect-node">
+            <div className="node-header">{data.label}</div>
+            <div className="node-controls">
+                <select 
+                    className="node-select"
+                    value={data.effect}
+                    onChange={(e) => data.onEffectChange(e.target.value)}>
+                    {data.options.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    );
+}
+
+function NodeEditor({ story, onStyleUpdate }) {
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+    React.useEffect(() => {
+        if (story?.paragraphs) {
+            // Create nodes from paragraphs
+            const paragraphNodes = story.paragraphs.map((para, index) => ({
+                id: `p${index}`,
+                type: 'paragraph',
+                position: { x: 250, y: index * 200 },
+                data: {
+                    index,
+                    text: para.text,
+                    imageStyle: para.image_style || 'realistic',
+                    voiceStyle: para.voice_style || 'neutral',
+                    onStyleChange: (type, value) => {
+                        const updatedData = [...story.paragraphs];
+                        updatedData[index] = {
+                            ...updatedData[index],
+                            [`${type}_style`]: value
+                        };
+                        onStyleUpdate(updatedData);
+                    }
+                }
+            }));
+
+            setNodes(paragraphNodes);
+        }
+    }, [story]);
+
+    const onConnect = useCallback((params) => 
+        setEdges((eds) => addEdge(params, eds)), []);
+
+    return (
+        <div style={{ width: '100%', height: '600px' }}>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                fitView
+            >
+                <Background />
+                <Controls />
+            </ReactFlow>
+        </div>
+    );
+}
+
+export default NodeEditor;
