@@ -8,19 +8,14 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-const nodeTypes = {
-    paragraph: ParagraphNode,
-    effect: EffectNode
-};
-
-function ParagraphNode({ data }) {
+export function ParagraphNode({ data }) {
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <div className="node-header">Paragraph {data.index + 1}</div>
-            <div className="node-content">{data.text.substring(0, 100)}...</div>
+            <div className="node-content">{data.text}</div>
             <div className="node-controls">
                 <button 
-                    className="btn btn-primary btn-sm w-100 mt-2" 
+                    className="btn btn-primary btn-sm w-100" 
                     onClick={() => data.onGenerateCard(data.index)}
                     disabled={data.isGenerating}>
                     {data.isGenerating ? 'Generating...' : 'Generate Card'}
@@ -74,10 +69,45 @@ function EffectNode({ data }) {
     );
 }
 
+const nodeTypes = {
+    paragraph: ParagraphNode,
+    effect: EffectNode
+};
+
 function NodeEditor({ story, onStyleUpdate }) {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
+
+    // Add immediate initialization of nodes
+    React.useEffect(() => {
+        if (!story?.paragraphs) {
+            console.error('No story paragraphs found');
+            return;
+        }
+
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            position: { 
+                x: (index % 2) * 300 + 50,
+                y: Math.floor(index / 2) * 250 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                isGenerating: false
+            }
+        }));
+
+        console.log('Initializing nodes:', paragraphNodes);
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard]);
 
     const handleStyleChange = useCallback((event) => {
         const newStyle = event.target.value;
@@ -177,34 +207,11 @@ function NodeEditor({ story, onStyleUpdate }) {
     }, [nodes, setNodes, story.paragraphs, selectedStyle]);
 
     React.useEffect(() => {
-        if (!story?.paragraphs) return;
-
         // Add event listener for radio buttons
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
         radioButtons.forEach(radio => {
             radio.addEventListener('change', handleStyleChange);
         });
-
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            position: { 
-                x: (index % 2) * 300 + 50,
-                y: Math.floor(index / 2) * 250 + 50
-            },
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                isGenerating: false
-            }
-        }));
-
-        setNodes(paragraphNodes);
 
         // Cleanup
         return () => {
@@ -212,7 +219,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                 radio.removeEventListener('change', handleStyleChange);
             });
         };
-    }, [story?.paragraphs, selectedStyle, handleGenerateCard]);
+    }, [handleStyleChange]);
 
     const onConnect = useCallback((params) => 
         setEdges((eds) => addEdge(params, eds)), []);
