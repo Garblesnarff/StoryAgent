@@ -8,7 +8,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-export function ParagraphNode({ data }) {
+const ParagraphNode = React.memo(({ data }) => {
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <div className="node-header">Paragraph {data.index + 1}</div>
@@ -49,9 +49,9 @@ export function ParagraphNode({ data }) {
             </div>
         </div>
     );
-}
+});
 
-function EffectNode({ data }) {
+const EffectNode = React.memo(({ data }) => {
     return (
         <div className="effect-node">
             <div className="node-header">{data.label}</div>
@@ -67,19 +67,112 @@ function EffectNode({ data }) {
             </div>
         </div>
     );
-}
+});
 
 const nodeTypes = {
     paragraph: ParagraphNode,
     effect: EffectNode
 };
 
-function NodeEditor({ story, onStyleUpdate }) {
+const NodeEditor = ({ story, onStyleUpdate }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
 
-    // Add immediate initialization of nodes
+    const handleGenerateCard = useCallback(async (index) => {
+        if (!story?.paragraphs?.[index]?.text) {
+            console.error('No text found for paragraph');
+            return;
+        }
+
+        try {
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    index: index,
+                    text: story.paragraphs[index].text.trim(),
+                    style: selectedStyle
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate card');
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.type === 'paragraph') {
+                            setNodes(currentNodes => {
+                                return currentNodes.map(node => 
+                                    node.id === `p${index}` ? {
+                                        ...node, 
+                                        data: {
+                                            ...node.data,
+                                            imageUrl: data.data.image_url,
+                                            imagePrompt: data.data.image_prompt,
+                                            audioUrl: data.data.audio_url,
+                                            isGenerating: false
+                                        }
+                                    } : node
+                                );
+                            });
+                        } else if (data.type === 'error') {
+                            throw new Error(data.message);
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing JSON:', parseError);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+            ));
+            alert(error.message || 'Failed to generate card');
+        }
+    }, [story?.paragraphs, selectedStyle, setNodes]);
+
+    const handleStyleChange = useCallback((event) => {
+        const newStyle = event.target.value;
+        setSelectedStyle(newStyle);
+        
+        setNodes(currentNodes => currentNodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                globalStyle: newStyle
+            }
+        })));
+        
+        const updatedParagraphs = story?.paragraphs?.map(p => ({
+            ...p,
+            image_style: newStyle
+        })) || [];
+        
+        onStyleUpdate(updatedParagraphs);
+    }, [setNodes, story?.paragraphs, onStyleUpdate]);
+
     React.useEffect(() => {
         if (!story?.paragraphs) {
             console.error('No story paragraphs found');
@@ -105,124 +198,27 @@ function NodeEditor({ story, onStyleUpdate }) {
             }
         }));
 
-        console.log('Initializing nodes:', paragraphNodes);
         setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleGenerateCard]);
-
-    const handleStyleChange = useCallback((event) => {
-        const newStyle = event.target.value;
-        setSelectedStyle(newStyle);
-        
-        // Update all nodes with the new global style
-        setNodes(nodes => nodes.map(node => ({
-            ...node,
-            data: {
-                ...node.data,
-                globalStyle: newStyle
-            }
-        })));
-        
-        // Update the parent component
-        const updatedParagraphs = story.paragraphs.map(p => ({
-            ...p,
-            image_style: newStyle
-        }));
-        
-        onStyleUpdate(updatedParagraphs);
-    }, [setNodes, story, onStyleUpdate]);
-
-    const handleGenerateCard = useCallback(async (index) => {
-        try {
-            const paragraphText = story.paragraphs[index]?.text;
-            if (!paragraphText) {
-                throw new Error('No text found for paragraph');
-            }
-
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
-            ));
-
-            const response = await fetch('/story/generate_cards', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    index: index,
-                    text: paragraphText.trim(),
-                    style: selectedStyle
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to generate card');
-            
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-                
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
-                        if (data.type === 'paragraph') {
-                            setNodes(nodes => {
-                                return nodes.map(node => 
-                                    node.id === `p${index}` ? {
-                                        ...node, 
-                                        data: {
-                                            ...node.data,
-                                            imageUrl: data.data.image_url,
-                                            imagePrompt: data.data.image_prompt,
-                                            audioUrl: data.data.audio_url,
-                                            isGenerating: false
-                                        }
-                                    } : node
-                                );
-                            });
-                        } else if (data.type === 'error') {
-                            throw new Error(data.message);
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing JSON:', parseError);
-                        continue;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error generating card:', error);
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
-            ));
-            alert(error.message || 'Failed to generate card');
-        }
-    }, [nodes, setNodes, story.paragraphs, selectedStyle]);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, setNodes]);
 
     React.useEffect(() => {
-        // Add event listener for radio buttons
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
+        const handler = (e) => handleStyleChange(e);
+        
         radioButtons.forEach(radio => {
-            radio.addEventListener('change', handleStyleChange);
+            radio.addEventListener('change', handler);
         });
 
-        // Cleanup
         return () => {
             radioButtons.forEach(radio => {
-                radio.removeEventListener('change', handleStyleChange);
+                radio.removeEventListener('change', handler);
             });
         };
     }, [handleStyleChange]);
 
     const onConnect = useCallback((params) => 
-        setEdges((eds) => addEdge(params, eds)), []);
+        setEdges(currentEdges => addEdge(params, currentEdges)), 
+    [setEdges]);
 
     return (
         <div style={{ width: '100%', height: '600px', position: 'relative' }} className="node-editor-root">
@@ -244,6 +240,6 @@ function NodeEditor({ story, onStyleUpdate }) {
             </ReactFlow>
         </div>
     );
-}
+};
 
-export default NodeEditor;
+export default React.memo(NodeEditor);
