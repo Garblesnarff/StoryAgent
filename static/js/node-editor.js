@@ -82,6 +82,7 @@ function NodeEditor({ story, onStyleUpdate }) {
 
     const handleGenerateCard = useCallback(async (index) => {
         try {
+            // Get only the text from the paragraph
             const paragraphText = story.paragraphs[index]?.text;
             if (!paragraphText) {
                 throw new Error('No text found for paragraph');
@@ -98,7 +99,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                 },
                 body: JSON.stringify({
                     index: index,
-                    text: paragraphText,
+                    text: paragraphText.trim(), // Ensure clean text
                     style: nodes.find(n => n.id === `p${index}`)?.data?.imageStyle || 'realistic'
                 })
             });
@@ -123,9 +124,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                     try {
                         const data = JSON.parse(line);
                         if (data.type === 'paragraph') {
-                            console.log('Received audio URL:', data.data.audio_url);
                             setNodes(nodes => {
-                                console.log('Updating node with audio URL:', data.data.audio_url);
                                 return nodes.map(node => 
                                     node.id === `p${index}` ? {
                                         ...node, 
@@ -144,7 +143,6 @@ function NodeEditor({ story, onStyleUpdate }) {
                         }
                     } catch (parseError) {
                         console.error('Error parsing JSON:', parseError);
-                        console.debug('Problematic line:', line);
                         continue;
                     }
                 }

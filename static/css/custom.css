@@ -196,6 +196,11 @@
     width: 100%;
     height: auto;
     object-fit: cover;
+    transition: opacity 0.3s ease;
+}
+
+.node-preview img:hover {
+    opacity: 0.5;
 }
 
 .audio-player {
