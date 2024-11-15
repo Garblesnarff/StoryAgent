@@ -38,7 +38,16 @@ function ParagraphNode({ data }) {
                 </button>
                 {data.imageUrl && (
                     <div className="node-preview mt-2">
-                        <img src={data.imageUrl} alt="Generated preview" className="img-fluid rounded" />
+                        <div className="image-container position-relative">
+                            <img 
+                                src={data.imageUrl} 
+                                alt="Generated preview" 
+                                className="img-fluid rounded"
+                            />
+                            <div className="image-prompt-overlay">
+                                {data.imagePrompt}
+                            </div>
+                        </div>
                     </div>
                 )}
                 {data.audioUrl && (
@@ -82,7 +91,6 @@ function NodeEditor({ story, onStyleUpdate }) {
 
     const handleGenerateCard = useCallback(async (index) => {
         try {
-            // Get only the text from the paragraph
             const paragraphText = story.paragraphs[index]?.text;
             if (!paragraphText) {
                 throw new Error('No text found for paragraph');
@@ -99,7 +107,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                 },
                 body: JSON.stringify({
                     index: index,
-                    text: paragraphText.trim(), // Ensure clean text
+                    text: paragraphText.trim(),
                     style: nodes.find(n => n.id === `p${index}`)?.data?.imageStyle || 'realistic'
                 })
             });
@@ -193,6 +201,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                 text: para.text,
                 imageStyle: para.image_style || 'realistic',
                 imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
                 onStyleChange: handleStyleChange,
                 onGenerateCard: handleGenerateCard,
