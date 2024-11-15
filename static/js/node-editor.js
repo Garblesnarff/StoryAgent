@@ -15,21 +15,10 @@ const nodeTypes = {
 
 function ParagraphNode({ data }) {
     return (
-        <div className={`paragraph-node ${data.imageStyle || 'realistic'}-style`}>
+        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text.substring(0, 100)}...</div>
             <div className="node-controls">
-                <div className="node-select-group">
-                    <label className="node-select-label">Image Style</label>
-                    <select 
-                        className="node-select"
-                        value={data.imageStyle || 'realistic'}
-                        onChange={(e) => data.onStyleChange(data.index, 'image', e.target.value)}>
-                        <option value="realistic">Realistic</option>
-                        <option value="artistic">Artistic</option>
-                        <option value="fantasy">Fantasy</option>
-                    </select>
-                </div>
                 <button 
                     className="btn btn-primary btn-sm w-100 mt-2" 
                     onClick={() => data.onGenerateCard(data.index)}
@@ -88,6 +77,29 @@ function EffectNode({ data }) {
 function NodeEditor({ story, onStyleUpdate }) {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [selectedStyle, setSelectedStyle] = useState('realistic');
+
+    const handleStyleChange = useCallback((event) => {
+        const newStyle = event.target.value;
+        setSelectedStyle(newStyle);
+        
+        // Update all nodes with the new global style
+        setNodes(nodes => nodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                globalStyle: newStyle
+            }
+        })));
+        
+        // Update the parent component
+        const updatedParagraphs = story.paragraphs.map(p => ({
+            ...p,
+            image_style: newStyle
+        }));
+        
+        onStyleUpdate(updatedParagraphs);
+    }, [setNodes, story, onStyleUpdate]);
 
     const handleGenerateCard = useCallback(async (index) => {
         try {
@@ -108,7 +120,7 @@ function NodeEditor({ story, onStyleUpdate }) {
                 body: JSON.stringify({
                     index: index,
                     text: paragraphText.trim(),
-                    style: nodes.find(n => n.id === `p${index}`)?.data?.imageStyle || 'realistic'
+                    style: selectedStyle
                 })
             });
 
@@ -162,32 +174,16 @@ function NodeEditor({ story, onStyleUpdate }) {
             ));
             alert(error.message || 'Failed to generate card');
         }
-    }, [nodes, setNodes, story.paragraphs]);
-
-    const handleStyleChange = useCallback((index, type, value) => {
-        setNodes(nodes => nodes.map(node => {
-            if (node.id === `p${index}`) {
-                return {
-                    ...node,
-                    data: {
-                        ...node.data,
-                        imageStyle: value
-                    }
-                };
-            }
-            return node;
-        }));
-        
-        const updatedParagraphs = story.paragraphs.map((p, i) => ({
-            ...p,
-            image_style: i === index ? value : (p.image_style || 'realistic')
-        }));
-        
-        onStyleUpdate(updatedParagraphs);
-    }, [story, onStyleUpdate]);
+    }, [nodes, setNodes, story.paragraphs, selectedStyle]);
 
     React.useEffect(() => {
         if (!story?.paragraphs) return;
+
+        // Add event listener for radio buttons
+        const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', handleStyleChange);
+        });
 
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
@@ -199,18 +195,24 @@ function NodeEditor({ story, onStyleUpdate }) {
             data: {
                 index,
                 text: para.text,
-                imageStyle: para.image_style || 'realistic',
+                globalStyle: selectedStyle,
                 imageUrl: para.image_url,
                 imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
-                onStyleChange: handleStyleChange,
                 onGenerateCard: handleGenerateCard,
                 isGenerating: false
             }
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs]);
+
+        // Cleanup
+        return () => {
+            radioButtons.forEach(radio => {
+                radio.removeEventListener('change', handleStyleChange);
+            });
+        };
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard]);
 
     const onConnect = useCallback((params) => 
         setEdges((eds) => addEdge(params, eds)), []);
