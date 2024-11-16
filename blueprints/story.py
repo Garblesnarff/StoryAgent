@@ -91,15 +91,15 @@ def customize_story():
     try:
         # Check if story data exists in session
         if 'story_data' not in session:
-            logger.error("No story data in session")
-            return jsonify({'error': 'Please generate a story first'}), 403
+            logger.warning("No story data in session, redirecting to home")
+            return redirect(url_for('index'))
 
         story_data = session['story_data']
         
         # Validate story data structure
         if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
             logger.error("Invalid story data structure")
-            return jsonify({'error': 'Invalid story data structure'}), 403
+            return redirect(url_for('index'))
 
         # Get data from temp storage if available
         temp_id = story_data.get('temp_id')
@@ -111,13 +111,22 @@ def customize_story():
         # Ensure paragraphs exist
         if not story_data.get('paragraphs'):
             logger.error("No paragraphs found in story data")
-            return jsonify({'error': 'No story content found'}), 403
+            return redirect(url_for('index'))
+
+        # Initialize default styles if not present
+        for paragraph in story_data['paragraphs']:
+            if 'image_style' not in paragraph:
+                paragraph['image_style'] = 'realistic'
+
+        # Update session with initialized data
+        session['story_data'] = story_data
+        session.modified = True
 
         return render_template('story/customize.html', story=story_data)
 
     except Exception as e:
         logger.error(f"Error in customize route: {str(e)}")
-        return jsonify({'error': 'Server error occurred'}), 500
+        return redirect(url_for('index'))
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():

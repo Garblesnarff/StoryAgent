@@ -186,6 +186,10 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 x: (index % 2) * 300 + 50,
                 y: Math.floor(index / 2) * 250 + 50
             },
+            // Add connection properties
+            sourcePosition: 'right',
+            targetPosition: 'left',
+            connectable: true,
             data: {
                 index,
                 text: para.text,
@@ -216,9 +220,16 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         };
     }, [handleStyleChange]);
 
-    const onConnect = useCallback((params) => 
-        setEdges(currentEdges => addEdge(params, currentEdges)), 
-    [setEdges]);
+    const onConnect = useCallback((params) => {
+        // Create a custom edge with styling
+        const edge = {
+            ...params,
+            type: 'smoothstep',  // Use smooth edges
+            animated: true,      // Add animation
+            style: { stroke: 'var(--bs-primary)', strokeWidth: 2 }
+        };
+        setEdges(currentEdges => addEdge(edge, currentEdges));
+    }, [setEdges]);
 
     return (
         <div style={{ width: '100%', height: '600px', position: 'relative' }} className="node-editor-root">
@@ -234,6 +245,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 minZoom={0.1}
                 maxZoom={4}
                 defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                connectOnClick={true}   // Enable click-to-connect
             >
                 <Background />
                 <Controls />
