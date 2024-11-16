@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, flash
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
@@ -91,7 +91,8 @@ def customize_story():
     try:
         # Check if story data exists in session
         if 'story_data' not in session:
-            logger.warning("No story data in session, redirecting to home")
+            logger.warning("No story data in session, redirecting to home with flash message")
+            flash('Please generate a story first before customizing', 'warning')
             return redirect(url_for('index'))
 
         story_data = session['story_data']
@@ -99,6 +100,7 @@ def customize_story():
         # Validate story data structure
         if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
             logger.error("Invalid story data structure")
+            flash('Invalid story data. Please generate a new story.', 'error')
             return redirect(url_for('index'))
 
         # Get data from temp storage if available
@@ -108,9 +110,10 @@ def customize_story():
             if temp_data:
                 story_data = temp_data.data
 
-        # Ensure paragraphs exist
+        # Ensure paragraphs exist and are properly formatted
         if not story_data.get('paragraphs'):
             logger.error("No paragraphs found in story data")
+            flash('No story content found. Please generate a new story.', 'error')
             return redirect(url_for('index'))
 
         # Initialize default styles if not present
@@ -126,6 +129,7 @@ def customize_story():
 
     except Exception as e:
         logger.error(f"Error in customize route: {str(e)}")
+        flash('An error occurred while loading the customization page.', 'error')
         return redirect(url_for('index'))
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])

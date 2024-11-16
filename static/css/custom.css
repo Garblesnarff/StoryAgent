@@ -85,8 +85,34 @@
     padding: 0;
 }
 
-.react-flow__edge path {
+/* Connection handles and edges styles */
+.react-flow__handle {
+    width: 10px;
+    height: 10px;
+    background: var(--bs-primary);
+    border: 2px solid var(--bs-dark);
+    transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+    background: var(--bs-light);
+    transform: scale(1.2);
+}
+
+.react-flow__handle-connecting {
+    background: #ff0072;
+}
+
+.react-flow__connection-path {
     stroke: var(--bs-primary);
+    stroke-width: 2;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+}
+
+.react-flow__edge-path {
+    stroke: var(--bs-primary);
+    stroke-width: 2;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
 }
 
 .react-flow__controls {

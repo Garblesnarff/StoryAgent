@@ -5,12 +5,15 @@ import ReactFlow, {
     useNodesState,
     useEdgesState,
     addEdge,
+    Handle,
+    Position
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 const ParagraphNode = React.memo(({ data }) => {
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
+            <Handle type="target" position={Position.Left} />
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text}</div>
             <div className="node-controls">
@@ -47,6 +50,7 @@ const ParagraphNode = React.memo(({ data }) => {
                     </div>
                 )}
             </div>
+            <Handle type="source" position={Position.Right} />
         </div>
     );
 });
@@ -54,6 +58,7 @@ const ParagraphNode = React.memo(({ data }) => {
 const EffectNode = React.memo(({ data }) => {
     return (
         <div className="effect-node">
+            <Handle type="target" position={Position.Left} />
             <div className="node-header">{data.label}</div>
             <div className="node-controls">
                 <select 
@@ -65,6 +70,7 @@ const EffectNode = React.memo(({ data }) => {
                     ))}
                 </select>
             </div>
+            <Handle type="source" position={Position.Right} />
         </div>
     );
 });
@@ -186,7 +192,6 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 x: (index % 2) * 300 + 50,
                 y: Math.floor(index / 2) * 250 + 50
             },
-            // Add connection properties
             sourcePosition: 'right',
             targetPosition: 'left',
             connectable: true,
@@ -221,13 +226,22 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [handleStyleChange]);
 
     const onConnect = useCallback((params) => {
+        // Validate connection
+        if (params.source === params.target) {
+            return; // Prevent self-connections
+        }
+        
         // Create a custom edge with styling
         const edge = {
             ...params,
-            type: 'smoothstep',  // Use smooth edges
-            animated: true,      // Add animation
-            style: { stroke: 'var(--bs-primary)', strokeWidth: 2 }
+            type: 'smoothstep',
+            animated: true,
+            style: { 
+                stroke: 'var(--bs-primary)', 
+                strokeWidth: 2,
+            }
         };
+        
         setEdges(currentEdges => addEdge(edge, currentEdges));
     }, [setEdges]);
 
@@ -245,7 +259,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 minZoom={0.1}
                 maxZoom={4}
                 defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                connectOnClick={true}   // Enable click-to-connect
+                connectOnClick={true}
             >
                 <Background />
                 <Controls />
