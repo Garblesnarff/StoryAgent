@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import NodeEditor from './node-editor';
-import EffectPanel from './effect-panel';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -67,55 +66,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const root = createRoot(container);
     root.render(
         <ErrorBoundary>
-            <div className="d-flex">
-                <EffectPanel />
-                <div className="flex-grow-1">
-                    <NodeEditor 
-                        story={storyData} 
-                        onStyleUpdate={(updatedParagraphs) => {
-                            fetch('/story/update_style', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ 
-                                    paragraphs: updatedParagraphs.map((p, index) => ({
-                                        index,
-                                        image_style: p.image_style || 'realistic'
-                                    }))
-                                })
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    if (response.status === 403) {
-                                        throw new Error('Session expired. Please generate a new story.');
-                                    }
-                                    return response.json().then(data => {
-                                        throw new Error(data.error || 'Failed to update style');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (!data.success) {
-                                    throw new Error(data.error || 'Failed to update style');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error updating style:', error);
-                                if (error.message.includes('Session expired')) {
-                                    showError(error.message);
-                                    setTimeout(() => {
-                                        window.location.href = '/';
-                                    }, 3000);
-                                } else {
-                                    alert(error.message || 'Failed to update style');
-                                }
+            <NodeEditor 
+                story={storyData} 
+                onStyleUpdate={(updatedParagraphs) => {
+                    fetch('/story/update_style', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            paragraphs: updatedParagraphs.map((p, index) => ({
+                                index,
+                                image_style: p.image_style || 'realistic'
+                            }))
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 403) {
+                                throw new Error('Session expired. Please generate a new story.');
+                            }
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Failed to update style');
                             });
-                        }}
-                    />
-                </div>
-            </div>
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.error || 'Failed to update style');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating style:', error);
+                        if (error.message.includes('Session expired')) {
+                            showError(error.message);
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 3000);
+                        } else {
+                            alert(error.message || 'Failed to update style');
+                        }
+                    });
+                }}
+            />
         </ErrorBoundary>
     );
 });
