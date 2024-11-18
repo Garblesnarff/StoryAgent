@@ -1,6 +1,7 @@
 from database import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -24,7 +25,7 @@ class Story(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 class TempBookData(db.Model):
-    id = db.Column(db.String(36), primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     data = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

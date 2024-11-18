@@ -70,17 +70,25 @@ def generate_story():
         if not story_paragraphs:
             return jsonify({'error': 'Failed to generate story'}), 500
             
-        # Create a new TempBookData entry
-        temp_data = TempBookData(data={
-            'prompt': prompt,
-            'genre': genre,
-            'mood': mood,
-            'target_audience': target_audience,
-            'created_at': str(datetime.now()),
-            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
-        })
-        db.session.add(temp_data)
-        db.session.commit()
+        # Create a new TempBookData entry with UUID
+        temp_data = TempBookData(
+            data={
+                'prompt': prompt,
+                'genre': genre,
+                'mood': mood,
+                'target_audience': target_audience,
+                'created_at': str(datetime.now()),
+                'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
+            }
+        )
+        
+        try:
+            db.session.add(temp_data)
+            db.session.commit()
+        except Exception as db_error:
+            db.session.rollback()
+            logger.error(f"Database error: {str(db_error)}")
+            return jsonify({'error': 'Failed to save story data'}), 500
         
         # Store story data in session
         session['story_data'] = {
