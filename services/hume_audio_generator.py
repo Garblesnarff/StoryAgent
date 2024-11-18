@@ -36,60 +36,96 @@ class HumeAudioGenerator:
 
     async def _generate_audio_async(self, text):
         try:
-            # Connect to websocket
-            await self._connect()
-            
             # Initialize audio data collection
             audio_data = bytearray()
             
-            # Split text into smaller chunks (around 200 characters each)
-            # Trying to split at sentence boundaries when possible
+            # Split text into smaller chunks (around 100 characters each)
             chunks = []
-            max_chunk_size = 200
+            max_chunk_size = 100  # Reduced from 200 to 100
             sentences = text.split('. ')
             current_chunk = []
             current_length = 0
             
             for sentence in sentences:
-                if current_length + len(sentence) > max_chunk_size and current_chunk:
-                    chunks.append('. '.join(current_chunk) + '.')
-                    current_chunk = [sentence]
-                    current_length = len(sentence)
-                else:
-                    current_chunk.append(sentence)
-                    current_length += len(sentence)
+                # If sentence itself is too long, split it further
+                if len(sentence) > max_chunk_size:
+                    words = sentence.split()
+                    temp_chunk = []
+                    temp_length = 0
                     
+                    for word in words:
+                        if temp_length + len(word) > max_chunk_size and temp_chunk:
+                            chunks.append(' '.join(temp_chunk) + '.')
+                            temp_chunk = [word]
+                            temp_length = len(word)
+                        else:
+                            temp_chunk.append(word)
+                            temp_length += len(word) + 1
+                    
+                    if temp_chunk:
+                        chunks.append(' '.join(temp_chunk) + '.')
+                else:
+                    if current_length + len(sentence) > max_chunk_size and current_chunk:
+                        chunks.append('. '.join(current_chunk) + '.')
+                        current_chunk = [sentence]
+                        current_length = len(sentence)
+                    else:
+                        current_chunk.append(sentence)
+                        current_length += len(sentence)
+            
             if current_chunk:
                 chunks.append('. '.join(current_chunk))
             
-            # Process each chunk
+            # Process each chunk with retries
             for chunk in chunks:
-                logger.info(f"Processing text chunk: {len(chunk)} characters")
+                max_retries = 3
+                retry_count = 0
                 
-                message = {
-                    "type": "user_input",
-                    "text": chunk
-                }
-                
-                await self.ws.send(json.dumps(message))
-                
-                # Collect audio data for this chunk
-                while True:
-                    response = await self.ws.recv()
-                    response_data = json.loads(response)
-                    
-                    if response_data["type"] == "audio_output":
-                        chunk_data = base64.b64decode(response_data["data"])
-                        audio_data.extend(chunk_data)
-                        logger.info(f"Received audio chunk: {len(chunk_data)} bytes")
-                    
-                    elif response_data["type"] == "assistant_end":
-                        logger.info("Received end of chunk signal")
-                        break
-                    
-                    elif response_data["type"] == "error":
-                        logger.error(f"Error from EVI: {response_data.get('message', 'Unknown error')}")
-                        return None
+                while retry_count < max_retries:
+                    try:
+                        # Connect for each chunk to ensure fresh connection
+                        await self._connect()
+                        
+                        logger.info(f"Processing text chunk: {len(chunk)} characters")
+                        message = {
+                            "type": "user_input",
+                            "text": chunk
+                        }
+                        
+                        await self.ws.send(json.dumps(message))
+                        
+                        # Collect audio data for this chunk
+                        while True:
+                            response = await self.ws.recv()
+                            response_data = json.loads(response)
+                            
+                            if response_data["type"] == "audio_output":
+                                chunk_data = base64.b64decode(response_data["data"])
+                                audio_data.extend(chunk_data)
+                                logger.info(f"Received audio chunk: {len(chunk_data)} bytes")
+                            
+                            elif response_data["type"] == "assistant_end":
+                                logger.info("Received end of chunk signal")
+                                break
+                            
+                            elif response_data["type"] == "error":
+                                raise Exception(response_data.get('message', 'Unknown error'))
+                        
+                        # Add small delay between chunks
+                        await asyncio.sleep(0.5)
+                        break  # Success, exit retry loop
+                        
+                    except Exception as e:
+                        logger.error(f"Error processing chunk (attempt {retry_count + 1}): {str(e)}")
+                        retry_count += 1
+                        if retry_count == max_retries:
+                            logger.error(f"Failed to process chunk after {max_retries} attempts")
+                            return None
+                        await asyncio.sleep(1)  # Wait before retry
+                    finally:
+                        if hasattr(self, 'ws'):
+                            await self.ws.close()
+                            logger.info("WebSocket connection closed")
 
             # Save complete audio file
             if audio_data:
@@ -97,24 +133,20 @@ class HumeAudioGenerator:
                 filepath = os.path.join(self.audio_dir, filename)
                 
                 with wave.open(filepath, 'wb') as wav_file:
-                    wav_file.setnchannels(1)  # Mono
-                    wav_file.setsampwidth(2)  # 16-bit
-                    wav_file.setframerate(24000)  # 24kHz sample rate
+                    wav_file.setnchannels(1)
+                    wav_file.setsampwidth(2)
+                    wav_file.setframerate(24000)
                     wav_file.writeframes(audio_data)
                 
                 logger.info(f"Saved audio file: {filename} ({len(audio_data)} bytes)")
                 return f"/static/audio/{filename}"
-                
+            
             logger.warning("No audio data received")
             return None
             
         except Exception as e:
             logger.error(f"Error generating audio with Hume: {str(e)}")
             return None
-        finally:
-            if hasattr(self, 'ws'):
-                await self.ws.close()
-                logger.info("WebSocket connection closed")
 
     def generate_audio(self, text):
         try:
