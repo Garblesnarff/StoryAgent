@@ -37,12 +37,12 @@ class ImageGenerator:
             # Create enhanced prompt with style
             enhanced_prompt = self._style_to_prompt_modifier(text, style)
             
-            # Generate image using Together AI
+            # Generate image using Together AI with 16:9 aspect ratio
             image_response = self.client.images.generate(
                 prompt=enhanced_prompt,
                 model="black-forest-labs/FLUX.1-schnell-Free",
-                width=512,
-                height=512,
+                width=1024,  # 16:9 ratio
+                height=576,
                 steps=4,
                 n=1,
                 response_format="b64_json"

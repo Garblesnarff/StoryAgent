@@ -233,15 +233,29 @@
     background: linear-gradient(45deg, #38b2ac, #4299e1);
 }
 
-/* Modal styles */
-.modal {
-    background: rgba(0, 0, 0, 0.8);
+/* Updated Modal styles for 16:9 images */
+.modal-dialog {
+    max-width: 90vw;
+    margin: 1.75rem auto;
 }
 
 .modal-content {
+    background: rgba(0, 0, 0, 0.9);
     border: 1px solid var(--bs-primary);
 }
 
-.btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
+.modal-body {
+    padding: 0;
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 aspect ratio */
+}
+
+.modal-body img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
