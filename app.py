@@ -55,6 +55,7 @@ def generate_story():
         required_fields = ['prompt', 'genre', 'mood', 'target_audience']
         for field in required_fields:
             if not request.form.get(field):
+                logger.error(f"Missing required field: {field}")
                 return jsonify({'error': f'Missing required field: {field}'}), 400
 
         prompt = request.form.get('prompt')
@@ -63,28 +64,32 @@ def generate_story():
         target_audience = request.form.get('target_audience')
         num_paragraphs = int(request.form.get('paragraphs', 5))
         
+        logger.info(f"Generating story with prompt: {prompt[:50]}...")
         # Generate story paragraphs
         story_paragraphs = text_service.generate_story(
             prompt, genre, mood, target_audience, num_paragraphs)
             
         if not story_paragraphs:
+            logger.error("Failed to generate story paragraphs")
             return jsonify({'error': 'Failed to generate story'}), 500
             
+        # Create story data structure
+        story_data = {
+            'prompt': prompt,
+            'genre': genre,
+            'mood': mood,
+            'target_audience': target_audience,
+            'created_at': str(datetime.now()),
+            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None, 'image_style': 'realistic'} for p in story_paragraphs]
+        }
+        
         # Create a new TempBookData entry with UUID
-        temp_data = TempBookData(
-            data={
-                'prompt': prompt,
-                'genre': genre,
-                'mood': mood,
-                'target_audience': target_audience,
-                'created_at': str(datetime.now()),
-                'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
-            }
-        )
+        temp_data = TempBookData(data=story_data)
         
         try:
             db.session.add(temp_data)
             db.session.commit()
+            logger.info(f"Saved story data with temp_id: {temp_data.id}")
         except Exception as db_error:
             db.session.rollback()
             logger.error(f"Database error: {str(db_error)}")
@@ -93,9 +98,12 @@ def generate_story():
         # Store story data in session
         session['story_data'] = {
             'temp_id': temp_data.id,
-            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
+            'story_context': '\n\n'.join(story_paragraphs),
+            'paragraphs': story_data['paragraphs']
         }
+        session.modified = True
         
+        logger.info("Story generation successful, redirecting to edit page")
         return jsonify({'success': True, 'redirect': '/story/edit'})
         
     except Exception as e:
@@ -124,7 +132,8 @@ def server_error(e):
 
 @app.errorhandler(403)
 def forbidden(e):
-    return jsonify({'error': 'Please start by creating a new story on the home page'}), 403
+    flash('Please start by creating a new story on the home page', 'warning')
+    return redirect(url_for('index'))
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
@@ -142,7 +151,8 @@ def check_story_data():
     # Check if story data exists for protected routes
     if 'story_data' not in session and \
        (request.path.startswith('/story/') or request.path.startswith('/save')):
-        return jsonify({'error': 'Please generate a story first'}), 403
+        flash('Please generate a story first', 'warning')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
