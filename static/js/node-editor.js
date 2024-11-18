@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -6,39 +6,13 @@ import ReactFlow, {
     useEdgesState,
     addEdge,
     Handle,
-    Position,
-    getConnectedEdges
+    Position
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 const ParagraphNode = React.memo(({ data }) => {
-    const [isDragOver, setIsDragOver] = useState(false);
-
-    const handleDragOver = (event) => {
-        event.preventDefault();
-        setIsDragOver(true);
-    };
-
-    const handleDragLeave = () => {
-        setIsDragOver(false);
-    };
-
-    const handleDrop = (event) => {
-        event.preventDefault();
-        setIsDragOver(false);
-        const effectType = event.dataTransfer.getData('effect-type');
-        if (effectType && data.onEffectDrop) {
-            data.onEffectDrop(data.index, effectType);
-        }
-    };
-
     return (
-        <div 
-            className={`paragraph-node ${data.globalStyle || 'realistic'}-style ${isDragOver ? 'drop-target' : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-        >
+        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} />
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text}</div>
@@ -88,9 +62,9 @@ const EffectNode = React.memo(({ data }) => {
             <div className="node-header">{data.label}</div>
             <div className="node-controls">
                 <select 
-                    className="form-select"
+                    className="node-select"
                     value={data.effect}
-                    onChange={(e) => data.onEffectChange(data.id, e.target.value)}>
+                    onChange={(e) => data.onEffectChange(e.target.value)}>
                     {data.options.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
@@ -106,81 +80,10 @@ const nodeTypes = {
     effect: EffectNode
 };
 
-const EFFECT_OPTIONS = {
-    image: [
-        { value: 'realistic', label: 'Realistic' },
-        { value: 'artistic', label: 'Artistic' },
-        { value: 'fantasy', label: 'Fantasy' }
-    ],
-    mood: [
-        { value: 'neutral', label: 'Neutral' },
-        { value: 'happy', label: 'Happy' },
-        { value: 'sad', label: 'Sad' },
-        { value: 'dramatic', label: 'Dramatic' }
-    ],
-    voice: [
-        { value: 'natural', label: 'Natural' },
-        { value: 'dramatic', label: 'Dramatic' },
-        { value: 'soft', label: 'Soft' },
-        { value: 'energetic', label: 'Energetic' }
-    ],
-    text: [
-        { value: 'normal', label: 'Normal' },
-        { value: 'poetic', label: 'Poetic' },
-        { value: 'descriptive', label: 'Descriptive' },
-        { value: 'concise', label: 'Concise' }
-    ]
-};
-
 const NodeEditor = ({ story, onStyleUpdate }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
-    const reactFlowWrapper = useRef(null);
-
-    const handleEffectDrop = useCallback((paragraphIndex, effectType) => {
-        const newNodeId = `effect-${effectType}-${Date.now()}`;
-        const paragraphNode = nodes.find(n => n.id === `p${paragraphIndex}`);
-        
-        if (!paragraphNode) return;
-
-        const newNode = {
-            id: newNodeId,
-            type: 'effect',
-            position: {
-                x: paragraphNode.position.x + 300,
-                y: paragraphNode.position.y
-            },
-            data: {
-                id: newNodeId,
-                label: `${effectType.charAt(0).toUpperCase() + effectType.slice(1)} Effect`,
-                effect: EFFECT_OPTIONS[effectType][0].value,
-                options: EFFECT_OPTIONS[effectType],
-                onEffectChange: handleEffectChange
-            }
-        };
-
-        const newEdge = {
-            id: `e-${paragraphNode.id}-${newNodeId}`,
-            source: paragraphNode.id,
-            target: newNodeId,
-            type: 'smoothstep',
-            animated: true
-        };
-
-        setNodes(nodes => [...nodes, newNode]);
-        setEdges(edges => [...edges, newEdge]);
-    }, [nodes, setNodes, setEdges]);
-
-    const handleEffectChange = useCallback((effectNodeId, value) => {
-        setNodes(nodes => 
-            nodes.map(node => 
-                node.id === effectNodeId 
-                    ? { ...node, data: { ...node.data, effect: value } }
-                    : node
-            )
-        );
-    }, [setNodes]);
 
     const handleGenerateCard = useCallback(async (index) => {
         if (!story?.paragraphs?.[index]?.text) {
@@ -300,13 +203,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
                 onGenerateCard: handleGenerateCard,
-                onEffectDrop: handleEffectDrop,
                 isGenerating: false
             }
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleEffectDrop, setNodes]);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, setNodes]);
 
     React.useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
@@ -323,27 +225,13 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         };
     }, [handleStyleChange]);
 
-    React.useEffect(() => {
-        // Initialize drag-and-drop for effect items
-        const effectItems = document.querySelectorAll('.effect-item');
-        
-        effectItems.forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('effect-type', item.dataset.effectType);
-                item.classList.add('dragging');
-            });
-
-            item.addEventListener('dragend', () => {
-                item.classList.remove('dragging');
-            });
-        });
-    }, []);
-
     const onConnect = useCallback((params) => {
+        // Validate connection
         if (params.source === params.target) {
-            return;
+            return; // Prevent self-connections
         }
         
+        // Create a custom edge with styling
         const edge = {
             ...params,
             type: 'smoothstep',
@@ -358,7 +246,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [setEdges]);
 
     return (
-        <div ref={reactFlowWrapper} style={{ width: '100%', height: '600px' }} className="node-editor-root">
+        <div style={{ width: '100%', height: '600px', position: 'relative' }} className="node-editor-root">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

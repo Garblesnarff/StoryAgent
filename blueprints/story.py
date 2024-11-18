@@ -69,18 +69,18 @@ def edit():
         if 'story_data' not in session:
             return redirect(url_for('index'))
             
-        story_data = session['story_data']
-        
-        # Handle both new and old session formats
-        if isinstance(story_data, dict) and 'temp_id' in story_data:
-            temp_data = TempBookData.query.get(story_data['temp_id'])
-            if temp_data:
-                return render_template('story/edit.html', story=temp_data.data)
-        elif isinstance(story_data, dict) and 'paragraphs' in story_data:
-            return render_template('story/edit.html', story=story_data)
+        # Get full data from temp storage
+        temp_id = session['story_data'].get('temp_id')
+        if not temp_id:
+            logger.error("No temp_id found in session")
+            return redirect(url_for('index'))
             
-        logger.error("Invalid story data format in session")
-        return redirect(url_for('index'))
+        temp_data = TempBookData.query.get(temp_id)
+        if not temp_data:
+            logger.error(f"No temp data found for ID: {temp_id}")
+            return redirect(url_for('index'))
+            
+        return render_template('story/edit.html', story=temp_data.data)
         
     except Exception as e:
         logger.error(f"Error in edit route: {str(e)}")

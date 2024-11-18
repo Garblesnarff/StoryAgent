@@ -25,31 +25,7 @@
             </div>
         </div>
         
-        <div class="editor-wrapper">
-            <div class="effects-panel">
-                <h5 class="effects-panel-title">Effects</h5>
-                <div class="effects-list">
-                    <div class="effect-item" draggable="true" data-effect-type="image">
-                        <div class="effect-icon">🖼️</div>
-                        <span>Image Style</span>
-                    </div>
-                    <div class="effect-item" draggable="true" data-effect-type="mood">
-                        <div class="effect-icon">😊</div>
-                        <span>Mood Enhancement</span>
-                    </div>
-                    <div class="effect-item" draggable="true" data-effect-type="voice">
-                        <div class="effect-icon">🗣️</div>
-                        <span>Voice Style</span>
-                    </div>
-                    <div class="effect-item" draggable="true" data-effect-type="text">
-                        <div class="effect-icon">📝</div>
-                        <span>Text Enhancement</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="node-editor" class="node-editor-container" data-story='{{ story|tojson|safe }}'></div>
-        </div>
+        <div id="node-editor" class="node-editor-container" data-story='{{ story|tojson|safe }}'></div>
         
         <div class="d-flex justify-content-center gap-3 mt-4">
             <a href="/story/edit" class="btn btn-secondary">Back to Edit</a>
