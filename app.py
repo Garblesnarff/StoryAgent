@@ -26,6 +26,7 @@ db.init_app(app)
 # Initialize services
 from services.text_generator import TextGenerator
 from services.book_processor import BookProcessor
+from models import TempBookData
 text_service = TextGenerator()
 book_processor = BookProcessor()
 
@@ -69,13 +70,21 @@ def generate_story():
         if not story_paragraphs:
             return jsonify({'error': 'Failed to generate story'}), 500
             
-        # Store story data in session with metadata
-        session['story_data'] = {
+        # Create a new TempBookData entry
+        temp_data = TempBookData(data={
             'prompt': prompt,
             'genre': genre,
             'mood': mood,
             'target_audience': target_audience,
             'created_at': str(datetime.now()),
+            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
+        })
+        db.session.add(temp_data)
+        db.session.commit()
+        
+        # Store story data in session
+        session['story_data'] = {
+            'temp_id': temp_data.id,
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
         }
         

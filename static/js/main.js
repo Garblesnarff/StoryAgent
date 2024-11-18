@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        // Show loading state
+        const submitButton = storyForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Generating...';
+        
         try {
             const formData = new FormData(storyForm);
             const response = await fetch('/generate_story', {
@@ -31,6 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error:', error);
             alert('Error: ' + (error.message || 'An unexpected error occurred'));
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
         }
     });
 });
