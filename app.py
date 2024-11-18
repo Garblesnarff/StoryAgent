@@ -2,8 +2,10 @@ import os
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
 import secrets
 from datetime import datetime
-from database import db
 import logging
+from database import db
+import uuid
+from models import TempBookData
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -69,14 +71,25 @@ def generate_story():
         if not story_paragraphs:
             return jsonify({'error': 'Failed to generate story'}), 500
             
-        # Store story data in session with metadata
+        # Create temp data for story
+        temp_data = TempBookData(
+            id=str(uuid.uuid4()),
+            data={
+                'prompt': prompt,
+                'genre': genre,
+                'mood': mood,
+                'target_audience': target_audience,
+                'created_at': str(datetime.now()),
+                'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
+            }
+        )
+        db.session.add(temp_data)
+        db.session.commit()
+        
+        # Store story data in session with temp_id
         session['story_data'] = {
-            'prompt': prompt,
-            'genre': genre,
-            'mood': mood,
-            'target_audience': target_audience,
-            'created_at': str(datetime.now()),
-            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
+            'temp_id': temp_data.id,
+            'created_at': str(datetime.now())
         }
         
         return jsonify({'success': True, 'redirect': '/story/edit'})
