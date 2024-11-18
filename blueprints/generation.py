@@ -4,6 +4,7 @@ import json
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
+from services.prompt_generator import PromptGenerator
 from database import db
 from models import TempBookData
 import logging
@@ -16,6 +17,7 @@ generation_bp = Blueprint('generation', __name__)
 text_service = TextGenerator()
 image_service = ImageGenerator()
 audio_service = HumeAudioGenerator()
+prompt_generator = PromptGenerator()
 
 def send_json_message(message_type, message_data, step=None):
     """Helper function to ensure consistent JSON message formatting"""
@@ -92,6 +94,7 @@ def generate_cards():
                 
             index = data.get('index')
             text = data.get('text')
+            story_context = data.get('story_context', '')
             style = data.get('style', 'realistic')
             
             if index is None or not text:
@@ -102,27 +105,20 @@ def generate_cards():
                 yield send_json_message('error', 'No story data found in session')
                 return
                 
-            # Get story data from session or temp storage
-            story_data = session['story_data']
-            temp_id = story_data.get('temp_id')
-            temp_data = None
-            if temp_id:
-                temp_data = TempBookData.query.get(temp_id)
-                if temp_data:
-                    story_data = temp_data.data
+            # Generate image prompt using Gemini
+            yield send_json_message('log', 'Generating image prompt...', step='prompt')
+            image_prompt = prompt_generator.generate_image_prompt(story_context, text)
             
-            yield send_json_message('log', f"Generating card for paragraph {index + 1}...")
-            
-            # Generate image with style
-            yield send_json_message('log', f"Generating image...", step='image')
-            result = image_service.generate_image(text, style=style)
+            # Generate image with the new prompt
+            yield send_json_message('log', 'Generating image...', step='image')
+            result = image_service.generate_image(image_prompt, style=style)
             
             if not result:
                 yield send_json_message('error', 'Failed to generate image')
                 return
 
             # Generate audio
-            yield send_json_message('log', f"Generating audio...", step='audio')
+            yield send_json_message('log', 'Generating audio...', step='audio')
             audio_url = audio_service.generate_audio(text)
                 
             # Update storage and send response
@@ -134,12 +130,18 @@ def generate_cards():
                 'index': index
             }
             
-            if temp_id and temp_data:
-                story_data['paragraphs'][index]['image_url'] = result['url']
-                story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')
-                story_data['paragraphs'][index]['audio_url'] = audio_url
-                temp_data.data = story_data
-                db.session.commit()
+            story_data = session['story_data']
+            temp_id = story_data.get('temp_id')
+            
+            if temp_id:
+                temp_data = TempBookData.query.get(temp_id)
+                if temp_data:
+                    story_data = temp_data.data
+                    story_data['paragraphs'][index]['image_url'] = result['url']
+                    story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')
+                    story_data['paragraphs'][index]['audio_url'] = audio_url
+                    temp_data.data = story_data
+                    db.session.commit()
             else:
                 story_data['paragraphs'][index]['image_url'] = result['url']
                 story_data['paragraphs'][index]['image_prompt'] = result.get('prompt', '')

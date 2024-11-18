@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -10,6 +10,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
+// Define components outside the main component
 const ParagraphNode = React.memo(({ data }) => {
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
@@ -55,29 +56,9 @@ const ParagraphNode = React.memo(({ data }) => {
     );
 });
 
-const EffectNode = React.memo(({ data }) => {
-    return (
-        <div className="effect-node">
-            <Handle type="target" position={Position.Left} />
-            <div className="node-header">{data.label}</div>
-            <div className="node-controls">
-                <select 
-                    className="node-select"
-                    value={data.effect}
-                    onChange={(e) => data.onEffectChange(e.target.value)}>
-                    {data.options.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                </select>
-            </div>
-            <Handle type="source" position={Position.Right} />
-        </div>
-    );
-});
-
+// Define node types at the top level
 const nodeTypes = {
-    paragraph: ParagraphNode,
-    effect: EffectNode
+    paragraph: ParagraphNode
 };
 
 const NodeEditor = ({ story, onStyleUpdate }) => {
@@ -96,6 +77,11 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
             ));
 
+            // Create story context by joining all paragraphs
+            const storyContext = story.paragraphs
+                .map(p => p.text)
+                .join('\n\n');
+
             const response = await fetch('/story/generate_cards', {
                 method: 'POST',
                 headers: {
@@ -104,6 +90,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 body: JSON.stringify({
                     index: index,
                     text: story.paragraphs[index].text.trim(),
+                    story_context: storyContext,
                     style: selectedStyle
                 })
             });
@@ -128,8 +115,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     try {
                         const data = JSON.parse(line);
                         if (data.type === 'paragraph') {
-                            setNodes(currentNodes => {
-                                return currentNodes.map(node => 
+                            setNodes(currentNodes => 
+                                currentNodes.map(node => 
                                     node.id === `p${index}` ? {
                                         ...node, 
                                         data: {
@@ -140,8 +127,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                                             isGenerating: false
                                         }
                                     } : node
-                                );
-                            });
+                                )
+                            );
                         } else if (data.type === 'error') {
                             throw new Error(data.message);
                         }
@@ -171,15 +158,16 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             }
         })));
         
-        const updatedParagraphs = story?.paragraphs?.map(p => ({
-            ...p,
+        const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
+            index,
             image_style: newStyle
         })) || [];
         
         onStyleUpdate(updatedParagraphs);
     }, [setNodes, story?.paragraphs, onStyleUpdate]);
 
-    React.useEffect(() => {
+    // Initialize nodes when story data changes
+    useEffect(() => {
         if (!story?.paragraphs) {
             console.error('No story paragraphs found');
             return;
@@ -210,7 +198,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         setNodes(paragraphNodes);
     }, [story?.paragraphs, selectedStyle, handleGenerateCard, setNodes]);
 
-    React.useEffect(() => {
+    // Add event listeners for style radio buttons
+    useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
         const handler = (e) => handleStyleChange(e);
         
@@ -226,18 +215,14 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [handleStyleChange]);
 
     const onConnect = useCallback((params) => {
-        // Validate connection
-        if (params.source === params.target) {
-            return; // Prevent self-connections
-        }
+        if (params.source === params.target) return;
         
-        // Create a custom edge with styling
         const edge = {
             ...params,
             type: 'smoothstep',
             animated: true,
             style: { 
-                stroke: 'var(--bs-primary)', 
+                stroke: 'var(--bs-primary)',
                 strokeWidth: 2,
             }
         };

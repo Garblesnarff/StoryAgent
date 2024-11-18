@@ -30,15 +30,22 @@ class ErrorBoundary extends React.Component {
 
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('node-editor');
-    if (!container) return;
+    if (!container) {
+        console.error('Node editor container not found');
+        return;
+    }
 
     // Parse story data
     let storyData;
     try {
-        storyData = JSON.parse(container.dataset.story || '{}');
+        const storyAttr = container.getAttribute('data-story');
+        if (!storyAttr) {
+            throw new Error('No story data attribute found');
+        }
+        storyData = JSON.parse(storyAttr);
     } catch (error) {
         console.error('Failed to parse story data:', error);
-        showError('Failed to load story data. Please try again.');
+        showError('Failed to load story data. Please generate a story first.');
         return;
     }
 
@@ -51,14 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p class="mb-0">You will be redirected to the story generation page...</p>
             </div>
         `;
-    }
-
-    // Check if we have valid story data
-    if (!storyData.paragraphs || !storyData.paragraphs.length) {
-        showError('No story found. Please generate a story first.');
         setTimeout(() => {
             window.location.href = '/';
         }, 3000);
+    }
+
+    // Check if we have valid story data
+    if (!storyData || !storyData.paragraphs || !storyData.paragraphs.length) {
+        showError('No story found. Please generate a story first.');
         return;
     }
 
@@ -101,9 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.error('Error updating style:', error);
                         if (error.message.includes('Session expired')) {
                             showError(error.message);
-                            setTimeout(() => {
-                                window.location.href = '/';
-                            }, 3000);
                         } else {
                             alert(error.message || 'Failed to update style');
                         }
