@@ -351,13 +351,17 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             </div>
             
             {expandedImage && (
-                <div className="modal fade show" style={{ display: 'block' }} onClick={() => setExpandedImage(null)}>
-                    <div className="modal-dialog modal-lg modal-dialog-centered">
-                        <div className="modal-content bg-dark">
-                            <div className="modal-body p-0">
-                                <button type="button" className="btn-close btn-close-white position-absolute top-0 end-0 m-2" onClick={() => setExpandedImage(null)}></button>
-                                <img src={expandedImage} className="img-fluid" alt="Full preview" />
-                            </div>
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
                         </div>
                     </div>
                 </div>
