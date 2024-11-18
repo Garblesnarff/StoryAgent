@@ -46,8 +46,12 @@ def regenerate_image():
         index = data.get('index')
         style = data.get('style', 'realistic')
         
-        # Generate new image with style
-        result = image_service.generate_image(text, style=style)
+        # Generate image prompt using Gemini
+        story_context = session.get('story_data', {}).get('story_context', '')
+        image_prompt = prompt_generator.generate_image_prompt(story_context, text)
+        
+        # Generate new image with the Gemini-generated prompt
+        result = image_service.generate_image(image_prompt, style=style)
         if not result:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -104,12 +108,12 @@ def generate_cards():
             if 'story_data' not in session:
                 yield send_json_message('error', 'No story data found in session')
                 return
-                
+            
             # Generate image prompt using Gemini
             yield send_json_message('log', 'Generating image prompt...', step='prompt')
             image_prompt = prompt_generator.generate_image_prompt(story_context, text)
             
-            # Generate image with the new prompt
+            # Generate image with the Gemini-generated prompt
             yield send_json_message('log', 'Generating image...', step='image')
             result = image_service.generate_image(image_prompt, style=style)
             
