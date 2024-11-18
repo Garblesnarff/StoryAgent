@@ -60,105 +60,21 @@
                 <input type="file" class="form-control" id="book-file" name="file" accept=".pdf,.epub,.html">
                 <div class="form-text">Supported formats: PDF, EPUB, HTML</div>
             </div>
-            <button type="submit" class="btn btn-primary">Upload and Process</button>
+            <button type="submit" class="btn btn-primary">
+                <span class="button-text">Upload and Process</span>
+                <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </button>
         </form>
         <div id="upload-progress" class="progress mt-3 d-none">
             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
         </div>
         <div id="upload-status" class="mt-2"></div>
     </div>
-
-    <div id="story-output" class="mt-5" style="display: none;">
-        <h2 class="h3 mb-4">Generated Story</h2>
-        <div class="book-container">
-            <button class="book-nav prev" style="display: none;">
-                <svg viewBox="0 0 24 24">
-                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                </svg>
-            </button>
-            <div class="book-pages" id="paragraph-cards"></div>
-            <button class="book-nav next" style="display: none;">
-                <svg viewBox="0 0 24 24">
-                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                </svg>
-            </button>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const uploadForm = document.getElementById('upload-form');
-    const progressBar = document.querySelector('#upload-progress .progress-bar');
-    const uploadProgress = document.getElementById('upload-progress');
-    const uploadStatus = document.getElementById('upload-status');
-
-    uploadForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(uploadForm);
-        uploadProgress.classList.remove('d-none');
-        progressBar.style.width = '0%';
-        uploadStatus.textContent = '';
-        
-        try {
-            // Start upload
-            console.log('Progress update:', {
-                status: 'uploading',
-                message: 'Starting file upload',
-                progress: 0
-            });
-            progressBar.style.width = '0%';
-            uploadStatus.textContent = 'Starting upload...';
-            
-            const response = await fetch('/story/upload', {
-                method: 'POST',
-                body: formData
-            });
-            
-            // Upload complete
-            console.log('Progress update:', {
-                status: 'uploading',
-                message: 'Document upload complete',
-                progress: 100
-            });
-            progressBar.style.width = '50%';
-            uploadStatus.textContent = 'Processing document...';
-            
-            let data;
-            try {
-                data = await response.json();
-            } catch (parseError) {
-                throw new Error('Server returned an invalid response');
-            }
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Upload failed');
-            }
-            
-            // Processing complete
-            console.log('Progress update:', {
-                status: 'complete',
-                message: 'Processing complete',
-                progress: 100,
-                redirect: data.redirect
-            });
-            progressBar.style.width = '100%';
-            uploadStatus.textContent = 'Processing complete!';
-            
-            // Redirect to edit page
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
-            
-        } catch (error) {
-            console.error('Error:', error);
-            uploadStatus.textContent = `Error: ${error.message}`;
-            uploadStatus.style.color = 'var(--bs-danger)';
-        }
-    });
-});
-</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}
