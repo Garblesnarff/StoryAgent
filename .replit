@@ -50,7 +50,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 app.py"
+args = "python app.py"
 waitForPort = 5000
 
 [[workflows.workflow]]
@@ -68,7 +68,7 @@ task = "shell.exec"
 args = "npm run build"
 
 [deployment]
-run = ["sh", "-c", "python3 app.py"]
+run = ["sh", "-c", "python app.py"]
 
 [[ports]]
 localPort = 5000
