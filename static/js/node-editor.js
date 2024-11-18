@@ -10,7 +10,6 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-// Define components outside the main component
 const ParagraphNode = React.memo(({ data }) => {
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
@@ -19,36 +18,53 @@ const ParagraphNode = React.memo(({ data }) => {
             <div className="node-content">{data.text}</div>
             <div className="node-controls">
                 <button 
-                    className="btn btn-primary btn-sm w-100" 
+                    className="btn btn-primary btn-sm w-100 mb-2" 
                     onClick={() => data.onGenerateCard(data.index)}
                     disabled={data.isGenerating}>
                     {data.isGenerating ? 'Generating...' : 'Generate Card'}
                 </button>
+                
                 {data.imageUrl && (
-                    <div className="node-preview mt-2">
-                        <div className="image-container position-relative">
-                            <img 
-                                src={data.imageUrl} 
-                                alt="Generated preview" 
-                                className="img-fluid rounded"
-                            />
-                            <div className="image-prompt-overlay">
-                                {data.imagePrompt}
+                    <>
+                        <div className="node-preview mt-2">
+                            <div className="image-container position-relative">
+                                <img 
+                                    src={data.imageUrl} 
+                                    alt="Generated preview" 
+                                    className="img-fluid rounded"
+                                    onClick={() => data.onExpandImage(data.imageUrl)}
+                                />
+                                <div className="image-prompt-overlay">
+                                    {data.imagePrompt}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                        <div className="d-flex gap-2 mt-2">
+                            <button 
+                                className="btn btn-secondary btn-sm flex-grow-1"
+                                onClick={() => data.onRegenerateImage(data.index)}
+                                disabled={data.isRegenerating}>
+                                <i className="bi bi-arrow-clockwise"></i> Regenerate Image
+                            </button>
+                        </div>
+                    </>
                 )}
+                
                 {data.audioUrl && (
-                    <div className="audio-player mt-2">
-                        <audio 
-                            controls 
-                            className="w-100"
-                            key={data.audioUrl}
-                        >
-                            <source src={data.audioUrl} type="audio/wav" />
-                            Your browser does not support the audio element.
-                        </audio>
-                    </div>
+                    <>
+                        <div className="audio-player mt-2">
+                            <audio controls className="w-100" key={data.audioUrl}>
+                                <source src={data.audioUrl} type="audio/wav" />
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <button 
+                            className="btn btn-secondary btn-sm w-100 mt-2"
+                            onClick={() => data.onRegenerateAudio(data.index)}
+                            disabled={data.isRegeneratingAudio}>
+                            <i className="bi bi-arrow-clockwise"></i> Regenerate Audio
+                        </button>
+                    </>
                 )}
             </div>
             <Handle type="source" position={Position.Right} />
@@ -56,7 +72,6 @@ const ParagraphNode = React.memo(({ data }) => {
     );
 });
 
-// Define node types at the top level
 const nodeTypes = {
     paragraph: ParagraphNode
 };
@@ -65,6 +80,87 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
+    const [expandedImage, setExpandedImage] = useState(null);
+
+    const handleRegenerateImage = useCallback(async (index) => {
+        try {
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    index: index,
+                    text: story.paragraphs[index].text.trim(),
+                    style: selectedStyle
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(currentNodes => currentNodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            imageUrl: data.image_url,
+                            imagePrompt: data.image_prompt,
+                            isRegenerating: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating image:', error);
+            alert('Failed to regenerate image');
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
+            ));
+        }
+    }, [story?.paragraphs, selectedStyle, setNodes]);
+
+    const handleRegenerateAudio = useCallback(async (index) => {
+        try {
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_audio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    index: index,
+                    text: story.paragraphs[index].text.trim()
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(currentNodes => currentNodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            audioUrl: data.audio_url,
+                            isRegeneratingAudio: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating audio:', error);
+            alert('Failed to regenerate audio');
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
+            ));
+        }
+    }, [story?.paragraphs, setNodes]);
 
     const handleGenerateCard = useCallback(async (index) => {
         if (!story?.paragraphs?.[index]?.text) {
@@ -77,7 +173,6 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
             ));
 
-            // Create story context by joining all paragraphs
             const storyContext = story.paragraphs
                 .map(p => p.text)
                 .join('\n\n');
@@ -166,7 +261,6 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         onStyleUpdate(updatedParagraphs);
     }, [setNodes, story?.paragraphs, onStyleUpdate]);
 
-    // Initialize nodes when story data changes
     useEffect(() => {
         if (!story?.paragraphs) {
             console.error('No story paragraphs found');
@@ -191,14 +285,18 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
                 onGenerateCard: handleGenerateCard,
-                isGenerating: false
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
             }
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleGenerateCard, setNodes]);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
-    // Add event listeners for style radio buttons
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
         const handler = (e) => handleStyleChange(e);
@@ -231,25 +329,40 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [setEdges]);
 
     return (
-        <div style={{ width: '100%', height: '600px', position: 'relative' }} className="node-editor-root">
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeTypes}
-                fitView
-                style={{ background: 'var(--bs-dark)' }}
-                minZoom={0.1}
-                maxZoom={4}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                connectOnClick={true}
-            >
-                <Background />
-                <Controls />
-            </ReactFlow>
-        </div>
+        <>
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    style={{ background: 'var(--bs-dark)' }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </div>
+            
+            {expandedImage && (
+                <div className="modal fade show" style={{ display: 'block' }} onClick={() => setExpandedImage(null)}>
+                    <div className="modal-dialog modal-lg modal-dialog-centered">
+                        <div className="modal-content bg-dark">
+                            <div className="modal-body p-0">
+                                <button type="button" className="btn-close btn-close-white position-absolute top-0 end-0 m-2" onClick={() => setExpandedImage(null)}></button>
+                                <img src={expandedImage} className="img-fluid" alt="Full preview" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

@@ -182,6 +182,7 @@
     position: relative;
     overflow: hidden;
     border-radius: 4px;
+    cursor: pointer;
 }
 
 .image-prompt-overlay {
@@ -230,4 +231,17 @@
 
 .paragraph-node.fantasy-style {
     background: linear-gradient(45deg, #38b2ac, #4299e1);
+}
+
+/* Modal styles */
+.modal {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    border: 1px solid var(--bs-primary);
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
