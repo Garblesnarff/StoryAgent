@@ -17,10 +17,12 @@
                     <div class="card story-card">
                         <div class="card-image position-relative">
                             {% if paragraph.image_url %}
-                            <img src="{{ paragraph.image_url }}" class="card-img-top" 
-                                 data-bs-toggle="tooltip" data-bs-placement="top" 
-                                 title="{{ paragraph.image_prompt }}" 
-                                 alt="Story image">
+                            <img src="{{ paragraph.image_url }}" class="card-img-top" alt="Story image">
+                            <div class="prompt-preview" 
+                                 data-prompt="{{ paragraph.image_prompt }}"
+                                 onclick="showPromptModal(this)">
+                                View Prompt
+                            </div>
                             {% endif %}
                         </div>
                         <div class="card-body">
@@ -38,8 +40,41 @@
         </div>
     </div>
 </div>
+
+<!-- Prompt Modal -->
+<div id="promptModal" class="prompt-modal">
+    <div class="prompt-modal-content">
+        <span class="prompt-modal-close" onclick="closePromptModal()">&times;</span>
+        <h4 class="prompt-modal-title">Image Generation Prompt</h4>
+        <div class="prompt-modal-body"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/card-generation.js') }}"></script>
+<script>
+function showPromptModal(element) {
+    const modal = document.getElementById('promptModal');
+    const modalBody = modal.querySelector('.prompt-modal-body');
+    modalBody.textContent = element.dataset.prompt;
+    modal.style.display = 'block';
+}
+
+function closePromptModal() {
+    document.getElementById('promptModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('promptModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
 {% endblock %}
