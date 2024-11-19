@@ -8,40 +8,19 @@ import ReactFlow, {
     Handle,
     Position
 } from 'reactflow';
-import { useDroppable } from '@dnd-kit/core';
 import 'reactflow/dist/style.css';
 
-const ParagraphNode = React.memo(({ data, id }) => {
-    const { setNodeRef } = useDroppable({
-        id: `droppable-${id}`,
-        data: { nodeId: id }
-    });
-
+const ParagraphNode = React.memo(({ data }) => {
     return (
-        <div ref={setNodeRef} className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
+        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} />
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text}</div>
-            <div className="node-effects">
-                {data.effects && data.effects.map((effect, idx) => (
-                    <div key={idx} className="node-effect-tag">
-                        <span>{effect.icon}</span>
-                        {effect.name}
-                        <span 
-                            className="remove-effect" 
-                            onClick={() => data.onRemoveEffect(data.index, effect.id)}
-                        >
-                            ×
-                        </span>
-                    </div>
-                ))}
-            </div>
             <div className="node-controls">
                 <button 
                     className="btn btn-primary btn-sm w-100 mb-2" 
                     onClick={() => data.onGenerateCard(data.index)}
-                    disabled={data.isGenerating}
-                >
+                    disabled={data.isGenerating}>
                     {data.isGenerating ? 'Generating...' : 'Generate Card'}
                 </button>
                 
@@ -311,15 +290,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 onExpandImage: setExpandedImage,
                 isGenerating: false,
                 isRegenerating: false,
-                isRegeneratingAudio: false,
-                effects: [],
-                onRemoveEffect: (index, effectId) => {
-                    setNodes(currentNodes => currentNodes.map(node =>
-                        node.id === `p${index}` ? 
-                            { ...node, data: { ...node.data, effects: node.data.effects.filter(effect => effect.id !== effectId) }} : 
-                            node
-                    ));
-                }
+                isRegeneratingAudio: false
             }
         }));
 

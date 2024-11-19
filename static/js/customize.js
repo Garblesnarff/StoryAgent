@@ -1,9 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import NodeEditor from './node-editor';
-import { DndContext, DragOverlay } from '@dnd-kit/core';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import EffectLibrary from './components/effect-library';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -31,84 +28,6 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-const CustomizationApp = ({ story }) => {
-    const [activeEffect, setActiveEffect] = React.useState(null);
-
-    const handleDragEnd = (event) => {
-        const { active, over } = event;
-        
-        if (over && active.data.current) {
-            const effect = active.data.current;
-            const nodeId = over.id.replace('droppable-', '');
-            const paragraphIndex = parseInt(nodeId.replace('p', ''));
-            
-            // Update the node with the new effect
-            if (story.paragraphs[paragraphIndex]) {
-                story.paragraphs[paragraphIndex].effects = [
-                    ...(story.paragraphs[paragraphIndex].effects || []),
-                    effect
-                ];
-
-                // Update server with new effects
-                fetch('/story/update_style', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        paragraphs: story.paragraphs.map((p, idx) => ({
-                            index: idx,
-                            effects: p.effects || []
-                        }))
-                    })
-                }).catch(error => {
-                    console.error('Error updating effects:', error);
-                });
-            }
-        }
-        setActiveEffect(null);
-    };
-
-    const handleDragStart = (event) => {
-        setActiveEffect(event.active.data.current);
-    };
-
-    return (
-        <DndContext 
-            onDragEnd={handleDragEnd}
-            onDragStart={handleDragStart}
-            modifiers={[restrictToWindowEdges]}
-        >
-            <div className="customization-wrapper">
-                <NodeEditor 
-                    story={story}
-                    onStyleUpdate={(updatedParagraphs) => {
-                        fetch('/story/update_style', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ paragraphs: updatedParagraphs })
-                        })
-                        .catch(error => {
-                            console.error('Error updating style:', error);
-                        });
-                    }}
-                />
-                <EffectLibrary />
-                <DragOverlay>
-                    {activeEffect ? (
-                        <div className="effect-item dragging">
-                            <span className="effect-icon">{activeEffect.icon}</span>
-                            <span className="effect-name">{activeEffect.name}</span>
-                        </div>
-                    ) : null}
-                </DragOverlay>
-            </div>
-        </DndContext>
-    );
-};
-
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('node-editor');
     if (!container) {
@@ -124,16 +43,29 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('No story data attribute found');
         }
         storyData = JSON.parse(storyAttr);
-        
-        // Initialize effects array for each paragraph if not present
-        if (storyData.paragraphs) {
-            storyData.paragraphs = storyData.paragraphs.map(p => ({
-                ...p,
-                effects: p.effects || []
-            }));
-        }
     } catch (error) {
         console.error('Failed to parse story data:', error);
+        showError('Failed to load story data. Please generate a story first.');
+        return;
+    }
+
+    function showError(message) {
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <h4 class="alert-heading">Oops!</h4>
+                <p>${message}</p>
+                <hr>
+                <p class="mb-0">You will be redirected to the story generation page...</p>
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 3000);
+    }
+
+    // Check if we have valid story data
+    if (!storyData || !storyData.paragraphs || !storyData.paragraphs.length) {
+        showError('No story found. Please generate a story first.');
         return;
     }
 
@@ -141,7 +73,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const root = createRoot(container);
     root.render(
         <ErrorBoundary>
-            <CustomizationApp story={storyData} />
+            <NodeEditor 
+                story={storyData} 
+                onStyleUpdate={(updatedParagraphs) => {
+                    fetch('/story/update_style', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            paragraphs: updatedParagraphs.map((p, index) => ({
+                                index,
+                                image_style: p.image_style || 'realistic'
+                            }))
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 403) {
+                                throw new Error('Session expired. Please generate a new story.');
+                            }
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Failed to update style');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.error || 'Failed to update style');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating style:', error);
+                        if (error.message.includes('Session expired')) {
+                            showError(error.message);
+                        } else {
+                            alert(error.message || 'Failed to update style');
+                        }
+                    });
+                }}
+            />
         </ErrorBoundary>
     );
 });
