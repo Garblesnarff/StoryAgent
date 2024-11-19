@@ -2,17 +2,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
     const uploadForm = document.getElementById('upload-form');
 
+    // Add easing function for smoother animation
+    function easeInOutCubic(x) {
+        return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    }
+
     // Add smooth progress animation function
     function animateProgress(progressBar, start, end) {
-        const duration = 600; // Animation duration in ms
+        const duration = 800; // Increased duration
         const startTime = performance.now();
+        
+        progressBar.style.transition = 'all 0.3s ease';
+        progressBar.style.background = 'linear-gradient(45deg, var(--bs-primary) 25%, var(--bs-primary-rgb, 13, 110, 253) 50%, var(--bs-primary) 75%)';
+        progressBar.style.backgroundSize = '200% 100%';
+        progressBar.style.animation = 'progress-wave 2s linear infinite';
         
         return new Promise(resolve => {
             function update(currentTime) {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                
-                const current = start + (end - start) * progress;
+                const current = start + (end - start) * easeInOutCubic(progress);
                 progressBar.style.width = `${current}%`;
                 
                 if (progress < 1) {
@@ -21,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     resolve();
                 }
             }
-            
             requestAnimationFrame(update);
         });
     }
@@ -88,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             // Start with upload phase
-            uploadStatus.innerHTML = '<strong>Phase 1/3:</strong> Uploading file...';
+            uploadStatus.innerHTML = '<strong><span class="phase-icon">📤</span>Phase 1/3:</strong> Uploading file...';
             await animateProgress(progressBar, 0, 33);
             
             const response = await fetch('/story/upload', {
@@ -108,17 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Processing phase
-            uploadStatus.innerHTML = '<strong>Phase 2/3:</strong> Processing document...';
+            uploadStatus.innerHTML = '<strong><span class="phase-icon">⚙️</span>Phase 2/3:</strong> Processing document...';
             await animateProgress(progressBar, 33, 66);
             await new Promise(resolve => setTimeout(resolve, 800)); // Small delay
             
             // Text extraction phase
-            uploadStatus.innerHTML = '<strong>Phase 3/3:</strong> Extracting text...';
+            uploadStatus.innerHTML = '<strong><span class="phase-icon">📑</span>Phase 3/3:</strong> Extracting text...';
             await animateProgress(progressBar, 66, 100);
             await new Promise(resolve => setTimeout(resolve, 800)); // Small delay
             
             // Complete
-            uploadStatus.innerHTML = '<strong>Complete!</strong> Redirecting to editor...';
+            uploadStatus.innerHTML = '<strong><span class="phase-icon">✨</span>Complete!</strong> Redirecting to editor...';
             
             if (data.redirect) {
                 window.location.href = data.redirect;
