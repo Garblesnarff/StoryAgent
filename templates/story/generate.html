@@ -61,20 +61,37 @@
 function showPromptModal(element) {
     const modal = document.getElementById('promptModal');
     const modalBody = modal.querySelector('.prompt-modal-body');
-    modalBody.textContent = element.dataset.prompt;
+    const promptText = element.dataset.prompt;
+    
+    // Format the prompt text with proper line breaks and spacing
+    modalBody.innerHTML = promptText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('<br><br>');
+    
     modal.style.display = 'block';
+    
+    // Focus on modal content for keyboard navigation
+    modal.querySelector('.prompt-modal-content').focus();
 }
 
 function closePromptModal() {
     document.getElementById('promptModal').style.display = 'none';
 }
 
-// Close modal when clicking outside
+// Close modal when clicking outside or pressing ESC
 window.onclick = function(event) {
     const modal = document.getElementById('promptModal');
     if (event.target == modal) {
-        modal.style.display = 'none';
+        closePromptModal();
     }
 }
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closePromptModal();
+    }
+});
 </script>
 {% endblock %}
