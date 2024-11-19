@@ -20,8 +20,9 @@
                             <img src="{{ paragraph.image_url }}" class="card-img-top" alt="Story image">
                             <div class="prompt-preview" 
                                  data-prompt="{{ paragraph.image_prompt }}"
-                                 onclick="showPromptModal(this)">
-                                View Prompt
+                                 onclick="showPromptModal(this)"
+                                 title="View generation prompt">
+                                <span>View Prompt</span>
                             </div>
                             {% endif %}
                         </div>
@@ -41,11 +42,13 @@
     </div>
 </div>
 
-<!-- Prompt Modal -->
-<div id="promptModal" class="prompt-modal">
-    <div class="prompt-modal-content">
-        <span class="prompt-modal-close" onclick="closePromptModal()">&times;</span>
-        <h4 class="prompt-modal-title">Image Generation Prompt</h4>
+<!-- Enhanced Prompt Modal -->
+<div id="promptModal" class="prompt-modal" role="dialog" aria-labelledby="modalTitle">
+    <div class="prompt-modal-content" tabindex="-1">
+        <button type="button" class="prompt-modal-close" onclick="closePromptModal()" aria-label="Close modal">
+            &times;
+        </button>
+        <h4 class="prompt-modal-title" id="modalTitle">Image Generation Prompt</h4>
         <div class="prompt-modal-body"></div>
     </div>
 </div>
@@ -68,26 +71,42 @@ function showPromptModal(element) {
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0)
-        .join('<br><br>');
+        .map(line => `<p>${line}</p>`)
+        .join('');
     
     modal.style.display = 'block';
+    // Trigger reflow to enable animation
+    modal.offsetHeight;
+    modal.classList.add('show');
     
     // Focus on modal content for keyboard navigation
-    modal.querySelector('.prompt-modal-content').focus();
+    const modalContent = modal.querySelector('.prompt-modal-content');
+    modalContent.focus();
+    
+    // Prevent background scrolling
+    document.body.style.overflow = 'hidden';
 }
 
 function closePromptModal() {
-    document.getElementById('promptModal').style.display = 'none';
+    const modal = document.getElementById('promptModal');
+    modal.classList.remove('show');
+    
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
 }
 
-// Close modal when clicking outside or pressing ESC
+// Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('promptModal');
-    if (event.target == modal) {
+    if (event.target === modal) {
         closePromptModal();
     }
 }
 
+// Handle keyboard events
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closePromptModal();
