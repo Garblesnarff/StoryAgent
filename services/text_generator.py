@@ -2,11 +2,13 @@ import groq
 import os
 import json
 import re
+from .langchain_prompt_manager import LangChainPromptManager
 
 class TextGenerator:
     def __init__(self):
         # Initialize Groq client
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        self.prompt_manager = LangChainPromptManager()
     
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
@@ -38,6 +40,15 @@ class TextGenerator:
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
         try:
+            # Use LangChain prompt manager to format the prompt
+            formatted_prompt = self.prompt_manager.format_story_prompt(
+                genre=genre,
+                mood=mood,
+                target_audience=target_audience,
+                prompt=prompt,
+                paragraphs=paragraphs
+            )
+            
             # Generate story text with improved prompt
             response = self.client.chat.completions.create(
                 model="llama-3.1-70b-versatile",
@@ -46,21 +57,12 @@ class TextGenerator:
                         "role": "system", 
                         "content": (
                             f"You are a creative storyteller specializing in {genre} stories "
-                            f"with a {mood} mood for a {target_audience} audience. Write in a "
-                            "natural, flowing narrative style. With a 3 act format. Do not use any section markers, "
-                            "segment labels, numbers, or chapter divisions. Each paragraph should "
-                            "flow naturally into the next as part of a continuous story."
+                            f"with a {mood} mood for a {target_audience} audience."
                         )
                     },
                     {
                         "role": "user", 
-                        "content": (
-                            f"Write a {genre} story with a {mood} mood for a {target_audience} "
-                            f"audience based on this prompt: {prompt}. Create {paragraphs} "
-                            "distinct paragraphs where each naturally flows from the previous one. The story should follow the 3 act format."
-                            "Each paragraph should be 2-3 sentences. Do not include any segment markers, "
-                            "numbers, or labels. The story should read as one continuous narrative."
-                        )
+                        "content": formatted_prompt
                     }
                 ],
                 temperature=0.7,
