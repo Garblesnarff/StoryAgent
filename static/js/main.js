@@ -2,6 +2,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
     const uploadForm = document.getElementById('upload-form');
 
+    // Add smooth progress animation function
+    function animateProgress(progressBar, start, end) {
+        const duration = 600; // Animation duration in ms
+        const startTime = performance.now();
+        
+        return new Promise(resolve => {
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const current = start + (end - start) * progress;
+                progressBar.style.width = `${current}%`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    resolve();
+                }
+            }
+            
+            requestAnimationFrame(update);
+        });
+    }
+
     storyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -63,18 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.classList.remove('d-none');
         
         try {
-            // File upload phase
+            // Start with upload phase
             uploadStatus.innerHTML = '<strong>Phase 1/3:</strong> Uploading file...';
-            progressBar.style.width = '0%';
+            await animateProgress(progressBar, 0, 33);
             
             const response = await fetch('/story/upload', {
                 method: 'POST',
                 body: formData
             });
-            
-            // Processing phase
-            uploadStatus.innerHTML = '<strong>Phase 2/3:</strong> Processing document...';
-            progressBar.style.width = '33%';
             
             let data;
             try {
@@ -87,15 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error || 'Upload failed');
             }
             
+            // Processing phase
+            uploadStatus.innerHTML = '<strong>Phase 2/3:</strong> Processing document...';
+            await animateProgress(progressBar, 33, 66);
+            await new Promise(resolve => setTimeout(resolve, 800)); // Small delay
+            
             // Text extraction phase
             uploadStatus.innerHTML = '<strong>Phase 3/3:</strong> Extracting text...';
-            progressBar.style.width = '66%';
+            await animateProgress(progressBar, 66, 100);
+            await new Promise(resolve => setTimeout(resolve, 800)); // Small delay
             
             // Complete
             uploadStatus.innerHTML = '<strong>Complete!</strong> Redirecting to editor...';
-            progressBar.style.width = '100%';
             
-            // Redirect to edit page
             if (data.redirect) {
                 window.location.href = data.redirect;
             }
