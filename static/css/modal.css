@@ -116,12 +116,48 @@
     font-weight: 500;
     transition: all 0.2s ease;
     backdrop-filter: blur(4px);
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .prompt-preview:hover {
     background: var(--bs-primary);
     transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+    max-width: none;
+    white-space: normal;
+    z-index: 1000;
+}
+
+.prompt-tooltip {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-width: 400px;
+    width: max-content;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    z-index: 1100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.prompt-preview:hover .prompt-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
 }
 
 @media (max-width: 768px) {
