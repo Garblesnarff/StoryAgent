@@ -288,34 +288,30 @@
 }
 
 /* Copy button styles */
-.copy-prompt-btn {
-    position: absolute;
-    top: 8px;
-    right: 48px; /* Position next to expand button */
-    background: rgba(0, 0, 0, 0.85);
+.overlay-copy-btn {
+    position: sticky;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bs-primary);
     color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    margin-top: 10px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    gap: 8px;
     z-index: 20;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 0;
-    opacity: 1;
 }
 
-.copy-prompt-btn:hover {
-    transform: scale(1.1);
-    background: rgba(0, 0, 0, 0.9);
-    border-color: var(--bs-primary);
+.overlay-copy-btn:hover {
+    background: var(--bs-primary-dark);
 }
 
-.copy-prompt-btn:active {
-    transform: scale(0.95);
+.overlay-copy-btn:active {
+    transform: translateX(-50%) scale(0.95);
 }
 
 .image-container img {

@@ -52,14 +52,14 @@ const ParagraphNode = React.memo(({ data }) => {
                                     <i className="bi bi-arrows-fullscreen"></i>
                                 </div>
                                 <div className="image-prompt-overlay">
+                                    {data.imagePrompt}
                                     <button 
-                                        className="copy-prompt-btn"
+                                        className="overlay-copy-btn"
                                         onClick={handleCopyPrompt}
                                         title="Copy prompt to clipboard"
                                     >
-                                        <i className="bi bi-clipboard"></i>
+                                        <i className="bi bi-clipboard"></i> Copy Prompt
                                     </button>
-                                    {data.imagePrompt}
                                 </div>
                             </div>
                         </div>

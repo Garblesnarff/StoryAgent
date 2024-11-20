@@ -123,19 +123,55 @@ Style: {self.style_elements.get('style', '')}
 """
 
     def _get_conversation_context(self) -> str:
-        """Get formatted conversation history from memory"""
+        """Get formatted conversation history from memory with enhanced context awareness"""
         messages = self.memory.load_memory_variables({})
         history = messages.get("chat_history", [])
         
         if not history:
             return ""
+        
+        # Extract key elements from previous interactions
+        context_elements = {
+            'themes': set(),
+            'styles': set(),
+            'subjects': set(),
+            'atmospheres': set()
+        }
+        
+        # Analyze previous interactions to build context
+        for msg in history[-6:]:  # Analyze last 3 interactions (6 messages)
+            content = msg.content.lower()
             
-        formatted_history = "\n".join([
+            # Extract themes and subjects
+            if 'theme:' in content:
+                themes = content.split('theme:')[1].split('\n')[0].strip()
+                context_elements['themes'].update(themes.split(','))
+            
+            if 'style:' in content:
+                styles = content.split('style:')[1].split('\n')[0].strip()
+                context_elements['styles'].update(styles.split(','))
+            
+            if 'subject:' in content:
+                subjects = content.split('subject:')[1].split('\n')[0].strip()
+                context_elements['subjects'].update(subjects.split(','))
+            
+            if 'atmosphere:' in content:
+                atmospheres = content.split('atmosphere:')[1].split('\n')[0].strip()
+                context_elements['atmospheres'].update(atmospheres.split(','))
+        
+        # Format the context summary
+        context_summary = "\nContext Analysis:\n"
+        for key, values in context_elements.items():
+            if values:
+                context_summary += f"Previous {key}: {', '.join(values)}\n"
+        
+        # Format the actual conversation history
+        formatted_history = "\nDetailed History:\n" + "\n".join([
             f"Previous {'Input' if i % 2 == 0 else 'Output'}: {msg.content}"
             for i, msg in enumerate(history[-4:])  # Keep last 2 interactions (4 messages)
         ])
         
-        return f"\nConversation History:\n{formatted_history}"
+        return f"{context_summary}\n{formatted_history}"
 
     def format_image_prompt(self, story_context: str, paragraph_text: str, style: str = None) -> str:
         """Format an image generation prompt using the template with conversation memory"""
@@ -164,7 +200,16 @@ Style: {self.style_elements.get('style', '')}
             conversation_context = self._get_conversation_context()
             style_context = self._get_style_context()
             
-            # Generate new prompt using Gemini LLM
+            # Analyze current input for context
+            current_context = {
+                'paragraph_length': len(paragraph_text.split()),
+                'has_dialogue': '"' in paragraph_text,
+                'has_action': any(word in paragraph_text.lower() for word in ['run', 'jump', 'move', 'walk', 'turn']),
+                'emotional_indicators': [word for word in ['happy', 'sad', 'angry', 'afraid', 'surprised'] 
+                                      if word in paragraph_text.lower()]
+            }
+
+            # Generate new prompt using Gemini LLM with enhanced context
             format_instructions = self.output_parser.get_format_instructions()
             prompt = self.image_prompt_template.format(
                 story_context=story_context,
@@ -172,6 +217,13 @@ Style: {self.style_elements.get('style', '')}
                 style=style or self.current_style or "realistic",
                 conversation_history=conversation_context,
                 style_context=style_context,
+                current_analysis=f"""
+Current Paragraph Analysis:
+- Length: {'Short' if current_context['paragraph_length'] < 50 else 'Medium' if current_context['paragraph_length'] < 100 else 'Long'}
+- Contains Dialogue: {'Yes' if current_context['has_dialogue'] else 'No'}
+- Contains Action: {'Yes' if current_context['has_action'] else 'No'}
+- Emotional Tone: {', '.join(current_context['emotional_indicators']) if current_context['emotional_indicators'] else 'Neutral'}
+                """.strip(),
                 format_instructions=format_instructions
             )
             
