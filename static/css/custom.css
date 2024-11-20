@@ -263,6 +263,23 @@
     pointer-events: none;
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
+    z-index: 1;
+}
+
+.image-container img {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease;
+}
+
+.image-container:hover .image-prompt-overlay {
+    opacity: 1;
+}
+
+.image-container:hover img {
+    transform: scale(1.05);
 }
 
 .image-prompt-overlay::-webkit-scrollbar {
@@ -276,11 +293,6 @@
 .image-prompt-overlay::-webkit-scrollbar-thumb {
     background-color: var(--bs-primary);
     border-radius: 3px;
-}
-
-.image-container:hover .image-prompt-overlay {
-    opacity: 1;
-    pointer-events: auto;
 }
 
 .audio-player {

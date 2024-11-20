@@ -2,7 +2,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 from langchain.prompts.example_selector import LengthBasedExampleSelector
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
-from langchain_community.cache import InMemoryCache  # Updated import
+from langchain_community.cache import InMemoryCache
 import logging
 from typing import Dict, List, Optional
 import json
@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 
 class LangChainPromptManager:
     def __init__(self):
-        # Initialize caching with InMemoryCache
+        # Initialize caching with InMemoryCache and llm parameters
         self.cache = InMemoryCache()
+        self.llm_string = "default_llm"  # Can be updated based on LLM configuration
         
         # Initialize example data for few-shot learning
         self._init_example_data()
@@ -22,6 +23,10 @@ class LangChainPromptManager:
         self._init_story_prompt_template()
         # Initialize structured output parser
         self._init_output_parser()
+        
+    def set_llm_string(self, llm_string: str):
+        """Update the LLM string used for cache lookups"""
+        self.llm_string = llm_string
         
     def _init_example_data(self):
         """Initialize example data for few-shot learning with rich descriptions"""
@@ -43,7 +48,6 @@ class LangChainPromptManager:
             }
         ]
         
-        # Initialize example selector with improved matching
         self.example_selector = LengthBasedExampleSelector(
             examples=self.image_prompt_examples,
             example_prompt=PromptTemplate(
@@ -182,11 +186,11 @@ Structure your response according to these requirements:
         
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with improved caching"""
-        cache_key = f"{story_context}:{paragraph_text}"
+        cache_key = f"{self.llm_string}:{story_context}:{paragraph_text}"
         
         try:
-            # Try to get the cached result
-            cached_result = self.cache.lookup(cache_key)
+            # Try to get the cached result with llm_string parameter
+            cached_result = self.cache.lookup(key=cache_key, llm_string=self.llm_string)
             if cached_result:
                 logger.info(f"Cache hit for image prompt with key: {cache_key}")
                 return cached_result
@@ -201,7 +205,7 @@ Structure your response according to these requirements:
             validated_prompt = self._validate_prompt(prompt)
             
             # Update cache with the new prompt
-            self.cache.update(cache_key, validated_prompt)
+            self.cache.update(key=cache_key, value=validated_prompt, llm_string=self.llm_string)
             logger.info(f"Cache updated with new image prompt for key: {cache_key}")
             return validated_prompt
             
@@ -217,11 +221,11 @@ Structure your response according to these requirements:
     def format_story_prompt(self, genre: str, mood: str, target_audience: str, 
                           prompt: str, paragraphs: int) -> str:
         """Format a story generation prompt using the template with improved caching"""
-        cache_key = f"{genre}:{mood}:{target_audience}:{prompt}:{paragraphs}"
+        cache_key = f"{self.llm_string}:{genre}:{mood}:{target_audience}:{prompt}:{paragraphs}"
         
         try:
-            # Try to get the cached result
-            cached_result = self.cache.lookup(cache_key)
+            # Try to get the cached result with llm_string parameter
+            cached_result = self.cache.lookup(key=cache_key, llm_string=self.llm_string)
             if cached_result:
                 logger.info(f"Cache hit for story prompt with key: {cache_key}")
                 return cached_result
@@ -237,7 +241,7 @@ Structure your response according to these requirements:
             validated_prompt = self._validate_prompt(prompt)
             
             # Update cache with the new prompt
-            self.cache.update(cache_key, validated_prompt)
+            self.cache.update(key=cache_key, value=validated_prompt, llm_string=self.llm_string)
             logger.info(f"Cache updated with new story prompt for key: {cache_key}")
             return validated_prompt
             
