@@ -14,15 +14,16 @@ class LangChainPromptManager:
     def __init__(self):
         # Initialize caching with SQLAlchemyCache
         try:
-            database_url = os.environ.get('DATABASE_URL', 'sqlite:///langchain_cache.db')
-            self.cache = SQLAlchemyCache(connection_string=database_url)
-        except TypeError:
-            # Fallback for different versions of langchain-community
-            try:
+            database_url = os.environ.get('DATABASE_URL')
+            if database_url:
                 self.cache = SQLAlchemyCache(url=database_url)
-            except:
-                logger.warning("Failed to initialize SQLAlchemyCache, proceeding without caching")
+                logger.info("Successfully initialized SQLAlchemyCache")
+            else:
+                logger.warning("No DATABASE_URL found, proceeding without caching")
                 self.cache = None
+        except Exception as e:
+            logger.warning(f"Failed to initialize SQLAlchemyCache: {str(e)}, proceeding without caching")
+            self.cache = None
         
         self.llm_string = "default_llm"  # Can be updated based on LLM configuration
         
@@ -197,14 +198,18 @@ Structure your response according to these requirements:
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with SQLAlchemy caching"""
         try:
+            prompt_key = f"{story_context}:{paragraph_text}"
+            
+            # Try to get cached result if cache is available
             if self.cache:
-                # Try to get the cached result using SQLAlchemyCache
-                prompt_key = f"{story_context}:{paragraph_text}"
-                cached_result = self.cache.lookup(prompt_key, self.llm_string)
-                if cached_result:
-                    logger.info(f"Cache hit for image prompt with llm_string: {self.llm_string}")
-                    return cached_result
-                
+                try:
+                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
+                    if cached_result:
+                        logger.info("Cache hit for image prompt")
+                        return cached_result
+                except Exception as cache_error:
+                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
+            
             # Generate new prompt
             format_instructions = self.output_parser.get_format_instructions()
             prompt = self.image_prompt_template.format(
@@ -214,38 +219,37 @@ Structure your response according to these requirements:
             )
             validated_prompt = self._validate_prompt(prompt)
             
-            # Update cache with the new prompt if caching is available
+            # Update cache if available
             if self.cache:
                 try:
                     self.cache.update(prompt_key, self.llm_string, validated_prompt)
-                    logger.info(f"Cache updated with new image prompt for llm_string: {self.llm_string}")
+                    logger.info("Cache updated with new image prompt")
                 except Exception as cache_error:
-                    logger.warning(f"Failed to update cache: {str(cache_error)}")
+                    logger.warning(f"Cache update failed: {str(cache_error)}")
             
             return validated_prompt
             
         except Exception as e:
             logger.error(f"Error in format_image_prompt: {str(e)}")
-            # Fallback to direct prompt generation without caching
-            try:
-                return self._validate_prompt(paragraph_text)
-            except Exception as fallback_error:
-                logger.error(f"Fallback error in format_image_prompt: {str(fallback_error)}")
-                return paragraph_text
+            return self._validate_prompt(paragraph_text)
             
     def format_story_prompt(self, genre: str, mood: str, target_audience: str, 
                           prompt: str, paragraphs: int) -> str:
         """Format a story generation prompt using the template with SQLAlchemy caching"""
         try:
+            prompt_key = f"{genre}:{mood}:{target_audience}:{prompt}:{paragraphs}"
+            
+            # Try to get cached result if cache is available
             if self.cache:
-                # Try to get the cached result using SQLAlchemyCache
-                prompt_key = f"{genre}:{mood}:{target_audience}:{prompt}:{paragraphs}"
-                cached_result = self.cache.lookup(prompt_key, self.llm_string)
-                if cached_result:
-                    logger.info(f"Cache hit for story prompt with llm_string: {self.llm_string}")
-                    return cached_result
-                
-            # Generate new prompt if cache miss
+                try:
+                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
+                    if cached_result:
+                        logger.info("Cache hit for story prompt")
+                        return cached_result
+                except Exception as cache_error:
+                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
+            
+            # Generate new prompt
             prompt = self.story_prompt_template.format(
                 genre=genre,
                 mood=mood,
@@ -255,24 +259,19 @@ Structure your response according to these requirements:
             )
             validated_prompt = self._validate_prompt(prompt)
             
-            # Update cache with the new prompt if caching is available
+            # Update cache if available
             if self.cache:
                 try:
                     self.cache.update(prompt_key, self.llm_string, validated_prompt)
-                    logger.info(f"Cache updated with new story prompt for llm_string: {self.llm_string}")
+                    logger.info("Cache updated with new story prompt")
                 except Exception as cache_error:
-                    logger.warning(f"Failed to update cache: {str(cache_error)}")
+                    logger.warning(f"Cache update failed: {str(cache_error)}")
             
             return validated_prompt
             
         except Exception as e:
             logger.error(f"Error in format_story_prompt: {str(e)}")
-            # Fallback to direct prompt generation without caching
-            try:
-                return self._validate_prompt(prompt)
-            except Exception as fallback_error:
-                logger.error(f"Fallback error in format_story_prompt: {str(fallback_error)}")
-                return prompt
+            return self._validate_prompt(prompt)
 
     def _validate_prompt(self, prompt: str) -> str:
         """Validate and clean the generated prompt with enhanced checks"""
