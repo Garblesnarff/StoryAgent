@@ -3,6 +3,8 @@ from langchain.prompts.example_selector import LengthBasedExampleSelector
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 from langchain_community.cache import SQLAlchemyCache
+from langchain_google_genai import ChatGoogleGenerativeAI
+from sqlalchemy import create_engine
 import logging
 from typing import Dict, List, Optional
 import json
@@ -12,11 +14,24 @@ logger = logging.getLogger(__name__)
 
 class LangChainPromptManager:
     def __init__(self):
+        # Initialize Gemini LLM
+        try:
+            self.llm = ChatGoogleGenerativeAI(
+                model="gemini-pro",
+                temperature=0.7,
+                google_api_key=os.environ.get('GOOGLE_API_KEY')
+            )
+            logger.info("Successfully initialized Gemini LLM")
+        except Exception as e:
+            logger.error(f"Failed to initialize Gemini LLM: {str(e)}")
+            raise
+
         # Initialize caching with SQLAlchemyCache
         try:
             database_url = os.environ.get('DATABASE_URL')
             if database_url:
-                self.cache = SQLAlchemyCache(url=database_url)
+                engine = create_engine(database_url)
+                self.cache = SQLAlchemyCache(engine=engine)
                 logger.info("Successfully initialized SQLAlchemyCache")
             else:
                 logger.warning("No DATABASE_URL found, proceeding without caching")
@@ -25,7 +40,7 @@ class LangChainPromptManager:
             logger.warning(f"Failed to initialize SQLAlchemyCache: {str(e)}, proceeding without caching")
             self.cache = None
         
-        self.llm_string = "default_llm"  # Can be updated based on LLM configuration
+        self.llm_string = "gemini_pro"
         
         # Initialize example data for few-shot learning
         self._init_example_data()
@@ -210,14 +225,15 @@ Structure your response according to these requirements:
                 except Exception as cache_error:
                     logger.warning(f"Cache lookup failed: {str(cache_error)}")
             
-            # Generate new prompt
+            # Generate new prompt using Gemini LLM
             format_instructions = self.output_parser.get_format_instructions()
             prompt = self.image_prompt_template.format(
                 story_context=story_context,
                 paragraph_text=paragraph_text,
                 format_instructions=format_instructions
             )
-            validated_prompt = self._validate_prompt(prompt)
+            response = self.llm.predict(prompt)
+            validated_prompt = self._validate_prompt(response)
             
             # Update cache if available
             if self.cache:
@@ -249,7 +265,7 @@ Structure your response according to these requirements:
                 except Exception as cache_error:
                     logger.warning(f"Cache lookup failed: {str(cache_error)}")
             
-            # Generate new prompt
+            # Generate new prompt using Gemini LLM
             prompt = self.story_prompt_template.format(
                 genre=genre,
                 mood=mood,
@@ -257,7 +273,8 @@ Structure your response according to these requirements:
                 prompt=prompt,
                 paragraphs=paragraphs
             )
-            validated_prompt = self._validate_prompt(prompt)
+            response = self.llm.predict(prompt)
+            validated_prompt = self._validate_prompt(response)
             
             # Update cache if available
             if self.cache:

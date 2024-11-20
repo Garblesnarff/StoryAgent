@@ -956,6 +956,20 @@ wheels = [
 ]
 
 [[package]]
+name = "langchain-google-genai"
+version = "2.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-generativeai" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/a3/695b13855a23893b62f2d97783c6d2e90c8b6b189eec8373d97587770346/langchain_google_genai-2.0.5.tar.gz", hash = "sha256:f027d845091b147537481c1e17adb25a8acfca1fa3b3c7b7c7ca16463ad37173", size = 37022 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/84/e66cfded0e68558e195338d0109dfcd8742f7bdc8aaaa39793a482857a7d/langchain_google_genai-2.0.5-py3-none-any.whl", hash = "sha256:d33fe5c32dccffc91c47fa30c99ece4c136c1a7d1330b154b7df43029b041bf3", size = 41271 },
+]
+
+[[package]]
 name = "langchain-text-splitters"
 version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1775,6 +1789,7 @@ dependencies = [
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
+    { name = "langchain-google-genai" },
     { name = "nltk" },
     { name = "psycopg2-binary" },
     { name = "pypdf2" },
@@ -1807,6 +1822,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=0.3.7" },
     { name = "langchain-community", specifier = ">=0.3.4" },
     { name = "langchain-core", specifier = ">=0.3.19" },
+    { name = "langchain-google-genai", specifier = ">=2.0.5" },
     { name = "nltk", specifier = ">=3.9.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pypdf2", specifier = ">=3.0.1" },
