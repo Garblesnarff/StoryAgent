@@ -287,9 +287,12 @@
     z-index: 10;
 }
 
-/* Add new copy button styles */
+/* Copy button styles */
 .copy-prompt-btn {
-    background: rgba(0, 0, 0, 0.7);
+    position: absolute;
+    top: 8px;
+    right: 48px; /* Position next to expand button */
+    background: rgba(0, 0, 0, 0.85);
     color: white;
     width: 32px;
     height: 32px;
@@ -298,25 +301,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 15;
+    z-index: 20;
     transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     padding: 0;
-    position: sticky;
-}
-
-.copy-prompt-btn.top {
-    position: absolute;
-    top: 8px;
-    right: 48px; /* Position next to expand button */
-}
-
-.copy-prompt-btn.bottom {
-    position: sticky;
-    bottom: 8px;
-    float: right;
-    margin-top: 16px;
-    margin-right: 8px;
+    opacity: 1;
 }
 
 .copy-prompt-btn:hover {

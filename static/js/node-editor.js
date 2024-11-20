@@ -53,20 +53,13 @@ const ParagraphNode = React.memo(({ data }) => {
                                 </div>
                                 <div className="image-prompt-overlay">
                                     <button 
-                                        className="copy-prompt-btn top"
+                                        className="copy-prompt-btn"
                                         onClick={handleCopyPrompt}
                                         title="Copy prompt to clipboard"
                                     >
                                         <i className="bi bi-clipboard"></i>
                                     </button>
                                     {data.imagePrompt}
-                                    <button 
-                                        className="copy-prompt-btn bottom"
-                                        onClick={handleCopyPrompt}
-                                        title="Copy prompt to clipboard"
-                                    >
-                                        <i className="bi bi-clipboard"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
