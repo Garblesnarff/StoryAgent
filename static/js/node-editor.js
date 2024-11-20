@@ -11,6 +11,18 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 const ParagraphNode = React.memo(({ data }) => {
+    const handleCopyPrompt = useCallback((e) => {
+        e.stopPropagation();
+        if (data.imagePrompt) {
+            navigator.clipboard.writeText(data.imagePrompt)
+                .then(() => {
+                    // Could add a toast notification here
+                    console.log('Prompt copied to clipboard');
+                })
+                .catch(err => console.error('Failed to copy prompt:', err));
+        }
+    }, [data.imagePrompt]);
+
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} />
@@ -41,6 +53,13 @@ const ParagraphNode = React.memo(({ data }) => {
                                 </div>
                                 <div className="image-prompt-overlay">
                                     {data.imagePrompt}
+                                    <button 
+                                        className="copy-prompt-btn"
+                                        onClick={handleCopyPrompt}
+                                        title="Copy prompt to clipboard"
+                                    >
+                                        <i className="bi bi-clipboard"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
