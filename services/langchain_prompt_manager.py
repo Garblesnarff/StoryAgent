@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class LangChainPromptManager:
     def __init__(self):
-        # Initialize caching with InMemoryCache and llm parameters
+        # Initialize caching with InMemoryCache
         self.cache = InMemoryCache()
         self.llm_string = "default_llm"  # Can be updated based on LLM configuration
         
@@ -186,13 +186,11 @@ Structure your response according to these requirements:
         
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with improved caching"""
-        cache_key = f"{self.llm_string}:{story_context}:{paragraph_text}"
-        
         try:
-            # Try to get the cached result with llm_string parameter
-            cached_result = self.cache.lookup(key=cache_key, llm_string=self.llm_string)
+            # Try to get the cached result with llm_string parameter only
+            cached_result = self.cache.lookup(llm_string=self.llm_string)
             if cached_result:
-                logger.info(f"Cache hit for image prompt with key: {cache_key}")
+                logger.info(f"Cache hit for image prompt with llm_string: {self.llm_string}")
                 return cached_result
                 
             # Generate new prompt if cache miss
@@ -205,8 +203,8 @@ Structure your response according to these requirements:
             validated_prompt = self._validate_prompt(prompt)
             
             # Update cache with the new prompt
-            self.cache.update(key=cache_key, value=validated_prompt, llm_string=self.llm_string)
-            logger.info(f"Cache updated with new image prompt for key: {cache_key}")
+            self.cache.update(value=validated_prompt, llm_string=self.llm_string)
+            logger.info(f"Cache updated with new image prompt for llm_string: {self.llm_string}")
             return validated_prompt
             
         except Exception as e:
@@ -221,13 +219,11 @@ Structure your response according to these requirements:
     def format_story_prompt(self, genre: str, mood: str, target_audience: str, 
                           prompt: str, paragraphs: int) -> str:
         """Format a story generation prompt using the template with improved caching"""
-        cache_key = f"{self.llm_string}:{genre}:{mood}:{target_audience}:{prompt}:{paragraphs}"
-        
         try:
-            # Try to get the cached result with llm_string parameter
-            cached_result = self.cache.lookup(key=cache_key, llm_string=self.llm_string)
+            # Try to get the cached result with llm_string parameter only
+            cached_result = self.cache.lookup(llm_string=self.llm_string)
             if cached_result:
-                logger.info(f"Cache hit for story prompt with key: {cache_key}")
+                logger.info(f"Cache hit for story prompt with llm_string: {self.llm_string}")
                 return cached_result
                 
             # Generate new prompt if cache miss
@@ -241,8 +237,8 @@ Structure your response according to these requirements:
             validated_prompt = self._validate_prompt(prompt)
             
             # Update cache with the new prompt
-            self.cache.update(key=cache_key, value=validated_prompt, llm_string=self.llm_string)
-            logger.info(f"Cache updated with new story prompt for key: {cache_key}")
+            self.cache.update(value=validated_prompt, llm_string=self.llm_string)
+            logger.info(f"Cache updated with new story prompt for llm_string: {self.llm_string}")
             return validated_prompt
             
         except Exception as e:

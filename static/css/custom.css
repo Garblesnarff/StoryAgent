@@ -255,15 +255,15 @@
     padding: 15px;
     opacity: 0;
     transition: opacity 0.3s ease;
-    overflow-y: auto;
+    overflow-y: scroll;
     max-height: 100%;
     font-size: 0.9em;
     line-height: 1.4;
     text-align: left;
-    pointer-events: none;
+    pointer-events: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
-    z-index: 1;
+    z-index: 10;
 }
 
 .image-container img {
