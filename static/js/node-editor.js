@@ -32,8 +32,13 @@ const ParagraphNode = React.memo(({ data }) => {
                                     src={data.imageUrl} 
                                     alt="Generated preview" 
                                     className="img-fluid rounded"
-                                    onClick={() => data.onExpandImage(data.imageUrl)}
                                 />
+                                <div 
+                                    className="expand-icon"
+                                    onClick={() => data.onExpandImage(data.imageUrl)}
+                                >
+                                    <i className="bi bi-arrows-fullscreen"></i>
+                                </div>
                                 <div className="image-prompt-overlay">
                                     {data.imagePrompt}
                                 </div>
