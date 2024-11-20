@@ -15,19 +15,12 @@
                 {% if story and story.paragraphs %}
                     {% for paragraph in story.paragraphs %}
                     <div class="card story-card">
-                        <div class="card-image">
+                        <div class="card-image position-relative">
                             {% if paragraph.image_url %}
-                            <img src="{{ paragraph.image_url }}" class="card-img-top" alt="Story image">
-                            <button 
-                                class="view-prompt-btn" 
-                                onclick="showPromptModal(this)" 
-                                data-prompt="{{ paragraph.image_prompt }}"
-                                aria-label="View image generation prompt">
-                                <svg viewBox="0 0 24 24" width="24" height="24">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                                </svg>
-                                View Prompt
-                            </button>
+                            <img src="{{ paragraph.image_url }}" class="card-img-top" 
+                                 data-bs-toggle="tooltip" data-bs-placement="top" 
+                                 title="{{ paragraph.image_prompt }}" 
+                                 alt="Story image">
                             {% endif %}
                         </div>
                         <div class="card-body">
@@ -45,72 +38,8 @@
         </div>
     </div>
 </div>
-
-<!-- Enhanced Prompt Modal -->
-<div id="promptModal" class="prompt-modal" role="dialog" aria-labelledby="modalTitle">
-    <div class="prompt-modal-content">
-        <div class="modal-header">
-            <h4 class="modal-title" id="modalTitle">Image Generation Prompt</h4>
-            <button type="button" class="modal-close" onclick="closePromptModal()" aria-label="Close modal">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="prompt-text"></div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/card-generation.js') }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('promptModal');
-    const modalContent = modal.querySelector('.prompt-modal-content');
-    const promptText = modal.querySelector('.prompt-text');
-
-    window.showPromptModal = function(button) {
-        const prompt = button.getAttribute('data-prompt');
-        promptText.innerHTML = prompt
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0)
-            .map(line => `<p>${line}</p>`)
-            .join('');
-        
-        modal.style.display = 'block';
-        setTimeout(() => modal.classList.add('show'), 10);
-        document.body.style.overflow = 'hidden';
-    };
-
-    window.closePromptModal = function() {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-            document.body.style.overflow = '';
-        }, 300);
-    };
-
-    // Close modal on outside click
-    modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closePromptModal();
-        }
-    });
-
-    // Handle escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closePromptModal();
-        }
-    });
-});
-</script>
 {% endblock %}
