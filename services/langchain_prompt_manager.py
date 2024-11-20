@@ -51,7 +51,53 @@ class LangChainPromptManager:
         self._init_story_prompt_template()
         # Initialize structured output parser
         self._init_output_parser()
+
+    def _init_example_data(self):
+        """Initialize example data for few-shot learning with rich descriptions"""
+        self.image_prompt_examples = [
+            # Existing examples
+            {
+                "story_context": "An epic fantasy tale of ancient magic and prophecy",
+                "paragraph_text": "The crystal spires of the ancient citadel pierced the clouds, their surfaces reflecting the dawn's golden light while arcane symbols pulsed with ethereal energy",
+                "image_prompt": "A majestic fantasy cityscape with towering crystal spires reaching into a dawn sky. Architecture features intricate geometric patterns and flowing organic forms. Glowing arcane symbols float and pulse with blue-white energy around the spires. Dramatic lighting with golden sunlight catching and refracting through the crystal structures. Low-angle perspective emphasizing scale and grandeur. Atmospheric effects include wispy clouds and lens flares. Fine details show the crystalline texture and magical energy patterns."
+            },
+            {
+                "story_context": "A dark cyberpunk thriller in a rain-soaked metropolis",
+                "paragraph_text": "Holographic advertisements flickered through the acid rain, casting their neon reflections across the chrome-plated augmentations of the crowd below",
+                "image_prompt": "A densely packed cyberpunk street scene at night. Multiple layers of holographic advertisements with visible glitch effects and distortions. Acid rain creates streaks of neon reflections on various metallic surfaces. Crowd of people with visible cybernetic augmentations, chrome plating catching colored lights. Deep atmospheric perspective with multiple light sources. Volumetric lighting effects show rain and steam rising. Technical details include high contrast ratio and subtle chromatic aberration effects."
+            },
+            {
+                "story_context": "A psychological horror set in an abandoned Victorian mansion",
+                "paragraph_text": "Shadows danced across the peeling wallpaper as the ancient grandfather clock struck midnight, its chimes echoing through empty corridors lined with portraits whose eyes seemed to follow every movement",
+                "image_prompt": "Interior of a decaying Victorian mansion with dramatic shadows and lighting. Detailed textures of peeling wallpaper with visible patterns and aging effects. Ornate grandfather clock with intricate mechanical details and brass accents. Multiple portrait paintings with period-appropriate frames and subtle uncanny valley effects in the eyes. Dust particles visible in light beams. Composition emphasizes depth through a long corridor perspective. Color palette focuses on deep shadows and warm accent lighting."
+            },
+            # New examples with diverse artistic styles
+            {
+                "story_context": "A martial arts epic set in ancient China",
+                "paragraph_text": "The master's brush danced across the scroll, each stroke flowing like water, capturing the essence of movement in eternal ink",
+                "image_prompt": "A scene rendered in Dynamic Ink Wash Motion style, with fluid brushstrokes capturing swift movements. Utilize bold black and deep crimson inks to create contrast and dynamism. The composition shows a traditional Chinese study with scrolls and calligraphy materials. Emphasis on the graceful movement of the brush and the way ink flows across rice paper. Atmospheric elements include subtle ink spatters and gradient washes that suggest depth and energy."
+            },
+            {
+                "story_context": "A surreal journey through consciousness",
+                "paragraph_text": "Reality rippled and warped as the boundaries between senses blurred, transforming simple sounds into vivid colors and textures into tastes",
+                "image_prompt": "A Reverse Polarized Synesthesia Fusion scene, where sensory experiences blend and transform in unexpected ways. Employ solarized purple and electric blue to represent the merging of different perceptual modalities. Abstract forms flow and interweave, suggesting the transformation of sound waves into color patterns. Multiple layers of transparency create depth and dimension. Inclusion of geometric patterns that seem to pulse and shift. Edge effects suggest the boundaries between different sensory experiences."
+            },
+            {
+                "story_context": "A post-apocalyptic survival story",
+                "paragraph_text": "Through the radioactive haze, the skeletal remains of the city's techno-organic architecture loomed, its once-pristine surfaces now corrupted by decades of digital decay",
+                "image_prompt": "A Halftone Mechanical Blueprint scene, combining technical schematics with halftone textures. Utilize industrial steel blue and corroded copper tones to highlight the mechanical intricacies. Architectural elements show both organic growth patterns and geometric precision. Degraded digital artifacts and glitch effects suggest technological decay. Multiple layers of technical drawings overlap with varying opacity. Inclusion of mathematical formulae and engineering notations as background elements. Perspective emphasizes the massive scale of the deteriorating structures."
+            }
+        ]
         
+        self.example_selector = LengthBasedExampleSelector(
+            examples=self.image_prompt_examples,
+            example_prompt=PromptTemplate(
+                input_variables=["story_context", "paragraph_text", "image_prompt"],
+                template="Story Context: {story_context}\nParagraph: {paragraph_text}\nImage Prompt: {image_prompt}"
+            ),
+            max_length=3000
+        )
+
     def validate_media_url(self, url: str, media_type: str = 'image') -> bool:
         """Validate media URL format and accessibility"""
         try:
@@ -81,7 +127,7 @@ class LangChainPromptManager:
         except Exception as e:
             logger.error(f"Error validating {media_type} URL: {str(e)}")
             return False
-            
+
     def _process_media_urls(self, response: str) -> Dict:
         """Extract and validate media URLs from response"""
         try:
@@ -162,69 +208,6 @@ class LangChainPromptManager:
     def set_llm_string(self, llm_string: str):
         """Update the LLM string used for cache lookups"""
         self.llm_string = llm_string
-        
-    def _init_example_data(self):
-        """Initialize example data for few-shot learning with rich descriptions"""
-        self.image_prompt_examples = [
-            {
-                "story_context": "An epic fantasy tale of ancient magic and prophecy",
-                "paragraph_text": "The crystal spires of the ancient citadel pierced the clouds, their surfaces reflecting the dawn's golden light while arcane symbols pulsed with ethereal energy",
-                "image_prompt": "A majestic fantasy cityscape with towering crystal spires reaching into a dawn sky. Architecture features intricate geometric patterns and flowing organic forms. Glowing arcane symbols float and pulse with blue-white energy around the spires. Dramatic lighting with golden sunlight catching and refracting through the crystal structures. Low-angle perspective emphasizing scale and grandeur. Atmospheric effects include wispy clouds and lens flares. Fine details show the crystalline texture and magical energy patterns."
-            },
-            {
-                "story_context": "A dark cyberpunk thriller in a rain-soaked metropolis",
-                "paragraph_text": "Holographic advertisements flickered through the acid rain, casting their neon reflections across the chrome-plated augmentations of the crowd below",
-                "image_prompt": "A densely packed cyberpunk street scene at night. Multiple layers of holographic advertisements with visible glitch effects and distortions. Acid rain creates streaks of neon reflections on various metallic surfaces. Crowd of people with visible cybernetic augmentations, chrome plating catching colored lights. Deep atmospheric perspective with multiple light sources. Volumetric lighting effects show rain and steam rising. Technical details include high contrast ratio and subtle chromatic aberration effects."
-            },
-            {
-                "story_context": "A psychological horror set in an abandoned Victorian mansion",
-                "paragraph_text": "Shadows danced across the peeling wallpaper as the ancient grandfather clock struck midnight, its chimes echoing through empty corridors lined with portraits whose eyes seemed to follow every movement",
-                "image_prompt": "Interior of a decaying Victorian mansion with dramatic shadows and lighting. Detailed textures of peeling wallpaper with visible patterns and aging effects. Ornate grandfather clock with intricate mechanical details and brass accents. Multiple portrait paintings with period-appropriate frames and subtle uncanny valley effects in the eyes. Dust particles visible in light beams. Composition emphasizes depth through a long corridor perspective. Color palette focuses on deep shadows and warm accent lighting."
-            }
-        ]
-        
-        self.example_selector = LengthBasedExampleSelector(
-            examples=self.image_prompt_examples,
-            example_prompt=PromptTemplate(
-                input_variables=["story_context", "paragraph_text", "image_prompt"],
-                template="Story Context: {story_context}\nParagraph: {paragraph_text}\nImage Prompt: {image_prompt}"
-            ),
-            max_length=3000
-        )
-        
-    def _init_output_parser(self):
-        """Initialize structured output parser with comprehensive schema"""
-        self.response_schemas = [
-            ResponseSchema(
-                name="visual_elements",
-                description="Key visual elements to be included in the scene, including main subjects, background elements, and important details"
-            ),
-            ResponseSchema(
-                name="composition",
-                description="Specific composition guidelines including perspective, framing, focal points, and use of rule of thirds"
-            ),
-            ResponseSchema(
-                name="lighting",
-                description="Detailed lighting information including main light sources, shadows, highlights, and any special lighting effects"
-            ),
-            ResponseSchema(
-                name="color_palette",
-                description="Primary and secondary colors to be used, including specific mood-enhancing color combinations"
-            ),
-            ResponseSchema(
-                name="atmosphere",
-                description="Overall mood and atmosphere including weather, time of day, and environmental effects"
-            ),
-            ResponseSchema(
-                name="artistic_style",
-                description="Specific artistic style guidelines including texture details, brush stroke suggestions, and rendering technique preferences"
-            ),
-            ResponseSchema(
-                name="technical_details",
-                description="Additional technical specifications including depth of field, motion effects, and post-processing suggestions"
-            )
-        ]
-        self.output_parser = StructuredOutputParser.from_response_schemas(self.response_schemas)
         
     def _init_image_prompt_template(self):
         """Initialize the image prompt template with enhanced instructions"""
@@ -335,30 +318,62 @@ Structure your response according to these requirements:
                 except Exception as cache_error:
                     logger.warning(f"Cache lookup failed: {str(cache_error)}")
             
-            # Generate new prompt using Gemini LLM
-            prompt = self.story_prompt_template.format(
+            # Generate new prompt
+            response = self.story_prompt_template.format(
                 genre=genre,
                 mood=mood,
                 target_audience=target_audience,
                 prompt=prompt,
                 paragraphs=paragraphs
             )
-            response = self.llm.predict(prompt)
-            validated_prompt = self._validate_prompt(response)
             
             # Update cache if available
             if self.cache:
                 try:
-                    self.cache.update(prompt_key, self.llm_string, validated_prompt)
+                    self.cache.update(prompt_key, self.llm_string, response)
                     logger.info("Cache updated with new story prompt")
                 except Exception as cache_error:
                     logger.warning(f"Cache update failed: {str(cache_error)}")
             
-            return validated_prompt
+            return response
             
         except Exception as e:
             logger.error(f"Error in format_story_prompt: {str(e)}")
-            return self._validate_prompt(prompt)
+            return prompt
+
+    def _init_output_parser(self):
+        """Initialize structured output parser with comprehensive schema"""
+        self.response_schemas = [
+            ResponseSchema(
+                name="visual_elements",
+                description="Key visual elements to be included in the scene, including main subjects, background elements, and important details"
+            ),
+            ResponseSchema(
+                name="composition",
+                description="Specific composition guidelines including perspective, framing, focal points, and use of rule of thirds"
+            ),
+            ResponseSchema(
+                name="lighting",
+                description="Detailed lighting information including main light sources, shadows, highlights, and any special lighting effects"
+            ),
+            ResponseSchema(
+                name="color_palette",
+                description="Primary and secondary colors to be used, including specific mood-enhancing color combinations"
+            ),
+            ResponseSchema(
+                name="atmosphere",
+                description="Overall mood and atmosphere including weather, time of day, and environmental effects"
+            ),
+            ResponseSchema(
+                name="artistic_style",
+                description="Specific artistic style guidelines including texture details, brush stroke suggestions, and rendering technique preferences"
+            ),
+            ResponseSchema(
+                name="technical_details",
+                description="Additional technical specifications including depth of field, motion effects, and post-processing suggestions"
+            )
+        ]
+        self.output_parser = StructuredOutputParser.from_response_schemas(self.response_schemas)
 
     def _validate_prompt(self, prompt: str) -> str:
         """Validate and clean the generated prompt with enhanced checks"""
