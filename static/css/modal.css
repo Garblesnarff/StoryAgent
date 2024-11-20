@@ -61,6 +61,74 @@
     transform: rotate(90deg);
 }
 
+.prompt-info-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s ease;
+}
+
+.prompt-info-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+}
+
+.prompt-info-icon:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+}
+
+.prompt-panel {
+    position: absolute;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100%;
+    background: var(--bs-body-bg);
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    transition: right 0.3s ease-in-out;
+    z-index: 999;
+}
+
+.prompt-panel.show {
+    right: 0;
+}
+
+.prompt-panel-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--bs-border-color);
+}
+
+.prompt-panel-content {
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-y: auto;
+    max-height: calc(100% - 60px);
+}
+
+@media (max-width: 768px) {
+    .prompt-panel {
+        width: 100%;
+        right: -100%;
+    }
+}
+
 .prompt-modal-title {
     margin-bottom: 20px;
     padding-right: 40px;

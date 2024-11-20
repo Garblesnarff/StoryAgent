@@ -18,12 +18,14 @@
                         <div class="card-image position-relative">
                             {% if paragraph.image_url %}
                             <img src="{{ paragraph.image_url }}" class="card-img-top" alt="Story image">
-                            <div class="prompt-preview" 
-                                 data-prompt="{{ paragraph.image_prompt }}"
-                                 onclick="showPromptModal(this)"
-                                 title="View generation prompt">
-                                <span>View Prompt</span>
-                                <div class="prompt-tooltip">{{ paragraph.image_prompt }}</div>
+                            <div class="prompt-info-icon" onclick="togglePromptPanel(this)" data-prompt="{{ paragraph.image_prompt }}">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                                </svg>
+                            </div>
+                            <div class="prompt-panel">
+                                <h4 class="prompt-panel-title">Image Generation Prompt</h4>
+                                <div class="prompt-panel-content"></div>
                             </div>
                             {% endif %}
                         </div>
@@ -43,7 +45,7 @@
     </div>
 </div>
 
-<!-- Enhanced Prompt Modal -->
+<!-- Enhanced Prompt Modal (fallback) -->
 <div id="promptModal" class="prompt-modal" role="dialog" aria-labelledby="modalTitle">
     <div class="prompt-modal-content" tabindex="-1">
         <button type="button" class="prompt-modal-close" onclick="closePromptModal()" aria-label="Close modal">
@@ -62,12 +64,50 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/card-generation.js') }}"></script>
 <script>
+// Handle sliding panel
+function togglePromptPanel(element) {
+    const panel = element.nextElementSibling;
+    const promptText = element.dataset.prompt;
+    const content = panel.querySelector('.prompt-panel-content');
+    
+    // Format and set the prompt text
+    content.innerHTML = promptText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => `<p>${line}</p>`)
+        .join('');
+    
+    // Toggle panel visibility
+    panel.classList.toggle('show');
+    
+    // Close other open panels
+    document.querySelectorAll('.prompt-panel.show').forEach(p => {
+        if (p !== panel) p.classList.remove('show');
+    });
+    
+    // Close panel when clicking outside
+    const closePanel = (e) => {
+        if (!panel.contains(e.target) && !element.contains(e.target)) {
+            panel.classList.remove('show');
+            document.removeEventListener('click', closePanel);
+        }
+    };
+    
+    if (panel.classList.contains('show')) {
+        // Add click listener with slight delay to prevent immediate closure
+        setTimeout(() => {
+            document.addEventListener('click', closePanel);
+        }, 0);
+    }
+}
+
+// Fallback modal functionality
 function showPromptModal(element) {
     const modal = document.getElementById('promptModal');
     const modalBody = modal.querySelector('.prompt-modal-body');
     const promptText = element.dataset.prompt;
     
-    // Format the prompt text with proper line breaks and spacing
     modalBody.innerHTML = promptText
         .split('\n')
         .map(line => line.trim())
@@ -76,15 +116,12 @@ function showPromptModal(element) {
         .join('');
     
     modal.style.display = 'block';
-    // Trigger reflow to enable animation
-    modal.offsetHeight;
+    modal.offsetHeight; // Trigger reflow
     modal.classList.add('show');
     
-    // Focus on modal content for keyboard navigation
     const modalContent = modal.querySelector('.prompt-modal-content');
     modalContent.focus();
     
-    // Prevent background scrolling
     document.body.style.overflow = 'hidden';
 }
 
@@ -92,24 +129,18 @@ function closePromptModal() {
     const modal = document.getElementById('promptModal');
     modal.classList.remove('show');
     
-    // Wait for animation to complete before hiding
     setTimeout(() => {
         modal.style.display = 'none';
         document.body.style.overflow = '';
     }, 300);
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('promptModal');
-    if (event.target === modal) {
-        closePromptModal();
-    }
-}
-
 // Handle keyboard events
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
+        document.querySelectorAll('.prompt-panel.show').forEach(panel => {
+            panel.classList.remove('show');
+        });
         closePromptModal();
     }
 });
