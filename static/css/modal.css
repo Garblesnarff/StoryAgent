@@ -1,3 +1,4 @@
+/* This code enhances the button visibility and adds some more styling */
 .prompt-modal {
     display: none;
     position: fixed;
@@ -83,52 +84,65 @@
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background-color: rgba(var(--bs-primary-rgb), 0.9);
+    background-color: rgba(var(--bs-primary-rgb), 0.95);
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.25rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(4px);
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 500;
-    z-index: 10;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .view-prompt-btn:hover {
     background-color: var(--bs-primary);
     transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+    box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.4);
 }
 
 .view-prompt-btn svg {
     fill: currentColor;
+    width: 20px;
+    height: 20px;
 }
 
+/* Ensure button is visible on dark backgrounds */
+.card-image {
+    position: relative;
+    overflow: visible !important;
+}
+
+.card-image img {
+    z-index: 1;
+}
+
+/* Enhanced modal styling */
+.prompt-modal {
+    z-index: 1050;
+}
+
+.prompt-modal-content {
+    z-index: 1051;
+}
+
+/* Mobile responsiveness for the button */
 @media (max-width: 768px) {
-    .prompt-modal-content {
-        width: 95%;
-        margin: 1rem auto;
+    .view-prompt-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
     }
     
-    .modal-header {
-        padding: 1rem;
-    }
-    
-    .modal-body {
-        padding: 1rem;
-    }
-    
-    .modal-title {
-        font-size: 1.25rem;
-    }
-    
-    .prompt-text {
-        font-size: 1rem;
+    .view-prompt-btn svg {
+        width: 16px;
+        height: 16px;
     }
 }
 
