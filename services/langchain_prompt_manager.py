@@ -4,6 +4,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 from langchain_community.cache import SQLAlchemyCache
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.memory import ConversationBufferMemory
 from sqlalchemy import create_engine
 import logging
 from typing import Dict, List, Optional
@@ -27,6 +28,12 @@ class LangChainPromptManager:
         except Exception as e:
             logger.error(f"Failed to initialize Gemini LLM: {str(e)}")
             raise
+
+        # Initialize conversation memory
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
 
         # Initialize caching with SQLAlchemyCache
         try:
@@ -86,6 +93,116 @@ class LangChainPromptManager:
         ]
         
         self.output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+
+    def _get_conversation_context(self) -> str:
+        """Get formatted conversation history from memory"""
+        messages = self.memory.load_memory_variables({})
+        if "chat_history" in messages and messages["chat_history"]:
+            history = messages["chat_history"]
+            return "\n".join([f"{msg.type}: {msg.content}" for msg in history])
+        return ""
+
+    def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
+        """Format an image generation prompt using the template with conversation memory"""
+        try:
+            prompt_key = f"{story_context}:{paragraph_text}"
+            
+            # Try to get cached result if cache is available
+            if self.cache:
+                try:
+                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
+                    if cached_result:
+                        logger.info("Cache hit for image prompt")
+                        # Store the cached result in conversation memory
+                        self.memory.save_context(
+                            {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
+                            {"output": cached_result}
+                        )
+                        # Validate cached media URLs
+                        media_urls = self._process_media_urls(cached_result)
+                        if media_urls['image_urls'] or media_urls['audio_urls']:
+                            return cached_result
+                        else:
+                            logger.warning("Cached result contains invalid media URLs")
+                except Exception as cache_error:
+                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
+            
+            # Get conversation history
+            conversation_context = self._get_conversation_context()
+            
+            # Generate new prompt using Gemini LLM
+            format_instructions = self.output_parser.get_format_instructions()
+            prompt = self.image_prompt_template.format(
+                story_context=story_context,
+                paragraph_text=paragraph_text,
+                conversation_history=conversation_context,
+                format_instructions=format_instructions
+            )
+            
+            # Use invoke instead of predict
+            response = self.llm.invoke(prompt).content
+            
+            # Store the interaction in conversation memory
+            self.memory.save_context(
+                {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
+                {"output": response}
+            )
+            
+            # Validate response and media URLs
+            validated_prompt = self._validate_prompt(response)
+            media_urls = self._process_media_urls(validated_prompt)
+            
+            if not (media_urls['image_urls'] or media_urls['audio_urls']):
+                logger.warning("Generated prompt contains no valid media URLs")
+            
+            # Update cache if available
+            if self.cache and (media_urls['image_urls'] or media_urls['audio_urls']):
+                try:
+                    self.cache.update(prompt_key, self.llm_string, validated_prompt)
+                    logger.info("Cache updated with new image prompt")
+                except Exception as cache_error:
+                    logger.warning(f"Cache update failed: {str(cache_error)}")
+            
+            return validated_prompt
+            
+        except Exception as e:
+            logger.error(f"Error in format_image_prompt: {str(e)}")
+            return self._validate_prompt(paragraph_text)
+
+    def _init_image_prompt_template(self):
+        """Initialize the image prompt template with enhanced instructions and conversation history"""
+        example_prompt = PromptTemplate(
+            input_variables=["story_context", "paragraph_text", "image_prompt"],
+            template="Story Context: {story_context}\nParagraph: {paragraph_text}\nImage Prompt: {image_prompt}"
+        )
+        
+        self.image_prompt_template = FewShotPromptTemplate(
+            example_selector=self.example_selector,
+            example_prompt=example_prompt,
+            prefix="""Generate a detailed artistic image prompt that captures the essence of a paragraph while maintaining consistency with the overall story and previous conversation context. Follow this structured approach:
+
+1. Visual Analysis:
+   - Identify primary and secondary subjects
+   - Note key environmental elements
+   - List important details that establish context
+
+2. Compositional Planning:
+   - Determine optimal perspective and viewing angle
+   - Plan foreground, midground, and background elements
+   - Consider framing and focal points
+
+3. Atmospheric Elements:
+   - Define the lighting scenario and its effects
+   - Specify weather conditions if applicable
+   - Consider time of day and seasonal aspects
+
+Previous Conversation Context:
+{conversation_history}
+
+Current Request:""",
+            suffix="Based on the above context and examples, generate a detailed image prompt following the format instructions:\n{format_instructions}",
+            input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"]
+        )
 
     def _validate_prompt(self, response: str) -> str:
         """Validate and format the generated prompt"""
