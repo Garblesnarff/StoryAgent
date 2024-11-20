@@ -250,20 +250,37 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.85);
     color: white;
-    padding: 10px;
+    padding: 15px;
     opacity: 0;
     transition: opacity 0.3s ease;
-    display: flex;
-    align-items: center;
-    text-align: center;
+    overflow-y: auto;
+    max-height: 100%;
     font-size: 0.9em;
+    line-height: 1.4;
+    text-align: left;
     pointer-events: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bs-primary) transparent;
+}
+
+.image-prompt-overlay::-webkit-scrollbar {
+    width: 6px;
+}
+
+.image-prompt-overlay::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.image-prompt-overlay::-webkit-scrollbar-thumb {
+    background-color: var(--bs-primary);
+    border-radius: 3px;
 }
 
 .image-container:hover .image-prompt-overlay {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .audio-player {

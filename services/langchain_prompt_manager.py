@@ -2,7 +2,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 from langchain.prompts.example_selector import LengthBasedExampleSelector
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
-from langchain_community.cache import SQLiteCache
+from langchain_community.cache import InMemoryCache  # Updated import
 import logging
 from typing import Dict, List, Optional
 import json
@@ -12,11 +12,8 @@ logger = logging.getLogger(__name__)
 
 class LangChainPromptManager:
     def __init__(self):
-        # Initialize caching with SQLite for persistence
-        cache_dir = ".cache"
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-        self.cache = SQLiteCache(database_path=f"{cache_dir}/prompt_cache.db")
+        # Initialize caching with InMemoryCache
+        self.cache = InMemoryCache()
         
         # Initialize example data for few-shot learning
         self._init_example_data()
@@ -30,19 +27,19 @@ class LangChainPromptManager:
         """Initialize example data for few-shot learning with rich descriptions"""
         self.image_prompt_examples = [
             {
-                "story_context": "A mysterious forest where ancient magic exists",
-                "paragraph_text": "The ancient trees whispered secrets to those who listened, their gnarled branches reaching like fingers through the misty air",
-                "image_prompt": "A mystical forest scene with towering ancient trees, twisted bark textures visible in detail. Ethereal mist weaves between trunks, creating depth. Dappled sunlight filters through a dense emerald canopy, casting mysterious shadows. Hints of magical energy manifest as subtle, glowing particles in the air. Low-angle perspective emphasizing the trees' majesty. Soft, diffused lighting creates a dreamy atmosphere."
+                "story_context": "An epic fantasy tale of ancient magic and prophecy",
+                "paragraph_text": "The crystal spires of the ancient citadel pierced the clouds, their surfaces reflecting the dawn's golden light while arcane symbols pulsed with ethereal energy",
+                "image_prompt": "A majestic fantasy cityscape with towering crystal spires reaching into a dawn sky. Architecture features intricate geometric patterns and flowing organic forms. Glowing arcane symbols float and pulse with blue-white energy around the spires. Dramatic lighting with golden sunlight catching and refracting through the crystal structures. Low-angle perspective emphasizing scale and grandeur. Atmospheric effects include wispy clouds and lens flares. Fine details show the crystalline texture and magical energy patterns."
             },
             {
-                "story_context": "A futuristic cyberpunk metropolis",
-                "paragraph_text": "Neon lights reflected off the chrome buildings, painting the streets in vibrant colors while hover-cars streamed between the towering structures",
-                "image_prompt": "A high-angle view of a cyberpunk cityscape at night. Gleaming chrome skyscrapers with distinct architectural details. Multiple layers of neon signs in blues, purples, and reds cast colorful reflections on wet streets. Streams of hover vehicles with visible light trails weave between buildings. Volumetric lighting effects show light pollution in the air. Detailed urban elements include floating advertisements and holographic displays."
+                "story_context": "A dark cyberpunk thriller in a rain-soaked metropolis",
+                "paragraph_text": "Holographic advertisements flickered through the acid rain, casting their neon reflections across the chrome-plated augmentations of the crowd below",
+                "image_prompt": "A densely packed cyberpunk street scene at night. Multiple layers of holographic advertisements with visible glitch effects and distortions. Acid rain creates streaks of neon reflections on various metallic surfaces. Crowd of people with visible cybernetic augmentations, chrome plating catching colored lights. Deep atmospheric perspective with multiple light sources. Volumetric lighting effects show rain and steam rising. Technical details include high contrast ratio and subtle chromatic aberration effects."
             },
             {
-                "story_context": "A serene coastal sunset",
-                "paragraph_text": "Waves lapped gently against the shore as the sun dipped below the horizon, painting the sky in brilliant shades of gold and crimson",
-                "image_prompt": "A panoramic coastal scene during golden hour. Detailed water surface with gentle ripples catching golden light. Dramatic sky with layered clouds in rich golds, oranges, and crimsons. Sun positioned low on horizon creating long reflections on water. Beach texture visible with small shells and subtle sand patterns. Atmospheric perspective showing distance through color gradation. Composition follows rule of thirds with horizon line placement."
+                "story_context": "A psychological horror set in an abandoned Victorian mansion",
+                "paragraph_text": "Shadows danced across the peeling wallpaper as the ancient grandfather clock struck midnight, its chimes echoing through empty corridors lined with portraits whose eyes seemed to follow every movement",
+                "image_prompt": "Interior of a decaying Victorian mansion with dramatic shadows and lighting. Detailed textures of peeling wallpaper with visible patterns and aging effects. Ornate grandfather clock with intricate mechanical details and brass accents. Multiple portrait paintings with period-appropriate frames and subtle uncanny valley effects in the eyes. Dust particles visible in light beams. Composition emphasizes depth through a long corridor perspective. Color palette focuses on deep shadows and warm accent lighting."
             }
         ]
         
@@ -184,14 +181,17 @@ Structure your response according to these requirements:
         ])
         
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
-        """Format an image generation prompt using the template with validation and caching"""
+        """Format an image generation prompt using the template with improved caching"""
         cache_key = f"{story_context}:{paragraph_text}"
         
         try:
+            # Try to get the cached result
             cached_result = self.cache.lookup(cache_key)
             if cached_result:
+                logger.info(f"Cache hit for image prompt with key: {cache_key}")
                 return cached_result
                 
+            # Generate new prompt if cache miss
             format_instructions = self.output_parser.get_format_instructions()
             prompt = self.image_prompt_template.format(
                 story_context=story_context,
@@ -199,22 +199,34 @@ Structure your response according to these requirements:
                 format_instructions=format_instructions
             )
             validated_prompt = self._validate_prompt(prompt)
+            
+            # Update cache with the new prompt
             self.cache.update(cache_key, validated_prompt)
+            logger.info(f"Cache updated with new image prompt for key: {cache_key}")
             return validated_prompt
+            
         except Exception as e:
-            logger.error(f"Error formatting image prompt: {str(e)}")
-            return self._validate_prompt(paragraph_text)
+            logger.error(f"Error in format_image_prompt: {str(e)}")
+            # Fallback to direct prompt generation without caching
+            try:
+                return self._validate_prompt(paragraph_text)
+            except Exception as fallback_error:
+                logger.error(f"Fallback error in format_image_prompt: {str(fallback_error)}")
+                return paragraph_text
             
     def format_story_prompt(self, genre: str, mood: str, target_audience: str, 
                           prompt: str, paragraphs: int) -> str:
-        """Format a story generation prompt using the template with validation and caching"""
+        """Format a story generation prompt using the template with improved caching"""
         cache_key = f"{genre}:{mood}:{target_audience}:{prompt}:{paragraphs}"
         
         try:
+            # Try to get the cached result
             cached_result = self.cache.lookup(cache_key)
             if cached_result:
+                logger.info(f"Cache hit for story prompt with key: {cache_key}")
                 return cached_result
                 
+            # Generate new prompt if cache miss
             prompt = self.story_prompt_template.format(
                 genre=genre,
                 mood=mood,
@@ -223,12 +235,21 @@ Structure your response according to these requirements:
                 paragraphs=paragraphs
             )
             validated_prompt = self._validate_prompt(prompt)
-            self.cache.update(cache_key, validated_prompt)
-            return validated_prompt
-        except Exception as e:
-            logger.error(f"Error formatting story prompt: {str(e)}")
-            return self._validate_prompt(prompt)
             
+            # Update cache with the new prompt
+            self.cache.update(cache_key, validated_prompt)
+            logger.info(f"Cache updated with new story prompt for key: {cache_key}")
+            return validated_prompt
+            
+        except Exception as e:
+            logger.error(f"Error in format_story_prompt: {str(e)}")
+            # Fallback to direct prompt generation without caching
+            try:
+                return self._validate_prompt(prompt)
+            except Exception as fallback_error:
+                logger.error(f"Fallback error in format_story_prompt: {str(fallback_error)}")
+                return prompt
+
     def _validate_prompt(self, prompt: str) -> str:
         """Validate and clean the generated prompt with enhanced checks"""
         if not prompt or len(prompt.strip()) < 10:
@@ -254,7 +275,17 @@ Structure your response according to these requirements:
         
     def get_prompt_feedback(self) -> Dict[str, List[str]]:
         """Get statistics and feedback about prompt usage"""
-        return {
-            "cache_hits": self.cache.get_stats() if hasattr(self.cache, 'get_stats') else {},
-            "common_errors": logger.getEffectiveLevel()
-        }
+        try:
+            stats = {
+                "cache_hits": len([k for k in self.cache._cache.keys()]),
+                "common_errors": logger.getEffectiveLevel(),
+                "cache_size": len(self.cache._cache)
+            }
+            return stats
+        except Exception as e:
+            logger.error(f"Error getting prompt feedback: {str(e)}")
+            return {
+                "cache_hits": 0,
+                "common_errors": logger.getEffectiveLevel(),
+                "cache_size": 0
+            }
