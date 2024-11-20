@@ -1,0 +1,51 @@
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+ * Serving Flask app 'app'
+ * Debug mode: on
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.30:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug: * Restarting with stat
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+INFO:services.langchain_prompt_manager:Successfully initialized Gemini LLM
+INFO:services.langchain_prompt_manager:Successfully initialized SQLAlchemyCache
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 314-924-303
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:17] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:17] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:17] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:17] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:17] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:17] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:24] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:24] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:32:24] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:services.book_processor:Successfully processed 24 two-sentence chunks
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:33:57] "POST /story/upload HTTP/1.1" 200 -
+INFO:services.book_processor:Successfully processed 24 two-sentence chunks
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:33:58] "POST /story/upload HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:01] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:01] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:01] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:01] "GET /static/js/story-edit.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:32] "GET /story/customize HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:32] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:32] "GET /static/dist/bundle.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:32] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:38] "POST /story/update_style HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.30 - - [20/Nov/2024 15:34:47] "POST /story/generate_cards HTTP/1.1" 200 -
+/home/runner/workspace/services/langchain_prompt_manager.py:235: LangChainDeprecationWarning: The method `BaseChatModel.predict` was deprecated in langchain-core 0.1.7 and will be removed in 1.0. Use :meth:`~invoke` instead.
+  response = self.llm.predict(prompt)

@@ -9,6 +9,8 @@ import logging
 from typing import Dict, List, Optional
 import json
 import os
+import re
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,113 @@ class LangChainPromptManager:
         # Initialize structured output parser
         self._init_output_parser()
         
+    def validate_media_url(self, url: str, media_type: str = 'image') -> bool:
+        """Validate media URL format and accessibility"""
+        try:
+            if not url:
+                return False
+                
+            parsed_url = urlparse(url)
+            
+            # Check if URL has proper scheme and path
+            if not all([parsed_url.scheme, parsed_url.path]):
+                logger.warning(f"Invalid {media_type} URL format: {url}")
+                return False
+                
+            # Validate file extension based on media type
+            valid_extensions = {
+                'image': ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+                'audio': ['.wav', '.mp3', '.ogg']
+            }
+            
+            file_ext = os.path.splitext(parsed_url.path)[1].lower()
+            if file_ext not in valid_extensions.get(media_type, []):
+                logger.warning(f"Invalid {media_type} file extension: {file_ext}")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error validating {media_type} URL: {str(e)}")
+            return False
+            
+    def _process_media_urls(self, response: str) -> Dict:
+        """Extract and validate media URLs from response"""
+        try:
+            # Extract URLs using regex
+            image_urls = re.findall(r'https?://[^\s<>"]+?(?:jpg|jpeg|png|gif|webp)', response)
+            audio_urls = re.findall(r'https?://[^\s<>"]+?(?:wav|mp3|ogg)', response)
+            
+            # Validate URLs
+            valid_image_urls = [url for url in image_urls if self.validate_media_url(url, 'image')]
+            valid_audio_urls = [url for url in audio_urls if self.validate_media_url(url, 'audio')]
+            
+            if valid_image_urls:
+                logger.info(f"Found valid image URLs: {len(valid_image_urls)}")
+            if valid_audio_urls:
+                logger.info(f"Found valid audio URLs: {len(valid_audio_urls)}")
+                
+            return {
+                'image_urls': valid_image_urls,
+                'audio_urls': valid_audio_urls
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing media URLs: {str(e)}")
+            return {'image_urls': [], 'audio_urls': []}
+
+    def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
+        """Format an image generation prompt using the template with SQLAlchemy caching"""
+        try:
+            prompt_key = f"{story_context}:{paragraph_text}"
+            
+            # Try to get cached result if cache is available
+            if self.cache:
+                try:
+                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
+                    if cached_result:
+                        logger.info("Cache hit for image prompt")
+                        # Validate cached media URLs
+                        media_urls = self._process_media_urls(cached_result)
+                        if media_urls['image_urls'] or media_urls['audio_urls']:
+                            return cached_result
+                        else:
+                            logger.warning("Cached result contains invalid media URLs")
+                except Exception as cache_error:
+                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
+            
+            # Generate new prompt using Gemini LLM
+            format_instructions = self.output_parser.get_format_instructions()
+            prompt = self.image_prompt_template.format(
+                story_context=story_context,
+                paragraph_text=paragraph_text,
+                format_instructions=format_instructions
+            )
+            
+            # Use invoke instead of predict as per deprecation warning
+            response = self.llm.invoke(prompt).content
+            
+            # Validate response and media URLs
+            validated_prompt = self._validate_prompt(response)
+            media_urls = self._process_media_urls(validated_prompt)
+            
+            if not (media_urls['image_urls'] or media_urls['audio_urls']):
+                logger.warning("Generated prompt contains no valid media URLs")
+            
+            # Update cache if available
+            if self.cache and (media_urls['image_urls'] or media_urls['audio_urls']):
+                try:
+                    self.cache.update(prompt_key, self.llm_string, validated_prompt)
+                    logger.info("Cache updated with new image prompt")
+                except Exception as cache_error:
+                    logger.warning(f"Cache update failed: {str(cache_error)}")
+            
+            return validated_prompt
+            
+        except Exception as e:
+            logger.error(f"Error in format_image_prompt: {str(e)}")
+            return self._validate_prompt(paragraph_text)
+
     def set_llm_string(self, llm_string: str):
         """Update the LLM string used for cache lookups"""
         self.llm_string = llm_string
@@ -210,45 +319,6 @@ Structure your response according to these requirements:
             """)
         ])
         
-    def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
-        """Format an image generation prompt using the template with SQLAlchemy caching"""
-        try:
-            prompt_key = f"{story_context}:{paragraph_text}"
-            
-            # Try to get cached result if cache is available
-            if self.cache:
-                try:
-                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
-                    if cached_result:
-                        logger.info("Cache hit for image prompt")
-                        return cached_result
-                except Exception as cache_error:
-                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
-            
-            # Generate new prompt using Gemini LLM
-            format_instructions = self.output_parser.get_format_instructions()
-            prompt = self.image_prompt_template.format(
-                story_context=story_context,
-                paragraph_text=paragraph_text,
-                format_instructions=format_instructions
-            )
-            response = self.llm.predict(prompt)
-            validated_prompt = self._validate_prompt(response)
-            
-            # Update cache if available
-            if self.cache:
-                try:
-                    self.cache.update(prompt_key, self.llm_string, validated_prompt)
-                    logger.info("Cache updated with new image prompt")
-                except Exception as cache_error:
-                    logger.warning(f"Cache update failed: {str(cache_error)}")
-            
-            return validated_prompt
-            
-        except Exception as e:
-            logger.error(f"Error in format_image_prompt: {str(e)}")
-            return self._validate_prompt(paragraph_text)
-            
     def format_story_prompt(self, genre: str, mood: str, target_audience: str, 
                           prompt: str, paragraphs: int) -> str:
         """Format a story generation prompt using the template with SQLAlchemy caching"""
