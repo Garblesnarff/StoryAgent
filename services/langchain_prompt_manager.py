@@ -1,39 +1,38 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+from langchain.prompts.example_selector import LengthBasedExampleSelector
+from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+from langchain_community.cache import SQLAlchemyCache
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferMemory
 from sqlalchemy import create_engine
-from langchain_community.cache import SQLAlchemyCache
-from typing import Dict, List
-from langchain.prompts import LengthBasedExampleSelector
-from urllib.parse import urlparse
+import logging
+from typing import Dict, List, Optional
+import json
 import os
 import re
-import logging
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
 class LangChainPromptManager:
     def __init__(self):
-        """Initialize LangChain prompt manager with Gemini LLM and conversation memory"""
         # Initialize Gemini LLM
         try:
             self.llm = ChatGoogleGenerativeAI(
                 model="gemini-pro",
                 temperature=0.7,
-                api_key=os.environ.get('GOOGLE_API_KEY')
+                google_api_key=os.environ.get('GOOGLE_API_KEY')
             )
             logger.info("Successfully initialized Gemini LLM")
         except Exception as e:
             logger.error(f"Failed to initialize Gemini LLM: {str(e)}")
             raise
 
-        # Initialize conversation memory with updated syntax
+        # Initialize conversation memory
         self.memory = ConversationBufferMemory(
-            input_key="input",
-            output_key="output",
-            return_messages=True,
-            memory_key="chat_history"
+            memory_key="chat_history",
+            return_messages=True
         )
 
         # Initialize caching with SQLAlchemyCache
@@ -52,19 +51,13 @@ class LangChainPromptManager:
         
         self.llm_string = "gemini_pro"
         
-        # Initialize output parser and templates
-        self._init_output_parser()
+        # Initialize example data for few-shot learning
         self._init_example_data()
+        # Initialize output parser
+        self._init_output_parser()
+        # Initialize base templates
         self._init_image_prompt_template()
-
-    def _fallback_prompt(self, story_context: str, paragraph_text: str) -> str:
-        """Generate a basic fallback prompt when API quota is exhausted"""
-        return f"""Create a detailed illustration of the scene described in:
-        
-        Context: {story_context[:200]}...
-        Scene: {paragraph_text}
-        
-        Style: Maintain consistency with previous illustrations while focusing on key story elements."""
+        self._init_story_prompt_template()
 
     def _init_output_parser(self):
         """Initialize structured output parser with enhanced schemas"""
@@ -102,29 +95,12 @@ class LangChainPromptManager:
         self.output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
     def _get_conversation_context(self) -> str:
-        """Get formatted conversation history from memory with enhanced context tracking"""
-        try:
-            variables = self.memory.load_memory_variables({})
-            chat_history = variables.get("chat_history", [])
-            
-            if not chat_history:
-                return "No previous conversation context available."
-                
-            # Format the conversation history with focus on visual elements
-            formatted_history = []
-            for message in chat_history[-3:]:  # Only use last 3 interactions for context
-                if hasattr(message, 'content'):
-                    content = message.content
-                    if "Visual Description" in content:
-                        # Extract key visual elements
-                        formatted_history.append(f"Previous Style: {content.split('Style:')[-1].split('\n')[0]}")
-                        formatted_history.append(f"Previous Atmosphere: {content.split('Atmosphere:')[-1].split('\n')[0]}")
-                
-            return "\n".join(formatted_history) if formatted_history else "No relevant visual context found."
-            
-        except Exception as e:
-            logger.error(f"Error getting conversation context: {str(e)}")
-            return "Error retrieving conversation context."
+        """Get formatted conversation history from memory"""
+        messages = self.memory.load_memory_variables({})
+        if "chat_history" in messages and messages["chat_history"]:
+            history = messages["chat_history"]
+            return "\n".join([f"{msg.type}: {msg.content}" for msg in history])
+        return ""
 
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with conversation memory"""
@@ -142,7 +118,12 @@ class LangChainPromptManager:
                             {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
                             {"output": cached_result}
                         )
-                        return cached_result
+                        # Validate cached media URLs
+                        media_urls = self._process_media_urls(cached_result)
+                        if media_urls['image_urls'] or media_urls['audio_urls']:
+                            return cached_result
+                        else:
+                            logger.warning("Cached result contains invalid media URLs")
                 except Exception as cache_error:
                     logger.warning(f"Cache lookup failed: {str(cache_error)}")
             
@@ -158,27 +139,24 @@ class LangChainPromptManager:
                 format_instructions=format_instructions
             )
             
-            try:
-                # Use invoke instead of predict
-                response = self.llm.invoke(prompt)
-                response_text = response.content if hasattr(response, 'content') else str(response)
-            except Exception as e:
-                if "429" in str(e):
-                    logger.error("API quota exceeded, using fallback prompt")
-                    return self._fallback_prompt(story_context, paragraph_text)
-                raise
+            # Use invoke instead of predict
+            response = self.llm.invoke(prompt).content
             
             # Store the interaction in conversation memory
             self.memory.save_context(
                 {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
-                {"output": response_text}
+                {"output": response}
             )
             
-            # Validate response
-            validated_prompt = self._validate_prompt(response_text)
+            # Validate response and media URLs
+            validated_prompt = self._validate_prompt(response)
+            media_urls = self._process_media_urls(validated_prompt)
+            
+            if not (media_urls['image_urls'] or media_urls['audio_urls']):
+                logger.warning("Generated prompt contains no valid media URLs")
             
             # Update cache if available
-            if self.cache:
+            if self.cache and (media_urls['image_urls'] or media_urls['audio_urls']):
                 try:
                     self.cache.update(prompt_key, self.llm_string, validated_prompt)
                     logger.info("Cache updated with new image prompt")
@@ -189,22 +167,42 @@ class LangChainPromptManager:
             
         except Exception as e:
             logger.error(f"Error in format_image_prompt: {str(e)}")
-            return self._fallback_prompt(story_context, paragraph_text)
+            return self._validate_prompt(paragraph_text)
 
     def _init_image_prompt_template(self):
-        """Initialize the image prompt template with enhanced instructions"""
+        """Initialize the image prompt template with enhanced instructions and conversation history"""
         example_prompt = PromptTemplate(
-            input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"],
-            template="""Generate a detailed artistic image prompt that captures the essence of a paragraph while maintaining consistency with the overall story and previous conversation context:
-
-Story Context: {story_context}
-Paragraph: {paragraph_text}
-Previous Context: {conversation_history}
-
-{format_instructions}"""
+            input_variables=["story_context", "paragraph_text", "image_prompt"],
+            template="Story Context: {story_context}\nParagraph: {paragraph_text}\nImage Prompt: {image_prompt}"
         )
         
-        self.image_prompt_template = example_prompt
+        self.image_prompt_template = FewShotPromptTemplate(
+            example_selector=self.example_selector,
+            example_prompt=example_prompt,
+            prefix="""Generate a detailed artistic image prompt that captures the essence of a paragraph while maintaining consistency with the overall story and previous conversation context. Follow this structured approach:
+
+1. Visual Analysis:
+   - Identify primary and secondary subjects
+   - Note key environmental elements
+   - List important details that establish context
+
+2. Compositional Planning:
+   - Determine optimal perspective and viewing angle
+   - Plan foreground, midground, and background elements
+   - Consider framing and focal points
+
+3. Atmospheric Elements:
+   - Define the lighting scenario and its effects
+   - Specify weather conditions if applicable
+   - Consider time of day and seasonal aspects
+
+Previous Conversation Context:
+{conversation_history}
+
+Current Request:""",
+            suffix="Based on the above context and examples, generate a detailed image prompt following the format instructions:\n{format_instructions}",
+            input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"]
+        )
 
     def _validate_prompt(self, response: str) -> str:
         """Validate and format the generated prompt"""
@@ -240,9 +238,115 @@ Technical Requirements:
             logger.error(f"Error parsing prompt response: {str(e)}")
             return response
 
+    def validate_media_url(self, url: str, media_type: str = 'image') -> bool:
+        """Validate media URL format and accessibility"""
+        try:
+            if not url:
+                return False
+                
+            parsed_url = urlparse(url)
+            
+            # Check if URL has proper scheme and path
+            if not all([parsed_url.scheme, parsed_url.path]):
+                logger.warning(f"Invalid {media_type} URL format: {url}")
+                return False
+                
+            # Validate file extension based on media type
+            valid_extensions = {
+                'image': ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+                'audio': ['.wav', '.mp3', '.ogg']
+            }
+            
+            file_ext = os.path.splitext(parsed_url.path)[1].lower()
+            if file_ext not in valid_extensions.get(media_type, []):
+                logger.warning(f"Invalid {media_type} file extension: {file_ext}")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error validating {media_type} URL: {str(e)}")
+            return False
+
+    def _process_media_urls(self, response: str) -> Dict:
+        """Extract and validate media URLs from response"""
+        try:
+            # Extract URLs using regex
+            image_urls = re.findall(r'https?://[^\s<>"]+?(?:jpg|jpeg|png|gif|webp)', response)
+            audio_urls = re.findall(r'https?://[^\s<>"]+?(?:wav|mp3|ogg)', response)
+            
+            # Validate URLs
+            valid_image_urls = [url for url in image_urls if self.validate_media_url(url, 'image')]
+            valid_audio_urls = [url for url in audio_urls if self.validate_media_url(url, 'audio')]
+            
+            if valid_image_urls:
+                logger.info(f"Found valid image URLs: {len(valid_image_urls)}")
+            if valid_audio_urls:
+                logger.info(f"Found valid audio URLs: {len(valid_audio_urls)}")
+                
+            return {
+                'image_urls': valid_image_urls,
+                'audio_urls': valid_audio_urls
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing media URLs: {str(e)}")
+            return {'image_urls': [], 'audio_urls': []}
+
+    def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
+        """Format an image generation prompt using the template with SQLAlchemy caching"""
+        try:
+            prompt_key = f"{story_context}:{paragraph_text}"
+            
+            # Try to get cached result if cache is available
+            if self.cache:
+                try:
+                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
+                    if cached_result:
+                        logger.info("Cache hit for image prompt")
+                        # Validate cached media URLs
+                        media_urls = self._process_media_urls(cached_result)
+                        if media_urls['image_urls'] or media_urls['audio_urls']:
+                            return cached_result
+                        else:
+                            logger.warning("Cached result contains invalid media URLs")
+                except Exception as cache_error:
+                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
+            
+            # Generate new prompt using Gemini LLM
+            format_instructions = self.output_parser.get_format_instructions()
+            prompt = self.image_prompt_template.format(
+                story_context=story_context,
+                paragraph_text=paragraph_text,
+                format_instructions=format_instructions
+            )
+            
+            # Use invoke instead of predict
+            response = self.llm.invoke(prompt).content
+            
+            # Validate response and media URLs
+            validated_prompt = self._validate_prompt(response)
+            media_urls = self._process_media_urls(validated_prompt)
+            
+            if not (media_urls['image_urls'] or media_urls['audio_urls']):
+                logger.warning("Generated prompt contains no valid media URLs")
+            
+            # Update cache if available
+            if self.cache and (media_urls['image_urls'] or media_urls['audio_urls']):
+                try:
+                    self.cache.update(prompt_key, self.llm_string, validated_prompt)
+                    logger.info("Cache updated with new image prompt")
+                except Exception as cache_error:
+                    logger.warning(f"Cache update failed: {str(cache_error)}")
+            
+            return validated_prompt
+            
+        except Exception as e:
+            logger.error(f"Error in format_image_prompt: {str(e)}")
+            return self._validate_prompt(paragraph_text)
+
     def _init_example_data(self):
-        """Initialize example data for few-shot learning"""
-        # This will be used if we implement few-shot learning in the future
+        """Initialize example data for few-shot learning with rich descriptions"""
         self.image_prompt_examples = [
             # Existing examples
             {
@@ -277,6 +381,7 @@ Technical Requirements:
                 "image_prompt": "A Halftone Mechanical Blueprint scene, combining technical schematics with halftone textures. Utilize industrial steel blue and corroded copper tones to highlight the mechanical intricacies. Architectural elements show both organic growth patterns and geometric precision. Degraded digital artifacts and glitch effects suggest technological decay. Multiple layers of technical drawings overlap with varying opacity. Inclusion of mathematical formulae and engineering notations as background elements. Perspective emphasizes the massive scale of the deteriorating structures."
             }
         ]
+        
         self.example_selector = LengthBasedExampleSelector(
             examples=self.image_prompt_examples,
             example_prompt=PromptTemplate(
@@ -291,81 +396,31 @@ Technical Requirements:
         self.llm_string = llm_string
         
     def _init_image_prompt_template(self):
-        """Initialize the image prompt template with enhanced instructions and conversation context"""
-        self.image_prompt_template = PromptTemplate(
-            input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"],
-            template="""Generate a detailed artistic image prompt that maintains visual consistency with previous generations:
-
-Story Context: {story_context}
-Paragraph: {paragraph_text}
-
-Previous Conversation History:
-{conversation_history}
-
-Consider the previous context while following these guidelines:
-1. Maintain consistent visual style with previous generations
-2. Use similar color palettes and lighting approaches
-3. Ensure character and environment continuity
-4. Incorporate environmental effects like weather and time of day
-5. Balance detail with artistic interpretation
-
-Format Instructions:
-{format_instructions}
-
-Generate a structured response that includes:
-1. Visual Description - Detailed representation of the scene and elements
-2. Composition - Layout, framing, and perspective guidance
-3. Lighting - Light sources, shadows, and mood lighting
-4. Color Palette - Primary and accent colors with their relationships
-5. Atmosphere - Environmental effects and overall mood
-6. Style - Artistic approach and rendering techniques
-7. Technical Requirements - Camera settings and post-processing notes"""
+        """Initialize the image prompt template with enhanced instructions"""
+        example_prompt = PromptTemplate(
+            input_variables=["story_context", "paragraph_text", "image_prompt"],
+            template="Story Context: {story_context}\nParagraph: {paragraph_text}\nImage Prompt: {image_prompt}"
         )
-            input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"],
-            template="""Generate a detailed artistic image prompt that maintains visual consistency with previous generations:
+        
+        self.image_prompt_template = FewShotPromptTemplate(
+            example_selector=self.example_selector,
+            example_prompt=example_prompt,
+            prefix="""Generate a detailed artistic image prompt that captures the essence of a paragraph while maintaining consistency with the overall story. Follow this structured approach:
 
-Story Context: {story_context}
-Paragraph: {paragraph_text}
+1. Visual Analysis:
+   - Identify primary and secondary subjects
+   - Note key environmental elements
+   - List important details that establish context
 
-Previous Conversation History:
-{conversation_history}
+2. Compositional Planning:
+   - Determine optimal perspective and viewing angle
+   - Plan foreground, midground, and background elements
+   - Consider framing and focal points
 
-Consider the previous context while following these guidelines:
-1. Maintain consistent visual style with previous generations
-2. Use similar color palettes and lighting approaches
-3. Ensure character and environment continuity
-4. Balance detail with artistic interpretation
-
-Format Instructions:
-{format_instructions}"""
-        )
-            input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"],
-            template="""Generate a detailed artistic image prompt that maintains visual consistency with previous generations:
-
-Story Context: {story_context}
-Paragraph: {paragraph_text}
-
-Previous Conversation History:
-{conversation_history}
-
-Consider the previous context while following these guidelines:
-1. Maintain consistent visual style with previous generations
-2. Use similar color palettes and lighting approaches
-3. Ensure character and environment continuity
-4. Incorporate environmental effects like weather and time of day
-5. Balance detail with artistic interpretation
-
-Format Instructions:
-{format_instructions}
-
-Generate a structured response that includes:
-1. Visual Description - Detailed representation of the scene and elements
-2. Composition - Layout, framing, and perspective guidance
-3. Lighting - Light sources, shadows, and mood lighting
-4. Color Palette - Primary and accent colors with their relationships
-5. Atmosphere - Environmental effects and overall mood
-6. Style - Artistic approach and rendering techniques
-7. Technical Requirements - Camera settings and post-processing notes""")
+3. Atmospheric Elements:
+   - Define the lighting scenario and its effects
+   - Plan color palette and mood
+   - Include environmental effects (weather, time of day, etc.)
 
 4. Technical Specifications:
    - Specify artistic style and rendering approach
