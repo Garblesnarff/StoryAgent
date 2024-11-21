@@ -20,8 +20,8 @@ class LangChainPromptManager:
         # Initialize Gemini LLM
         try:
             self.llm = ChatGoogleGenerativeAI(
-                model="gemini-pro",
-                temperature=0.7,
+                model="gemini-1.5-flash-8b",
+                temperature=0.3,
                 google_api_key=os.environ.get('GOOGLE_API_KEY')
             )
             logger.info("Successfully initialized Gemini LLM")
@@ -49,7 +49,7 @@ class LangChainPromptManager:
             logger.warning(f"Failed to initialize SQLAlchemyCache: {str(e)}, proceeding without caching")
             self.cache = None
         
-        self.llm_string = "gemini_pro"
+        self.llm_string = "gemini-1.5-flash-8b"
         
         # Initialize example data for few-shot learning
         self._init_example_data()
@@ -179,28 +179,31 @@ class LangChainPromptManager:
         self.image_prompt_template = FewShotPromptTemplate(
             example_selector=self.example_selector,
             example_prompt=example_prompt,
-            prefix="""Generate a detailed artistic image prompt that captures the essence of a paragraph while maintaining consistency with the overall story and previous conversation context. Follow this structured approach:
+            prefix="""Generate a detailed artistic image prompt that captures the essence of a paragraph while maintaining visual consistency with previously generated images. Consider the conversation history for style continuity.
 
 1. Visual Analysis:
-   - Identify primary and secondary subjects
-   - Note key environmental elements
-   - List important details that establish context
+   - Analyze previous image descriptions from the conversation history
+   - Identify recurring visual elements and themes
+   - Ensure new elements complement existing imagery
 
-2. Compositional Planning:
-   - Determine optimal perspective and viewing angle
-   - Plan foreground, midground, and background elements
-   - Consider framing and focal points
+2. Style Consistency:
+   - Match the artistic style from previous generations
+   - Maintain consistent color palettes
+   - Use similar compositional approaches
 
-3. Atmospheric Elements:
-   - Define the lighting scenario and its effects
-   - Specify weather conditions if applicable
-   - Consider time of day and seasonal aspects
+3. Scene Integration:
+   - Connect new visual elements with previous scenes
+   - Maintain consistent environmental details
+   - Ensure character appearances remain consistent
 
-Previous Conversation Context:
+Previous Image Descriptions:
 {conversation_history}
 
-Current Request:""",
-            suffix="Based on the above context and examples, generate a detailed image prompt following the format instructions:\n{format_instructions}",
+Current Story Context: {story_context}
+Current Paragraph: {paragraph_text}
+
+Based on the above context and maintaining visual consistency, generate a detailed image prompt that includes:""",
+            suffix="Generate a detailed image prompt following these format instructions:\n{format_instructions}",
             input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"]
         )
 
@@ -293,57 +296,7 @@ Technical Requirements:
             logger.error(f"Error processing media URLs: {str(e)}")
             return {'image_urls': [], 'audio_urls': []}
 
-    def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
-        """Format an image generation prompt using the template with SQLAlchemy caching"""
-        try:
-            prompt_key = f"{story_context}:{paragraph_text}"
-            
-            # Try to get cached result if cache is available
-            if self.cache:
-                try:
-                    cached_result = self.cache.lookup(prompt_key, self.llm_string)
-                    if cached_result:
-                        logger.info("Cache hit for image prompt")
-                        # Validate cached media URLs
-                        media_urls = self._process_media_urls(cached_result)
-                        if media_urls['image_urls'] or media_urls['audio_urls']:
-                            return cached_result
-                        else:
-                            logger.warning("Cached result contains invalid media URLs")
-                except Exception as cache_error:
-                    logger.warning(f"Cache lookup failed: {str(cache_error)}")
-            
-            # Generate new prompt using Gemini LLM
-            format_instructions = self.output_parser.get_format_instructions()
-            prompt = self.image_prompt_template.format(
-                story_context=story_context,
-                paragraph_text=paragraph_text,
-                format_instructions=format_instructions
-            )
-            
-            # Use invoke instead of predict
-            response = self.llm.invoke(prompt).content
-            
-            # Validate response and media URLs
-            validated_prompt = self._validate_prompt(response)
-            media_urls = self._process_media_urls(validated_prompt)
-            
-            if not (media_urls['image_urls'] or media_urls['audio_urls']):
-                logger.warning("Generated prompt contains no valid media URLs")
-            
-            # Update cache if available
-            if self.cache and (media_urls['image_urls'] or media_urls['audio_urls']):
-                try:
-                    self.cache.update(prompt_key, self.llm_string, validated_prompt)
-                    logger.info("Cache updated with new image prompt")
-                except Exception as cache_error:
-                    logger.warning(f"Cache update failed: {str(cache_error)}")
-            
-            return validated_prompt
-            
-        except Exception as e:
-            logger.error(f"Error in format_image_prompt: {str(e)}")
-            return self._validate_prompt(paragraph_text)
+    
 
     def _init_example_data(self):
         """Initialize example data for few-shot learning with rich descriptions"""

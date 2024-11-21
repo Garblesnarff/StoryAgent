@@ -25,7 +25,7 @@ class BookProcessor:
         
         # Configure Gemini
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-pro')
+        self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
         
     def process_file(self, file) -> Dict[str, any]:
         """Process uploaded file based on its type."""
