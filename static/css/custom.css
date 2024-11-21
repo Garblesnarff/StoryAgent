@@ -268,13 +268,15 @@
 
 .image-prompt-overlay {
     position: absolute;
-    top: 0;
+    top: 20%;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.95);
+    background: rgba(0, 0, 0, 0.85);
     color: white;
-    padding: 15px 15px 60px 15px;
+    padding: 15px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
     overflow-y: scroll;
     font-size: 0.9em;
     line-height: 1.4;
@@ -283,41 +285,6 @@
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
     z-index: 10;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s;
-}
-
-.image-container:hover .image-prompt-overlay {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Copy button styles */
-.overlay-copy-btn {
-    position: sticky;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bs-primary);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    margin-top: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 20;
-}
-
-.overlay-copy-btn:hover {
-    background: var(--bs-primary-dark);
-}
-
-.overlay-copy-btn:active {
-    transform: translateX(-50%) scale(0.95);
 }
 
 .image-container img {
@@ -328,7 +295,9 @@
     transition: transform 0.3s ease;
 }
 
-/* Removed hover trigger as overlay is now always visible */
+.image-container:hover .image-prompt-overlay {
+    opacity: 1;
+}
 
 .image-prompt-overlay::-webkit-scrollbar {
     width: 6px;

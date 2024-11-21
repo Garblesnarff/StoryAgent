@@ -11,30 +11,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 const ParagraphNode = React.memo(({ data }) => {
-    const handleCopyPrompt = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (data.imagePrompt) {
-            navigator.clipboard.writeText(data.imagePrompt)
-                .then(() => {
-                    const button = e.currentTarget;
-                    button.innerHTML = '<i class="bi bi-check"></i> Copied!';
-                    setTimeout(() => {
-                        button.innerHTML = '<i class="bi bi-clipboard"></i> Copy Prompt';
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Failed to copy prompt:', err);
-                    const button = e.currentTarget;
-                    button.innerHTML = '<i class="bi bi-x"></i> Failed to copy';
-                    setTimeout(() => {
-                        button.innerHTML = '<i class="bi bi-clipboard"></i> Copy Prompt';
-                    }, 2000);
-                });
-        }
-    }, [data.imagePrompt]);
-
     return (
         <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} />
@@ -65,13 +41,6 @@ const ParagraphNode = React.memo(({ data }) => {
                                 </div>
                                 <div className="image-prompt-overlay">
                                     {data.imagePrompt}
-                                    <button 
-                                        className="overlay-copy-btn"
-                                        onClick={handleCopyPrompt}
-                                        title="Copy prompt to clipboard"
-                                    >
-                                        <i className="bi bi-clipboard"></i> Copy Prompt
-                                    </button>
                                 </div>
                             </div>
                         </div>
