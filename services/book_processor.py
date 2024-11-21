@@ -175,15 +175,14 @@ class BookProcessor:
             # Clean the text initially
             text = self._clean_text(text)
             
-            # Use Gemini to identify story start and process text
+            # Use Gemini to extract only story content
             prompt = f'''
-            Analyze this book text and:
-            1. Identify where the actual story narrative begins
-            2. Remove any preamble, license info, or metadata
-            3. Extract only the story content
-            4. Split into proper story paragraphs
-            5. Start from the first actual story paragraph
-            
+            Extract and return ONLY the actual story narrative from this text.
+            - Do not include any analysis, processing steps, or metadata
+            - Do not include any markers or labels
+            - Start directly with the story content
+            - Return only the cleaned narrative text
+
             Text to process:
             {text[:8000]}
             '''
@@ -191,6 +190,17 @@ class BookProcessor:
             # Get story content from Gemini
             response = self.model.generate_content(prompt)
             story_text = response.text
+            
+            # Post-process to remove any remaining metadata markers
+            # Remove lines starting with asterisks
+            story_text = '\n'.join([line for line in story_text.split('\n') 
+                                  if not line.strip().startswith('**')])
+            
+            # Remove numbered processing steps
+            story_text = re.sub(r'^\d+\.\s+', '', story_text, flags=re.MULTILINE)
+            
+            # Remove "Start of..." or "End of..." markers
+            story_text = re.sub(r'(?i)(^|\n)(Start|End)\s+of.*?\n', '\n', story_text)
             
             # Split into sentences
             sentence_pattern = r'(?<=[.!?])\s+'
