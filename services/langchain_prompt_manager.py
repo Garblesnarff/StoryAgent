@@ -29,11 +29,15 @@ class LangChainPromptManager:
             logger.error(f"Failed to initialize Gemini LLM: {str(e)}")
             raise
 
-        # Initialize conversation memory
+        # Initialize conversation memory with enhanced settings
         self.memory = ConversationBufferMemory(
             memory_key="chat_history",
-            return_messages=True
+            return_messages=True,
+            output_key="output",
+            input_key="input"
         )
+        self.max_context_window = 5  # Maximum number of previous conversations to keep
+        self.relevance_threshold = 0.7  # Threshold for filtering relevant context
 
         # Initialize caching with SQLAlchemyCache
         try:
@@ -95,12 +99,53 @@ class LangChainPromptManager:
         self.output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
     def _get_conversation_context(self) -> str:
-        """Get formatted conversation history from memory"""
-        messages = self.memory.load_memory_variables({})
-        if "chat_history" in messages and messages["chat_history"]:
-            history = messages["chat_history"]
-            return "\n".join([f"{msg.type}: {msg.content}" for msg in history])
-        return ""
+        """Get formatted conversation history with enhanced context management"""
+        try:
+            messages = self.memory.load_memory_variables({})
+            logger.info(f"Loading conversation history with {len(messages.get('chat_history', []))} messages")
+            
+            if "chat_history" in messages and messages["chat_history"]:
+                history = messages["chat_history"]
+                
+                # Apply context windowing
+                recent_history = history[-self.max_context_window:] if len(history) > self.max_context_window else history
+                
+                # Format the conversation history with emphasis on image descriptions
+                formatted_history = []
+                for msg in recent_history:
+                    if 'image_prompt' in msg.content.lower():
+                        # Extract and format image descriptions
+                        formatted_history.append(f"Previous Image Description:\n{msg.content}")
+                    else:
+                        formatted_history.append(f"{msg.type}: {msg.content}")
+                
+                context = "\n\n".join(formatted_history)
+                logger.info(f"Formatted conversation context with {len(formatted_history)} relevant entries")
+                return context
+                
+            logger.info("No conversation history found")
+            return ""
+            
+        except Exception as e:
+            logger.error(f"Error getting conversation context: {str(e)}")
+            return ""
+
+    def _cleanup_completed_conversations(self):
+        """Clean up completed conversations to prevent memory overflow"""
+        try:
+            messages = self.memory.load_memory_variables({})
+            if "chat_history" in messages and len(messages["chat_history"]) > self.max_context_window * 2:
+                # Keep only the most recent conversations
+                recent_messages = messages["chat_history"][-self.max_context_window:]
+                self.memory.clear()
+                for msg in recent_messages:
+                    self.memory.save_context(
+                        {"input": msg.content if msg.type == "human" else ""},
+                        {"output": msg.content if msg.type == "ai" else ""}
+                    )
+                logger.info(f"Cleaned up conversation history, kept {len(recent_messages)} recent messages")
+        except Exception as e:
+            logger.error(f"Error cleaning up conversations: {str(e)}")
 
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with conversation memory"""
@@ -142,11 +187,26 @@ class LangChainPromptManager:
             # Use invoke instead of predict
             response = self.llm.invoke(prompt).content
             
-            # Store the interaction in conversation memory
+            # Clean up old conversations before saving new context
+            self._cleanup_completed_conversations()
+            
+            # Store the interaction in conversation memory with enhanced context
+            context_entry = {
+                "input": f"Story Context: {story_context}\nParagraph: {paragraph_text}",
+                "context_type": "story",
+                "timestamp": time.time()
+            }
+            
+            # Save context with logging
             self.memory.save_context(
-                {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
+                {"input": context_entry["input"]},
                 {"output": response}
             )
+            logger.info("Saved new context to conversation memory")
+            
+            # Log memory state for debugging
+            messages = self.memory.load_memory_variables({})
+            logger.info(f"Current memory state: {len(messages.get('chat_history', []))} messages in history")
             
             # Validate response and media URLs
             validated_prompt = self._validate_prompt(response)
