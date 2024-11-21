@@ -7,6 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferMemory
 from sqlalchemy import create_engine
 import logging
+import time
 from typing import Dict, List, Optional
 import json
 import os
@@ -99,28 +100,53 @@ class LangChainPromptManager:
         self.output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
     def _get_conversation_context(self) -> str:
-        """Get formatted conversation history with enhanced context management"""
+        """Get formatted conversation history with enhanced context management and relevance filtering"""
         try:
             messages = self.memory.load_memory_variables({})
             logger.info(f"Loading conversation history with {len(messages.get('chat_history', []))} messages")
             
             if "chat_history" in messages and messages["chat_history"]:
                 history = messages["chat_history"]
+                current_time = time.time()
                 
-                # Apply context windowing
-                recent_history = history[-self.max_context_window:] if len(history) > self.max_context_window else history
+                # Filter and score messages for relevance
+                scored_messages = []
+                for msg in history:
+                    msg_time = getattr(msg, 'timestamp', current_time)
+                    time_diff = current_time - msg_time
+                    
+                    # Calculate relevance score based on multiple factors
+                    relevance_score = 0.0
+                    
+                    # Time-based relevance (more recent = more relevant)
+                    time_relevance = max(0, 1 - (time_diff / 3600))  # Scale over 1 hour
+                    relevance_score += time_relevance * 0.4  # 40% weight
+                    
+                    # Content-based relevance
+                    if 'image_prompt' in msg.content.lower():
+                        relevance_score += 0.3  # 30% weight for image prompts
+                    if any(key in msg.content.lower() for key in ['style', 'color', 'composition']):
+                        relevance_score += 0.2  # 20% weight for style-related content
+                    
+                    # Keep messages above relevance threshold
+                    if relevance_score >= self.relevance_threshold:
+                        scored_messages.append((msg, relevance_score))
+                
+                # Sort by relevance score and apply context windowing
+                scored_messages.sort(key=lambda x: x[1], reverse=True)
+                relevant_messages = scored_messages[:self.max_context_window]
                 
                 # Format the conversation history with emphasis on image descriptions
                 formatted_history = []
-                for msg in recent_history:
+                for msg, score in relevant_messages:
                     if 'image_prompt' in msg.content.lower():
-                        # Extract and format image descriptions
-                        formatted_history.append(f"Previous Image Description:\n{msg.content}")
+                        formatted_history.append(f"Previous Image Description (Relevance: {score:.2f}):\n{msg.content}")
                     else:
-                        formatted_history.append(f"{msg.type}: {msg.content}")
+                        formatted_history.append(f"{msg.type} (Relevance: {score:.2f}): {msg.content}")
                 
                 context = "\n\n".join(formatted_history)
                 logger.info(f"Formatted conversation context with {len(formatted_history)} relevant entries")
+                logger.debug(f"Context relevance scores: {[score for _, score in relevant_messages]}")
                 return context
                 
             logger.info("No conversation history found")
@@ -128,24 +154,47 @@ class LangChainPromptManager:
             
         except Exception as e:
             logger.error(f"Error getting conversation context: {str(e)}")
+            logger.debug(f"Stack trace: {e.__traceback__}")
             return ""
 
     def _cleanup_completed_conversations(self):
-        """Clean up completed conversations to prevent memory overflow"""
+        """Clean up completed conversations to prevent memory overflow with timestamp handling"""
         try:
             messages = self.memory.load_memory_variables({})
-            if "chat_history" in messages and len(messages["chat_history"]) > self.max_context_window * 2:
-                # Keep only the most recent conversations
-                recent_messages = messages["chat_history"][-self.max_context_window:]
+            current_time = time.time()
+            
+            if "chat_history" in messages and messages["chat_history"]:
+                # Filter messages based on timestamp and relevance
+                recent_messages = []
+                overflow_threshold = self.max_context_window * 2
+                
+                for msg in messages["chat_history"]:
+                    # Get message timestamp or set current time if not available
+                    msg_time = getattr(msg, 'timestamp', current_time)
+                    time_diff = current_time - msg_time
+                    
+                    # Keep messages from last hour or if they contain important context
+                    if time_diff < 3600 or 'image_prompt' in msg.content.lower():
+                        recent_messages.append(msg)
+                
+                # If still over threshold, keep only most recent ones
+                if len(recent_messages) > overflow_threshold:
+                    recent_messages = recent_messages[-self.max_context_window:]
+                
+                # Clear and rebuild memory with timestamped messages
                 self.memory.clear()
                 for msg in recent_messages:
                     self.memory.save_context(
                         {"input": msg.content if msg.type == "human" else ""},
                         {"output": msg.content if msg.type == "ai" else ""}
                     )
-                logger.info(f"Cleaned up conversation history, kept {len(recent_messages)} recent messages")
+                
+                logger.info(f"Cleaned up conversation history: kept {len(recent_messages)} relevant messages")
+                logger.debug(f"Memory usage after cleanup: {len(recent_messages)} messages in context")
+                
         except Exception as e:
             logger.error(f"Error cleaning up conversations: {str(e)}")
+            logger.debug(f"Stack trace: {e.__traceback__}")
 
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with conversation memory"""
