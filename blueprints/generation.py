@@ -46,12 +46,12 @@ def regenerate_image():
         index = data.get('index')
         style = data.get('style', 'realistic')
         
-        # Generate image prompt using Gemini
+        # Generate chain of image prompts using Gemini
         story_context = session.get('story_data', {}).get('story_context', '')
-        image_prompt = prompt_generator.generate_image_prompt(story_context, text)
+        image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
         
-        # Generate new image with the Gemini-generated prompt
-        result = image_service.generate_image(image_prompt, style=style)
+        # Generate new image with chained prompts
+        result = image_service.generate_image_chain(image_prompts, style=style)
         if not result:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -153,13 +153,13 @@ def generate_cards():
                 yield send_json_message('error', 'Missing required parameters')
                 return
             
-            # Generate image prompt using Gemini
-            yield send_json_message('log', 'Generating image prompt...', step='prompt')
-            image_prompt = prompt_generator.generate_image_prompt(story_context, text)
+            # Generate chain of image prompts using Gemini
+            yield send_json_message('log', 'Generating image prompts...', step='prompt')
+            image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
             
-            # Generate image with the Gemini-generated prompt
-            yield send_json_message('log', 'Generating image...', step='image')
-            result = image_service.generate_image(image_prompt, style=style)
+            # Generate image with chained prompts
+            yield send_json_message('log', 'Generating image through multiple steps...', step='image')
+            result = image_service.generate_image_chain(image_prompts, style=style)
             
             if not result:
                 yield send_json_message('error', 'Failed to generate image')

@@ -1,3 +1,9 @@
+from typing import Dict, List, Optional
+import time
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
 from collections import deque
 from together import Together
@@ -62,4 +68,35 @@ class ImageGenerator:
             
         except Exception as e:
             print(f"Error generating image: {str(e)}")
+            return None
+
+
+    def generate_image_chain(self, prompts: List[str], style: str = 'realistic') -> Optional[Dict[str, str]]:
+        """Generate image through multiple refinement steps"""
+        try:
+            final_image = None
+            final_prompt = None
+            
+            for i, prompt in enumerate(prompts):
+                # Generate image for current step
+                step_result = self.generate_image(prompt, style)
+                
+                if isinstance(step_result, dict):
+                    final_image = str(step_result.get('url', ''))
+                    final_prompt = str(step_result.get('prompt', ''))
+                    
+                    # If this isn't the final step, allow some time for the model to process
+                    if i < len(prompts) - 1:
+                        time.sleep(2)  # Brief pause between steps
+                
+            if final_image and final_prompt:
+                return {
+                    'url': final_image,
+                    'prompt': final_prompt,
+                    'steps_completed': str(len(prompts))
+                }
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error in generate_image_chain: {str(e)}")
             return None

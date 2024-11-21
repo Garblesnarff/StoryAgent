@@ -362,23 +362,52 @@ Technical Requirements:
             if not all([parsed_url.scheme, parsed_url.path]):
                 logger.warning(f"Invalid {media_type} URL format: {url}")
                 return False
-                
-            # Validate file extension based on media type
-            valid_extensions = {
-                'image': ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
-                'audio': ['.wav', '.mp3', '.ogg']
-            }
-            
-            file_ext = os.path.splitext(parsed_url.path)[1].lower()
-            if file_ext not in valid_extensions.get(media_type, []):
-                logger.warning(f"Invalid {media_type} file extension: {file_ext}")
-                return False
-                
             return True
-            
         except Exception as e:
             logger.error(f"Error validating {media_type} URL: {str(e)}")
             return False
+
+    def _process_media_urls(self, text: str) -> Dict[str, List[str]]:
+        """Extract and validate media URLs from text"""
+        image_pattern = r'(https?://[^\s<>"]+?\.(?:jpg|jpeg|gif|png|webp))'
+        audio_pattern = r'(https?://[^\s<>"]+?\.(?:mp3|wav|ogg|m4a))'
+        
+        image_urls = re.findall(image_pattern, text, re.I)
+        audio_urls = re.findall(audio_pattern, text, re.I)
+        
+        return {
+            'image_urls': [url for url in image_urls if self.validate_media_url(url, 'image')],
+            'audio_urls': [url for url in audio_urls if self.validate_media_url(url, 'audio')]
+        }
+
+    def chain_prompts(self, story_context: str, paragraph_text: str, num_steps: int = 3) -> List[str]:
+        """Generate a chain of prompts for multi-step image generation"""
+        try:
+            prompts = []
+            current_context = story_context
+            
+            for step in range(num_steps):
+                # Generate prompt with current context
+                step_prompt = self.format_image_prompt(current_context, paragraph_text)
+                prompts.append(step_prompt)
+                
+                # Update context with the generated prompt for next iteration
+                current_context = f"{current_context}\nPrevious Step Result: {step_prompt}"
+                
+                # Add step-specific guidance
+                if step == 0:
+                    current_context += "\nFocus on refining composition and basic elements"
+                elif step == 1:
+                    current_context += "\nEnhance lighting and atmospheric details"
+                else:
+                    current_context += "\nFinalize details and polish overall appearance"
+                    
+            return prompts
+            
+        except Exception as e:
+            logger.error(f"Error in chain_prompts: {str(e)}")
+            return [paragraph_text]  # Fallback to basic prompt
+                
 
     def _process_media_urls(self, response: str) -> Dict:
         """Extract and validate media URLs from response"""
