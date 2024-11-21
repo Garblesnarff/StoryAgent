@@ -93,6 +93,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
             ));
 
+            // Build context from previous paragraphs and their image prompts
+            const storyContext = story.paragraphs
+                .slice(0, index)
+                .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
+                .join('\n\n');
+
             const response = await fetch('/story/regenerate_image', {
                 method: 'POST',
                 headers: {
@@ -101,6 +107,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 body: JSON.stringify({
                     index: index,
                     text: story.paragraphs[index].text.trim(),
+                    story_context: storyContext,
                     style: selectedStyle
                 })
             });
@@ -178,8 +185,10 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
             ));
 
+            // Build context including previous image prompts
             const storyContext = story.paragraphs
-                .map(p => p.text)
+                .slice(0, index)
+                .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
                 .join('\n\n');
 
             const response = await fetch('/story/generate_cards', {
