@@ -268,11 +268,11 @@
 
 .image-prompt-overlay {
     position: absolute;
-    top: 20%;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     color: white;
     padding: 15px 15px 60px 15px;
     overflow-y: scroll;
@@ -283,7 +283,14 @@
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
     z-index: 10;
-    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.image-container:hover .image-prompt-overlay {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Copy button styles */

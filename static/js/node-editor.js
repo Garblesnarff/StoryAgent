@@ -12,14 +12,26 @@ import 'reactflow/dist/style.css';
 
 const ParagraphNode = React.memo(({ data }) => {
     const handleCopyPrompt = useCallback((e) => {
+        e.preventDefault();
         e.stopPropagation();
+        
         if (data.imagePrompt) {
             navigator.clipboard.writeText(data.imagePrompt)
                 .then(() => {
-                    // Could add a toast notification here
-                    console.log('Prompt copied to clipboard');
+                    const button = e.currentTarget;
+                    button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                    setTimeout(() => {
+                        button.innerHTML = '<i class="bi bi-clipboard"></i> Copy Prompt';
+                    }, 2000);
                 })
-                .catch(err => console.error('Failed to copy prompt:', err));
+                .catch(err => {
+                    console.error('Failed to copy prompt:', err);
+                    const button = e.currentTarget;
+                    button.innerHTML = '<i class="bi bi-x"></i> Failed to copy';
+                    setTimeout(() => {
+                        button.innerHTML = '<i class="bi bi-clipboard"></i> Copy Prompt';
+                    }, 2000);
+                });
         }
     }, [data.imagePrompt]);
 
