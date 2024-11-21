@@ -198,6 +198,12 @@ class LangChainPromptManager:
 
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with conversation memory"""
+        start_time = time.time()
+        success = False
+        cache_hit = False
+        error_msg = None
+        prompt_length = len(story_context) + len(paragraph_text)
+        
         try:
             prompt_key = f"{story_context}:{paragraph_text}"
             
@@ -207,6 +213,7 @@ class LangChainPromptManager:
                     cached_result = self.cache.lookup(prompt_key, self.llm_string)
                     if cached_result:
                         logger.info("Cache hit for image prompt")
+                        cache_hit = True
                         # Store the cached result in conversation memory
                         self.memory.save_context(
                             {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
@@ -215,11 +222,22 @@ class LangChainPromptManager:
                         # Validate cached media URLs
                         media_urls = self._process_media_urls(cached_result)
                         if media_urls['image_urls'] or media_urls['audio_urls']:
+                            success = True
+                            self._record_metrics(
+                                prompt_type='image',
+                                generation_time=time.time() - start_time,
+                                num_steps=1,
+                                success=True,
+                                cache_hit=True,
+                                prompt_length=prompt_length
+                            )
                             return cached_result
                         else:
                             logger.warning("Cached result contains invalid media URLs")
+                            error_msg = "Invalid media URLs in cached result"
                 except Exception as cache_error:
                     logger.warning(f"Cache lookup failed: {str(cache_error)}")
+                    error_msg = f"Cache lookup error: {str(cache_error)}"
             
             # Get conversation history
             conversation_context = self._get_conversation_context()
@@ -272,11 +290,24 @@ class LangChainPromptManager:
                 except Exception as cache_error:
                     logger.warning(f"Cache update failed: {str(cache_error)}")
             
+            success = True
             return validated_prompt
             
         except Exception as e:
-            logger.error(f"Error in format_image_prompt: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Error in format_image_prompt: {error_msg}")
             return self._validate_prompt(paragraph_text)
+        finally:
+            generation_time = time.time() - start_time
+            self._record_metrics(
+                prompt_type='image',
+                generation_time=generation_time,
+                num_steps=1,
+                success=success,
+                cache_hit=cache_hit,
+                prompt_length=prompt_length,
+                error_msg=error_msg
+            )
 
     def _init_image_prompt_template(self):
         """Initialize the image prompt template with enhanced instructions and conversation history"""
@@ -380,8 +411,34 @@ Technical Requirements:
             'audio_urls': [url for url in audio_urls if self.validate_media_url(url, 'audio')]
         }
 
+    def _record_metrics(self, prompt_type: str, generation_time: float, num_steps: int, 
+                       success: bool, cache_hit: bool, prompt_length: int, error_msg: str = None):
+        """Record prompt generation metrics to database"""
+        try:
+            with db.session.begin():
+                db.session.execute("""
+                    INSERT INTO prompt_metrics 
+                    (prompt_type, generation_time, num_refinement_steps, success, cache_hit, prompt_length, error_message)
+                    VALUES (:type, :time, :steps, :success, :cache_hit, :length, :error)
+                """, {
+                    'type': prompt_type,
+                    'time': generation_time,
+                    'steps': num_steps,
+                    'success': success,
+                    'cache_hit': cache_hit,
+                    'length': prompt_length,
+                    'error': error_msg
+                })
+        except Exception as e:
+            logger.error(f"Error recording metrics: {str(e)}")
+
     def chain_prompts(self, story_context: str, paragraph_text: str, num_steps: int = 3) -> List[str]:
         """Generate a chain of prompts for multi-step image generation"""
+        start_time = time.time()
+        success = False
+        cache_hit = False
+        error_msg = None
+        
         try:
             prompts = []
             current_context = story_context
@@ -402,11 +459,27 @@ Technical Requirements:
                 else:
                     current_context += "\nFinalize details and polish overall appearance"
                     
+            success = True
             return prompts
             
         except Exception as e:
-            logger.error(f"Error in chain_prompts: {str(e)}")
-            return [paragraph_text]  # Fallback to basic prompt
+            error_msg = str(e)
+            logger.error(f"Error in chain_prompts: {error_msg}")
+            prompts = [paragraph_text]  # Fallback to basic prompt
+            success = False
+            return prompts
+        finally:
+            generation_time = time.time() - start_time
+            total_prompt_length = sum(len(p) for p in prompts)
+            self._record_metrics(
+                prompt_type='chain',
+                generation_time=generation_time,
+                num_steps=len(prompts),
+                success=success,
+                cache_hit=cache_hit,
+                prompt_length=total_prompt_length,
+                error_msg=error_msg
+            )
                 
 
     def _process_media_urls(self, response: str) -> Dict:
