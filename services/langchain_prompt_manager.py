@@ -6,6 +6,9 @@ from langchain_community.cache import SQLAlchemyCache
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferMemory
 from sqlalchemy import create_engine
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
 import time
 from typing import Dict, List, Optional
@@ -198,11 +201,6 @@ class LangChainPromptManager:
 
     def format_image_prompt(self, story_context: str, paragraph_text: str) -> str:
         """Format an image generation prompt using the template with conversation memory"""
-        start_time = time.time()
-        success = False
-        cache_hit = False
-        error_msg = None
-        prompt_length = len(story_context) + len(paragraph_text)
         
         try:
             prompt_key = f"{story_context}:{paragraph_text}"
@@ -213,7 +211,6 @@ class LangChainPromptManager:
                     cached_result = self.cache.lookup(prompt_key, self.llm_string)
                     if cached_result:
                         logger.info("Cache hit for image prompt")
-                        cache_hit = True
                         # Store the cached result in conversation memory
                         self.memory.save_context(
                             {"input": f"Story Context: {story_context}\nParagraph: {paragraph_text}"},
@@ -222,15 +219,6 @@ class LangChainPromptManager:
                         # Validate cached media URLs
                         media_urls = self._process_media_urls(cached_result)
                         if media_urls['image_urls'] or media_urls['audio_urls']:
-                            success = True
-                            self._record_metrics(
-                                prompt_type='image',
-                                generation_time=time.time() - start_time,
-                                num_steps=1,
-                                success=True,
-                                cache_hit=True,
-                                prompt_length=prompt_length
-                            )
                             return cached_result
                         else:
                             logger.warning("Cached result contains invalid media URLs")
@@ -290,24 +278,11 @@ class LangChainPromptManager:
                 except Exception as cache_error:
                     logger.warning(f"Cache update failed: {str(cache_error)}")
             
-            success = True
             return validated_prompt
             
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error in format_image_prompt: {error_msg}")
+            logger.error(f"Error in format_image_prompt: {str(e)}")
             return self._validate_prompt(paragraph_text)
-        finally:
-            generation_time = time.time() - start_time
-            self._record_metrics(
-                prompt_type='image',
-                generation_time=generation_time,
-                num_steps=1,
-                success=success,
-                cache_hit=cache_hit,
-                prompt_length=prompt_length,
-                error_msg=error_msg
-            )
 
     def _init_image_prompt_template(self):
         """Initialize the image prompt template with enhanced instructions and conversation history"""
@@ -346,6 +321,88 @@ Based on the above context and maintaining visual consistency, generate a detail
             suffix="Generate a detailed image prompt following these format instructions:\n{format_instructions}",
             input_variables=["story_context", "paragraph_text", "conversation_history", "format_instructions"]
         )
+    def _process_media_urls(self, text: str) -> dict:
+        """Process and validate media URLs with improved validation"""
+        try:
+            image_urls = []
+            audio_urls = []
+            
+            # Extract URLs using regex
+            url_pattern = r'https?://[^\s<>"]+|www\.[^\s<>"]+|data:image/[^\s<>"]+|/static/[^\s<>"]+|/audio/[^\s<>"]+|/images/[^\s<>"]+|/uploads/[^\s<>"]+'
+            urls = re.findall(url_pattern, text)
+            
+            for url in urls:
+                try:
+                    # Add missing scheme if needed
+                    if url.startswith('www.'):
+                        url = 'http://' + url
+                        
+                    # Parse URL
+                    parsed = urlparse(url)
+                    
+                    # Validate URL structure
+                    if not parsed.scheme and not url.startswith('/'):
+                        logger.warning(f"Invalid URL structure: {url}")
+                        continue
+                        
+                    # Categorize URLs
+                    if any(ext in url.lower() for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', 'data:image']):
+                        image_urls.append(url)
+                        logger.debug(f"Valid image URL found: {url}")
+                    elif any(ext in url.lower() for ext in ['.mp3', '.wav', '.ogg', '.m4a']):
+                        audio_urls.append(url)
+                        logger.debug(f"Valid audio URL found: {url}")
+                    else:
+                        logger.info(f"URL with unknown media type: {url}")
+                        
+                except Exception as url_error:
+                    logger.warning(f"Error processing URL {url}: {str(url_error)}")
+                    continue
+                    
+            return {
+                'image_urls': image_urls,
+                'audio_urls': audio_urls
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in _process_media_urls: {str(e)}")
+            return {'image_urls': [], 'audio_urls': []}
+    def _record_metrics(self, prompt_type: str, generation_time: float, num_steps: int,
+                       success: bool, cache_hit: bool, prompt_length: int, error_msg: str = None):
+        """Record prompt generation metrics with proper error handling"""
+        try:
+            # Validate inputs
+            if prompt_length <= 0:
+                logger.warning("Invalid prompt length detected")
+                prompt_length = 1
+                
+            if generation_time < 0:
+                logger.warning("Invalid generation time detected")
+                generation_time = 0
+                
+            # Create metric record
+            metric = PromptMetric(
+                prompt_type=prompt_type,
+                generation_time=generation_time,
+                num_refinement_steps=num_steps,
+                success=success,
+                cache_hit=cache_hit,
+                prompt_length=prompt_length,
+                error_message=error_msg
+            )
+            
+            # Add and commit with error handling
+            try:
+                db.session.add(metric)
+                db.session.commit()
+                logger.info(f"Successfully recorded metrics for {prompt_type} prompt")
+            except Exception as db_error:
+                db.session.rollback()
+                logger.error(f"Database error while recording metrics: {str(db_error)}")
+                
+        except Exception as e:
+            logger.error(f"Error recording metrics: {str(e)}")
+            # Don't raise the exception to prevent affecting the main flow
 
     def _validate_prompt(self, response: str) -> str:
         """Validate and format the generated prompt"""
@@ -411,24 +468,39 @@ Technical Requirements:
             'audio_urls': [url for url in audio_urls if self.validate_media_url(url, 'audio')]
         }
 
-    def _record_metrics(self, prompt_type: str, generation_time: float, num_steps: int, 
+    def _record_metrics(self, prompt_type: str, generation_time: float, num_steps: int,
                        success: bool, cache_hit: bool, prompt_length: int, error_msg: str = None):
-        """Record prompt generation metrics to database"""
+        """Record prompt generation metrics with proper error handling"""
         try:
-            with db.session.begin():
-                db.session.execute("""
-                    INSERT INTO prompt_metrics 
-                    (prompt_type, generation_time, num_refinement_steps, success, cache_hit, prompt_length, error_message)
-                    VALUES (:type, :time, :steps, :success, :cache_hit, :length, :error)
-                """, {
-                    'type': prompt_type,
-                    'time': generation_time,
-                    'steps': num_steps,
-                    'success': success,
-                    'cache_hit': cache_hit,
-                    'length': prompt_length,
-                    'error': error_msg
-                })
+            # Validate inputs
+            if prompt_length <= 0:
+                logger.warning("Invalid prompt length detected")
+                prompt_length = 1
+                
+            if generation_time < 0:
+                logger.warning("Invalid generation time detected")
+                generation_time = 0
+                
+            # Create metric record
+            metric = PromptMetric(
+                prompt_type=prompt_type,
+                generation_time=generation_time,
+                num_refinement_steps=num_steps,
+                success=success,
+                cache_hit=cache_hit,
+                prompt_length=prompt_length,
+                error_message=error_msg
+            )
+            
+            # Add and commit with error handling
+            try:
+                db.session.add(metric)
+                db.session.commit()
+                logger.info(f"Successfully recorded metrics for {prompt_type} prompt")
+            except Exception as db_error:
+                db.session.rollback()
+                logger.error(f"Database error while recording metrics: {str(db_error)}")
+                
         except Exception as e:
             logger.error(f"Error recording metrics: {str(e)}")
 
