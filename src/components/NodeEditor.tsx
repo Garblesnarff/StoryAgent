@@ -30,16 +30,23 @@ interface ParagraphData {
 
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
     return (
-        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
-            <Handle type="target" position={Position.Left} />
-            <div className="node-header">Paragraph {data.index + 1}</div>
-            <div className="node-content">{data.text}</div>
-            <div className="node-controls">
+        <div className="bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border">
+            <Handle type="target" position={Position.Left} className="!bg-primary" />
+            <div className="text-lg font-bold mb-2 text-primary">Paragraph {data.index + 1}</div>
+            <div className="text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto">
+                {data.text}
+            </div>
+            <div className="space-y-4">
                 <button 
-                    className="btn btn-primary btn-sm w-100 mb-2" 
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md transition-colors"
                     onClick={() => data.onGenerateCard(data.index)}
                     disabled={data.isGenerating}>
-                    {data.isGenerating ? 'Generating...' : 'Generate Card'}
+                    {data.isGenerating ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                            <span>Generating...</span>
+                        </div>
+                    ) : 'Generate Card'}
                 </button>
                 
                 {data.imageUrl && (
@@ -122,27 +129,38 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [isLoading, setIsLoading] = useState(!initialStory);
 
     useEffect(() => {
-        const fetchStoryData = async () => {
-            if (!story) {
-                try {
-                    const response = await fetch('/api/story/data');
-                    const data = await response.json();
-                    if (data.success) {
-                        console.log('Fetched story data:', data.story);
-                        setStory(data.story);
-                    } else {
-                        console.error('Failed to fetch story data:', data.error);
-                    }
-                } catch (error) {
-                    console.error('Error fetching story data:', error);
-                } finally {
-                    setIsLoading(false);
-                }
+        if (!story?.paragraphs) {
+            setIsLoading(false);
+            return;
+        }
+
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            position: { 
+                x: (index % 3) * 450 + 50, // Arrange in 3 columns
+                y: Math.floor(index / 3) * 400 + 50 // More vertical spacing
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
             }
-        };
-        
-        fetchStoryData();
-    }, [story]);
+        }));
+
+        setNodes(paragraphNodes);
+        setIsLoading(false);
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio]);
 
     // Rest of the component implementation remains the same, just with proper TypeScript types
     // ...
