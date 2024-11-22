@@ -45399,6 +45399,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_ui_progress__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../components/ui/progress */ "./src/components/ui/progress.tsx");
 /* harmony import */ var _components_ui_alert__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../components/ui/alert */ "./src/components/ui/alert.tsx");
 /* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! framer-motion */ "./node_modules/framer-motion/dist/es/render/components/motion/proxy.mjs");
+var __assign = (undefined && undefined.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -45453,18 +45464,18 @@ var BookUpload = function () {
         if (!selectedFile)
             return;
         var fileType = (_b = selectedFile.name.split('.').pop()) === null || _b === void 0 ? void 0 : _b.toLowerCase();
-        if (!fileType || !['pdf', 'epub', 'txt'].includes(fileType)) {
-            setError('Please select a valid file type (PDF, EPUB, or TXT)');
+        if (!fileType || !['pdf', 'epub', 'txt', 'html'].includes(fileType)) {
+            setError('Please select a valid file type (PDF, EPUB, TXT, or HTML)');
             return;
         }
         setFile(selectedFile);
         setError(null);
     };
     var handleUpload = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var formData, response, reader, contentLength, receivedLength, _a, done, value, data_1, err_1;
-        var _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var formData, fileType, contentTypeMap, response, reader, contentLength, receivedLength, _a, done, value, data_1, err_1;
+        var _b, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
                     if (!file) {
                         setError('Please select a file first');
@@ -45475,27 +45486,37 @@ var BookUpload = function () {
                     setError(null);
                     formData = new FormData();
                     formData.append('file', file);
-                    _c.label = 1;
+                    fileType = (_b = file.name.split('.').pop()) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+                    contentTypeMap = {
+                        'pdf': 'application/pdf',
+                        'epub': 'application/epub+zip',
+                        'txt': 'text/plain',
+                        'html': 'text/html'
+                    };
+                    _d.label = 1;
                 case 1:
-                    _c.trys.push([1, 7, 8, 9]);
+                    _d.trys.push([1, 7, 8, 9]);
                     return [4 /*yield*/, fetch('/story/upload', {
                             method: 'POST',
                             body: formData,
+                            headers: __assign({}, (fileType && contentTypeMap[fileType]
+                                ? { 'Content-Type': contentTypeMap[fileType] }
+                                : {}))
                         })];
                 case 2:
-                    response = _c.sent();
+                    response = _d.sent();
                     if (!response.ok) {
                         throw new Error("Upload failed: ".concat(response.statusText));
                     }
-                    reader = (_b = response.body) === null || _b === void 0 ? void 0 : _b.getReader();
+                    reader = (_c = response.body) === null || _c === void 0 ? void 0 : _c.getReader();
                     contentLength = +response.headers.get('Content-Length');
                     receivedLength = 0;
-                    _c.label = 3;
+                    _d.label = 3;
                 case 3:
                     if (!reader) return [3 /*break*/, 5];
                     return [4 /*yield*/, reader.read()];
                 case 4:
-                    _a = _c.sent(), done = _a.done, value = _a.value;
+                    _a = _d.sent(), done = _a.done, value = _a.value;
                     if (done)
                         return [3 /*break*/, 5];
                     receivedLength += value.length;
@@ -45503,7 +45524,7 @@ var BookUpload = function () {
                     return [3 /*break*/, 3];
                 case 5: return [4 /*yield*/, response.json()];
                 case 6:
-                    data_1 = _c.sent();
+                    data_1 = _d.sent();
                     if (data_1.status === 'complete') {
                         setProgress(100);
                         setTimeout(function () { return navigate(data_1.redirect); }, 500);
@@ -45513,7 +45534,7 @@ var BookUpload = function () {
                     }
                     return [3 /*break*/, 9];
                 case 7:
-                    err_1 = _c.sent();
+                    err_1 = _d.sent();
                     setError(err_1 instanceof Error ? err_1.message : 'An error occurred during upload');
                     return [3 /*break*/, 9];
                 case 8:
@@ -45536,7 +45557,7 @@ var BookUpload = function () {
                             if (droppedFile)
                                 setFile(droppedFile);
                         } },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("input", { type: "file", id: "book-file", className: "hidden", accept: ".pdf,.epub,.txt", onChange: handleFileSelect }),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("input", { type: "file", id: "book-file", className: "hidden", accept: ".pdf,.epub,.txt,.html", onChange: handleFileSelect }),
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("label", { htmlFor: "book-file" },
                             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4" },
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center" },
@@ -45548,7 +45569,7 @@ var BookUpload = function () {
                                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", className: "mb-2" }, file ? 'Change File' : 'Choose File'),
                                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "or drag and drop your file here")),
                                 file && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm font-medium text-primary" }, file.name)),
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "Supported formats: PDF, EPUB, TXT")))),
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "Supported formats: PDF, EPUB, TXT, HTML")))),
                     error && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.Alert, { open: !!error, onOpenChange: function () { return setError(null); } },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertContent, null,
                             react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertHeader, null,

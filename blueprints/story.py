@@ -21,7 +21,7 @@ audio_service = HumeAudioGenerator()
 book_processor = BookProcessor()
 regeneration_service = RegenerationService(image_service, audio_service)
 
-ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html'}
+ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html', 'txt'}
 UPLOAD_FOLDER = 'uploads'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -40,6 +40,13 @@ def upload_file():
         
     if file and allowed_file(file.filename):
         try:
+            # Secure the filename and save the file
+            if not file.filename:
+                return jsonify({'error': 'Invalid filename'}), 400
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(file_path)
+            
             # Process the file using BookProcessor service
             result = book_processor.process_file(file)
             
