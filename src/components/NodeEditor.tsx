@@ -113,14 +113,47 @@ interface NodeEditorProps {
     onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
 }
 
-const NodeEditor: React.FC<NodeEditorProps> = ({ story, onStyleUpdate }) => {
+const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
+    const [story, setStory] = useState(initialStory);
+    const [isLoading, setIsLoading] = useState(!initialStory);
+
+    useEffect(() => {
+        const fetchStoryData = async () => {
+            if (!story) {
+                try {
+                    const response = await fetch('/api/story/data');
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('Fetched story data:', data.story);
+                        setStory(data.story);
+                    } else {
+                        console.error('Failed to fetch story data:', data.error);
+                    }
+                } catch (error) {
+                    console.error('Error fetching story data:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        
+        fetchStoryData();
+    }, [story]);
 
     // Rest of the component implementation remains the same, just with proper TypeScript types
     // ...
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96">Loading story data...</div>;
+    }
+
+    if (!story?.paragraphs?.length) {
+        return <div className="flex items-center justify-center h-96">No story data available</div>;
+    }
 
     return (
         <>

@@ -50,7 +50,7 @@ const StoryGeneration: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        navigate('/story/edit');
+        navigate(data.redirect);
       } else {
         throw new Error(data.error || 'Failed to generate story');
       }

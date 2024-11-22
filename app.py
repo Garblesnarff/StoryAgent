@@ -110,7 +110,7 @@ def generate_story():
         session.modified = True
         
         logger.info("Story generation successful, redirecting to editor")
-        return jsonify({'success': True, 'redirect': '/editor'})
+        return jsonify({'success': True, 'redirect': '/story/edit'})
         
     except Exception as e:
         logger.error(f"Error generating story: {str(e)}")
