@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { Button } from './ui/button';
+import { Breadcrumb } from './ui/breadcrumb';
 
 const Layout: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const Layout: React.FC = () => {
         </nav>
       </header>
       <main className="container mx-auto px-4 py-8 relative">
+        <Breadcrumb />
         <Outlet />
       </main>
     </div>
