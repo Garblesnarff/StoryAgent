@@ -2,13 +2,32 @@ import groq
 import os
 import json
 import re
-from .langchain_prompt_manager import LangChainPromptManager
+import logging
+import time
+from database import db
+from models import PromptMetric
+
+logger = logging.getLogger(__name__)
 
 class TextGenerator:
+    def _record_metrics(self, prompt_type, generation_time, success, prompt_length=0, error_msg=None):
+        """Record prompt generation metrics"""
+        try:
+            metric = PromptMetric(
+                prompt_type=prompt_type,
+                generation_time=generation_time,
+                num_refinement_steps=1,  # Text generation is single-step
+                success=success,
+                prompt_length=prompt_length,
+                error_message=error_msg
+            )
+            db.session.add(metric)
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"Error recording metrics: {str(e)}")
     def __init__(self):
         # Initialize Groq client
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
-        self.prompt_manager = LangChainPromptManager()
     
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
@@ -39,15 +58,22 @@ class TextGenerator:
         return not bool(re.search(marker_pattern, text))
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
+        start_time = time.time()
+        success = False
+        error_msg = None
+        prompt_length = len(prompt) + len(genre) + len(mood) + len(target_audience)
+        
         try:
-            # Use LangChain prompt manager to format the prompt
-            formatted_prompt = self.prompt_manager.format_story_prompt(
-                genre=genre,
-                mood=mood,
-                target_audience=target_audience,
-                prompt=prompt,
-                paragraphs=paragraphs
-            )
+            # Format the story prompt directly
+            formatted_prompt = f"""
+            Write a {genre} story with a {mood} mood targeting {target_audience}.
+            The story should be based on the following prompt:
+            {prompt}
+            
+            Please write {paragraphs} well-structured paragraphs.
+            Each paragraph should advance the story while maintaining consistent tone and pacing.
+            Focus on creating vivid imagery and engaging narrative flow.
+            """
             
             # Generate story text with improved prompt
             response = self.client.chat.completions.create(
@@ -92,8 +118,20 @@ class TextGenerator:
                     if cleaned:
                         story_paragraphs.append(cleaned)
                     
+            success = True
             return story_paragraphs[:paragraphs]
             
         except Exception as e:
-            print(f"Error generating story: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Error generating story: {error_msg}")
             return None
+            
+        finally:
+            generation_time = time.time() - start_time
+            self._record_metrics(
+                prompt_type='story',
+                generation_time=generation_time,
+                success=success,
+                prompt_length=prompt_length,
+                error_msg=error_msg
+            )
