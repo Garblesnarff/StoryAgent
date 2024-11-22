@@ -1,23 +1,35 @@
 import React from 'react';
 import './styles/globals.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { 
+  createBrowserRouter, 
+  RouterProvider,
+  createRoutesFromElements,
+  Route
+} from 'react-router-dom';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import StoryGeneration from './pages/StoryGeneration';
 import BookUpload from './pages/BookUpload';
+import NodeEditor from './components/NodeEditor';
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<Layout />}>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/create-story" element={<StoryGeneration />} />
+      <Route path="/upload-book" element={<BookUpload />} />
+      <Route path="/story/edit" element={<NodeEditor />} />
+    </Route>
+  ),
+  {
+    future: {
+      v7_startTransition: true,
+    },
+  }
+);
 
 function App() {
-  return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/create-story" element={<StoryGeneration />} />
-          <Route path="/upload-book" element={<BookUpload />} />
-        </Routes>
-      </Layout>
-    </Router>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
