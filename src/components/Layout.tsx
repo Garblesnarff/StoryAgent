@@ -20,7 +20,7 @@ const Layout: React.FC = () => {
           </div>
         </nav>
       </header>
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 relative">
         <Outlet />
       </main>
     </div>
