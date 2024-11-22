@@ -40,16 +40,18 @@ const BookUpload: React.FC = () => {
     formData.append('file', file);
 
     try {
+      // Remove any additional headers - let browser set correct Content-Type
       const response = await fetch('/story/upload', {
         method: 'POST',
         body: formData
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error(data.error || 'Upload failed');
       }
 
-      const data = await response.json();
       if (data.status === 'complete') {
         setProgress(100);
         setTimeout(() => {
@@ -60,7 +62,8 @@ const BookUpload: React.FC = () => {
         throw new Error(data.error || 'Upload failed');
       }
     } catch (err) {
-      setError('Failed to upload file');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload file';
+      setError(errorMessage);
       setProgress(0);
       setUploading(false);
     }
