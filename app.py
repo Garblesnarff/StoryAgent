@@ -160,5 +160,23 @@ def check_story_data():
         flash('Please generate a story first', 'warning')
         return redirect(url_for('index'))
 
+@app.route('/api/story/data')
+def get_story_data():
+    if 'story_data' not in session:
+        return jsonify({'error': 'No story data found'}), 404
+        
+    temp_id = session['story_data'].get('temp_id')
+    if not temp_id:
+        return jsonify({'error': 'No temp data found'}), 404
+        
+    temp_data = TempBookData.query.get(temp_id)
+    if not temp_data:
+        return jsonify({'error': 'Temp data not found'}), 404
+        
+    return jsonify({
+        'success': True,
+        'story': temp_data.data
+    })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
