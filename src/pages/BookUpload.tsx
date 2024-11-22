@@ -17,8 +17,8 @@ const BookUpload: React.FC = () => {
     if (!selectedFile) return;
 
     const fileType = selectedFile.name.split('.').pop()?.toLowerCase();
-    if (!fileType || !['pdf', 'epub', 'txt'].includes(fileType)) {
-      setError('Please select a valid file type (PDF, EPUB, or TXT)');
+    if (!fileType || !['pdf', 'epub', 'txt', 'html'].includes(fileType)) {
+      setError('Please select a valid file type (PDF, EPUB, TXT, or HTML)');
       return;
     }
 
@@ -109,7 +109,7 @@ const BookUpload: React.FC = () => {
                 type="file"
                 id="book-file"
                 className="hidden"
-                accept=".pdf,.epub,.txt"
+                accept=".pdf,.epub,.txt,.html"
                 onChange={handleFileSelect}
               />
               <label htmlFor="book-file">
@@ -142,7 +142,7 @@ const BookUpload: React.FC = () => {
                     <p className="text-sm font-medium text-primary">{file.name}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Supported formats: PDF, EPUB, TXT
+                    Supported formats: PDF, EPUB, TXT, HTML
                   </p>
                 </div>
               </label>
