@@ -21,7 +21,7 @@ audio_service = HumeAudioGenerator()
 book_processor = BookProcessor()
 regeneration_service = RegenerationService(image_service, audio_service)
 
-ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html', 'txt'}
+ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html'}
 UPLOAD_FOLDER = 'uploads'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -31,39 +31,37 @@ def allowed_file(filename):
 
 @story_bp.route('/story/upload', methods=['POST'])
 def upload_file():
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-            
-        file = request.files['file']
-        if not file or file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-            
-        if not allowed_file(file.filename):
-            return jsonify({'error': f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
-
-        # Process the file directly through the book processor
-        result = book_processor.process_file(file)
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
         
-        if not result or 'temp_id' not in result:
-            return jsonify({'error': 'Failed to process file'}), 500
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+        
+    if file and allowed_file(file.filename):
+        try:
+            # Process the file using BookProcessor service
+            result = book_processor.process_file(file)
             
-        session['story_data'] = {
-            'temp_id': result['temp_id'],
-            'source_file': result.get('source_file', ''),
-            'paragraphs': result.get('paragraphs', [])
-        }
-        
-        return jsonify({
-            'status': 'complete',
-            'message': 'File processed successfully',
-            'progress': 100,
-            'redirect': '/story/edit'
-        })
-        
-    except Exception as e:
-        logger.error(f"Error in upload route: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+            # Store necessary data in session
+            session['story_data'] = {
+                'temp_id': result['temp_id'],
+                'source_file': result['source_file'],
+                'paragraphs': result.get('paragraphs', [])
+            }
+            
+            return jsonify({
+                'status': 'complete',
+                'message': 'Processing complete',
+                'progress': 100,
+                'redirect': '/story/edit'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error processing upload: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+            
+    return jsonify({'error': 'Invalid file type'}), 400
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():

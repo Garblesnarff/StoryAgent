@@ -17,8 +17,8 @@ const BookUpload: React.FC = () => {
     if (!selectedFile) return;
 
     const fileType = selectedFile.name.split('.').pop()?.toLowerCase();
-    if (!fileType || !['pdf', 'epub', 'txt', 'html'].includes(fileType)) {
-      setError('Please select a valid file type (PDF, EPUB, TXT, or HTML)');
+    if (!fileType || !['pdf', 'epub', 'txt'].includes(fileType)) {
+      setError('Please select a valid file type (PDF, EPUB, or TXT)');
       return;
     }
 
@@ -40,31 +40,37 @@ const BookUpload: React.FC = () => {
     formData.append('file', file);
 
     try {
-      // Remove any additional headers - let browser set correct Content-Type
       const response = await fetch('/story/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Upload failed');
+        throw new Error(`Upload failed: ${response.statusText}`);
       }
 
+      const reader = response.body?.getReader();
+      const contentLength = +response.headers.get('Content-Length')!;
+      let receivedLength = 0;
+
+      while(reader) {
+        const {done, value} = await reader.read();
+        if (done) break;
+
+        receivedLength += value.length;
+        setProgress(Math.min((receivedLength / contentLength) * 100, 99));
+      }
+
+      const data = await response.json();
       if (data.status === 'complete') {
         setProgress(100);
-        setTimeout(() => {
-          setUploading(false);
-          navigate(data.redirect);
-        }, 500);
+        setTimeout(() => navigate(data.redirect), 500);
       } else {
         throw new Error(data.error || 'Upload failed');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload file';
-      setError(errorMessage);
-      setProgress(0);
+      setError(err instanceof Error ? err.message : 'An error occurred during upload');
+    } finally {
       setUploading(false);
     }
   };
@@ -103,7 +109,7 @@ const BookUpload: React.FC = () => {
                 type="file"
                 id="book-file"
                 className="hidden"
-                accept=".pdf,.epub,.txt,.html"
+                accept=".pdf,.epub,.txt"
                 onChange={handleFileSelect}
               />
               <label htmlFor="book-file">
@@ -136,7 +142,7 @@ const BookUpload: React.FC = () => {
                     <p className="text-sm font-medium text-primary">{file.name}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Supported formats: PDF, EPUB, TXT, HTML
+                    Supported formats: PDF, EPUB, TXT
                   </p>
                 </div>
               </label>
