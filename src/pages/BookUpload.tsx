@@ -42,36 +42,32 @@ const BookUpload: React.FC = () => {
     try {
       const response = await fetch('/story/upload', {
         method: 'POST',
-        body: formData  // Let the browser set the correct multipart/form-data Content-Type
+        body: formData
       });
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const reader = response.body?.getReader();
-      const contentLength = +response.headers.get('Content-Length')!;
-      let receivedLength = 0;
-
-      while(reader) {
-        const {done, value} = await reader.read();
-        if (done) break;
-
-        receivedLength += value.length;
-        setProgress(Math.min((receivedLength / contentLength) * 100, 99));
-      }
-
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `Upload failed: ${response.statusText}`);
+      }
+
       if (data.status === 'complete') {
         setProgress(100);
-        setTimeout(() => navigate(data.redirect), 500);
+        setTimeout(() => {
+          setUploading(false);
+          navigate(data.redirect);
+        }, 500);
       } else {
         throw new Error(data.error || 'Upload failed');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during upload');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload';
+      setError(errorMessage);
+      setProgress(0);
     } finally {
-      setUploading(false);
+      if (error) {
+        setUploading(false);
+      }
     }
   };
 
