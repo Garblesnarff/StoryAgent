@@ -569,6 +569,9 @@ video {
 .left-10 {
   left: 2.5rem;
 }
+.left-2 {
+  left: 0.5rem;
+}
 .right-10 {
   right: 2.5rem;
 }
@@ -581,9 +584,20 @@ video {
 .z-10 {
   z-index: 10;
 }
+.z-50 {
+  z-index: 50;
+}
+.-mx-1 {
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+}
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
+}
+.my-1 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 .mb-2 {
   margin-bottom: 0.5rem;
@@ -606,6 +620,9 @@ video {
 .inline-flex {
   display: inline-flex;
 }
+.grid {
+  display: grid;
+}
 .hidden {
   display: none;
 }
@@ -615,8 +632,14 @@ video {
 .h-16 {
   height: 4rem;
 }
+.h-3\.5 {
+  height: 0.875rem;
+}
 .h-32 {
   height: 8rem;
+}
+.h-4 {
+  height: 1rem;
 }
 .h-8 {
   height: 2rem;
@@ -624,20 +647,41 @@ video {
 .h-9 {
   height: 2.25rem;
 }
+.h-\[var\(--radix-select-trigger-height\)\] {
+  height: var(--radix-select-trigger-height);
+}
+.h-px {
+  height: 1px;
+}
+.min-h-\[80px\] {
+  min-height: 80px;
+}
 .min-h-\[calc\(100vh-4rem\)\] {
   min-height: calc(100vh - 4rem);
 }
 .min-h-screen {
   min-height: 100vh;
 }
+.w-3\.5 {
+  width: 0.875rem;
+}
 .w-32 {
   width: 8rem;
+}
+.w-4 {
+  width: 1rem;
 }
 .w-9 {
   width: 2.25rem;
 }
 .w-full {
   width: 100%;
+}
+.min-w-\[8rem\] {
+  min-width: 8rem;
+}
+.min-w-\[var\(--radix-select-trigger-width\)\] {
+  min-width: var(--radix-select-trigger-width);
 }
 .max-w-2xl {
   max-width: 42rem;
@@ -657,8 +701,22 @@ video {
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+.cursor-default {
+  cursor: default;
+}
+.select-none {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+.resize-none {
+  resize: none;
+}
 .resize {
   resize: both;
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 .flex-col {
   flex-direction: column;
@@ -683,10 +741,20 @@ video {
   margin-right: calc(1rem * var(--tw-space-x-reverse));
   margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
 }
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
 .space-y-6 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 .overflow-hidden {
   overflow: hidden;
@@ -702,6 +770,9 @@ video {
 }
 .rounded-md {
   border-radius: calc(var(--radius) - 2px);
+}
+.rounded-sm {
+  border-radius: calc(var(--radius) - 4px);
 }
 .border {
   border-width: 1px;
@@ -724,8 +795,14 @@ video {
 .bg-destructive {
   background-color: hsl(var(--destructive));
 }
+.bg-muted {
+  background-color: hsl(var(--muted));
+}
 .bg-pink-500\/10 {
   background-color: rgb(236 72 153 / 0.1);
+}
+.bg-popover {
+  background-color: hsl(var(--popover));
 }
 .bg-primary {
   background-color: hsl(var(--primary));
@@ -774,6 +851,9 @@ video {
 .to-primary\/10 {
   --tw-gradient-to: hsl(var(--primary) / 0.1) var(--tw-gradient-to-position);
 }
+.to-primary\/5 {
+  --tw-gradient-to: hsl(var(--primary) / 0.05) var(--tw-gradient-to-position);
+}
 .to-purple-600 {
   --tw-gradient-to: #9333ea var(--tw-gradient-to-position);
 }
@@ -783,6 +863,9 @@ video {
 .bg-clip-text {
   -webkit-background-clip: text;
           background-clip: text;
+}
+.p-1 {
+  padding: 0.25rem;
 }
 .p-12 {
   padding: 3rem;
@@ -799,6 +882,10 @@ video {
   padding-left: 2rem;
   padding-right: 2rem;
 }
+.py-1\.5 {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
 .py-2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -810,6 +897,12 @@ video {
 .py-8 {
   padding-top: 2rem;
   padding-bottom: 2rem;
+}
+.pl-8 {
+  padding-left: 2rem;
+}
+.pr-2 {
+  padding-right: 0.5rem;
 }
 .text-center {
   text-align: center;
@@ -823,6 +916,10 @@ video {
 .text-3xl {
   font-size: 1.875rem;
   line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
 }
 .text-6xl {
   font-size: 3.75rem;
@@ -850,17 +947,33 @@ video {
 .font-medium {
   font-weight: 500;
 }
+.font-semibold {
+  font-weight: 600;
+}
+.leading-none {
+  line-height: 1;
+}
+.text-destructive {
+  color: hsl(var(--destructive));
+}
 .text-destructive-foreground {
   color: hsl(var(--destructive-foreground));
 }
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
 }
+.text-popover-foreground {
+  color: hsl(var(--popover-foreground));
+}
 .text-primary {
   color: hsl(var(--primary));
 }
 .text-primary-foreground {
   color: hsl(var(--primary-foreground));
+}
+.text-red-500 {
+  --tw-text-opacity: 1;
+  color: rgb(239 68 68 / var(--tw-text-opacity, 1));
 }
 .text-secondary-foreground {
   color: hsl(var(--secondary-foreground));
@@ -874,9 +987,17 @@ video {
 .opacity-20 {
   opacity: 0.2;
 }
+.opacity-50 {
+  opacity: 0.5;
+}
 .shadow {
   --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-md {
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 .shadow-sm {
@@ -884,8 +1005,15 @@ video {
   --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
+.outline-none {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
 .outline {
   outline-style: solid;
+}
+.ring-offset-background {
+  --tw-ring-offset-color: hsl(var(--background));
 }
 .blur-3xl {
   --tw-blur: blur(64px);
@@ -932,6 +1060,25 @@ video {
 .duration-200 {
   animation-duration: 200ms;
 }
+.file\:border-0::file-selector-button {
+  border-width: 0px;
+}
+.file\:bg-transparent::file-selector-button {
+  background-color: transparent;
+}
+.file\:text-sm::file-selector-button {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.file\:font-medium::file-selector-button {
+  font-weight: 500;
+}
+.placeholder\:text-muted-foreground::-moz-placeholder {
+  color: hsl(var(--muted-foreground));
+}
+.placeholder\:text-muted-foreground::placeholder {
+  color: hsl(var(--muted-foreground));
+}
 .hover\:scale-105:hover {
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
@@ -963,6 +1110,27 @@ video {
 .hover\:underline:hover {
   text-decoration-line: underline;
 }
+.focus\:bg-accent:focus {
+  background-color: hsl(var(--accent));
+}
+.focus\:text-accent-foreground:focus {
+  color: hsl(var(--accent-foreground));
+}
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.focus\:ring-ring:focus {
+  --tw-ring-color: hsl(var(--ring));
+}
+.focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px;
+}
 .focus-visible\:outline-none:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
@@ -972,14 +1140,95 @@ video {
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
+.focus-visible\:ring-2:focus-visible {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
 .focus-visible\:ring-ring:focus-visible {
   --tw-ring-color: hsl(var(--ring));
+}
+.focus-visible\:ring-offset-2:focus-visible {
+  --tw-ring-offset-width: 2px;
 }
 .disabled\:pointer-events-none:disabled {
   pointer-events: none;
 }
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed;
+}
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
+}
+.peer:disabled ~ .peer-disabled\:cursor-not-allowed {
+  cursor: not-allowed;
+}
+.peer:disabled ~ .peer-disabled\:opacity-70 {
+  opacity: 0.7;
+}
+.data-\[disabled\]\:pointer-events-none[data-disabled] {
+  pointer-events: none;
+}
+.data-\[side\=bottom\]\:translate-y-1[data-side="bottom"] {
+  --tw-translate-y: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[side\=left\]\:-translate-x-1[data-side="left"] {
+  --tw-translate-x: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[side\=right\]\:translate-x-1[data-side="right"] {
+  --tw-translate-x: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[side\=top\]\:-translate-y-1[data-side="top"] {
+  --tw-translate-y: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[disabled\]\:opacity-50[data-disabled] {
+  opacity: 0.5;
+}
+.data-\[state\=open\]\:animate-in[data-state="open"] {
+  animation-name: enter;
+  animation-duration: 150ms;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-rotate: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+.data-\[state\=closed\]\:animate-out[data-state="closed"] {
+  animation-name: exit;
+  animation-duration: 150ms;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+.data-\[state\=closed\]\:fade-out-0[data-state="closed"] {
+  --tw-exit-opacity: 0;
+}
+.data-\[state\=open\]\:fade-in-0[data-state="open"] {
+  --tw-enter-opacity: 0;
+}
+.data-\[state\=closed\]\:zoom-out-95[data-state="closed"] {
+  --tw-exit-scale: .95;
+}
+.data-\[state\=open\]\:zoom-in-95[data-state="open"] {
+  --tw-enter-scale: .95;
+}
+.data-\[side\=bottom\]\:slide-in-from-top-2[data-side="bottom"] {
+  --tw-enter-translate-y: -0.5rem;
+}
+.data-\[side\=left\]\:slide-in-from-right-2[data-side="left"] {
+  --tw-enter-translate-x: 0.5rem;
+}
+.data-\[side\=right\]\:slide-in-from-left-2[data-side="right"] {
+  --tw-enter-translate-x: -0.5rem;
+}
+.data-\[side\=top\]\:slide-in-from-bottom-2[data-side="top"] {
+  --tw-enter-translate-y: 0.5rem;
 }
 @media (min-width: 640px) {
 
@@ -988,6 +1237,10 @@ video {
   }
 }
 @media (min-width: 768px) {
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   .md\:text-2xl {
     font-size: 1.5rem;
@@ -998,403 +1251,6 @@ video {
     font-size: 4.5rem;
     line-height: 1;
   }
-}
-
-/*!***********************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/reactflow/dist/style.css ***!
-  \***********************************************************************************************************************************/
-/* this gets exported as style.css and can be used for the default theming */
-/* these are the necessary styles for React Flow, they get used by base.css and style.css */
-.react-flow {
-  direction: ltr;
-}
-.react-flow__container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-.react-flow__pane {
-  z-index: 1;
-  cursor: grab;
-}
-.react-flow__pane.selection {
-    cursor: pointer;
-  }
-.react-flow__pane.dragging {
-    cursor: grabbing;
-  }
-.react-flow__viewport {
-  transform-origin: 0 0;
-  z-index: 2;
-  pointer-events: none;
-}
-.react-flow__renderer {
-  z-index: 4;
-}
-.react-flow__selection {
-  z-index: 6;
-}
-.react-flow__nodesselection-rect:focus,
-.react-flow__nodesselection-rect:focus-visible {
-  outline: none;
-}
-.react-flow .react-flow__edges {
-  pointer-events: none;
-  overflow: visible;
-}
-.react-flow__edge-path,
-.react-flow__connection-path {
-  stroke: #b1b1b7;
-  stroke-width: 1;
-  fill: none;
-}
-.react-flow__edge {
-  pointer-events: visibleStroke;
-  cursor: pointer;
-}
-.react-flow__edge.animated path {
-    stroke-dasharray: 5;
-    animation: dashdraw 0.5s linear infinite;
-  }
-.react-flow__edge.animated path.react-flow__edge-interaction {
-    stroke-dasharray: none;
-    animation: none;
-  }
-.react-flow__edge.inactive {
-    pointer-events: none;
-  }
-.react-flow__edge.selected,
-  .react-flow__edge:focus,
-  .react-flow__edge:focus-visible {
-    outline: none;
-  }
-.react-flow__edge.selected .react-flow__edge-path,
-  .react-flow__edge:focus .react-flow__edge-path,
-  .react-flow__edge:focus-visible .react-flow__edge-path {
-    stroke: #555;
-  }
-.react-flow__edge-textwrapper {
-    pointer-events: all;
-  }
-.react-flow__edge-textbg {
-    fill: white;
-  }
-.react-flow__edge .react-flow__edge-text {
-    pointer-events: none;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
-  }
-.react-flow__connection {
-  pointer-events: none;
-}
-.react-flow__connection .animated {
-    stroke-dasharray: 5;
-    animation: dashdraw 0.5s linear infinite;
-  }
-.react-flow__connectionline {
-  z-index: 1001;
-}
-.react-flow__nodes {
-  pointer-events: none;
-  transform-origin: 0 0;
-}
-.react-flow__node {
-  position: absolute;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
-  pointer-events: all;
-  transform-origin: 0 0;
-  box-sizing: border-box;
-  cursor: grab;
-}
-.react-flow__node.dragging {
-    cursor: grabbing;
-  }
-.react-flow__nodesselection {
-  z-index: 3;
-  transform-origin: left top;
-  pointer-events: none;
-}
-.react-flow__nodesselection-rect {
-    position: absolute;
-    pointer-events: all;
-    cursor: grab;
-  }
-.react-flow__handle {
-  position: absolute;
-  pointer-events: none;
-  min-width: 5px;
-  min-height: 5px;
-  width: 6px;
-  height: 6px;
-  background: #1a192b;
-  border: 1px solid white;
-  border-radius: 100%;
-}
-.react-flow__handle.connectionindicator {
-    pointer-events: all;
-    cursor: crosshair;
-  }
-.react-flow__handle-bottom {
-    top: auto;
-    left: 50%;
-    bottom: -4px;
-    transform: translate(-50%, 0);
-  }
-.react-flow__handle-top {
-    left: 50%;
-    top: -4px;
-    transform: translate(-50%, 0);
-  }
-.react-flow__handle-left {
-    top: 50%;
-    left: -4px;
-    transform: translate(0, -50%);
-  }
-.react-flow__handle-right {
-    right: -4px;
-    top: 50%;
-    transform: translate(0, -50%);
-  }
-.react-flow__edgeupdater {
-  cursor: move;
-  pointer-events: all;
-}
-.react-flow__panel {
-  position: absolute;
-  z-index: 5;
-  margin: 15px;
-}
-.react-flow__panel.top {
-    top: 0;
-  }
-.react-flow__panel.bottom {
-    bottom: 0;
-  }
-.react-flow__panel.left {
-    left: 0;
-  }
-.react-flow__panel.right {
-    right: 0;
-  }
-.react-flow__panel.center {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-.react-flow__attribution {
-  font-size: 10px;
-  background: rgba(255, 255, 255, 0.5);
-  padding: 2px 3px;
-  margin: 0;
-}
-.react-flow__attribution a {
-    text-decoration: none;
-    color: #999;
-  }
-@keyframes dashdraw {
-  from {
-    stroke-dashoffset: 10;
-  }
-}
-.react-flow__edgelabel-renderer {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
-}
-.react-flow__edge.updating .react-flow__edge-path {
-      stroke: #777;
-    }
-.react-flow__edge-text {
-    font-size: 10px;
-  }
-.react-flow__node.selectable:focus,
-  .react-flow__node.selectable:focus-visible {
-    outline: none;
-  }
-.react-flow__node-default,
-.react-flow__node-input,
-.react-flow__node-output,
-.react-flow__node-group {
-  padding: 10px;
-  border-radius: 3px;
-  width: 150px;
-  font-size: 12px;
-  color: #222;
-  text-align: center;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #1a192b;
-  background-color: white;
-}
-.react-flow__node-default.selectable:hover, .react-flow__node-input.selectable:hover, .react-flow__node-output.selectable:hover, .react-flow__node-group.selectable:hover {
-      box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.08);
-    }
-.react-flow__node-default.selectable.selected,
-    .react-flow__node-default.selectable:focus,
-    .react-flow__node-default.selectable:focus-visible,
-    .react-flow__node-input.selectable.selected,
-    .react-flow__node-input.selectable:focus,
-    .react-flow__node-input.selectable:focus-visible,
-    .react-flow__node-output.selectable.selected,
-    .react-flow__node-output.selectable:focus,
-    .react-flow__node-output.selectable:focus-visible,
-    .react-flow__node-group.selectable.selected,
-    .react-flow__node-group.selectable:focus,
-    .react-flow__node-group.selectable:focus-visible {
-      box-shadow: 0 0 0 0.5px #1a192b;
-    }
-.react-flow__node-group {
-  background-color: rgba(240, 240, 240, 0.25);
-}
-.react-flow__nodesselection-rect,
-.react-flow__selection {
-  background: rgba(0, 89, 220, 0.08);
-  border: 1px dotted rgba(0, 89, 220, 0.8);
-}
-.react-flow__nodesselection-rect:focus,
-  .react-flow__nodesselection-rect:focus-visible,
-  .react-flow__selection:focus,
-  .react-flow__selection:focus-visible {
-    outline: none;
-  }
-.react-flow__controls {
-  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.08);
-}
-.react-flow__controls-button {
-    border: none;
-    background: #fefefe;
-    border-bottom: 1px solid #eee;
-    box-sizing: content-box;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
-    padding: 5px;
-  }
-.react-flow__controls-button:hover {
-      background: #f4f4f4;
-    }
-.react-flow__controls-button svg {
-      width: 100%;
-      max-width: 12px;
-      max-height: 12px;
-    }
-.react-flow__controls-button:disabled {
-      pointer-events: none;
-    }
-.react-flow__controls-button:disabled svg {
-        fill-opacity: 0.4;
-      }
-.react-flow__minimap {
-  background-color: #fff;
-}
-.react-flow__minimap svg {
-  display: block;
-}
-.react-flow__resize-control {
-  position: absolute;
-}
-.react-flow__resize-control.left,
-.react-flow__resize-control.right {
-  cursor: ew-resize;
-}
-.react-flow__resize-control.top,
-.react-flow__resize-control.bottom {
-  cursor: ns-resize;
-}
-.react-flow__resize-control.top.left,
-.react-flow__resize-control.bottom.right {
-  cursor: nwse-resize;
-}
-.react-flow__resize-control.bottom.left,
-.react-flow__resize-control.top.right {
-  cursor: nesw-resize;
-}
-/* handle styles */
-.react-flow__resize-control.handle {
-  width: 4px;
-  height: 4px;
-  border: 1px solid #fff;
-  border-radius: 1px;
-  background-color: #3367d9;
-  transform: translate(-50%, -50%);
-}
-.react-flow__resize-control.handle.left {
-  left: 0;
-  top: 50%;
-}
-.react-flow__resize-control.handle.right {
-  left: 100%;
-  top: 50%;
-}
-.react-flow__resize-control.handle.top {
-  left: 50%;
-  top: 0;
-}
-.react-flow__resize-control.handle.bottom {
-  left: 50%;
-  top: 100%;
-}
-.react-flow__resize-control.handle.top.left {
-  left: 0;
-}
-.react-flow__resize-control.handle.bottom.left {
-  left: 0;
-}
-.react-flow__resize-control.handle.top.right {
-  left: 100%;
-}
-.react-flow__resize-control.handle.bottom.right {
-  left: 100%;
-}
-/* line styles */
-.react-flow__resize-control.line {
-  border-color: #3367d9;
-  border-width: 0;
-  border-style: solid;
-}
-.react-flow__resize-control.line.left,
-.react-flow__resize-control.line.right {
-  width: 1px;
-  transform: translate(-50%, 0);
-  top: 0;
-  height: 100%;
-}
-.react-flow__resize-control.line.left {
-  left: 0;
-  border-left-width: 1px;
-}
-.react-flow__resize-control.line.right {
-  left: 100%;
-  border-right-width: 1px;
-}
-.react-flow__resize-control.line.top,
-.react-flow__resize-control.line.bottom {
-  height: 1px;
-  transform: translate(0, -50%);
-  left: 0;
-  width: 100%;
-}
-.react-flow__resize-control.line.top {
-  top: 0;
-  border-top-width: 1px;
-}
-.react-flow__resize-control.line.bottom {
-  border-bottom-width: 1px;
-  top: 100%;
 }
 
 
