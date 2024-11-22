@@ -44654,13 +44654,20 @@ var NodeEditor = function (_a) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Alert: () => (/* binding */ Alert),
+/* harmony export */   AlertAction: () => (/* binding */ AlertAction),
+/* harmony export */   AlertCancel: () => (/* binding */ AlertCancel),
+/* harmony export */   AlertContent: () => (/* binding */ AlertContent),
 /* harmony export */   AlertDescription: () => (/* binding */ AlertDescription),
-/* harmony export */   AlertTitle: () => (/* binding */ AlertTitle)
+/* harmony export */   AlertFooter: () => (/* binding */ AlertFooter),
+/* harmony export */   AlertHeader: () => (/* binding */ AlertHeader),
+/* harmony export */   AlertTitle: () => (/* binding */ AlertTitle),
+/* harmony export */   AlertTrigger: () => (/* binding */ AlertTrigger)
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var class_variance_authority__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! class-variance-authority */ "./node_modules/class-variance-authority/dist/index.mjs");
-/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/lib/utils */ "./src/lib/utils.ts");
+/* harmony import */ var _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @radix-ui/react-alert-dialog */ "./node_modules/@radix-ui/react-alert-dialog/dist/index.mjs");
+/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/lib/utils */ "./src/lib/utils.ts");
+/* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/components/ui/button */ "./src/components/ui/button.tsx");
 var __assign = (undefined && undefined.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -44686,32 +44693,52 @@ var __rest = (undefined && undefined.__rest) || function (s, e) {
 
 
 
-var alertVariants = (0,class_variance_authority__WEBPACK_IMPORTED_MODULE_1__.cva)("relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7", {
-    variants: {
-        variant: {
-            default: "bg-background text-foreground",
-            destructive: "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
-        },
-    },
-    defaultVariants: {
-        variant: "default",
-    },
+
+var Alert = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Root;
+var AlertTrigger = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Trigger;
+var AlertPortal = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Portal;
+var AlertOverlay = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Overlay, __assign({ className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0", className) }, props, { ref: ref })));
 });
-var Alert = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
-    var className = _a.className, variant = _a.variant, props = __rest(_a, ["className", "variant"]);
-    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", __assign({ ref: ref, role: "alert", className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_2__.cn)(alertVariants({ variant: variant }), className) }, props)));
+AlertOverlay.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Overlay.displayName;
+var AlertContent = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(AlertPortal, null,
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement(AlertOverlay, null),
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Content, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg", className) }, props))));
 });
-Alert.displayName = "Alert";
+AlertContent.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Content.displayName;
+var AlertHeader = function (_a) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", __assign({ className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("flex flex-col space-y-2 text-center sm:text-left", className) }, props)));
+};
+AlertHeader.displayName = "AlertHeader";
 var AlertTitle = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
     var className = _a.className, props = __rest(_a, ["className"]);
-    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("h5", __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_2__.cn)("mb-1 font-medium leading-none tracking-tight", className) }, props)));
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Title, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("text-lg font-semibold", className) }, props)));
 });
-AlertTitle.displayName = "AlertTitle";
+AlertTitle.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Title.displayName;
 var AlertDescription = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
     var className = _a.className, props = __rest(_a, ["className"]);
-    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_2__.cn)("text-sm [&_p]:leading-relaxed", className) }, props)));
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Description, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("text-sm text-muted-foreground", className) }, props)));
 });
-AlertDescription.displayName = "AlertDescription";
+AlertDescription.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Description.displayName;
+var AlertFooter = function (_a) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", __assign({ className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className) }, props)));
+};
+AlertFooter.displayName = "AlertFooter";
+var AlertAction = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Action, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)((0,_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.buttonVariants)(), className) }, props)));
+});
+AlertAction.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Action.displayName;
+var AlertCancel = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Cancel, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)((0,_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.buttonVariants)({ variant: "outline" }), "mt-2 sm:mt-0", className) }, props)));
+});
+AlertCancel.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Cancel.displayName;
 
 
 
@@ -45360,9 +45387,13 @@ var BookUpload = function () {
                                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "or drag and drop your file here")),
                                 file && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm font-medium text-primary" }, file.name)),
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "Supported formats: PDF, EPUB, TXT")))),
-                    error && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.Alert, { variant: "destructive" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertTitle, null, "Error"),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertDescription, null, error))),
+                    error && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.Alert, { open: !!error, onOpenChange: function () { return setError(null); } },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertContent, null,
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertHeader, null,
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertTitle, null, "Error"),
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertDescription, null, error)),
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertFooter, null,
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertAction, null, "OK"))))),
                     uploading && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-2" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_progress__WEBPACK_IMPORTED_MODULE_2__.Progress, { value: progress, className: "w-full" }),
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-center text-muted-foreground" }, "Processing your book..."))),
@@ -49100,6 +49131,194 @@ function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForD
 
 /***/ }),
 
+/***/ "./node_modules/@radix-ui/react-alert-dialog/dist/index.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-alert-dialog/dist/index.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Action: () => (/* binding */ Action),
+/* harmony export */   AlertDialog: () => (/* binding */ AlertDialog),
+/* harmony export */   AlertDialogAction: () => (/* binding */ AlertDialogAction),
+/* harmony export */   AlertDialogCancel: () => (/* binding */ AlertDialogCancel),
+/* harmony export */   AlertDialogContent: () => (/* binding */ AlertDialogContent),
+/* harmony export */   AlertDialogDescription: () => (/* binding */ AlertDialogDescription),
+/* harmony export */   AlertDialogOverlay: () => (/* binding */ AlertDialogOverlay),
+/* harmony export */   AlertDialogPortal: () => (/* binding */ AlertDialogPortal),
+/* harmony export */   AlertDialogTitle: () => (/* binding */ AlertDialogTitle),
+/* harmony export */   AlertDialogTrigger: () => (/* binding */ AlertDialogTrigger),
+/* harmony export */   Cancel: () => (/* binding */ Cancel),
+/* harmony export */   Content: () => (/* binding */ Content2),
+/* harmony export */   Description: () => (/* binding */ Description2),
+/* harmony export */   Overlay: () => (/* binding */ Overlay2),
+/* harmony export */   Portal: () => (/* binding */ Portal2),
+/* harmony export */   Root: () => (/* binding */ Root2),
+/* harmony export */   Title: () => (/* binding */ Title2),
+/* harmony export */   Trigger: () => (/* binding */ Trigger2),
+/* harmony export */   createAlertDialogScope: () => (/* binding */ createAlertDialogScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var _radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-context */ "./node_modules/@radix-ui/react-context/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @radix-ui/react-compose-refs */ "./node_modules/@radix-ui/react-compose-refs/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @radix-ui/react-dialog */ "./node_modules/@radix-ui/react-dialog/dist/index.mjs");
+/* harmony import */ var _radix_ui_primitive__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @radix-ui/primitive */ "./node_modules/@radix-ui/primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_slot__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @radix-ui/react-slot */ "./node_modules/@radix-ui/react-slot/dist/index.mjs");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+"use client";
+
+// packages/react/alert-dialog/src/AlertDialog.tsx
+
+
+
+
+
+
+
+
+var ROOT_NAME = "AlertDialog";
+var [createAlertDialogContext, createAlertDialogScope] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__.createContextScope)(ROOT_NAME, [
+  _radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.createDialogScope
+]);
+var useDialogScope = (0,_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.createDialogScope)();
+var AlertDialog = (props) => {
+  const { __scopeAlertDialog, ...alertDialogProps } = props;
+  const dialogScope = useDialogScope(__scopeAlertDialog);
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Root, { ...dialogScope, ...alertDialogProps, modal: true });
+};
+AlertDialog.displayName = ROOT_NAME;
+var TRIGGER_NAME = "AlertDialogTrigger";
+var AlertDialogTrigger = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeAlertDialog, ...triggerProps } = props;
+    const dialogScope = useDialogScope(__scopeAlertDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Trigger, { ...dialogScope, ...triggerProps, ref: forwardedRef });
+  }
+);
+AlertDialogTrigger.displayName = TRIGGER_NAME;
+var PORTAL_NAME = "AlertDialogPortal";
+var AlertDialogPortal = (props) => {
+  const { __scopeAlertDialog, ...portalProps } = props;
+  const dialogScope = useDialogScope(__scopeAlertDialog);
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Portal, { ...dialogScope, ...portalProps });
+};
+AlertDialogPortal.displayName = PORTAL_NAME;
+var OVERLAY_NAME = "AlertDialogOverlay";
+var AlertDialogOverlay = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeAlertDialog, ...overlayProps } = props;
+    const dialogScope = useDialogScope(__scopeAlertDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Overlay, { ...dialogScope, ...overlayProps, ref: forwardedRef });
+  }
+);
+AlertDialogOverlay.displayName = OVERLAY_NAME;
+var CONTENT_NAME = "AlertDialogContent";
+var [AlertDialogContentProvider, useAlertDialogContentContext] = createAlertDialogContext(CONTENT_NAME);
+var AlertDialogContent = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeAlertDialog, children, ...contentProps } = props;
+    const dialogScope = useDialogScope(__scopeAlertDialog);
+    const contentRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+    const composedRefs = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_4__.useComposedRefs)(forwardedRef, contentRef);
+    const cancelRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.WarningProvider,
+      {
+        contentName: CONTENT_NAME,
+        titleName: TITLE_NAME,
+        docsSlug: "alert-dialog",
+        children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(AlertDialogContentProvider, { scope: __scopeAlertDialog, cancelRef, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)(
+          _radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Content,
+          {
+            role: "alertdialog",
+            ...dialogScope,
+            ...contentProps,
+            ref: composedRefs,
+            onOpenAutoFocus: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_5__.composeEventHandlers)(contentProps.onOpenAutoFocus, (event) => {
+              event.preventDefault();
+              cancelRef.current?.focus({ preventScroll: true });
+            }),
+            onPointerDownOutside: (event) => event.preventDefault(),
+            onInteractOutside: (event) => event.preventDefault(),
+            children: [
+              /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_slot__WEBPACK_IMPORTED_MODULE_6__.Slottable, { children }),
+              /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(DescriptionWarning, { contentRef })
+            ]
+          }
+        ) })
+      }
+    );
+  }
+);
+AlertDialogContent.displayName = CONTENT_NAME;
+var TITLE_NAME = "AlertDialogTitle";
+var AlertDialogTitle = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeAlertDialog, ...titleProps } = props;
+    const dialogScope = useDialogScope(__scopeAlertDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Title, { ...dialogScope, ...titleProps, ref: forwardedRef });
+  }
+);
+AlertDialogTitle.displayName = TITLE_NAME;
+var DESCRIPTION_NAME = "AlertDialogDescription";
+var AlertDialogDescription = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef((props, forwardedRef) => {
+  const { __scopeAlertDialog, ...descriptionProps } = props;
+  const dialogScope = useDialogScope(__scopeAlertDialog);
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Description, { ...dialogScope, ...descriptionProps, ref: forwardedRef });
+});
+AlertDialogDescription.displayName = DESCRIPTION_NAME;
+var ACTION_NAME = "AlertDialogAction";
+var AlertDialogAction = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeAlertDialog, ...actionProps } = props;
+    const dialogScope = useDialogScope(__scopeAlertDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Close, { ...dialogScope, ...actionProps, ref: forwardedRef });
+  }
+);
+AlertDialogAction.displayName = ACTION_NAME;
+var CANCEL_NAME = "AlertDialogCancel";
+var AlertDialogCancel = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeAlertDialog, ...cancelProps } = props;
+    const { cancelRef } = useAlertDialogContentContext(CANCEL_NAME, __scopeAlertDialog);
+    const dialogScope = useDialogScope(__scopeAlertDialog);
+    const ref = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_4__.useComposedRefs)(forwardedRef, cancelRef);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_dialog__WEBPACK_IMPORTED_MODULE_3__.Close, { ...dialogScope, ...cancelProps, ref });
+  }
+);
+AlertDialogCancel.displayName = CANCEL_NAME;
+var DescriptionWarning = ({ contentRef }) => {
+  const MESSAGE = `\`${CONTENT_NAME}\` requires a description for the component to be accessible for screen reader users.
+
+You can add a description to the \`${CONTENT_NAME}\` by passing a \`${DESCRIPTION_NAME}\` component as a child, which also benefits sighted users by adding visible context to the dialog.
+
+Alternatively, you can use your own component as a description by assigning it an \`id\` and passing the same value to the \`aria-describedby\` prop in \`${CONTENT_NAME}\`. If the description is confusing or duplicative for sighted users, you can use the \`@radix-ui/react-visually-hidden\` primitive as a wrapper around your description component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/alert-dialog`;
+  react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+    const hasDescription = document.getElementById(
+      contentRef.current?.getAttribute("aria-describedby")
+    );
+    if (!hasDescription) console.warn(MESSAGE);
+  }, [MESSAGE, contentRef]);
+  return null;
+};
+var Root2 = AlertDialog;
+var Trigger2 = AlertDialogTrigger;
+var Portal2 = AlertDialogPortal;
+var Overlay2 = AlertDialogOverlay;
+var Content2 = AlertDialogContent;
+var Action = AlertDialogAction;
+var Cancel = AlertDialogCancel;
+var Title2 = AlertDialogTitle;
+var Description2 = AlertDialogDescription;
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
 /***/ "./node_modules/@radix-ui/react-arrow/dist/index.mjs":
 /*!***********************************************************!*\
   !*** ./node_modules/@radix-ui/react-arrow/dist/index.mjs ***!
@@ -49448,6 +49667,374 @@ function composeContextScopes(...scopes) {
   createScope.scopeName = baseScope.scopeName;
   return createScope;
 }
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-dialog/dist/index.mjs":
+/*!************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-dialog/dist/index.mjs ***!
+  \************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Close: () => (/* binding */ Close),
+/* harmony export */   Content: () => (/* binding */ Content),
+/* harmony export */   Description: () => (/* binding */ Description),
+/* harmony export */   Dialog: () => (/* binding */ Dialog),
+/* harmony export */   DialogClose: () => (/* binding */ DialogClose),
+/* harmony export */   DialogContent: () => (/* binding */ DialogContent),
+/* harmony export */   DialogDescription: () => (/* binding */ DialogDescription),
+/* harmony export */   DialogOverlay: () => (/* binding */ DialogOverlay),
+/* harmony export */   DialogPortal: () => (/* binding */ DialogPortal),
+/* harmony export */   DialogTitle: () => (/* binding */ DialogTitle),
+/* harmony export */   DialogTrigger: () => (/* binding */ DialogTrigger),
+/* harmony export */   Overlay: () => (/* binding */ Overlay),
+/* harmony export */   Portal: () => (/* binding */ Portal),
+/* harmony export */   Root: () => (/* binding */ Root),
+/* harmony export */   Title: () => (/* binding */ Title),
+/* harmony export */   Trigger: () => (/* binding */ Trigger),
+/* harmony export */   WarningProvider: () => (/* binding */ WarningProvider),
+/* harmony export */   createDialogScope: () => (/* binding */ createDialogScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var _radix_ui_primitive__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @radix-ui/primitive */ "./node_modules/@radix-ui/primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @radix-ui/react-compose-refs */ "./node_modules/@radix-ui/react-compose-refs/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-context */ "./node_modules/@radix-ui/react-context/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_id__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @radix-ui/react-id */ "./node_modules/@radix-ui/react-id/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_controllable_state__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @radix-ui/react-use-controllable-state */ "./node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_dismissable_layer__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! @radix-ui/react-dismissable-layer */ "./node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_focus_scope__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! @radix-ui/react-focus-scope */ "./node_modules/@radix-ui/react-focus-scope/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_portal__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @radix-ui/react-portal */ "./node_modules/@radix-ui/react-portal/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_presence__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @radix-ui/react-presence */ "./node_modules/@radix-ui/react-presence/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @radix-ui/react-primitive */ "./node_modules/@radix-ui/react-primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_focus_guards__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! @radix-ui/react-focus-guards */ "./node_modules/@radix-ui/react-focus-guards/dist/index.mjs");
+/* harmony import */ var react_remove_scroll__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! react-remove-scroll */ "./node_modules/react-remove-scroll/dist/es2015/Combination.js");
+/* harmony import */ var aria_hidden__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! aria-hidden */ "./node_modules/aria-hidden/dist/es2015/index.js");
+/* harmony import */ var _radix_ui_react_slot__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @radix-ui/react-slot */ "./node_modules/@radix-ui/react-slot/dist/index.mjs");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+"use client";
+
+// packages/react/dialog/src/Dialog.tsx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var DIALOG_NAME = "Dialog";
+var [createDialogContext, createDialogScope] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__.createContextScope)(DIALOG_NAME);
+var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
+var Dialog = (props) => {
+  const {
+    __scopeDialog,
+    children,
+    open: openProp,
+    defaultOpen,
+    onOpenChange,
+    modal = true
+  } = props;
+  const triggerRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+  const contentRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+  const [open = false, setOpen] = (0,_radix_ui_react_use_controllable_state__WEBPACK_IMPORTED_MODULE_3__.useControllableState)({
+    prop: openProp,
+    defaultProp: defaultOpen,
+    onChange: onOpenChange
+  });
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+    DialogProvider,
+    {
+      scope: __scopeDialog,
+      triggerRef,
+      contentRef,
+      contentId: (0,_radix_ui_react_id__WEBPACK_IMPORTED_MODULE_4__.useId)(),
+      titleId: (0,_radix_ui_react_id__WEBPACK_IMPORTED_MODULE_4__.useId)(),
+      descriptionId: (0,_radix_ui_react_id__WEBPACK_IMPORTED_MODULE_4__.useId)(),
+      open,
+      onOpenChange: setOpen,
+      onOpenToggle: react__WEBPACK_IMPORTED_MODULE_0__.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
+      modal,
+      children
+    }
+  );
+};
+Dialog.displayName = DIALOG_NAME;
+var TRIGGER_NAME = "DialogTrigger";
+var DialogTrigger = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...triggerProps } = props;
+    const context = useDialogContext(TRIGGER_NAME, __scopeDialog);
+    const composedTriggerRef = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_5__.useComposedRefs)(forwardedRef, context.triggerRef);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_6__.Primitive.button,
+      {
+        type: "button",
+        "aria-haspopup": "dialog",
+        "aria-expanded": context.open,
+        "aria-controls": context.contentId,
+        "data-state": getState(context.open),
+        ...triggerProps,
+        ref: composedTriggerRef,
+        onClick: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_7__.composeEventHandlers)(props.onClick, context.onOpenToggle)
+      }
+    );
+  }
+);
+DialogTrigger.displayName = TRIGGER_NAME;
+var PORTAL_NAME = "DialogPortal";
+var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME, {
+  forceMount: void 0
+});
+var DialogPortal = (props) => {
+  const { __scopeDialog, forceMount, children, container } = props;
+  const context = useDialogContext(PORTAL_NAME, __scopeDialog);
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: react__WEBPACK_IMPORTED_MODULE_0__.Children.map(children, (child) => /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_presence__WEBPACK_IMPORTED_MODULE_8__.Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_portal__WEBPACK_IMPORTED_MODULE_9__.Portal, { asChild: true, container, children: child }) })) });
+};
+DialogPortal.displayName = PORTAL_NAME;
+var OVERLAY_NAME = "DialogOverlay";
+var DialogOverlay = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const portalContext = usePortalContext(OVERLAY_NAME, props.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...overlayProps } = props;
+    const context = useDialogContext(OVERLAY_NAME, props.__scopeDialog);
+    return context.modal ? /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_presence__WEBPACK_IMPORTED_MODULE_8__.Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(DialogOverlayImpl, { ...overlayProps, ref: forwardedRef }) }) : null;
+  }
+);
+DialogOverlay.displayName = OVERLAY_NAME;
+var DialogOverlayImpl = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...overlayProps } = props;
+    const context = useDialogContext(OVERLAY_NAME, __scopeDialog);
+    return (
+      // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
+      // ie. when `Overlay` and `Content` are siblings
+      /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(react_remove_scroll__WEBPACK_IMPORTED_MODULE_10__["default"], { as: _radix_ui_react_slot__WEBPACK_IMPORTED_MODULE_11__.Slot, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+        _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_6__.Primitive.div,
+        {
+          "data-state": getState(context.open),
+          ...overlayProps,
+          ref: forwardedRef,
+          style: { pointerEvents: "auto", ...overlayProps.style }
+        }
+      ) })
+    );
+  }
+);
+var CONTENT_NAME = "DialogContent";
+var DialogContent = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const portalContext = usePortalContext(CONTENT_NAME, props.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...contentProps } = props;
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_presence__WEBPACK_IMPORTED_MODULE_8__.Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(DialogContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(DialogContentNonModal, { ...contentProps, ref: forwardedRef }) });
+  }
+);
+DialogContent.displayName = CONTENT_NAME;
+var DialogContentModal = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    const contentRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+    const composedRefs = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_5__.useComposedRefs)(forwardedRef, context.contentRef, contentRef);
+    react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+      const content = contentRef.current;
+      if (content) return (0,aria_hidden__WEBPACK_IMPORTED_MODULE_12__.hideOthers)(content);
+    }, []);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      DialogContentImpl,
+      {
+        ...props,
+        ref: composedRefs,
+        trapFocus: context.open,
+        disableOutsidePointerEvents: true,
+        onCloseAutoFocus: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_7__.composeEventHandlers)(props.onCloseAutoFocus, (event) => {
+          event.preventDefault();
+          context.triggerRef.current?.focus();
+        }),
+        onPointerDownOutside: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_7__.composeEventHandlers)(props.onPointerDownOutside, (event) => {
+          const originalEvent = event.detail.originalEvent;
+          const ctrlLeftClick = originalEvent.button === 0 && originalEvent.ctrlKey === true;
+          const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
+          if (isRightClick) event.preventDefault();
+        }),
+        onFocusOutside: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_7__.composeEventHandlers)(
+          props.onFocusOutside,
+          (event) => event.preventDefault()
+        )
+      }
+    );
+  }
+);
+var DialogContentNonModal = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    const hasInteractedOutsideRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(false);
+    const hasPointerDownOutsideRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(false);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      DialogContentImpl,
+      {
+        ...props,
+        ref: forwardedRef,
+        trapFocus: false,
+        disableOutsidePointerEvents: false,
+        onCloseAutoFocus: (event) => {
+          props.onCloseAutoFocus?.(event);
+          if (!event.defaultPrevented) {
+            if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus();
+            event.preventDefault();
+          }
+          hasInteractedOutsideRef.current = false;
+          hasPointerDownOutsideRef.current = false;
+        },
+        onInteractOutside: (event) => {
+          props.onInteractOutside?.(event);
+          if (!event.defaultPrevented) {
+            hasInteractedOutsideRef.current = true;
+            if (event.detail.originalEvent.type === "pointerdown") {
+              hasPointerDownOutsideRef.current = true;
+            }
+          }
+          const target = event.target;
+          const targetIsTrigger = context.triggerRef.current?.contains(target);
+          if (targetIsTrigger) event.preventDefault();
+          if (event.detail.originalEvent.type === "focusin" && hasPointerDownOutsideRef.current) {
+            event.preventDefault();
+          }
+        }
+      }
+    );
+  }
+);
+var DialogContentImpl = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props;
+    const context = useDialogContext(CONTENT_NAME, __scopeDialog);
+    const contentRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+    const composedRefs = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_5__.useComposedRefs)(forwardedRef, contentRef);
+    (0,_radix_ui_react_focus_guards__WEBPACK_IMPORTED_MODULE_13__.useFocusGuards)();
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.Fragment, { children: [
+      /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+        _radix_ui_react_focus_scope__WEBPACK_IMPORTED_MODULE_14__.FocusScope,
+        {
+          asChild: true,
+          loop: true,
+          trapped: trapFocus,
+          onMountAutoFocus: onOpenAutoFocus,
+          onUnmountAutoFocus: onCloseAutoFocus,
+          children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+            _radix_ui_react_dismissable_layer__WEBPACK_IMPORTED_MODULE_15__.DismissableLayer,
+            {
+              role: "dialog",
+              id: context.contentId,
+              "aria-describedby": context.descriptionId,
+              "aria-labelledby": context.titleId,
+              "data-state": getState(context.open),
+              ...contentProps,
+              ref: composedRefs,
+              onDismiss: () => context.onOpenChange(false)
+            }
+          )
+        }
+      ),
+      /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.Fragment, { children: [
+        /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(TitleWarning, { titleId: context.titleId }),
+        /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(DescriptionWarning, { contentRef, descriptionId: context.descriptionId })
+      ] })
+    ] });
+  }
+);
+var TITLE_NAME = "DialogTitle";
+var DialogTitle = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...titleProps } = props;
+    const context = useDialogContext(TITLE_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_6__.Primitive.h2, { id: context.titleId, ...titleProps, ref: forwardedRef });
+  }
+);
+DialogTitle.displayName = TITLE_NAME;
+var DESCRIPTION_NAME = "DialogDescription";
+var DialogDescription = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...descriptionProps } = props;
+    const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_6__.Primitive.p, { id: context.descriptionId, ...descriptionProps, ref: forwardedRef });
+  }
+);
+DialogDescription.displayName = DESCRIPTION_NAME;
+var CLOSE_NAME = "DialogClose";
+var DialogClose = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...closeProps } = props;
+    const context = useDialogContext(CLOSE_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_6__.Primitive.button,
+      {
+        type: "button",
+        ...closeProps,
+        ref: forwardedRef,
+        onClick: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_7__.composeEventHandlers)(props.onClick, () => context.onOpenChange(false))
+      }
+    );
+  }
+);
+DialogClose.displayName = CLOSE_NAME;
+function getState(open) {
+  return open ? "open" : "closed";
+}
+var TITLE_WARNING_NAME = "DialogTitleWarning";
+var [WarningProvider, useWarningContext] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__.createContext)(TITLE_WARNING_NAME, {
+  contentName: CONTENT_NAME,
+  titleName: TITLE_NAME,
+  docsSlug: "dialog"
+});
+var TitleWarning = ({ titleId }) => {
+  const titleWarningContext = useWarningContext(TITLE_WARNING_NAME);
+  const MESSAGE = `\`${titleWarningContext.contentName}\` requires a \`${titleWarningContext.titleName}\` for the component to be accessible for screen reader users.
+
+If you want to hide the \`${titleWarningContext.titleName}\`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/${titleWarningContext.docsSlug}`;
+  react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+    if (titleId) {
+      const hasTitle = document.getElementById(titleId);
+      if (!hasTitle) console.error(MESSAGE);
+    }
+  }, [MESSAGE, titleId]);
+  return null;
+};
+var DESCRIPTION_WARNING_NAME = "DialogDescriptionWarning";
+var DescriptionWarning = ({ contentRef, descriptionId }) => {
+  const descriptionWarningContext = useWarningContext(DESCRIPTION_WARNING_NAME);
+  const MESSAGE = `Warning: Missing \`Description\` or \`aria-describedby={undefined}\` for {${descriptionWarningContext.contentName}}.`;
+  react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+    const describedById = contentRef.current?.getAttribute("aria-describedby");
+    if (descriptionId && describedById) {
+      const hasDescription = document.getElementById(descriptionId);
+      if (!hasDescription) console.warn(MESSAGE);
+    }
+  }, [MESSAGE, contentRef, descriptionId]);
+  return null;
+};
+var Root = Dialog;
+var Trigger = DialogTrigger;
+var Portal = DialogPortal;
+var Overlay = DialogOverlay;
+var Content = DialogContent;
+var Title = DialogTitle;
+var Description = DialogDescription;
+var Close = DialogClose;
 
 //# sourceMappingURL=index.mjs.map
 
@@ -50531,6 +51118,158 @@ var Portal = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef((props, forwardedRef)
 });
 Portal.displayName = PORTAL_NAME;
 var Root = Portal;
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-presence/dist/index.mjs":
+/*!**************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-presence/dist/index.mjs ***!
+  \**************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Presence: () => (/* binding */ Presence)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var _radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @radix-ui/react-compose-refs */ "./node_modules/@radix-ui/react-compose-refs/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_layout_effect__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-use-layout-effect */ "./node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs");
+"use client";
+
+// packages/react/presence/src/Presence.tsx
+
+
+
+
+// packages/react/presence/src/useStateMachine.tsx
+
+function useStateMachine(initialState, machine) {
+  return react__WEBPACK_IMPORTED_MODULE_0__.useReducer((state, event) => {
+    const nextState = machine[state][event];
+    return nextState ?? state;
+  }, initialState);
+}
+
+// packages/react/presence/src/Presence.tsx
+var Presence = (props) => {
+  const { present, children } = props;
+  const presence = usePresence(present);
+  const child = typeof children === "function" ? children({ present: presence.isPresent }) : react__WEBPACK_IMPORTED_MODULE_0__.Children.only(children);
+  const ref = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_1__.useComposedRefs)(presence.ref, getElementRef(child));
+  const forceMount = typeof children === "function";
+  return forceMount || presence.isPresent ? react__WEBPACK_IMPORTED_MODULE_0__.cloneElement(child, { ref }) : null;
+};
+Presence.displayName = "Presence";
+function usePresence(present) {
+  const [node, setNode] = react__WEBPACK_IMPORTED_MODULE_0__.useState();
+  const stylesRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef({});
+  const prevPresentRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(present);
+  const prevAnimationNameRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef("none");
+  const initialState = present ? "mounted" : "unmounted";
+  const [state, send] = useStateMachine(initialState, {
+    mounted: {
+      UNMOUNT: "unmounted",
+      ANIMATION_OUT: "unmountSuspended"
+    },
+    unmountSuspended: {
+      MOUNT: "mounted",
+      ANIMATION_END: "unmounted"
+    },
+    unmounted: {
+      MOUNT: "mounted"
+    }
+  });
+  react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+    const currentAnimationName = getAnimationName(stylesRef.current);
+    prevAnimationNameRef.current = state === "mounted" ? currentAnimationName : "none";
+  }, [state]);
+  (0,_radix_ui_react_use_layout_effect__WEBPACK_IMPORTED_MODULE_2__.useLayoutEffect)(() => {
+    const styles = stylesRef.current;
+    const wasPresent = prevPresentRef.current;
+    const hasPresentChanged = wasPresent !== present;
+    if (hasPresentChanged) {
+      const prevAnimationName = prevAnimationNameRef.current;
+      const currentAnimationName = getAnimationName(styles);
+      if (present) {
+        send("MOUNT");
+      } else if (currentAnimationName === "none" || styles?.display === "none") {
+        send("UNMOUNT");
+      } else {
+        const isAnimating = prevAnimationName !== currentAnimationName;
+        if (wasPresent && isAnimating) {
+          send("ANIMATION_OUT");
+        } else {
+          send("UNMOUNT");
+        }
+      }
+      prevPresentRef.current = present;
+    }
+  }, [present, send]);
+  (0,_radix_ui_react_use_layout_effect__WEBPACK_IMPORTED_MODULE_2__.useLayoutEffect)(() => {
+    if (node) {
+      let timeoutId;
+      const ownerWindow = node.ownerDocument.defaultView ?? window;
+      const handleAnimationEnd = (event) => {
+        const currentAnimationName = getAnimationName(stylesRef.current);
+        const isCurrentAnimation = currentAnimationName.includes(event.animationName);
+        if (event.target === node && isCurrentAnimation) {
+          send("ANIMATION_END");
+          if (!prevPresentRef.current) {
+            const currentFillMode = node.style.animationFillMode;
+            node.style.animationFillMode = "forwards";
+            timeoutId = ownerWindow.setTimeout(() => {
+              if (node.style.animationFillMode === "forwards") {
+                node.style.animationFillMode = currentFillMode;
+              }
+            });
+          }
+        }
+      };
+      const handleAnimationStart = (event) => {
+        if (event.target === node) {
+          prevAnimationNameRef.current = getAnimationName(stylesRef.current);
+        }
+      };
+      node.addEventListener("animationstart", handleAnimationStart);
+      node.addEventListener("animationcancel", handleAnimationEnd);
+      node.addEventListener("animationend", handleAnimationEnd);
+      return () => {
+        ownerWindow.clearTimeout(timeoutId);
+        node.removeEventListener("animationstart", handleAnimationStart);
+        node.removeEventListener("animationcancel", handleAnimationEnd);
+        node.removeEventListener("animationend", handleAnimationEnd);
+      };
+    } else {
+      send("ANIMATION_END");
+    }
+  }, [node, send]);
+  return {
+    isPresent: ["mounted", "unmountSuspended"].includes(state),
+    ref: react__WEBPACK_IMPORTED_MODULE_0__.useCallback((node2) => {
+      if (node2) stylesRef.current = getComputedStyle(node2);
+      setNode(node2);
+    }, [])
+  };
+}
+function getAnimationName(styles) {
+  return styles?.animationName || "none";
+}
+function getElementRef(element) {
+  let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
+  let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element.ref;
+  }
+  getter = Object.getOwnPropertyDescriptor(element, "ref")?.get;
+  mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element.props.ref;
+  }
+  return element.props.ref || element.ref;
+}
 
 //# sourceMappingURL=index.mjs.map
 

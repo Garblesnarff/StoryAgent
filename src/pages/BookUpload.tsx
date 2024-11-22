@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Alert, AlertContent, AlertDescription, AlertHeader, AlertTitle, AlertFooter, AlertAction } from '../components/ui/alert';
 import { motion } from 'framer-motion';
 
 const BookUpload: React.FC = () => {
