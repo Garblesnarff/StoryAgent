@@ -42,7 +42,7 @@ def upload_file():
         if not allowed_file(file.filename):
             return jsonify({'error': f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
 
-        # Process the file directly without saving
+        # Process the file directly through the book processor
         result = book_processor.process_file(file)
         
         if not result or 'temp_id' not in result:
