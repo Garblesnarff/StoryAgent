@@ -160,6 +160,22 @@ def check_story_data():
         flash('Please generate a story first', 'warning')
         return redirect(url_for('index'))
 
+@app.route('/')
+def index():
+    return render_template('react.html')
+
+@app.route('/create-story')
+def create_story():
+    return render_template('react.html')
+
+@app.route('/upload-book')
+def upload_book():
+    return render_template('react.html')
+
+@app.route('/story/edit')
+def story_edit():
+    return render_template('react.html')
+
 @app.route('/api/story/data')
 def get_story_data():
     if 'story_data' not in session:

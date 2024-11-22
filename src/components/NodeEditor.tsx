@@ -128,6 +128,158 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [story, setStory] = useState(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
 
+    const handleGenerateCard = useCallback(async (index: number) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text,
+                    style: selectedStyle
+                })
+            });
+
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error('Failed to get reader');
+
+            // Handle streaming response
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    const data = JSON.parse(line);
+                    if (data.type === 'paragraph') {
+                        setNodes(nodes => nodes.map(node => 
+                            node.id === `p${index}` ? {
+                                ...node, 
+                                data: {
+                                    ...node.data,
+                                    imageUrl: data.data.image_url,
+                                    imagePrompt: data.data.image_prompt,
+                                    audioUrl: data.data.audio_url,
+                                    isGenerating: false
+                                }
+                            } : node
+                        ));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+            ));
+        }
+    }, [story, selectedStyle]);
+
+    const handleRegenerateImage = useCallback(async (index: number) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text,
+                    style: selectedStyle
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(nodes => nodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            imageUrl: data.image_url,
+                            imagePrompt: data.image_prompt,
+                            isRegenerating: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating image:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
+            ));
+        }
+    }, [story, selectedStyle]);
+
+    const handleRegenerateAudio = useCallback(async (index: number) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(nodes => nodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            audioUrl: data.audio_url,
+                            isRegeneratingAudio: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating audio:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
+            ));
+        }
+    }, [story, selectedStyle]);
+
+    useEffect(() => {
+        const fetchStoryData = async () => {
+            try {
+                const response = await fetch('/api/story/data');
+                const data = await response.json();
+                if (data.success) {
+                    setStory(data.story);
+                }
+            } catch (error) {
+                console.error('Error fetching story data:', error);
+                setIsLoading(false);
+            }
+        };
+
+        if (!story) {
+            fetchStoryData();
+        }
+    }, [story]);
+
     useEffect(() => {
         if (!story?.paragraphs) {
             setIsLoading(false);
