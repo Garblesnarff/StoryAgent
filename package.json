@@ -30,6 +30,7 @@
     "clsx": "^2.1.1",
     "css-loader": "^6.11.0",
     "lucide-react": "^0.460.0",
+    "mini-css-extract-plugin": "^2.9.2",
     "next": "^15.0.3",
     "postcss": "^8.4.49",
     "postcss-loader": "^8.1.1",

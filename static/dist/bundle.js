@@ -5065,541 +5065,27 @@ function persistAppliedTransitions(_window, transitions) {
 
 /***/ }),
 
-/***/ "./node_modules/css-loader/dist/cjs.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/reactflow/dist/style.css":
-/*!*******************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader/dist/cjs.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/reactflow/dist/style.css ***!
-  \*******************************************************************************************************************************/
-/***/ ((module, __webpack_exports__, __webpack_require__) => {
+/***/ "./node_modules/reactflow/dist/style.css":
+/*!***********************************************!*\
+  !*** ./node_modules/reactflow/dist/style.css ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../css-loader/dist/runtime/sourceMaps.js */ "./node_modules/css-loader/dist/runtime/sourceMaps.js");
-/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
-/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
-// Imports
-
-
-var ___CSS_LOADER_EXPORT___ = _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
-// Module
-___CSS_LOADER_EXPORT___.push([module.id, `/* this gets exported as style.css and can be used for the default theming */
-/* these are the necessary styles for React Flow, they get used by base.css and style.css */
-.react-flow {
-  direction: ltr;
-}
-.react-flow__container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-.react-flow__pane {
-  z-index: 1;
-  cursor: grab;
-}
-.react-flow__pane.selection {
-    cursor: pointer;
-  }
-.react-flow__pane.dragging {
-    cursor: grabbing;
-  }
-.react-flow__viewport {
-  transform-origin: 0 0;
-  z-index: 2;
-  pointer-events: none;
-}
-.react-flow__renderer {
-  z-index: 4;
-}
-.react-flow__selection {
-  z-index: 6;
-}
-.react-flow__nodesselection-rect:focus,
-.react-flow__nodesselection-rect:focus-visible {
-  outline: none;
-}
-.react-flow .react-flow__edges {
-  pointer-events: none;
-  overflow: visible;
-}
-.react-flow__edge-path,
-.react-flow__connection-path {
-  stroke: #b1b1b7;
-  stroke-width: 1;
-  fill: none;
-}
-.react-flow__edge {
-  pointer-events: visibleStroke;
-  cursor: pointer;
-}
-.react-flow__edge.animated path {
-    stroke-dasharray: 5;
-    animation: dashdraw 0.5s linear infinite;
-  }
-.react-flow__edge.animated path.react-flow__edge-interaction {
-    stroke-dasharray: none;
-    animation: none;
-  }
-.react-flow__edge.inactive {
-    pointer-events: none;
-  }
-.react-flow__edge.selected,
-  .react-flow__edge:focus,
-  .react-flow__edge:focus-visible {
-    outline: none;
-  }
-.react-flow__edge.selected .react-flow__edge-path,
-  .react-flow__edge:focus .react-flow__edge-path,
-  .react-flow__edge:focus-visible .react-flow__edge-path {
-    stroke: #555;
-  }
-.react-flow__edge-textwrapper {
-    pointer-events: all;
-  }
-.react-flow__edge-textbg {
-    fill: white;
-  }
-.react-flow__edge .react-flow__edge-text {
-    pointer-events: none;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
-  }
-.react-flow__connection {
-  pointer-events: none;
-}
-.react-flow__connection .animated {
-    stroke-dasharray: 5;
-    animation: dashdraw 0.5s linear infinite;
-  }
-.react-flow__connectionline {
-  z-index: 1001;
-}
-.react-flow__nodes {
-  pointer-events: none;
-  transform-origin: 0 0;
-}
-.react-flow__node {
-  position: absolute;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
-  pointer-events: all;
-  transform-origin: 0 0;
-  box-sizing: border-box;
-  cursor: grab;
-}
-.react-flow__node.dragging {
-    cursor: grabbing;
-  }
-.react-flow__nodesselection {
-  z-index: 3;
-  transform-origin: left top;
-  pointer-events: none;
-}
-.react-flow__nodesselection-rect {
-    position: absolute;
-    pointer-events: all;
-    cursor: grab;
-  }
-.react-flow__handle {
-  position: absolute;
-  pointer-events: none;
-  min-width: 5px;
-  min-height: 5px;
-  width: 6px;
-  height: 6px;
-  background: #1a192b;
-  border: 1px solid white;
-  border-radius: 100%;
-}
-.react-flow__handle.connectionindicator {
-    pointer-events: all;
-    cursor: crosshair;
-  }
-.react-flow__handle-bottom {
-    top: auto;
-    left: 50%;
-    bottom: -4px;
-    transform: translate(-50%, 0);
-  }
-.react-flow__handle-top {
-    left: 50%;
-    top: -4px;
-    transform: translate(-50%, 0);
-  }
-.react-flow__handle-left {
-    top: 50%;
-    left: -4px;
-    transform: translate(0, -50%);
-  }
-.react-flow__handle-right {
-    right: -4px;
-    top: 50%;
-    transform: translate(0, -50%);
-  }
-.react-flow__edgeupdater {
-  cursor: move;
-  pointer-events: all;
-}
-.react-flow__panel {
-  position: absolute;
-  z-index: 5;
-  margin: 15px;
-}
-.react-flow__panel.top {
-    top: 0;
-  }
-.react-flow__panel.bottom {
-    bottom: 0;
-  }
-.react-flow__panel.left {
-    left: 0;
-  }
-.react-flow__panel.right {
-    right: 0;
-  }
-.react-flow__panel.center {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-.react-flow__attribution {
-  font-size: 10px;
-  background: rgba(255, 255, 255, 0.5);
-  padding: 2px 3px;
-  margin: 0;
-}
-.react-flow__attribution a {
-    text-decoration: none;
-    color: #999;
-  }
-@keyframes dashdraw {
-  from {
-    stroke-dashoffset: 10;
-  }
-}
-.react-flow__edgelabel-renderer {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
-}
-.react-flow__edge.updating .react-flow__edge-path {
-      stroke: #777;
-    }
-.react-flow__edge-text {
-    font-size: 10px;
-  }
-.react-flow__node.selectable:focus,
-  .react-flow__node.selectable:focus-visible {
-    outline: none;
-  }
-.react-flow__node-default,
-.react-flow__node-input,
-.react-flow__node-output,
-.react-flow__node-group {
-  padding: 10px;
-  border-radius: 3px;
-  width: 150px;
-  font-size: 12px;
-  color: #222;
-  text-align: center;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #1a192b;
-  background-color: white;
-}
-.react-flow__node-default.selectable:hover, .react-flow__node-input.selectable:hover, .react-flow__node-output.selectable:hover, .react-flow__node-group.selectable:hover {
-      box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.08);
-    }
-.react-flow__node-default.selectable.selected,
-    .react-flow__node-default.selectable:focus,
-    .react-flow__node-default.selectable:focus-visible,
-    .react-flow__node-input.selectable.selected,
-    .react-flow__node-input.selectable:focus,
-    .react-flow__node-input.selectable:focus-visible,
-    .react-flow__node-output.selectable.selected,
-    .react-flow__node-output.selectable:focus,
-    .react-flow__node-output.selectable:focus-visible,
-    .react-flow__node-group.selectable.selected,
-    .react-flow__node-group.selectable:focus,
-    .react-flow__node-group.selectable:focus-visible {
-      box-shadow: 0 0 0 0.5px #1a192b;
-    }
-.react-flow__node-group {
-  background-color: rgba(240, 240, 240, 0.25);
-}
-.react-flow__nodesselection-rect,
-.react-flow__selection {
-  background: rgba(0, 89, 220, 0.08);
-  border: 1px dotted rgba(0, 89, 220, 0.8);
-}
-.react-flow__nodesselection-rect:focus,
-  .react-flow__nodesselection-rect:focus-visible,
-  .react-flow__selection:focus,
-  .react-flow__selection:focus-visible {
-    outline: none;
-  }
-.react-flow__controls {
-  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.08);
-}
-.react-flow__controls-button {
-    border: none;
-    background: #fefefe;
-    border-bottom: 1px solid #eee;
-    box-sizing: content-box;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
-    padding: 5px;
-  }
-.react-flow__controls-button:hover {
-      background: #f4f4f4;
-    }
-.react-flow__controls-button svg {
-      width: 100%;
-      max-width: 12px;
-      max-height: 12px;
-    }
-.react-flow__controls-button:disabled {
-      pointer-events: none;
-    }
-.react-flow__controls-button:disabled svg {
-        fill-opacity: 0.4;
-      }
-.react-flow__minimap {
-  background-color: #fff;
-}
-.react-flow__minimap svg {
-  display: block;
-}
-.react-flow__resize-control {
-  position: absolute;
-}
-.react-flow__resize-control.left,
-.react-flow__resize-control.right {
-  cursor: ew-resize;
-}
-.react-flow__resize-control.top,
-.react-flow__resize-control.bottom {
-  cursor: ns-resize;
-}
-.react-flow__resize-control.top.left,
-.react-flow__resize-control.bottom.right {
-  cursor: nwse-resize;
-}
-.react-flow__resize-control.bottom.left,
-.react-flow__resize-control.top.right {
-  cursor: nesw-resize;
-}
-/* handle styles */
-.react-flow__resize-control.handle {
-  width: 4px;
-  height: 4px;
-  border: 1px solid #fff;
-  border-radius: 1px;
-  background-color: #3367d9;
-  transform: translate(-50%, -50%);
-}
-.react-flow__resize-control.handle.left {
-  left: 0;
-  top: 50%;
-}
-.react-flow__resize-control.handle.right {
-  left: 100%;
-  top: 50%;
-}
-.react-flow__resize-control.handle.top {
-  left: 50%;
-  top: 0;
-}
-.react-flow__resize-control.handle.bottom {
-  left: 50%;
-  top: 100%;
-}
-.react-flow__resize-control.handle.top.left {
-  left: 0;
-}
-.react-flow__resize-control.handle.bottom.left {
-  left: 0;
-}
-.react-flow__resize-control.handle.top.right {
-  left: 100%;
-}
-.react-flow__resize-control.handle.bottom.right {
-  left: 100%;
-}
-/* line styles */
-.react-flow__resize-control.line {
-  border-color: #3367d9;
-  border-width: 0;
-  border-style: solid;
-}
-.react-flow__resize-control.line.left,
-.react-flow__resize-control.line.right {
-  width: 1px;
-  transform: translate(-50%, 0);
-  top: 0;
-  height: 100%;
-}
-.react-flow__resize-control.line.left {
-  left: 0;
-  border-left-width: 1px;
-}
-.react-flow__resize-control.line.right {
-  left: 100%;
-  border-right-width: 1px;
-}
-.react-flow__resize-control.line.top,
-.react-flow__resize-control.line.bottom {
-  height: 1px;
-  transform: translate(0, -50%);
-  left: 0;
-  width: 100%;
-}
-.react-flow__resize-control.line.top {
-  top: 0;
-  border-top-width: 1px;
-}
-.react-flow__resize-control.line.bottom {
-  border-bottom-width: 1px;
-  top: 100%;
-}
-`, "",{"version":3,"sources":["webpack://./node_modules/reactflow/dist/style.css"],"names":[],"mappings":"AAAA,4EAA4E;AAC5E,2FAA2F;AAC3F;EACE,cAAc;AAChB;AACA;EACE,kBAAkB;EAClB,WAAW;EACX,YAAY;EACZ,MAAM;EACN,OAAO;AACT;AACA;EACE,UAAU;EAEV,YAAY;AACd;AACA;IACI,eAAe;EACjB;AACF;IAEI,gBAAgB;EAClB;AACF;EACE,qBAAqB;EACrB,UAAU;EACV,oBAAoB;AACtB;AACA;EACE,UAAU;AACZ;AACA;EACE,UAAU;AACZ;AACA;;EAEE,aAAa;AACf;AACA;EACE,oBAAoB;EACpB,iBAAiB;AACnB;AACA;;EAEE,eAAe;EACf,eAAe;EACf,UAAU;AACZ;AACA;EACE,6BAA6B;EAC7B,eAAe;AACjB;AACA;IACI,mBAAmB;IAEX,wCAAwC;EAClD;AACF;IACI,sBAAsB;IAEd,eAAe;EACzB;AACF;IACI,oBAAoB;EACtB;AACF;;;IAGI,aAAa;EACf;AACF;;;IAGI,YAAY;EACd;AACF;IACI,mBAAmB;EACrB;AACF;IACI,WAAW;EACb;AACF;IACI,oBAAoB;IACpB,yBAAyB;OACtB,sBAAsB;YACjB,iBAAiB;EAC3B;AACF;EACE,oBAAoB;AACtB;AACA;IACI,mBAAmB;IAEX,wCAAwC;EAClD;AACF;EACE,aAAa;AACf;AACA;EACE,oBAAoB;EACpB,qBAAqB;AACvB;AACA;EACE,kBAAkB;EAClB,yBAAyB;KACtB,sBAAsB;UACjB,iBAAiB;EACzB,mBAAmB;EACnB,qBAAqB;EACrB,sBAAsB;EAEtB,YAAY;AACd;AACA;IAEI,gBAAgB;EAClB;AACF;EACE,UAAU;EACV,0BAA0B;EAC1B,oBAAoB;AACtB;AACA;IACI,kBAAkB;IAClB,mBAAmB;IAEnB,YAAY;EACd;AACF;EACE,kBAAkB;EAClB,oBAAoB;EACpB,cAAc;EACd,eAAe;EACf,UAAU;EACV,WAAW;EACX,mBAAmB;EACnB,uBAAuB;EACvB,mBAAmB;AACrB;AACA;IACI,mBAAmB;IACnB,iBAAiB;EACnB;AACF;IACI,SAAS;IACT,SAAS;IACT,YAAY;IACZ,6BAA6B;EAC/B;AACF;IACI,SAAS;IACT,SAAS;IACT,6BAA6B;EAC/B;AACF;IACI,QAAQ;IACR,UAAU;IACV,6BAA6B;EAC/B;AACF;IACI,WAAW;IACX,QAAQ;IACR,6BAA6B;EAC/B;AACF;EACE,YAAY;EACZ,mBAAmB;AACrB;AACA;EACE,kBAAkB;EAClB,UAAU;EACV,YAAY;AACd;AACA;IACI,MAAM;EACR;AACF;IACI,SAAS;EACX;AACF;IACI,OAAO;EACT;AACF;IACI,QAAQ;EACV;AACF;IACI,SAAS;IACT,2BAA2B;EAC7B;AACF;EACE,eAAe;EACf,oCAAoC;EACpC,gBAAgB;EAChB,SAAS;AACX;AACA;IACI,qBAAqB;IACrB,WAAW;EACb;AAMF;EACE;IACE,qBAAqB;EACvB;AACF;AACA;EACE,kBAAkB;EAClB,WAAW;EACX,YAAY;EACZ,oBAAoB;EACpB,yBAAyB;KACtB,sBAAsB;UACjB,iBAAiB;AAC3B;AACA;MACM,YAAY;IACd;AACJ;IACI,eAAe;EACjB;AACF;;IAEI,aAAa;EACf;AACF;;;;EAIE,aAAa;EACb,kBAAkB;EAClB,YAAY;EACZ,eAAe;EACf,WAAW;EACX,kBAAkB;EAClB,iBAAiB;EACjB,mBAAmB;EACnB,qBAAqB;EACrB,uBAAuB;AACzB;AACA;MACM,6CAA6C;IAC/C;AACJ;;;;;;;;;;;;MAYM,+BAA+B;IACjC;AACJ;EACE,2CAA2C;AAC7C;AACA;;EAEE,kCAAkC;EAClC,wCAAwC;AAC1C;AACA;;;;IAII,aAAa;EACf;AACF;EACE,2CAA2C;AAC7C;AACA;IACI,YAAY;IACZ,mBAAmB;IACnB,6BAA6B;IAC7B,uBAAuB;IACvB,aAAa;IACb,uBAAuB;IACvB,mBAAmB;IACnB,WAAW;IACX,YAAY;IACZ,eAAe;IACf,yBAAyB;OACtB,sBAAsB;YACjB,iBAAiB;IACzB,YAAY;EACd;AACF;MACM,mBAAmB;IACrB;AACJ;MACM,WAAW;MACX,eAAe;MACf,gBAAgB;IAClB;AACJ;MACM,oBAAoB;IACtB;AACJ;QACQ,iBAAiB;MACnB;AACN;EACE,sBAAsB;AACxB;AACA;EACE,cAAc;AAChB;AACA;EACE,kBAAkB;AACpB;AACA;;EAEE,iBAAiB;AACnB;AACA;;EAEE,iBAAiB;AACnB;AACA;;EAEE,mBAAmB;AACrB;AACA;;EAEE,mBAAmB;AACrB;AACA,kBAAkB;AAClB;EACE,UAAU;EACV,WAAW;EACX,sBAAsB;EACtB,kBAAkB;EAClB,yBAAyB;EACzB,gCAAgC;AAClC;AACA;EACE,OAAO;EACP,QAAQ;AACV;AACA;EACE,UAAU;EACV,QAAQ;AACV;AACA;EACE,SAAS;EACT,MAAM;AACR;AACA;EACE,SAAS;EACT,SAAS;AACX;AACA;EACE,OAAO;AACT;AACA;EACE,OAAO;AACT;AACA;EACE,UAAU;AACZ;AACA;EACE,UAAU;AACZ;AACA,gBAAgB;AAChB;EACE,qBAAqB;EACrB,eAAe;EACf,mBAAmB;AACrB;AACA;;EAEE,UAAU;EACV,6BAA6B;EAC7B,MAAM;EACN,YAAY;AACd;AACA;EACE,OAAO;EACP,sBAAsB;AACxB;AACA;EACE,UAAU;EACV,uBAAuB;AACzB;AACA;;EAEE,WAAW;EACX,6BAA6B;EAC7B,OAAO;EACP,WAAW;AACb;AACA;EACE,MAAM;EACN,qBAAqB;AACvB;AACA;EACE,wBAAwB;EACxB,SAAS;AACX","sourcesContent":["/* this gets exported as style.css and can be used for the default theming */\n/* these are the necessary styles for React Flow, they get used by base.css and style.css */\n.react-flow {\n  direction: ltr;\n}\n.react-flow__container {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  top: 0;\n  left: 0;\n}\n.react-flow__pane {\n  z-index: 1;\n  cursor: -webkit-grab;\n  cursor: grab;\n}\n.react-flow__pane.selection {\n    cursor: pointer;\n  }\n.react-flow__pane.dragging {\n    cursor: -webkit-grabbing;\n    cursor: grabbing;\n  }\n.react-flow__viewport {\n  transform-origin: 0 0;\n  z-index: 2;\n  pointer-events: none;\n}\n.react-flow__renderer {\n  z-index: 4;\n}\n.react-flow__selection {\n  z-index: 6;\n}\n.react-flow__nodesselection-rect:focus,\n.react-flow__nodesselection-rect:focus-visible {\n  outline: none;\n}\n.react-flow .react-flow__edges {\n  pointer-events: none;\n  overflow: visible;\n}\n.react-flow__edge-path,\n.react-flow__connection-path {\n  stroke: #b1b1b7;\n  stroke-width: 1;\n  fill: none;\n}\n.react-flow__edge {\n  pointer-events: visibleStroke;\n  cursor: pointer;\n}\n.react-flow__edge.animated path {\n    stroke-dasharray: 5;\n    -webkit-animation: dashdraw 0.5s linear infinite;\n            animation: dashdraw 0.5s linear infinite;\n  }\n.react-flow__edge.animated path.react-flow__edge-interaction {\n    stroke-dasharray: none;\n    -webkit-animation: none;\n            animation: none;\n  }\n.react-flow__edge.inactive {\n    pointer-events: none;\n  }\n.react-flow__edge.selected,\n  .react-flow__edge:focus,\n  .react-flow__edge:focus-visible {\n    outline: none;\n  }\n.react-flow__edge.selected .react-flow__edge-path,\n  .react-flow__edge:focus .react-flow__edge-path,\n  .react-flow__edge:focus-visible .react-flow__edge-path {\n    stroke: #555;\n  }\n.react-flow__edge-textwrapper {\n    pointer-events: all;\n  }\n.react-flow__edge-textbg {\n    fill: white;\n  }\n.react-flow__edge .react-flow__edge-text {\n    pointer-events: none;\n    -webkit-user-select: none;\n       -moz-user-select: none;\n            user-select: none;\n  }\n.react-flow__connection {\n  pointer-events: none;\n}\n.react-flow__connection .animated {\n    stroke-dasharray: 5;\n    -webkit-animation: dashdraw 0.5s linear infinite;\n            animation: dashdraw 0.5s linear infinite;\n  }\n.react-flow__connectionline {\n  z-index: 1001;\n}\n.react-flow__nodes {\n  pointer-events: none;\n  transform-origin: 0 0;\n}\n.react-flow__node {\n  position: absolute;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n          user-select: none;\n  pointer-events: all;\n  transform-origin: 0 0;\n  box-sizing: border-box;\n  cursor: -webkit-grab;\n  cursor: grab;\n}\n.react-flow__node.dragging {\n    cursor: -webkit-grabbing;\n    cursor: grabbing;\n  }\n.react-flow__nodesselection {\n  z-index: 3;\n  transform-origin: left top;\n  pointer-events: none;\n}\n.react-flow__nodesselection-rect {\n    position: absolute;\n    pointer-events: all;\n    cursor: -webkit-grab;\n    cursor: grab;\n  }\n.react-flow__handle {\n  position: absolute;\n  pointer-events: none;\n  min-width: 5px;\n  min-height: 5px;\n  width: 6px;\n  height: 6px;\n  background: #1a192b;\n  border: 1px solid white;\n  border-radius: 100%;\n}\n.react-flow__handle.connectionindicator {\n    pointer-events: all;\n    cursor: crosshair;\n  }\n.react-flow__handle-bottom {\n    top: auto;\n    left: 50%;\n    bottom: -4px;\n    transform: translate(-50%, 0);\n  }\n.react-flow__handle-top {\n    left: 50%;\n    top: -4px;\n    transform: translate(-50%, 0);\n  }\n.react-flow__handle-left {\n    top: 50%;\n    left: -4px;\n    transform: translate(0, -50%);\n  }\n.react-flow__handle-right {\n    right: -4px;\n    top: 50%;\n    transform: translate(0, -50%);\n  }\n.react-flow__edgeupdater {\n  cursor: move;\n  pointer-events: all;\n}\n.react-flow__panel {\n  position: absolute;\n  z-index: 5;\n  margin: 15px;\n}\n.react-flow__panel.top {\n    top: 0;\n  }\n.react-flow__panel.bottom {\n    bottom: 0;\n  }\n.react-flow__panel.left {\n    left: 0;\n  }\n.react-flow__panel.right {\n    right: 0;\n  }\n.react-flow__panel.center {\n    left: 50%;\n    transform: translateX(-50%);\n  }\n.react-flow__attribution {\n  font-size: 10px;\n  background: rgba(255, 255, 255, 0.5);\n  padding: 2px 3px;\n  margin: 0;\n}\n.react-flow__attribution a {\n    text-decoration: none;\n    color: #999;\n  }\n@-webkit-keyframes dashdraw {\n  from {\n    stroke-dashoffset: 10;\n  }\n}\n@keyframes dashdraw {\n  from {\n    stroke-dashoffset: 10;\n  }\n}\n.react-flow__edgelabel-renderer {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  pointer-events: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n          user-select: none;\n}\n.react-flow__edge.updating .react-flow__edge-path {\n      stroke: #777;\n    }\n.react-flow__edge-text {\n    font-size: 10px;\n  }\n.react-flow__node.selectable:focus,\n  .react-flow__node.selectable:focus-visible {\n    outline: none;\n  }\n.react-flow__node-default,\n.react-flow__node-input,\n.react-flow__node-output,\n.react-flow__node-group {\n  padding: 10px;\n  border-radius: 3px;\n  width: 150px;\n  font-size: 12px;\n  color: #222;\n  text-align: center;\n  border-width: 1px;\n  border-style: solid;\n  border-color: #1a192b;\n  background-color: white;\n}\n.react-flow__node-default.selectable:hover, .react-flow__node-input.selectable:hover, .react-flow__node-output.selectable:hover, .react-flow__node-group.selectable:hover {\n      box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.08);\n    }\n.react-flow__node-default.selectable.selected,\n    .react-flow__node-default.selectable:focus,\n    .react-flow__node-default.selectable:focus-visible,\n    .react-flow__node-input.selectable.selected,\n    .react-flow__node-input.selectable:focus,\n    .react-flow__node-input.selectable:focus-visible,\n    .react-flow__node-output.selectable.selected,\n    .react-flow__node-output.selectable:focus,\n    .react-flow__node-output.selectable:focus-visible,\n    .react-flow__node-group.selectable.selected,\n    .react-flow__node-group.selectable:focus,\n    .react-flow__node-group.selectable:focus-visible {\n      box-shadow: 0 0 0 0.5px #1a192b;\n    }\n.react-flow__node-group {\n  background-color: rgba(240, 240, 240, 0.25);\n}\n.react-flow__nodesselection-rect,\n.react-flow__selection {\n  background: rgba(0, 89, 220, 0.08);\n  border: 1px dotted rgba(0, 89, 220, 0.8);\n}\n.react-flow__nodesselection-rect:focus,\n  .react-flow__nodesselection-rect:focus-visible,\n  .react-flow__selection:focus,\n  .react-flow__selection:focus-visible {\n    outline: none;\n  }\n.react-flow__controls {\n  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.08);\n}\n.react-flow__controls-button {\n    border: none;\n    background: #fefefe;\n    border-bottom: 1px solid #eee;\n    box-sizing: content-box;\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    width: 16px;\n    height: 16px;\n    cursor: pointer;\n    -webkit-user-select: none;\n       -moz-user-select: none;\n            user-select: none;\n    padding: 5px;\n  }\n.react-flow__controls-button:hover {\n      background: #f4f4f4;\n    }\n.react-flow__controls-button svg {\n      width: 100%;\n      max-width: 12px;\n      max-height: 12px;\n    }\n.react-flow__controls-button:disabled {\n      pointer-events: none;\n    }\n.react-flow__controls-button:disabled svg {\n        fill-opacity: 0.4;\n      }\n.react-flow__minimap {\n  background-color: #fff;\n}\n.react-flow__minimap svg {\n  display: block;\n}\n.react-flow__resize-control {\n  position: absolute;\n}\n.react-flow__resize-control.left,\n.react-flow__resize-control.right {\n  cursor: ew-resize;\n}\n.react-flow__resize-control.top,\n.react-flow__resize-control.bottom {\n  cursor: ns-resize;\n}\n.react-flow__resize-control.top.left,\n.react-flow__resize-control.bottom.right {\n  cursor: nwse-resize;\n}\n.react-flow__resize-control.bottom.left,\n.react-flow__resize-control.top.right {\n  cursor: nesw-resize;\n}\n/* handle styles */\n.react-flow__resize-control.handle {\n  width: 4px;\n  height: 4px;\n  border: 1px solid #fff;\n  border-radius: 1px;\n  background-color: #3367d9;\n  transform: translate(-50%, -50%);\n}\n.react-flow__resize-control.handle.left {\n  left: 0;\n  top: 50%;\n}\n.react-flow__resize-control.handle.right {\n  left: 100%;\n  top: 50%;\n}\n.react-flow__resize-control.handle.top {\n  left: 50%;\n  top: 0;\n}\n.react-flow__resize-control.handle.bottom {\n  left: 50%;\n  top: 100%;\n}\n.react-flow__resize-control.handle.top.left {\n  left: 0;\n}\n.react-flow__resize-control.handle.bottom.left {\n  left: 0;\n}\n.react-flow__resize-control.handle.top.right {\n  left: 100%;\n}\n.react-flow__resize-control.handle.bottom.right {\n  left: 100%;\n}\n/* line styles */\n.react-flow__resize-control.line {\n  border-color: #3367d9;\n  border-width: 0;\n  border-style: solid;\n}\n.react-flow__resize-control.line.left,\n.react-flow__resize-control.line.right {\n  width: 1px;\n  transform: translate(-50%, 0);\n  top: 0;\n  height: 100%;\n}\n.react-flow__resize-control.line.left {\n  left: 0;\n  border-left-width: 1px;\n}\n.react-flow__resize-control.line.right {\n  left: 100%;\n  border-right-width: 1px;\n}\n.react-flow__resize-control.line.top,\n.react-flow__resize-control.line.bottom {\n  height: 1px;\n  transform: translate(0, -50%);\n  left: 0;\n  width: 100%;\n}\n.react-flow__resize-control.line.top {\n  top: 0;\n  border-top-width: 1px;\n}\n.react-flow__resize-control.line.bottom {\n  border-bottom-width: 1px;\n  top: 100%;\n}\n"],"sourceRoot":""}]);
-// Exports
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+// extracted by mini-css-extract-plugin
 
 
 /***/ }),
 
-/***/ "./node_modules/css-loader/dist/runtime/api.js":
-/*!*****************************************************!*\
-  !*** ./node_modules/css-loader/dist/runtime/api.js ***!
-  \*****************************************************/
-/***/ ((module) => {
+/***/ "./src/styles/globals.css":
+/*!********************************!*\
+  !*** ./src/styles/globals.css ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
 
-
-/*
-  MIT License http://www.opensource.org/licenses/mit-license.php
-  Author Tobias Koppers @sokra
-*/
-module.exports = function (cssWithMappingToString) {
-  var list = [];
-
-  // return the list of modules as css string
-  list.toString = function toString() {
-    return this.map(function (item) {
-      var content = "";
-      var needLayer = typeof item[5] !== "undefined";
-      if (item[4]) {
-        content += "@supports (".concat(item[4], ") {");
-      }
-      if (item[2]) {
-        content += "@media ".concat(item[2], " {");
-      }
-      if (needLayer) {
-        content += "@layer".concat(item[5].length > 0 ? " ".concat(item[5]) : "", " {");
-      }
-      content += cssWithMappingToString(item);
-      if (needLayer) {
-        content += "}";
-      }
-      if (item[2]) {
-        content += "}";
-      }
-      if (item[4]) {
-        content += "}";
-      }
-      return content;
-    }).join("");
-  };
-
-  // import a list of modules into the list
-  list.i = function i(modules, media, dedupe, supports, layer) {
-    if (typeof modules === "string") {
-      modules = [[null, modules, undefined]];
-    }
-    var alreadyImportedModules = {};
-    if (dedupe) {
-      for (var k = 0; k < this.length; k++) {
-        var id = this[k][0];
-        if (id != null) {
-          alreadyImportedModules[id] = true;
-        }
-      }
-    }
-    for (var _k = 0; _k < modules.length; _k++) {
-      var item = [].concat(modules[_k]);
-      if (dedupe && alreadyImportedModules[item[0]]) {
-        continue;
-      }
-      if (typeof layer !== "undefined") {
-        if (typeof item[5] === "undefined") {
-          item[5] = layer;
-        } else {
-          item[1] = "@layer".concat(item[5].length > 0 ? " ".concat(item[5]) : "", " {").concat(item[1], "}");
-          item[5] = layer;
-        }
-      }
-      if (media) {
-        if (!item[2]) {
-          item[2] = media;
-        } else {
-          item[1] = "@media ".concat(item[2], " {").concat(item[1], "}");
-          item[2] = media;
-        }
-      }
-      if (supports) {
-        if (!item[4]) {
-          item[4] = "".concat(supports);
-        } else {
-          item[1] = "@supports (".concat(item[4], ") {").concat(item[1], "}");
-          item[4] = supports;
-        }
-      }
-      list.push(item);
-    }
-  };
-  return list;
-};
-
-/***/ }),
-
-/***/ "./node_modules/css-loader/dist/runtime/sourceMaps.js":
-/*!************************************************************!*\
-  !*** ./node_modules/css-loader/dist/runtime/sourceMaps.js ***!
-  \************************************************************/
-/***/ ((module) => {
-
-
-
-module.exports = function (item) {
-  var content = item[1];
-  var cssMapping = item[3];
-  if (!cssMapping) {
-    return content;
-  }
-  if (typeof btoa === "function") {
-    var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(cssMapping))));
-    var data = "sourceMappingURL=data:application/json;charset=utf-8;base64,".concat(base64);
-    var sourceMapping = "/*# ".concat(data, " */");
-    return [content].concat([sourceMapping]).join("\n");
-  }
-  return [content].join("\n");
-};
 
 /***/ }),
 
@@ -35531,6 +35017,38 @@ if (
 
 /***/ }),
 
+/***/ "./node_modules/react-dom/client.js":
+/*!******************************************!*\
+  !*** ./node_modules/react-dom/client.js ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+var m = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
+if (false) {} else {
+  var i = m.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+  exports.createRoot = function(c, o) {
+    i.usingClientEntryPoint = true;
+    try {
+      return m.createRoot(c, o);
+    } finally {
+      i.usingClientEntryPoint = false;
+    }
+  };
+  exports.hydrateRoot = function(c, h, o) {
+    i.usingClientEntryPoint = true;
+    try {
+      return m.hydrateRoot(c, h, o);
+    } finally {
+      i.usingClientEntryPoint = false;
+    }
+  };
+}
+
+
+/***/ }),
+
 /***/ "./node_modules/react-dom/index.js":
 /*!*****************************************!*\
   !*** ./node_modules/react-dom/index.js ***!
@@ -43482,324 +43000,42 @@ if (false) {} else {
 
 /***/ }),
 
-/***/ "./node_modules/reactflow/dist/style.css":
-/*!***********************************************!*\
-  !*** ./node_modules/reactflow/dist/style.css ***!
-  \***********************************************/
+/***/ "./src/App.tsx":
+/*!*********************!*\
+  !*** ./src/App.tsx ***!
+  \*********************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
-/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleDomAPI.js */ "./node_modules/style-loader/dist/runtime/styleDomAPI.js");
-/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertBySelector.js */ "./node_modules/style-loader/dist/runtime/insertBySelector.js");
-/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../style-loader/dist/runtime/setAttributesWithoutAttributes.js */ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js");
-/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertStyleElement.js */ "./node_modules/style-loader/dist/runtime/insertStyleElement.js");
-/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleTagTransform.js */ "./node_modules/style-loader/dist/runtime/styleTagTransform.js");
-/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var _css_loader_dist_cjs_js_postcss_loader_dist_cjs_js_style_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js!../../postcss-loader/dist/cjs.js!./style.css */ "./node_modules/css-loader/dist/cjs.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/reactflow/dist/style.css");
-
-      
-      
-      
-      
-      
-      
-      
-      
-      
-
-var options = {};
-
-options.styleTagTransform = (_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default());
-options.setAttributes = (_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default());
-
-      options.insert = _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default().bind(null, "head");
-    
-options.domAPI = (_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default());
-options.insertStyleElement = (_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default());
-
-var update = _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_css_loader_dist_cjs_js_postcss_loader_dist_cjs_js_style_css__WEBPACK_IMPORTED_MODULE_6__["default"], options);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _styles_globals_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./styles/globals.css */ "./src/styles/globals.css");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/dist/index.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
+/* harmony import */ var _components_Layout__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/Layout */ "./src/components/Layout.tsx");
+/* harmony import */ var _pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pages/LandingPage */ "./src/pages/LandingPage.tsx");
+/* harmony import */ var _pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./pages/StoryGeneration */ "./src/pages/StoryGeneration.tsx");
+/* harmony import */ var _pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./pages/BookUpload */ "./src/pages/BookUpload.tsx");
 
 
 
 
-       /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_css_loader_dist_cjs_js_postcss_loader_dist_cjs_js_style_css__WEBPACK_IMPORTED_MODULE_6__["default"] && _css_loader_dist_cjs_js_postcss_loader_dist_cjs_js_style_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals ? _css_loader_dist_cjs_js_postcss_loader_dist_cjs_js_style_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals : undefined);
-
-
-/***/ }),
-
-/***/ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js":
-/*!****************************************************************************!*\
-  !*** ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js ***!
-  \****************************************************************************/
-/***/ ((module) => {
 
 
 
-var stylesInDOM = [];
-function getIndexByIdentifier(identifier) {
-  var result = -1;
-  for (var i = 0; i < stylesInDOM.length; i++) {
-    if (stylesInDOM[i].identifier === identifier) {
-      result = i;
-      break;
-    }
-  }
-  return result;
+function App() {
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_6__.BrowserRouter, null,
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_Layout__WEBPACK_IMPORTED_MODULE_2__["default"], null,
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.Routes, null,
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.Route, { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__["default"], null) }),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null) }),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null) })))));
 }
-function modulesToDom(list, options) {
-  var idCountMap = {};
-  var identifiers = [];
-  for (var i = 0; i < list.length; i++) {
-    var item = list[i];
-    var id = options.base ? item[0] + options.base : item[0];
-    var count = idCountMap[id] || 0;
-    var identifier = "".concat(id, " ").concat(count);
-    idCountMap[id] = count + 1;
-    var indexByIdentifier = getIndexByIdentifier(identifier);
-    var obj = {
-      css: item[1],
-      media: item[2],
-      sourceMap: item[3],
-      supports: item[4],
-      layer: item[5]
-    };
-    if (indexByIdentifier !== -1) {
-      stylesInDOM[indexByIdentifier].references++;
-      stylesInDOM[indexByIdentifier].updater(obj);
-    } else {
-      var updater = addElementStyle(obj, options);
-      options.byIndex = i;
-      stylesInDOM.splice(i, 0, {
-        identifier: identifier,
-        updater: updater,
-        references: 1
-      });
-    }
-    identifiers.push(identifier);
-  }
-  return identifiers;
-}
-function addElementStyle(obj, options) {
-  var api = options.domAPI(options);
-  api.update(obj);
-  var updater = function updater(newObj) {
-    if (newObj) {
-      if (newObj.css === obj.css && newObj.media === obj.media && newObj.sourceMap === obj.sourceMap && newObj.supports === obj.supports && newObj.layer === obj.layer) {
-        return;
-      }
-      api.update(obj = newObj);
-    } else {
-      api.remove();
-    }
-  };
-  return updater;
-}
-module.exports = function (list, options) {
-  options = options || {};
-  list = list || [];
-  var lastIdentifiers = modulesToDom(list, options);
-  return function update(newList) {
-    newList = newList || [];
-    for (var i = 0; i < lastIdentifiers.length; i++) {
-      var identifier = lastIdentifiers[i];
-      var index = getIndexByIdentifier(identifier);
-      stylesInDOM[index].references--;
-    }
-    var newLastIdentifiers = modulesToDom(newList, options);
-    for (var _i = 0; _i < lastIdentifiers.length; _i++) {
-      var _identifier = lastIdentifiers[_i];
-      var _index = getIndexByIdentifier(_identifier);
-      if (stylesInDOM[_index].references === 0) {
-        stylesInDOM[_index].updater();
-        stylesInDOM.splice(_index, 1);
-      }
-    }
-    lastIdentifiers = newLastIdentifiers;
-  };
-};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (App);
 
-/***/ }),
-
-/***/ "./node_modules/style-loader/dist/runtime/insertBySelector.js":
-/*!********************************************************************!*\
-  !*** ./node_modules/style-loader/dist/runtime/insertBySelector.js ***!
-  \********************************************************************/
-/***/ ((module) => {
-
-
-
-var memo = {};
-
-/* istanbul ignore next  */
-function getTarget(target) {
-  if (typeof memo[target] === "undefined") {
-    var styleTarget = document.querySelector(target);
-
-    // Special case to return head of iframe instead of iframe itself
-    if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
-      try {
-        // This will throw an exception if access to iframe is blocked
-        // due to cross-origin restrictions
-        styleTarget = styleTarget.contentDocument.head;
-      } catch (e) {
-        // istanbul ignore next
-        styleTarget = null;
-      }
-    }
-    memo[target] = styleTarget;
-  }
-  return memo[target];
-}
-
-/* istanbul ignore next  */
-function insertBySelector(insert, style) {
-  var target = getTarget(insert);
-  if (!target) {
-    throw new Error("Couldn't find a style target. This probably means that the value for the 'insert' parameter is invalid.");
-  }
-  target.appendChild(style);
-}
-module.exports = insertBySelector;
-
-/***/ }),
-
-/***/ "./node_modules/style-loader/dist/runtime/insertStyleElement.js":
-/*!**********************************************************************!*\
-  !*** ./node_modules/style-loader/dist/runtime/insertStyleElement.js ***!
-  \**********************************************************************/
-/***/ ((module) => {
-
-
-
-/* istanbul ignore next  */
-function insertStyleElement(options) {
-  var element = document.createElement("style");
-  options.setAttributes(element, options.attributes);
-  options.insert(element, options.options);
-  return element;
-}
-module.exports = insertStyleElement;
-
-/***/ }),
-
-/***/ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js":
-/*!**********************************************************************************!*\
-  !*** ./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js ***!
-  \**********************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-/* istanbul ignore next  */
-function setAttributesWithoutAttributes(styleElement) {
-  var nonce =  true ? __webpack_require__.nc : 0;
-  if (nonce) {
-    styleElement.setAttribute("nonce", nonce);
-  }
-}
-module.exports = setAttributesWithoutAttributes;
-
-/***/ }),
-
-/***/ "./node_modules/style-loader/dist/runtime/styleDomAPI.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/style-loader/dist/runtime/styleDomAPI.js ***!
-  \***************************************************************/
-/***/ ((module) => {
-
-
-
-/* istanbul ignore next  */
-function apply(styleElement, options, obj) {
-  var css = "";
-  if (obj.supports) {
-    css += "@supports (".concat(obj.supports, ") {");
-  }
-  if (obj.media) {
-    css += "@media ".concat(obj.media, " {");
-  }
-  var needLayer = typeof obj.layer !== "undefined";
-  if (needLayer) {
-    css += "@layer".concat(obj.layer.length > 0 ? " ".concat(obj.layer) : "", " {");
-  }
-  css += obj.css;
-  if (needLayer) {
-    css += "}";
-  }
-  if (obj.media) {
-    css += "}";
-  }
-  if (obj.supports) {
-    css += "}";
-  }
-  var sourceMap = obj.sourceMap;
-  if (sourceMap && typeof btoa !== "undefined") {
-    css += "\n/*# sourceMappingURL=data:application/json;base64,".concat(btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))), " */");
-  }
-
-  // For old IE
-  /* istanbul ignore if  */
-  options.styleTagTransform(css, styleElement, options.options);
-}
-function removeStyleElement(styleElement) {
-  // istanbul ignore if
-  if (styleElement.parentNode === null) {
-    return false;
-  }
-  styleElement.parentNode.removeChild(styleElement);
-}
-
-/* istanbul ignore next  */
-function domAPI(options) {
-  if (typeof document === "undefined") {
-    return {
-      update: function update() {},
-      remove: function remove() {}
-    };
-  }
-  var styleElement = options.insertStyleElement(options);
-  return {
-    update: function update(obj) {
-      apply(styleElement, options, obj);
-    },
-    remove: function remove() {
-      removeStyleElement(styleElement);
-    }
-  };
-}
-module.exports = domAPI;
-
-/***/ }),
-
-/***/ "./node_modules/style-loader/dist/runtime/styleTagTransform.js":
-/*!*********************************************************************!*\
-  !*** ./node_modules/style-loader/dist/runtime/styleTagTransform.js ***!
-  \*********************************************************************/
-/***/ ((module) => {
-
-
-
-/* istanbul ignore next  */
-function styleTagTransform(css, styleElement) {
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = css;
-  } else {
-    while (styleElement.firstChild) {
-      styleElement.removeChild(styleElement.firstChild);
-    }
-    styleElement.appendChild(document.createTextNode(css));
-  }
-}
-module.exports = styleTagTransform;
 
 /***/ }),
 
@@ -57541,45 +56777,27 @@ var vanilla = (createState) => {
 /******/ 		};
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/nonce */
-/******/ 	(() => {
-/******/ 		__webpack_require__.nc = undefined;
-/******/ 	})();
-/******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
-/*!*********************!*\
-  !*** ./src/App.tsx ***!
-  \*********************/
+/*!***********************!*\
+  !*** ./src/index.tsx ***!
+  \***********************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/dist/index.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
-/* harmony import */ var _components_Layout__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/Layout */ "./src/components/Layout.tsx");
-/* harmony import */ var _pages_LandingPage__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./pages/LandingPage */ "./src/pages/LandingPage.tsx");
-/* harmony import */ var _pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pages/StoryGeneration */ "./src/pages/StoryGeneration.tsx");
-/* harmony import */ var _pages_BookUpload__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./pages/BookUpload */ "./src/pages/BookUpload.tsx");
+/* harmony import */ var react_dom_client__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom/client */ "./node_modules/react-dom/client.js");
+/* harmony import */ var _App__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./App */ "./src/App.tsx");
 
 
 
-
-
-
-function App() {
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_5__.BrowserRouter, null,
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_Layout__WEBPACK_IMPORTED_MODULE_1__["default"], null,
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_6__.Routes, null,
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_6__.Route, { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_2__["default"], null) }),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_6__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_3__["default"], null) }),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_6__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_4__["default"], null) })))));
-}
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (App);
+var container = document.getElementById('root');
+if (!container)
+    throw new Error('Failed to find the root element');
+var root = (0,react_dom_client__WEBPACK_IMPORTED_MODULE_1__.createRoot)(container);
+root.render(react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().StrictMode), null,
+    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_App__WEBPACK_IMPORTED_MODULE_2__["default"], null)));
 
 })();
 

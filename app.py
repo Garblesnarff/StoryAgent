@@ -47,7 +47,12 @@ def serve(path):
     # Clear any existing story data when returning to home
     if path == '' and 'story_data' in session:
         session.pop('story_data', None)
-    return render_template('index.html')
+    
+    # Only serve API routes, everything else goes to React
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+        
+    return render_template('react.html')
 
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
