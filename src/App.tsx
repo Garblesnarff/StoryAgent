@@ -10,6 +10,7 @@ import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import StoryGeneration from './pages/StoryGeneration';
 import BookUpload from './pages/BookUpload';
+import StoryEdit from './pages/StoryEdit';
 import NodeEditor from './components/NodeEditor';
 
 const router = createBrowserRouter(
@@ -18,12 +19,17 @@ const router = createBrowserRouter(
       <Route path="/" element={<LandingPage />} />
       <Route path="/create-story" element={<StoryGeneration />} />
       <Route path="/upload-book" element={<BookUpload />} />
-      <Route path="/story/edit" element={<NodeEditor />} />
+      <Route path="/story/edit" element={<StoryEdit />} />
+      <Route path="/story/edit/nodes" element={<NodeEditor />} />
     </Route>
   ),
   {
     future: {
-      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true
     },
   }
 );
