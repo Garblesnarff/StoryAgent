@@ -14,10 +14,16 @@ const BookUpload: React.FC = () => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setError(null);
+    if (!selectedFile) return;
+
+    const fileType = selectedFile.name.split('.').pop()?.toLowerCase();
+    if (!fileType || !['pdf', 'epub', 'txt'].includes(fileType)) {
+      setError('Please select a valid file type (PDF, EPUB, or TXT)');
+      return;
     }
+
+    setFile(selectedFile);
+    setError(null);
   };
 
   const handleUpload = async () => {
@@ -39,10 +45,26 @@ const BookUpload: React.FC = () => {
         body: formData,
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
 
+      const reader = response.body?.getReader();
+      const contentLength = +response.headers.get('Content-Length')!;
+      let receivedLength = 0;
+
+      while(reader) {
+        const {done, value} = await reader.read();
+        if (done) break;
+
+        receivedLength += value.length;
+        setProgress(Math.min((receivedLength / contentLength) * 100, 99));
+      }
+
+      const data = await response.json();
       if (data.status === 'complete') {
-        navigate(data.redirect);
+        setProgress(100);
+        setTimeout(() => navigate(data.redirect), 500);
       } else {
         throw new Error(data.error || 'Upload failed');
       }

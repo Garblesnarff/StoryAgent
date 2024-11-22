@@ -44366,6 +44366,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (_a) {
     var data = _a.data;
     var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
+    var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.globalStyle || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border" },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Left, className: "!bg-primary" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-lg font-bold mb-2 text-primary" },
@@ -45310,17 +45311,23 @@ var BookUpload = function () {
     var _d = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), error = _d[0], setError = _d[1];
     var navigate = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_4__.useNavigate)();
     var handleFileSelect = function (event) {
-        var _a;
+        var _a, _b;
         var selectedFile = (_a = event.target.files) === null || _a === void 0 ? void 0 : _a[0];
-        if (selectedFile) {
-            setFile(selectedFile);
-            setError(null);
+        if (!selectedFile)
+            return;
+        var fileType = (_b = selectedFile.name.split('.').pop()) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+        if (!fileType || !['pdf', 'epub', 'txt'].includes(fileType)) {
+            setError('Please select a valid file type (PDF, EPUB, or TXT)');
+            return;
         }
+        setFile(selectedFile);
+        setError(null);
     };
     var handleUpload = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var formData, response, data, err_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var formData, response, reader, contentLength, receivedLength, _a, done, value, data_1, err_1;
+        var _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     if (!file) {
                         setError('Please select a file first');
@@ -45331,33 +45338,51 @@ var BookUpload = function () {
                     setError(null);
                     formData = new FormData();
                     formData.append('file', file);
-                    _a.label = 1;
+                    _c.label = 1;
                 case 1:
-                    _a.trys.push([1, 4, 5, 6]);
+                    _c.trys.push([1, 7, 8, 9]);
                     return [4 /*yield*/, fetch('/story/upload', {
                             method: 'POST',
                             body: formData,
                         })];
                 case 2:
-                    response = _a.sent();
-                    return [4 /*yield*/, response.json()];
+                    response = _c.sent();
+                    if (!response.ok) {
+                        throw new Error("Upload failed: ".concat(response.statusText));
+                    }
+                    reader = (_b = response.body) === null || _b === void 0 ? void 0 : _b.getReader();
+                    contentLength = +response.headers.get('Content-Length');
+                    receivedLength = 0;
+                    _c.label = 3;
                 case 3:
-                    data = _a.sent();
-                    if (data.status === 'complete') {
-                        navigate(data.redirect);
+                    if (!reader) return [3 /*break*/, 5];
+                    return [4 /*yield*/, reader.read()];
+                case 4:
+                    _a = _c.sent(), done = _a.done, value = _a.value;
+                    if (done)
+                        return [3 /*break*/, 5];
+                    receivedLength += value.length;
+                    setProgress(Math.min((receivedLength / contentLength) * 100, 99));
+                    return [3 /*break*/, 3];
+                case 5: return [4 /*yield*/, response.json()];
+                case 6:
+                    data_1 = _c.sent();
+                    if (data_1.status === 'complete') {
+                        setProgress(100);
+                        setTimeout(function () { return navigate(data_1.redirect); }, 500);
                     }
                     else {
-                        throw new Error(data.error || 'Upload failed');
+                        throw new Error(data_1.error || 'Upload failed');
                     }
-                    return [3 /*break*/, 6];
-                case 4:
-                    err_1 = _a.sent();
+                    return [3 /*break*/, 9];
+                case 7:
+                    err_1 = _c.sent();
                     setError(err_1 instanceof Error ? err_1.message : 'An error occurred during upload');
-                    return [3 /*break*/, 6];
-                case 5:
+                    return [3 /*break*/, 9];
+                case 8:
                     setUploading(false);
                     return [7 /*endfinally*/];
-                case 6: return [2 /*return*/];
+                case 9: return [2 /*return*/];
             }
         });
     }); };
@@ -45388,12 +45413,12 @@ var BookUpload = function () {
                                 file && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm font-medium text-primary" }, file.name)),
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "Supported formats: PDF, EPUB, TXT")))),
                     error && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.Alert, { open: !!error, onOpenChange: function () { return setError(null); } },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertContent, null,
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertHeader, null,
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertContent, null,
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertHeader, null,
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertTitle, null, "Error"),
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertDescription, null, error)),
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertFooter, null,
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(AlertAction, null, "OK"))))),
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertFooter, null,
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertAction, null, "OK"))))),
                     uploading && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-2" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_progress__WEBPACK_IMPORTED_MODULE_2__.Progress, { value: progress, className: "w-full" }),
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-center text-muted-foreground" }, "Processing your book..."))),

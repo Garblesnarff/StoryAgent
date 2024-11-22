@@ -24,6 +24,7 @@ interface ParagraphData {
     onRegenerateImage: (index: number) => void;
     onRegenerateAudio: (index: number) => void;
     onExpandImage: (url: string) => void;
+    onStyleChange?: (index: number, style: string) => void;
     isGenerating: boolean;
     isRegenerating: boolean;
     isRegeneratingAudio: boolean;
@@ -31,6 +32,7 @@ interface ParagraphData {
 
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
     const [showPrompt, setShowPrompt] = useState(false);
+    const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
 
     return (
         <div className="bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border">
@@ -51,6 +53,30 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                         </div>
                     ) : 'Generate Card'}
                 </Button>
+                
+                <div className="mt-4 mb-2">
+                    <RadioGroup
+                        value={localStyle}
+                        onValueChange={(value) => {
+                            setLocalStyle(value);
+                            data.onStyleChange?.(data.index, value);
+                        }}
+                        className="flex gap-4 justify-center"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="realistic" id={`realistic-${data.index}`} />
+                            <Label htmlFor={`realistic-${data.index}`}>Realistic</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="artistic" id={`artistic-${data.index}`} />
+                            <Label htmlFor={`artistic-${data.index}`}>Artistic</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="fantasy" id={`fantasy-${data.index}`} />
+                            <Label htmlFor={`fantasy-${data.index}`}>Fantasy</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
                 
                 {data.imageUrl && (
                     <>
