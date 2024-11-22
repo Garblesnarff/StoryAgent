@@ -44281,14 +44281,7 @@ var router = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_7__.createBrowserRoute
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null) }),
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null) }),
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null) }))), {
-    future: {
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-        v7_fetcherPersist: true,
-        v7_normalizeFormMethod: true,
-        v7_partialHydration: true,
-        v7_skipActionErrorRevalidation: true,
-    }
+    basename: '/'
 });
 function App() {
     return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.RouterProvider, { router: router });
@@ -44474,31 +44467,79 @@ var NodeEditor = function (_a) {
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _f[0], setExpandedImage = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _g[0], setStory = _g[1];
     var _h = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _h[0], setIsLoading = _h[1];
+    var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
+        var response, data_1, error_1;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _b.trys.push([0, 3, , 4]);
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: true }) }) : node;
+                    }); });
+                    return [4 /*yield*/, fetch('/story/regenerate_image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                index: index,
+                                text: story === null || story === void 0 ? void 0 : story.paragraphs[index].text,
+                                style: ((_a = nodes.find(function (n) { return n.id === "p".concat(index); })) === null || _a === void 0 ? void 0 : _a.data.globalStyle) || 'realistic',
+                                regenerate_prompt: true
+                            })
+                        })];
+                case 1:
+                    response = _b.sent();
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    data_1 = _b.sent();
+                    if (data_1.success) {
+                        setNodes(function (nodes) { return nodes.map(function (node) {
+                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_1.image_url, imagePrompt: data_1.image_prompt, isRegenerating: false }) }) : node;
+                        }); });
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _b.sent();
+                    console.error('Error regenerating image:', error_1);
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: false }) }) : node;
+                    }); });
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); }, [story, nodes]);
     var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
+        var _a;
+        // Update local style
         setNodes(function (nodes) { return nodes.map(function (node) {
             return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
         }); });
-        // Update backend about style change
+        // Get the current paragraph text
+        var paragraphText = (_a = story === null || story === void 0 ? void 0 : story.paragraphs[index]) === null || _a === void 0 ? void 0 : _a.text;
+        // Update backend and regenerate image with new style
         fetch('/story/update_style', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 paragraphs: [{
                         index: index,
-                        image_style: newStyle
+                        image_style: newStyle,
+                        text: paragraphText
                     }]
             })
+        }).then(function () {
+            // After style is updated, regenerate the image with new prompt
+            handleRegenerateImage(index);
         });
-        // Regenerate image with new style
-        handleRegenerateImage(index);
-    }, [handleRegenerateImage]);
+    }, [story, handleRegenerateImage]);
     var handleGenerateCard = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_1;
-        var _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_2;
+        var _b, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    _c.trys.push([0, 5, , 6]);
+                    _d.trys.push([0, 5, , 6]);
                     setNodes(function (nodes) { return nodes.map(function (node) {
                         return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: true }) }) : node;
                     }); });
@@ -44508,22 +44549,22 @@ var NodeEditor = function (_a) {
                             body: JSON.stringify({
                                 index: index,
                                 text: story === null || story === void 0 ? void 0 : story.paragraphs[index].text,
-                                style: selectedStyle
+                                style: ((_b = nodes.find(function (n) { return n.id === "p".concat(index); })) === null || _b === void 0 ? void 0 : _b.data.globalStyle) || 'realistic'
                             })
                         })];
                 case 1:
-                    response = _c.sent();
-                    reader = (_b = response.body) === null || _b === void 0 ? void 0 : _b.getReader();
+                    response = _d.sent();
+                    reader = (_c = response.body) === null || _c === void 0 ? void 0 : _c.getReader();
                     if (!reader)
                         throw new Error('Failed to get reader');
                     decoder = new TextDecoder();
                     buffer = '';
-                    _c.label = 2;
+                    _d.label = 2;
                 case 2:
                     if (false) {}
                     return [4 /*yield*/, reader.read()];
                 case 3:
-                    _a = _c.sent(), done = _a.done, value = _a.value;
+                    _a = _d.sent(), done = _a.done, value = _a.value;
                     if (done)
                         return [3 /*break*/, 4];
                     buffer += decoder.decode(value, { stream: true });
@@ -44546,8 +44587,8 @@ var NodeEditor = function (_a) {
                     return [3 /*break*/, 2];
                 case 4: return [3 /*break*/, 6];
                 case 5:
-                    error_1 = _c.sent();
-                    console.error('Error generating card:', error_1);
+                    error_2 = _d.sent();
+                    console.error('Error generating card:', error_2);
                     setNodes(function (nodes) { return nodes.map(function (node) {
                         return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: false }) }) : node;
                     }); });
@@ -44556,46 +44597,7 @@ var NodeEditor = function (_a) {
             }
         });
     }); }, [story, selectedStyle]);
-    var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, data_1, error_2;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 3, , 4]);
-                    setNodes(function (nodes) { return nodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: true }) }) : node;
-                    }); });
-                    return [4 /*yield*/, fetch('/story/regenerate_image', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                index: index,
-                                text: story === null || story === void 0 ? void 0 : story.paragraphs[index].text,
-                                style: selectedStyle
-                            })
-                        })];
-                case 1:
-                    response = _a.sent();
-                    return [4 /*yield*/, response.json()];
-                case 2:
-                    data_1 = _a.sent();
-                    if (data_1.success) {
-                        setNodes(function (nodes) { return nodes.map(function (node) {
-                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_1.image_url, imagePrompt: data_1.image_prompt, isRegenerating: false }) }) : node;
-                        }); });
-                    }
-                    return [3 /*break*/, 4];
-                case 3:
-                    error_2 = _a.sent();
-                    console.error('Error regenerating image:', error_2);
-                    setNodes(function (nodes) { return nodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: false }) }) : node;
-                    }); });
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
-            }
-        });
-    }); }, [story, selectedStyle]);
+    // Removed duplicate declaration
     var handleRegenerateAudio = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_2, error_3;
         return __generator(this, function (_a) {

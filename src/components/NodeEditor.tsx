@@ -261,7 +261,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 body: JSON.stringify({
                     index,
                     text: story?.paragraphs[index].text,
-                    style: selectedStyle
+                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
                 })
             });
 
@@ -308,43 +308,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story, selectedStyle]);
 
-    const handleRegenerateImage = useCallback(async (index: number) => {
-        try {
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
-            ));
-
-            const response = await fetch('/story/regenerate_image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    index,
-                    text: story?.paragraphs[index].text,
-                    style: selectedStyle
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                setNodes(nodes => nodes.map(node => 
-                    node.id === `p${index}` ? {
-                        ...node, 
-                        data: {
-                            ...node.data,
-                            imageUrl: data.image_url,
-                            imagePrompt: data.image_prompt,
-                            isRegenerating: false
-                        }
-                    } : node
-                ));
-            }
-        } catch (error) {
-            console.error('Error regenerating image:', error);
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
-            ));
-        }
-    }, [story, selectedStyle]);
+    // Removed duplicate declaration
 
     const handleRegenerateAudio = useCallback(async (index: number) => {
         try {
