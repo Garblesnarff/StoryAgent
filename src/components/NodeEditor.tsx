@@ -37,7 +37,7 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
     const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
 
     return (
-        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
+        <div className={`paragraph-node ${localStyle}-style`}>
             <Handle type="target" position={Position.Left} className="!bg-primary" />
             <div className="text-lg font-bold mb-2 text-primary">Paragraph {data.index + 1}</div>
             <div className="text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto">
@@ -177,6 +177,23 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
+
+    const handleStyleChange = useCallback((index: number, newStyle: string) => {
+        setNodes(nodes => nodes.map(node => 
+            node.id === `p${index}` ? {
+                ...node,
+                data: {
+                    ...node.data,
+                    globalStyle: newStyle
+                }
+            } : node
+        ));
+        
+        // Update the prompt based on the new style
+        if (story?.paragraphs[index].image_url) {
+            handleRegenerateImage(index);
+        }
+    }, [story, handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
         try {
