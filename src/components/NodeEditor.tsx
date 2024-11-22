@@ -61,12 +61,26 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                             </div>
                         ) : 'Generate Card'}
                     </Button>
-                    {data.isGenerating && (
+                    {(data.isGenerating || data.isRegenerating || data.isRegeneratingAudio) && (
                         <div className="space-y-2">
-                            <Progress value={data.progress} className="w-full" />
-                            <p className="text-sm text-center text-muted-foreground">
-                                {data.progressStep || 'Processing...'}
-                            </p>
+                            <Progress 
+                                value={data.progress || 0} 
+                                className="w-full h-2 bg-muted" 
+                            />
+                            <div className="text-sm text-center space-y-1">
+                                <p className="text-primary font-medium">
+                                    {data.progressStep || 'Processing...'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {data.isGenerating && 'Generating story elements...'}
+                                    {data.isRegenerating && 'Regenerating image...'}
+                                    {data.isRegeneratingAudio && 'Regenerating audio...'}
+                                </p>
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                    <span className="text-muted-foreground">{data.progress || 0}%</span>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -316,8 +330,8 @@ const onNodesChange = useCallback((changes: NodeChange[]) => {
                                 ...node,
                                 data: {
                                     ...node.data,
-                                    progressStep: data.message,
-                                    progress: data.progress || node.data.progress
+                                    progressStep: data.step || data.message,
+                                    progress: data.progress || node.data.progress || 0
                                 }
                             } : node
                         ));
