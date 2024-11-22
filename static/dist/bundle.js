@@ -5475,6 +5475,36 @@ const ChevronDown = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["defaul
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/circle.js":
+/*!************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/circle.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ Circle)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.460.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const Circle = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("Circle", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]
+]);
+
+
+//# sourceMappingURL=circle.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/shared/src/utils.js":
 /*!****************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/shared/src/utils.js ***!
@@ -44250,7 +44280,16 @@ var router = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_7__.createBrowserRoute
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__["default"], null) }),
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null) }),
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null) }))));
+    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null) }))), {
+    future: {
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+        v7_fetcherPersist: true,
+        v7_normalizeFormMethod: true,
+        v7_partialHydration: true,
+        v7_skipActionErrorRevalidation: true,
+    }
+});
 function App() {
     return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.RouterProvider, { router: router });
 }
@@ -44307,11 +44346,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/core/dist/esm/index.mjs");
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/background/dist/esm/index.mjs");
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/controls/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/core/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/background/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/controls/dist/esm/index.mjs");
 /* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/components/ui/button */ "./src/components/ui/button.tsx");
-/* harmony import */ var reactflow_dist_style_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! reactflow/dist/style.css */ "./node_modules/reactflow/dist/style.css");
+/* harmony import */ var _components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/components/ui/radio-group */ "./src/components/ui/radio-group.tsx");
+/* harmony import */ var _components_ui_label__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/components/ui/label */ "./src/components/ui/label.tsx");
+/* harmony import */ var reactflow_dist_style_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! reactflow/dist/style.css */ "./node_modules/reactflow/dist/style.css");
 var __assign = (undefined && undefined.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -44363,12 +44404,14 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
+
+
 var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (_a) {
     var data = _a.data;
     var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
     var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.globalStyle || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border" },
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Left, className: "!bg-primary" }),
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Left, className: "!bg-primary" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-lg font-bold mb-2 text-primary" },
             "Paragraph ",
             data.index + 1),
@@ -44377,6 +44420,21 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { className: "w-full", onClick: function () { return data.onGenerateCard(data.index); }, disabled: data.isGenerating }, data.isGenerating ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" }),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", null, "Generating..."))) : 'Generate Card'),
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "mt-4 mb-2" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__.RadioGroup, { value: localStyle, onValueChange: function (value) {
+                        var _a;
+                        setLocalStyle(value);
+                        (_a = data.onStyleChange) === null || _a === void 0 ? void 0 : _a.call(data, data.index, value);
+                    }, className: "flex gap-4 justify-center" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center space-x-2" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__.RadioGroupItem, { value: "realistic", id: "realistic-".concat(data.index) }),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_label__WEBPACK_IMPORTED_MODULE_3__.Label, { htmlFor: "realistic-".concat(data.index) }, "Realistic")),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center space-x-2" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__.RadioGroupItem, { value: "artistic", id: "artistic-".concat(data.index) }),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_label__WEBPACK_IMPORTED_MODULE_3__.Label, { htmlFor: "artistic-".concat(data.index) }, "Artistic")),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center space-x-2" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__.RadioGroupItem, { value: "fantasy", id: "fantasy-".concat(data.index) }),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_label__WEBPACK_IMPORTED_MODULE_3__.Label, { htmlFor: "fantasy-".concat(data.index) }, "Fantasy")))),
             data.imageUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative rounded-lg overflow-hidden border border-border" },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "w-full h-auto" }),
@@ -44402,7 +44460,7 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { className: "btn btn-secondary btn-sm w-100 mt-2", onClick: function () { return data.onRegenerateAudio(data.index); }, disabled: data.isRegeneratingAudio },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("i", { className: "bi bi-arrow-clockwise" }),
                     " Regenerate Audio")))),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Right })));
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Right })));
 });
 var nodeTypes = {
     paragraph: ParagraphNode
@@ -44410,8 +44468,8 @@ var nodeTypes = {
 var NodeEditor = function (_a) {
     var _b;
     var initialStory = _a.story, onStyleUpdate = _a.onStyleUpdate;
-    var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_3__.useNodesState)([]), nodes = _c[0], setNodes = _c[1], onNodesChange = _c[2];
-    var _d = (0,reactflow__WEBPACK_IMPORTED_MODULE_3__.useEdgesState)([]), edges = _d[0], setEdges = _d[1], onEdgesChange = _d[2];
+    var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useNodesState)([]), nodes = _c[0], setNodes = _c[1], onNodesChange = _c[2];
+    var _d = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useEdgesState)([]), edges = _d[0], setEdges = _d[1], onEdgesChange = _d[2];
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('realistic'), selectedStyle = _e[0], setSelectedStyle = _e[1];
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _f[0], setExpandedImage = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _g[0], setStory = _g[1];
@@ -44630,9 +44688,9 @@ var NodeEditor = function (_a) {
     }
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Background, null),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Controls, null))),
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Background, null),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_7__.Controls, null))),
         expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm", onClick: function () { return setExpandedImage(null); } },
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4", onClick: function (e) { return e.stopPropagation(); } },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost", size: "icon", className: "absolute right-2 top-2", onClick: function () { return setExpandedImage(null); } },
@@ -45075,6 +45133,65 @@ var Progress = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) 
         react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_progress__WEBPACK_IMPORTED_MODULE_2__.Indicator, { className: "h-full w-full flex-1 bg-primary transition-all", style: { transform: "translateX(-".concat(100 - (value || 0), "%)") } })));
 });
 Progress.displayName = _radix_ui_react_progress__WEBPACK_IMPORTED_MODULE_2__.Root.displayName;
+
+
+
+/***/ }),
+
+/***/ "./src/components/ui/radio-group.tsx":
+/*!*******************************************!*\
+  !*** ./src/components/ui/radio-group.tsx ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   RadioGroup: () => (/* binding */ RadioGroup),
+/* harmony export */   RadioGroupItem: () => (/* binding */ RadioGroupItem)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _radix_ui_react_radio_group__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-radio-group */ "./node_modules/@radix-ui/react-radio-group/dist/index.mjs");
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/circle.js");
+/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/lib/utils */ "./src/lib/utils.ts");
+var __assign = (undefined && undefined.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __rest = (undefined && undefined.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+
+
+
+
+var RadioGroup = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_radio_group__WEBPACK_IMPORTED_MODULE_2__.Root, __assign({ className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("grid gap-2", className) }, props, { ref: ref })));
+});
+RadioGroup.displayName = _radix_ui_react_radio_group__WEBPACK_IMPORTED_MODULE_2__.Root.displayName;
+var RadioGroupItem = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_radio_group__WEBPACK_IMPORTED_MODULE_2__.Item, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", className) }, props),
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_radio_group__WEBPACK_IMPORTED_MODULE_2__.Indicator, { className: "flex items-center justify-center" },
+            react__WEBPACK_IMPORTED_MODULE_0__.createElement(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], { className: "h-2.5 w-2.5 fill-current text-current" }))));
+});
+RadioGroupItem.displayName = _radix_ui_react_radio_group__WEBPACK_IMPORTED_MODULE_2__.Item.displayName;
 
 
 
@@ -51483,6 +51600,664 @@ var Indicator = ProgressIndicator;
 /*!***************************************************************************************************!*\
   !*** ./node_modules/@radix-ui/react-progress/node_modules/@radix-ui/react-context/dist/index.mjs ***!
   \***************************************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createContext: () => (/* binding */ createContext2),
+/* harmony export */   createContextScope: () => (/* binding */ createContextScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+// packages/react/context/src/createContext.tsx
+
+
+function createContext2(rootComponentName, defaultContext) {
+  const Context = react__WEBPACK_IMPORTED_MODULE_0__.createContext(defaultContext);
+  function Provider(props) {
+    const { children, ...context } = props;
+    const value = react__WEBPACK_IMPORTED_MODULE_0__.useMemo(() => context, Object.values(context));
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(Context.Provider, { value, children });
+  }
+  function useContext2(consumerName) {
+    const context = react__WEBPACK_IMPORTED_MODULE_0__.useContext(Context);
+    if (context) return context;
+    if (defaultContext !== void 0) return defaultContext;
+    throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+  }
+  Provider.displayName = rootComponentName + "Provider";
+  return [Provider, useContext2];
+}
+function createContextScope(scopeName, createContextScopeDeps = []) {
+  let defaultContexts = [];
+  function createContext3(rootComponentName, defaultContext) {
+    const BaseContext = react__WEBPACK_IMPORTED_MODULE_0__.createContext(defaultContext);
+    const index = defaultContexts.length;
+    defaultContexts = [...defaultContexts, defaultContext];
+    function Provider(props) {
+      const { scope, children, ...context } = props;
+      const Context = scope?.[scopeName][index] || BaseContext;
+      const value = react__WEBPACK_IMPORTED_MODULE_0__.useMemo(() => context, Object.values(context));
+      return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(Context.Provider, { value, children });
+    }
+    function useContext2(consumerName, scope) {
+      const Context = scope?.[scopeName][index] || BaseContext;
+      const context = react__WEBPACK_IMPORTED_MODULE_0__.useContext(Context);
+      if (context) return context;
+      if (defaultContext !== void 0) return defaultContext;
+      throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+    }
+    Provider.displayName = rootComponentName + "Provider";
+    return [Provider, useContext2];
+  }
+  const createScope = () => {
+    const scopeContexts = defaultContexts.map((defaultContext) => {
+      return react__WEBPACK_IMPORTED_MODULE_0__.createContext(defaultContext);
+    });
+    return function useScope(scope) {
+      const contexts = scope?.[scopeName] || scopeContexts;
+      return react__WEBPACK_IMPORTED_MODULE_0__.useMemo(
+        () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
+        [scope, contexts]
+      );
+    };
+  };
+  createScope.scopeName = scopeName;
+  return [createContext3, composeContextScopes(createScope, ...createContextScopeDeps)];
+}
+function composeContextScopes(...scopes) {
+  const baseScope = scopes[0];
+  if (scopes.length === 1) return baseScope;
+  const createScope = () => {
+    const scopeHooks = scopes.map((createScope2) => ({
+      useScope: createScope2(),
+      scopeName: createScope2.scopeName
+    }));
+    return function useComposedScopes(overrideScopes) {
+      const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName }) => {
+        const scopeProps = useScope(overrideScopes);
+        const currentScope = scopeProps[`__scope${scopeName}`];
+        return { ...nextScopes2, ...currentScope };
+      }, {});
+      return react__WEBPACK_IMPORTED_MODULE_0__.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
+    };
+  };
+  createScope.scopeName = baseScope.scopeName;
+  return createScope;
+}
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-radio-group/dist/index.mjs":
+/*!*****************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-radio-group/dist/index.mjs ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Indicator: () => (/* binding */ Indicator),
+/* harmony export */   Item: () => (/* binding */ Item2),
+/* harmony export */   RadioGroup: () => (/* binding */ RadioGroup),
+/* harmony export */   RadioGroupIndicator: () => (/* binding */ RadioGroupIndicator),
+/* harmony export */   RadioGroupItem: () => (/* binding */ RadioGroupItem),
+/* harmony export */   Root: () => (/* binding */ Root2),
+/* harmony export */   createRadioGroupScope: () => (/* binding */ createRadioGroupScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var _radix_ui_primitive__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @radix-ui/primitive */ "./node_modules/@radix-ui/primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @radix-ui/react-compose-refs */ "./node_modules/@radix-ui/react-compose-refs/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-context */ "./node_modules/@radix-ui/react-context/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @radix-ui/react-primitive */ "./node_modules/@radix-ui/react-primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_roving_focus__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @radix-ui/react-roving-focus */ "./node_modules/@radix-ui/react-roving-focus/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_controllable_state__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @radix-ui/react-use-controllable-state */ "./node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_direction__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @radix-ui/react-direction */ "./node_modules/@radix-ui/react-direction/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_size__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @radix-ui/react-use-size */ "./node_modules/@radix-ui/react-use-size/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_previous__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @radix-ui/react-use-previous */ "./node_modules/@radix-ui/react-use-previous/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_presence__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @radix-ui/react-presence */ "./node_modules/@radix-ui/react-presence/dist/index.mjs");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+"use client";
+
+// packages/react/radio-group/src/RadioGroup.tsx
+
+
+
+
+
+
+
+
+
+
+// packages/react/radio-group/src/Radio.tsx
+
+
+
+
+
+
+
+
+
+var RADIO_NAME = "Radio";
+var [createRadioContext, createRadioScope] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__.createContextScope)(RADIO_NAME);
+var [RadioProvider, useRadioContext] = createRadioContext(RADIO_NAME);
+var Radio = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeRadio,
+      name,
+      checked = false,
+      required,
+      disabled,
+      value = "on",
+      onCheck,
+      form,
+      ...radioProps
+    } = props;
+    const [button, setButton] = react__WEBPACK_IMPORTED_MODULE_0__.useState(null);
+    const composedRefs = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_3__.useComposedRefs)(forwardedRef, (node) => setButton(node));
+    const hasConsumerStoppedPropagationRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(false);
+    const isFormControl = button ? form || !!button.closest("form") : true;
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)(RadioProvider, { scope: __scopeRadio, checked, disabled, children: [
+      /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+        _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_4__.Primitive.button,
+        {
+          type: "button",
+          role: "radio",
+          "aria-checked": checked,
+          "data-state": getState(checked),
+          "data-disabled": disabled ? "" : void 0,
+          disabled,
+          value,
+          ...radioProps,
+          ref: composedRefs,
+          onClick: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_5__.composeEventHandlers)(props.onClick, (event) => {
+            if (!checked) onCheck?.();
+            if (isFormControl) {
+              hasConsumerStoppedPropagationRef.current = event.isPropagationStopped();
+              if (!hasConsumerStoppedPropagationRef.current) event.stopPropagation();
+            }
+          })
+        }
+      ),
+      isFormControl && /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+        BubbleInput,
+        {
+          control: button,
+          bubbles: !hasConsumerStoppedPropagationRef.current,
+          name,
+          value,
+          checked,
+          required,
+          disabled,
+          form,
+          style: { transform: "translateX(-100%)" }
+        }
+      )
+    ] });
+  }
+);
+Radio.displayName = RADIO_NAME;
+var INDICATOR_NAME = "RadioIndicator";
+var RadioIndicator = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeRadio, forceMount, ...indicatorProps } = props;
+    const context = useRadioContext(INDICATOR_NAME, __scopeRadio);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_radix_ui_react_presence__WEBPACK_IMPORTED_MODULE_6__.Presence, { present: forceMount || context.checked, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_4__.Primitive.span,
+      {
+        "data-state": getState(context.checked),
+        "data-disabled": context.disabled ? "" : void 0,
+        ...indicatorProps,
+        ref: forwardedRef
+      }
+    ) });
+  }
+);
+RadioIndicator.displayName = INDICATOR_NAME;
+var BubbleInput = (props) => {
+  const { control, checked, bubbles = true, ...inputProps } = props;
+  const ref = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+  const prevChecked = (0,_radix_ui_react_use_previous__WEBPACK_IMPORTED_MODULE_7__.usePrevious)(checked);
+  const controlSize = (0,_radix_ui_react_use_size__WEBPACK_IMPORTED_MODULE_8__.useSize)(control);
+  react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+    const input = ref.current;
+    const inputProto = window.HTMLInputElement.prototype;
+    const descriptor = Object.getOwnPropertyDescriptor(inputProto, "checked");
+    const setChecked = descriptor.set;
+    if (prevChecked !== checked && setChecked) {
+      const event = new Event("click", { bubbles });
+      setChecked.call(input, checked);
+      input.dispatchEvent(event);
+    }
+  }, [prevChecked, checked, bubbles]);
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+    "input",
+    {
+      type: "radio",
+      "aria-hidden": true,
+      defaultChecked: checked,
+      ...inputProps,
+      tabIndex: -1,
+      ref,
+      style: {
+        ...props.style,
+        ...controlSize,
+        position: "absolute",
+        pointerEvents: "none",
+        opacity: 0,
+        margin: 0
+      }
+    }
+  );
+};
+function getState(checked) {
+  return checked ? "checked" : "unchecked";
+}
+
+// packages/react/radio-group/src/RadioGroup.tsx
+
+var ARROW_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+var RADIO_GROUP_NAME = "RadioGroup";
+var [createRadioGroupContext, createRadioGroupScope] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__.createContextScope)(RADIO_GROUP_NAME, [
+  _radix_ui_react_roving_focus__WEBPACK_IMPORTED_MODULE_9__.createRovingFocusGroupScope,
+  createRadioScope
+]);
+var useRovingFocusGroupScope = (0,_radix_ui_react_roving_focus__WEBPACK_IMPORTED_MODULE_9__.createRovingFocusGroupScope)();
+var useRadioScope = createRadioScope();
+var [RadioGroupProvider, useRadioGroupContext] = createRadioGroupContext(RADIO_GROUP_NAME);
+var RadioGroup = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeRadioGroup,
+      name,
+      defaultValue,
+      value: valueProp,
+      required = false,
+      disabled = false,
+      orientation,
+      dir,
+      loop = true,
+      onValueChange,
+      ...groupProps
+    } = props;
+    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup);
+    const direction = (0,_radix_ui_react_direction__WEBPACK_IMPORTED_MODULE_10__.useDirection)(dir);
+    const [value, setValue] = (0,_radix_ui_react_use_controllable_state__WEBPACK_IMPORTED_MODULE_11__.useControllableState)({
+      prop: valueProp,
+      defaultProp: defaultValue,
+      onChange: onValueChange
+    });
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      RadioGroupProvider,
+      {
+        scope: __scopeRadioGroup,
+        name,
+        required,
+        disabled,
+        value,
+        onValueChange: setValue,
+        children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+          _radix_ui_react_roving_focus__WEBPACK_IMPORTED_MODULE_9__.Root,
+          {
+            asChild: true,
+            ...rovingFocusGroupScope,
+            orientation,
+            dir: direction,
+            loop,
+            children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+              _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_4__.Primitive.div,
+              {
+                role: "radiogroup",
+                "aria-required": required,
+                "aria-orientation": orientation,
+                "data-disabled": disabled ? "" : void 0,
+                dir: direction,
+                ...groupProps,
+                ref: forwardedRef
+              }
+            )
+          }
+        )
+      }
+    );
+  }
+);
+RadioGroup.displayName = RADIO_GROUP_NAME;
+var ITEM_NAME = "RadioGroupItem";
+var RadioGroupItem = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeRadioGroup, disabled, ...itemProps } = props;
+    const context = useRadioGroupContext(ITEM_NAME, __scopeRadioGroup);
+    const isDisabled = context.disabled || disabled;
+    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup);
+    const radioScope = useRadioScope(__scopeRadioGroup);
+    const ref = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+    const composedRefs = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_3__.useComposedRefs)(forwardedRef, ref);
+    const checked = context.value === itemProps.value;
+    const isArrowKeyPressedRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(false);
+    react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+      const handleKeyDown = (event) => {
+        if (ARROW_KEYS.includes(event.key)) {
+          isArrowKeyPressedRef.current = true;
+        }
+      };
+      const handleKeyUp = () => isArrowKeyPressedRef.current = false;
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("keyup", handleKeyUp);
+      };
+    }, []);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_roving_focus__WEBPACK_IMPORTED_MODULE_9__.Item,
+      {
+        asChild: true,
+        ...rovingFocusGroupScope,
+        focusable: !isDisabled,
+        active: checked,
+        children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+          Radio,
+          {
+            disabled: isDisabled,
+            required: context.required,
+            checked,
+            ...radioScope,
+            ...itemProps,
+            name: context.name,
+            ref: composedRefs,
+            onCheck: () => context.onValueChange(itemProps.value),
+            onKeyDown: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_5__.composeEventHandlers)((event) => {
+              if (event.key === "Enter") event.preventDefault();
+            }),
+            onFocus: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_5__.composeEventHandlers)(itemProps.onFocus, () => {
+              if (isArrowKeyPressedRef.current) ref.current?.click();
+            })
+          }
+        )
+      }
+    );
+  }
+);
+RadioGroupItem.displayName = ITEM_NAME;
+var INDICATOR_NAME2 = "RadioGroupIndicator";
+var RadioGroupIndicator = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeRadioGroup, ...indicatorProps } = props;
+    const radioScope = useRadioScope(__scopeRadioGroup);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(RadioIndicator, { ...radioScope, ...indicatorProps, ref: forwardedRef });
+  }
+);
+RadioGroupIndicator.displayName = INDICATOR_NAME2;
+var Root2 = RadioGroup;
+var Item2 = RadioGroupItem;
+var Indicator = RadioGroupIndicator;
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-roving-focus/dist/index.mjs":
+/*!******************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-roving-focus/dist/index.mjs ***!
+  \******************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Item: () => (/* binding */ Item),
+/* harmony export */   Root: () => (/* binding */ Root),
+/* harmony export */   RovingFocusGroup: () => (/* binding */ RovingFocusGroup),
+/* harmony export */   RovingFocusGroupItem: () => (/* binding */ RovingFocusGroupItem),
+/* harmony export */   createRovingFocusGroupScope: () => (/* binding */ createRovingFocusGroupScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var _radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @radix-ui/primitive */ "./node_modules/@radix-ui/primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_collection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-collection */ "./node_modules/@radix-ui/react-collection/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @radix-ui/react-compose-refs */ "./node_modules/@radix-ui/react-compose-refs/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_context__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @radix-ui/react-context */ "./node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-context/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_id__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @radix-ui/react-id */ "./node_modules/@radix-ui/react-id/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @radix-ui/react-primitive */ "./node_modules/@radix-ui/react-primitive/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_callback_ref__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @radix-ui/react-use-callback-ref */ "./node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_use_controllable_state__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @radix-ui/react-use-controllable-state */ "./node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_direction__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @radix-ui/react-direction */ "./node_modules/@radix-ui/react-direction/dist/index.mjs");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+"use client";
+
+// packages/react/roving-focus/src/RovingFocusGroup.tsx
+
+
+
+
+
+
+
+
+
+
+
+var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
+var EVENT_OPTIONS = { bubbles: false, cancelable: true };
+var GROUP_NAME = "RovingFocusGroup";
+var [Collection, useCollection, createCollectionScope] = (0,_radix_ui_react_collection__WEBPACK_IMPORTED_MODULE_2__.createCollection)(GROUP_NAME);
+var [createRovingFocusGroupContext, createRovingFocusGroupScope] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_3__.createContextScope)(
+  GROUP_NAME,
+  [createCollectionScope]
+);
+var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME);
+var RovingFocusGroup = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(Collection.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(Collection.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(RovingFocusGroupImpl, { ...props, ref: forwardedRef }) }) });
+  }
+);
+RovingFocusGroup.displayName = GROUP_NAME;
+var RovingFocusGroupImpl = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef((props, forwardedRef) => {
+  const {
+    __scopeRovingFocusGroup,
+    orientation,
+    loop = false,
+    dir,
+    currentTabStopId: currentTabStopIdProp,
+    defaultCurrentTabStopId,
+    onCurrentTabStopIdChange,
+    onEntryFocus,
+    preventScrollOnEntryFocus = false,
+    ...groupProps
+  } = props;
+  const ref = react__WEBPACK_IMPORTED_MODULE_0__.useRef(null);
+  const composedRefs = (0,_radix_ui_react_compose_refs__WEBPACK_IMPORTED_MODULE_4__.useComposedRefs)(forwardedRef, ref);
+  const direction = (0,_radix_ui_react_direction__WEBPACK_IMPORTED_MODULE_5__.useDirection)(dir);
+  const [currentTabStopId = null, setCurrentTabStopId] = (0,_radix_ui_react_use_controllable_state__WEBPACK_IMPORTED_MODULE_6__.useControllableState)({
+    prop: currentTabStopIdProp,
+    defaultProp: defaultCurrentTabStopId,
+    onChange: onCurrentTabStopIdChange
+  });
+  const [isTabbingBackOut, setIsTabbingBackOut] = react__WEBPACK_IMPORTED_MODULE_0__.useState(false);
+  const handleEntryFocus = (0,_radix_ui_react_use_callback_ref__WEBPACK_IMPORTED_MODULE_7__.useCallbackRef)(onEntryFocus);
+  const getItems = useCollection(__scopeRovingFocusGroup);
+  const isClickFocusRef = react__WEBPACK_IMPORTED_MODULE_0__.useRef(false);
+  const [focusableItemsCount, setFocusableItemsCount] = react__WEBPACK_IMPORTED_MODULE_0__.useState(0);
+  react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+    const node = ref.current;
+    if (node) {
+      node.addEventListener(ENTRY_FOCUS, handleEntryFocus);
+      return () => node.removeEventListener(ENTRY_FOCUS, handleEntryFocus);
+    }
+  }, [handleEntryFocus]);
+  return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+    RovingFocusProvider,
+    {
+      scope: __scopeRovingFocusGroup,
+      orientation,
+      dir: direction,
+      loop,
+      currentTabStopId,
+      onItemFocus: react__WEBPACK_IMPORTED_MODULE_0__.useCallback(
+        (tabStopId) => setCurrentTabStopId(tabStopId),
+        [setCurrentTabStopId]
+      ),
+      onItemShiftTab: react__WEBPACK_IMPORTED_MODULE_0__.useCallback(() => setIsTabbingBackOut(true), []),
+      onFocusableItemAdd: react__WEBPACK_IMPORTED_MODULE_0__.useCallback(
+        () => setFocusableItemsCount((prevCount) => prevCount + 1),
+        []
+      ),
+      onFocusableItemRemove: react__WEBPACK_IMPORTED_MODULE_0__.useCallback(
+        () => setFocusableItemsCount((prevCount) => prevCount - 1),
+        []
+      ),
+      children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+        _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_8__.Primitive.div,
+        {
+          tabIndex: isTabbingBackOut || focusableItemsCount === 0 ? -1 : 0,
+          "data-orientation": orientation,
+          ...groupProps,
+          ref: composedRefs,
+          style: { outline: "none", ...props.style },
+          onMouseDown: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__.composeEventHandlers)(props.onMouseDown, () => {
+            isClickFocusRef.current = true;
+          }),
+          onFocus: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__.composeEventHandlers)(props.onFocus, (event) => {
+            const isKeyboardFocus = !isClickFocusRef.current;
+            if (event.target === event.currentTarget && isKeyboardFocus && !isTabbingBackOut) {
+              const entryFocusEvent = new CustomEvent(ENTRY_FOCUS, EVENT_OPTIONS);
+              event.currentTarget.dispatchEvent(entryFocusEvent);
+              if (!entryFocusEvent.defaultPrevented) {
+                const items = getItems().filter((item) => item.focusable);
+                const activeItem = items.find((item) => item.active);
+                const currentItem = items.find((item) => item.id === currentTabStopId);
+                const candidateItems = [activeItem, currentItem, ...items].filter(
+                  Boolean
+                );
+                const candidateNodes = candidateItems.map((item) => item.ref.current);
+                focusFirst(candidateNodes, preventScrollOnEntryFocus);
+              }
+            }
+            isClickFocusRef.current = false;
+          }),
+          onBlur: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__.composeEventHandlers)(props.onBlur, () => setIsTabbingBackOut(false))
+        }
+      )
+    }
+  );
+});
+var ITEM_NAME = "RovingFocusGroupItem";
+var RovingFocusGroupItem = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeRovingFocusGroup,
+      focusable = true,
+      active = false,
+      tabStopId,
+      ...itemProps
+    } = props;
+    const autoId = (0,_radix_ui_react_id__WEBPACK_IMPORTED_MODULE_10__.useId)();
+    const id = tabStopId || autoId;
+    const context = useRovingFocusContext(ITEM_NAME, __scopeRovingFocusGroup);
+    const isCurrentTabStop = context.currentTabStopId === id;
+    const getItems = useCollection(__scopeRovingFocusGroup);
+    const { onFocusableItemAdd, onFocusableItemRemove } = context;
+    react__WEBPACK_IMPORTED_MODULE_0__.useEffect(() => {
+      if (focusable) {
+        onFocusableItemAdd();
+        return () => onFocusableItemRemove();
+      }
+    }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      Collection.ItemSlot,
+      {
+        scope: __scopeRovingFocusGroup,
+        id,
+        focusable,
+        active,
+        children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+          _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_8__.Primitive.span,
+          {
+            tabIndex: isCurrentTabStop ? 0 : -1,
+            "data-orientation": context.orientation,
+            ...itemProps,
+            ref: forwardedRef,
+            onMouseDown: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__.composeEventHandlers)(props.onMouseDown, (event) => {
+              if (!focusable) event.preventDefault();
+              else context.onItemFocus(id);
+            }),
+            onFocus: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__.composeEventHandlers)(props.onFocus, () => context.onItemFocus(id)),
+            onKeyDown: (0,_radix_ui_primitive__WEBPACK_IMPORTED_MODULE_9__.composeEventHandlers)(props.onKeyDown, (event) => {
+              if (event.key === "Tab" && event.shiftKey) {
+                context.onItemShiftTab();
+                return;
+              }
+              if (event.target !== event.currentTarget) return;
+              const focusIntent = getFocusIntent(event, context.orientation, context.dir);
+              if (focusIntent !== void 0) {
+                if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+                event.preventDefault();
+                const items = getItems().filter((item) => item.focusable);
+                let candidateNodes = items.map((item) => item.ref.current);
+                if (focusIntent === "last") candidateNodes.reverse();
+                else if (focusIntent === "prev" || focusIntent === "next") {
+                  if (focusIntent === "prev") candidateNodes.reverse();
+                  const currentIndex = candidateNodes.indexOf(event.currentTarget);
+                  candidateNodes = context.loop ? wrapArray(candidateNodes, currentIndex + 1) : candidateNodes.slice(currentIndex + 1);
+                }
+                setTimeout(() => focusFirst(candidateNodes));
+              }
+            })
+          }
+        )
+      }
+    );
+  }
+);
+RovingFocusGroupItem.displayName = ITEM_NAME;
+var MAP_KEY_TO_FOCUS_INTENT = {
+  ArrowLeft: "prev",
+  ArrowUp: "prev",
+  ArrowRight: "next",
+  ArrowDown: "next",
+  PageUp: "first",
+  Home: "first",
+  PageDown: "last",
+  End: "last"
+};
+function getDirectionAwareKey(key, dir) {
+  if (dir !== "rtl") return key;
+  return key === "ArrowLeft" ? "ArrowRight" : key === "ArrowRight" ? "ArrowLeft" : key;
+}
+function getFocusIntent(event, orientation, dir) {
+  const key = getDirectionAwareKey(event.key, dir);
+  if (orientation === "vertical" && ["ArrowLeft", "ArrowRight"].includes(key)) return void 0;
+  if (orientation === "horizontal" && ["ArrowUp", "ArrowDown"].includes(key)) return void 0;
+  return MAP_KEY_TO_FOCUS_INTENT[key];
+}
+function focusFirst(candidates, preventScroll = false) {
+  const PREVIOUSLY_FOCUSED_ELEMENT = document.activeElement;
+  for (const candidate of candidates) {
+    if (candidate === PREVIOUSLY_FOCUSED_ELEMENT) return;
+    candidate.focus({ preventScroll });
+    if (document.activeElement !== PREVIOUSLY_FOCUSED_ELEMENT) return;
+  }
+}
+function wrapArray(array, startIndex) {
+  return array.map((_, index) => array[(startIndex + index) % array.length]);
+}
+var Root = RovingFocusGroup;
+var Item = RovingFocusGroupItem;
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-context/dist/index.mjs":
+/*!*******************************************************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-context/dist/index.mjs ***!
+  \*******************************************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
