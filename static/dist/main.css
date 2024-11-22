@@ -1240,25 +1240,25 @@ video {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
   animation-duration: 300ms;
-  background: #ffdab9; /* Default peach */
+    background: #ffdab9; /* Default peach */
 }
 
 .realistic-style {
-  background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
-  --tw-text-opacity: 1;
-  color: rgb(31 41 55 / var(--tw-text-opacity, 1));
+    background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+    --tw-text-opacity: 1;
+    color: rgb(31 41 55 / var(--tw-text-opacity, 1));
 }
 
 .artistic-style {
-  background: linear-gradient(135deg, #dc143c, #800080);
-  --tw-text-opacity: 1;
-  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+    background: linear-gradient(135deg, #dc143c, #800080);
+    --tw-text-opacity: 1;
+    color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
 .fantasy-style {
-  background: linear-gradient(135deg, #008080, #00ffff);
-  --tw-text-opacity: 1;
-  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+    background: linear-gradient(135deg, #008080, #00ffff);
+    --tw-text-opacity: 1;
+    color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
 /* Style-specific text colors */

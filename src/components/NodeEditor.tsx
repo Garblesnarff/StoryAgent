@@ -178,7 +178,47 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [story, setStory] = useState(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
 
+    const handleRegenerateImage = useCallback(async (index: number) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text,
+                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic',
+                    regenerate_prompt: true
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(nodes => nodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            imageUrl: data.image_url,
+                            imagePrompt: data.image_prompt,
+                            isRegenerating: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating image:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
+            ));
+        }
+    }, [story, nodes]);
+
     const handleStyleChange = useCallback((index: number, newStyle: string) => {
+        // Update local style
         setNodes(nodes => nodes.map(node => 
             node.id === `p${index}` ? {
                 ...node,
@@ -189,21 +229,25 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             } : node
         ));
         
-        // Update backend about style change
+        // Get the current paragraph text
+        const paragraphText = story?.paragraphs[index]?.text;
+        
+        // Update backend and regenerate image with new style
         fetch('/story/update_style', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 paragraphs: [{
                     index,
-                    image_style: newStyle
+                    image_style: newStyle,
+                    text: paragraphText
                 }]
             })
+        }).then(() => {
+            // After style is updated, regenerate the image with new prompt
+            handleRegenerateImage(index);
         });
-        
-        // Regenerate image with new style
-        handleRegenerateImage(index);
-    }, [handleRegenerateImage]);
+    }, [story, handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
         try {

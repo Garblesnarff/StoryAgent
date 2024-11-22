@@ -44410,7 +44410,7 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
     var data = _a.data;
     var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
     var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.globalStyle || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "paragraph-node ".concat(data.globalStyle || 'realistic', "-style") },
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "paragraph-node ".concat(localStyle, "-style") },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Left, className: "!bg-primary" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-lg font-bold mb-2 text-primary" },
             "Paragraph ",
@@ -44474,6 +44474,24 @@ var NodeEditor = function (_a) {
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _f[0], setExpandedImage = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _g[0], setStory = _g[1];
     var _h = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _h[0], setIsLoading = _h[1];
+    var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
+        setNodes(function (nodes) { return nodes.map(function (node) {
+            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
+        }); });
+        // Update backend about style change
+        fetch('/story/update_style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paragraphs: [{
+                        index: index,
+                        image_style: newStyle
+                    }]
+            })
+        });
+        // Regenerate image with new style
+        handleRegenerateImage(index);
+    }, [handleRegenerateImage]);
     var handleGenerateCard = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_1;
         var _b;
