@@ -8,7 +8,9 @@ import ReactFlow, {
     Handle,
     Position,
     Node,
-    Edge
+    Edge,
+    NodeChange,
+    applyNodeChanges
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -171,7 +173,10 @@ interface NodeEditorProps {
 }
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [nodes, setNodes] = useNodesState([]);
+const onNodesChange = useCallback((changes: NodeChange[]) => {
+  setNodes((nds) => applyNodeChanges(changes, nds));
+}, [setNodes]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
