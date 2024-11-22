@@ -10,6 +10,7 @@ import ReactFlow, {
     Node,
     Edge
 } from 'reactflow';
+import { Button } from '@/components/ui/button';
 import 'reactflow/dist/style.css';
 
 interface ParagraphData {
@@ -29,6 +30,8 @@ interface ParagraphData {
 }
 
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
+    const [showPrompt, setShowPrompt] = useState(false);
+
     return (
         <div className="bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border">
             <Handle type="target" position={Position.Left} className="!bg-primary" />
@@ -37,8 +40,8 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                 {data.text}
             </div>
             <div className="space-y-4">
-                <button 
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md transition-colors"
+                <Button 
+                    className="w-full"
                     onClick={() => data.onGenerateCard(data.index)}
                     disabled={data.isGenerating}>
                     {data.isGenerating ? (
@@ -47,35 +50,54 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                             <span>Generating...</span>
                         </div>
                     ) : 'Generate Card'}
-                </button>
+                </Button>
                 
                 {data.imageUrl && (
                     <>
-                        <div className="node-preview mt-2">
-                            <div className="image-container position-relative">
-                                <img 
-                                    src={data.imageUrl} 
-                                    alt="Generated preview" 
-                                    className="img-fluid rounded"
-                                />
-                                <div 
-                                    className="expand-icon"
-                                    onClick={() => data.onExpandImage(data.imageUrl!)}
-                                >
-                                    <i className="bi bi-arrows-fullscreen"></i>
+                        <div className="relative rounded-lg overflow-hidden border border-border">
+                            <img 
+                                src={data.imageUrl} 
+                                alt="Generated preview" 
+                                className="w-full h-auto"
+                            />
+                            {showPrompt && (
+                                <div className="absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200">
+                                    <p className="text-sm">{data.imagePrompt}</p>
                                 </div>
-                                <div className="image-prompt-overlay">
-                                    {data.imagePrompt}
-                                </div>
-                            </div>
+                            )}
                         </div>
-                        <div className="d-flex gap-2 mt-2">
-                            <button 
-                                className="btn btn-secondary btn-sm flex-grow-1"
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
                                 onClick={() => data.onRegenerateImage(data.index)}
-                                disabled={data.isRegenerating}>
-                                <i className="bi bi-arrow-clockwise"></i> Regenerate Image
-                            </button>
+                                disabled={data.isRegenerating}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                    <path d="M16 16h5v5" />
+                                </svg>
+                                Regenerate
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowPrompt(!showPrompt)}
+                            >
+                                {showPrompt ? 'Hide Prompt' : 'Show Prompt'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => data.onExpandImage(data.imageUrl!)}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                                </svg>
+                            </Button>
                         </div>
                     </>
                 )}
@@ -346,17 +368,30 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             </div>
             
             {expandedImage && (
-                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
-                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
-                        <button 
-                            type="button" 
-                            className="close-button"
+                <div 
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm"
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <div 
+                        className="relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-2 top-2"
                             onClick={() => setExpandedImage(null)}
                         >
-                            ×
-                        </button>
-                        <div className="preview-content">
-                            <img src={expandedImage} alt="Full preview" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </Button>
+                        <div className="overflow-auto">
+                            <img 
+                                src={expandedImage} 
+                                alt="Full preview" 
+                                className="w-full h-auto rounded-lg"
+                            />
                         </div>
                     </div>
                 </div>
