@@ -44307,10 +44307,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/core/dist/esm/index.mjs");
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/background/dist/esm/index.mjs");
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/controls/dist/esm/index.mjs");
-/* harmony import */ var reactflow_dist_style_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! reactflow/dist/style.css */ "./node_modules/reactflow/dist/style.css");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/core/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/background/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/controls/dist/esm/index.mjs");
+/* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/components/ui/button */ "./src/components/ui/button.tsx");
+/* harmony import */ var reactflow_dist_style_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! reactflow/dist/style.css */ "./node_modules/reactflow/dist/style.css");
 var __assign = (undefined && undefined.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -44361,29 +44362,37 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
+
 var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (_a) {
     var data = _a.data;
+    var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border" },
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_2__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_2__.Position.Left, className: "!bg-primary" }),
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Left, className: "!bg-primary" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-lg font-bold mb-2 text-primary" },
             "Paragraph ",
             data.index + 1),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto" }, data.text),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { className: "w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md transition-colors", onClick: function () { return data.onGenerateCard(data.index); }, disabled: data.isGenerating }, data.isGenerating ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { className: "w-full", onClick: function () { return data.onGenerateCard(data.index); }, disabled: data.isGenerating }, data.isGenerating ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" }),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", null, "Generating..."))) : 'Generate Card'),
             data.imageUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "node-preview mt-2" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "image-container position-relative" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "img-fluid rounded" }),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "expand-icon", onClick: function () { return data.onExpandImage(data.imageUrl); } },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("i", { className: "bi bi-arrows-fullscreen" })),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "image-prompt-overlay" }, data.imagePrompt))),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "d-flex gap-2 mt-2" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { className: "btn btn-secondary btn-sm flex-grow-1", onClick: function () { return data.onRegenerateImage(data.index); }, disabled: data.isRegenerating },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("i", { className: "bi bi-arrow-clockwise" }),
-                        " Regenerate Image")))),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative rounded-lg overflow-hidden border border-border" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "w-full h-auto" }),
+                    showPrompt && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm" }, data.imagePrompt)))),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex gap-2" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", className: "flex-1", onClick: function () { return data.onRegenerateImage(data.index); }, disabled: data.isRegenerating },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4 mr-2", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }),
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M3 3v5h5" }),
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" }),
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M16 16h5v5" })),
+                        "Regenerate"),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", onClick: function () { return setShowPrompt(!showPrompt); } }, showPrompt ? 'Hide Prompt' : 'Show Prompt'),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", onClick: function () { return data.onExpandImage(data.imageUrl); } },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" })))))),
             data.audioUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "audio-player mt-2" },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("audio", { controls: true, className: "w-100", key: data.audioUrl },
@@ -44392,7 +44401,7 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { className: "btn btn-secondary btn-sm w-100 mt-2", onClick: function () { return data.onRegenerateAudio(data.index); }, disabled: data.isRegeneratingAudio },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("i", { className: "bi bi-arrow-clockwise" }),
                     " Regenerate Audio")))),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_2__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_2__.Position.Right })));
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Right })));
 });
 var nodeTypes = {
     paragraph: ParagraphNode
@@ -44400,8 +44409,8 @@ var nodeTypes = {
 var NodeEditor = function (_a) {
     var _b;
     var initialStory = _a.story, onStyleUpdate = _a.onStyleUpdate;
-    var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_2__.useNodesState)([]), nodes = _c[0], setNodes = _c[1], onNodesChange = _c[2];
-    var _d = (0,reactflow__WEBPACK_IMPORTED_MODULE_2__.useEdgesState)([]), edges = _d[0], setEdges = _d[1], onEdgesChange = _d[2];
+    var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_3__.useNodesState)([]), nodes = _c[0], setNodes = _c[1], onNodesChange = _c[2];
+    var _d = (0,reactflow__WEBPACK_IMPORTED_MODULE_3__.useEdgesState)([]), edges = _d[0], setEdges = _d[1], onEdgesChange = _d[2];
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('realistic'), selectedStyle = _e[0], setSelectedStyle = _e[1];
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _f[0], setExpandedImage = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _g[0], setStory = _g[1];
@@ -44620,16 +44629,90 @@ var NodeEditor = function (_a) {
     }
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_2__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Background, null),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Controls, null))),
-        expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "modal-backdrop", onClick: function () { return setExpandedImage(null); } },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "preview-modal", onClick: function (e) { return e.stopPropagation(); } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { type: "button", className: "close-button", onClick: function () { return setExpandedImage(null); } }, "\u00D7"),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "preview-content" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: expandedImage, alt: "Full preview" })))))));
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Background, null),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Controls, null))),
+        expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm", onClick: function () { return setExpandedImage(null); } },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4", onClick: function (e) { return e.stopPropagation(); } },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost", size: "icon", className: "absolute right-2 top-2", onClick: function () { return setExpandedImage(null); } },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M18 6L6 18M6 6l12 12" }))),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "overflow-auto" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: expandedImage, alt: "Full preview", className: "w-full h-auto rounded-lg" })))))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (react__WEBPACK_IMPORTED_MODULE_0___default().memo(NodeEditor));
+
+
+/***/ }),
+
+/***/ "./src/components/ui/alert.tsx":
+/*!*************************************!*\
+  !*** ./src/components/ui/alert.tsx ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Alert: () => (/* binding */ Alert),
+/* harmony export */   AlertDescription: () => (/* binding */ AlertDescription),
+/* harmony export */   AlertTitle: () => (/* binding */ AlertTitle)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var class_variance_authority__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! class-variance-authority */ "./node_modules/class-variance-authority/dist/index.mjs");
+/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/lib/utils */ "./src/lib/utils.ts");
+var __assign = (undefined && undefined.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __rest = (undefined && undefined.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+
+
+
+var alertVariants = (0,class_variance_authority__WEBPACK_IMPORTED_MODULE_1__.cva)("relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7", {
+    variants: {
+        variant: {
+            default: "bg-background text-foreground",
+            destructive: "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+        },
+    },
+    defaultVariants: {
+        variant: "default",
+    },
+});
+var Alert = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, variant = _a.variant, props = __rest(_a, ["className", "variant"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", __assign({ ref: ref, role: "alert", className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_2__.cn)(alertVariants({ variant: variant }), className) }, props)));
+});
+Alert.displayName = "Alert";
+var AlertTitle = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("h5", __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_2__.cn)("mb-1 font-medium leading-none tracking-tight", className) }, props)));
+});
+AlertTitle.displayName = "AlertTitle";
+var AlertDescription = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, props = __rest(_a, ["className"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_2__.cn)("text-sm [&_p]:leading-relaxed", className) }, props)));
+});
+AlertDescription.displayName = "AlertDescription";
+
 
 
 /***/ }),
@@ -44919,6 +45002,56 @@ Label.displayName = _radix_ui_react_label__WEBPACK_IMPORTED_MODULE_3__.Root.disp
 
 /***/ }),
 
+/***/ "./src/components/ui/progress.tsx":
+/*!****************************************!*\
+  !*** ./src/components/ui/progress.tsx ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Progress: () => (/* binding */ Progress)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _radix_ui_react_progress__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-progress */ "./node_modules/@radix-ui/react-progress/dist/index.mjs");
+/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/lib/utils */ "./src/lib/utils.ts");
+var __assign = (undefined && undefined.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __rest = (undefined && undefined.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+
+
+
+var Progress = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, ref) {
+    var className = _a.className, value = _a.value, props = __rest(_a, ["className", "value"]);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_progress__WEBPACK_IMPORTED_MODULE_2__.Root, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("relative h-2 w-full overflow-hidden rounded-full bg-primary/20", className) }, props),
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_progress__WEBPACK_IMPORTED_MODULE_2__.Indicator, { className: "h-full w-full flex-1 bg-primary transition-all", style: { transform: "translateX(-".concat(100 - (value || 0), "%)") } })));
+});
+Progress.displayName = _radix_ui_react_progress__WEBPACK_IMPORTED_MODULE_2__.Root.displayName;
+
+
+
+/***/ }),
+
 /***/ "./src/components/ui/select.tsx":
 /*!**************************************!*\
   !*** ./src/components/ui/select.tsx ***!
@@ -45096,18 +45229,144 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
 /* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/ui/button */ "./src/components/ui/button.tsx");
+/* harmony import */ var _components_ui_progress__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../components/ui/progress */ "./src/components/ui/progress.tsx");
+/* harmony import */ var _components_ui_alert__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../components/ui/alert */ "./src/components/ui/alert.tsx");
+/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! framer-motion */ "./node_modules/framer-motion/dist/es/render/components/motion/proxy.mjs");
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+
+
+
+
 
 
 var BookUpload = function () {
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-6" },
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h1", { className: "text-3xl font-bold" }, "Upload Book"),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "max-w-xl" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "border-2 border-dashed rounded-lg p-12 text-center" },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("input", { type: "file", id: "book-file", className: "hidden", accept: ".pdf,.epub,.txt" }),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("label", { htmlFor: "book-file" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", className: "mb-4" }, "Choose File")),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "Supported formats: PDF, EPUB, TXT")))));
+    var _a = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), file = _a[0], setFile = _a[1];
+    var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), uploading = _b[0], setUploading = _b[1];
+    var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(0), progress = _c[0], setProgress = _c[1];
+    var _d = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), error = _d[0], setError = _d[1];
+    var navigate = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_4__.useNavigate)();
+    var handleFileSelect = function (event) {
+        var _a;
+        var selectedFile = (_a = event.target.files) === null || _a === void 0 ? void 0 : _a[0];
+        if (selectedFile) {
+            setFile(selectedFile);
+            setError(null);
+        }
+    };
+    var handleUpload = function () { return __awaiter(void 0, void 0, void 0, function () {
+        var formData, response, data, err_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!file) {
+                        setError('Please select a file first');
+                        return [2 /*return*/];
+                    }
+                    setUploading(true);
+                    setProgress(0);
+                    setError(null);
+                    formData = new FormData();
+                    formData.append('file', file);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, 5, 6]);
+                    return [4 /*yield*/, fetch('/story/upload', {
+                            method: 'POST',
+                            body: formData,
+                        })];
+                case 2:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    data = _a.sent();
+                    if (data.status === 'complete') {
+                        navigate(data.redirect);
+                    }
+                    else {
+                        throw new Error(data.error || 'Upload failed');
+                    }
+                    return [3 /*break*/, 6];
+                case 4:
+                    err_1 = _a.sent();
+                    setError(err_1 instanceof Error ? err_1.message : 'An error occurred during upload');
+                    return [3 /*break*/, 6];
+                case 5:
+                    setUploading(false);
+                    return [7 /*endfinally*/];
+                case 6: return [2 /*return*/];
+            }
+        });
+    }); };
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-primary/5" },
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "container max-w-2xl mx-auto px-4 py-12" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(framer_motion__WEBPACK_IMPORTED_MODULE_5__.motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 }, className: "space-y-8" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-center space-y-2" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h1", { className: "font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600" }, "Upload Your Book"),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "font-serif text-lg text-muted-foreground" }, "Transform your existing story with AI-powered visualization")),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-card rounded-lg shadow-lg p-8 space-y-6" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "border-2 border-dashed rounded-lg p-12 text-center transition-colors ".concat(file ? 'border-primary' : 'border-border'), onDragOver: function (e) { return e.preventDefault(); }, onDrop: function (e) {
+                            e.preventDefault();
+                            var droppedFile = e.dataTransfer.files[0];
+                            if (droppedFile)
+                                setFile(droppedFile);
+                        } },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("input", { type: "file", id: "book-file", className: "hidden", accept: ".pdf,.epub,.txt", onChange: handleFileSelect }),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("label", { htmlFor: "book-file" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4" },
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center" },
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-8 h-8 text-primary", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
+                                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }),
+                                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("polyline", { points: "17 8 12 3 7 8" }),
+                                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("line", { x1: "12", y1: "3", x2: "12", y2: "15" }))),
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", null,
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", className: "mb-2" }, file ? 'Change File' : 'Choose File'),
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "or drag and drop your file here")),
+                                file && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm font-medium text-primary" }, file.name)),
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-muted-foreground" }, "Supported formats: PDF, EPUB, TXT")))),
+                    error && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.Alert, { variant: "destructive" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertTitle, null, "Error"),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_alert__WEBPACK_IMPORTED_MODULE_3__.AlertDescription, null, error))),
+                    uploading && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-2" },
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_progress__WEBPACK_IMPORTED_MODULE_2__.Progress, { value: progress, className: "w-full" }),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-center text-muted-foreground" }, "Processing your book..."))),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { className: "w-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary", onClick: handleUpload, disabled: !file || uploading }, uploading ? 'Processing...' : 'Upload and Process'))))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (BookUpload);
 
@@ -50333,6 +50592,218 @@ function dispatchDiscreteCustomEvent(target, event) {
   if (target) react_dom__WEBPACK_IMPORTED_MODULE_1__.flushSync(() => target.dispatchEvent(event));
 }
 var Root = Primitive;
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-progress/dist/index.mjs":
+/*!**************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-progress/dist/index.mjs ***!
+  \**************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Indicator: () => (/* binding */ Indicator),
+/* harmony export */   Progress: () => (/* binding */ Progress),
+/* harmony export */   ProgressIndicator: () => (/* binding */ ProgressIndicator),
+/* harmony export */   Root: () => (/* binding */ Root),
+/* harmony export */   createProgressScope: () => (/* binding */ createProgressScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var _radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @radix-ui/react-context */ "./node_modules/@radix-ui/react-progress/node_modules/@radix-ui/react-context/dist/index.mjs");
+/* harmony import */ var _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @radix-ui/react-primitive */ "./node_modules/@radix-ui/react-primitive/dist/index.mjs");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+"use client";
+
+// packages/react/progress/src/Progress.tsx
+
+
+
+
+var PROGRESS_NAME = "Progress";
+var DEFAULT_MAX = 100;
+var [createProgressContext, createProgressScope] = (0,_radix_ui_react_context__WEBPACK_IMPORTED_MODULE_2__.createContextScope)(PROGRESS_NAME);
+var [ProgressProvider, useProgressContext] = createProgressContext(PROGRESS_NAME);
+var Progress = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeProgress,
+      value: valueProp = null,
+      max: maxProp,
+      getValueLabel = defaultGetValueLabel,
+      ...progressProps
+    } = props;
+    if ((maxProp || maxProp === 0) && !isValidMaxNumber(maxProp)) {
+      console.error(getInvalidMaxError(`${maxProp}`, "Progress"));
+    }
+    const max = isValidMaxNumber(maxProp) ? maxProp : DEFAULT_MAX;
+    if (valueProp !== null && !isValidValueNumber(valueProp, max)) {
+      console.error(getInvalidValueError(`${valueProp}`, "Progress"));
+    }
+    const value = isValidValueNumber(valueProp, max) ? valueProp : null;
+    const valueLabel = isNumber(value) ? getValueLabel(value, max) : void 0;
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(ProgressProvider, { scope: __scopeProgress, value, max, children: /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_3__.Primitive.div,
+      {
+        "aria-valuemax": max,
+        "aria-valuemin": 0,
+        "aria-valuenow": isNumber(value) ? value : void 0,
+        "aria-valuetext": valueLabel,
+        role: "progressbar",
+        "data-state": getProgressState(value, max),
+        "data-value": value ?? void 0,
+        "data-max": max,
+        ...progressProps,
+        ref: forwardedRef
+      }
+    ) });
+  }
+);
+Progress.displayName = PROGRESS_NAME;
+var INDICATOR_NAME = "ProgressIndicator";
+var ProgressIndicator = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeProgress, ...indicatorProps } = props;
+    const context = useProgressContext(INDICATOR_NAME, __scopeProgress);
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(
+      _radix_ui_react_primitive__WEBPACK_IMPORTED_MODULE_3__.Primitive.div,
+      {
+        "data-state": getProgressState(context.value, context.max),
+        "data-value": context.value ?? void 0,
+        "data-max": context.max,
+        ...indicatorProps,
+        ref: forwardedRef
+      }
+    );
+  }
+);
+ProgressIndicator.displayName = INDICATOR_NAME;
+function defaultGetValueLabel(value, max) {
+  return `${Math.round(value / max * 100)}%`;
+}
+function getProgressState(value, maxValue) {
+  return value == null ? "indeterminate" : value === maxValue ? "complete" : "loading";
+}
+function isNumber(value) {
+  return typeof value === "number";
+}
+function isValidMaxNumber(max) {
+  return isNumber(max) && !isNaN(max) && max > 0;
+}
+function isValidValueNumber(value, max) {
+  return isNumber(value) && !isNaN(value) && value <= max && value >= 0;
+}
+function getInvalidMaxError(propValue, componentName) {
+  return `Invalid prop \`max\` of value \`${propValue}\` supplied to \`${componentName}\`. Only numbers greater than 0 are valid max values. Defaulting to \`${DEFAULT_MAX}\`.`;
+}
+function getInvalidValueError(propValue, componentName) {
+  return `Invalid prop \`value\` of value \`${propValue}\` supplied to \`${componentName}\`. The \`value\` prop must be:
+  - a positive number
+  - less than the value passed to \`max\` (or ${DEFAULT_MAX} if no \`max\` prop is set)
+  - \`null\` or \`undefined\` if the progress is indeterminate.
+
+Defaulting to \`null\`.`;
+}
+var Root = Progress;
+var Indicator = ProgressIndicator;
+
+//# sourceMappingURL=index.mjs.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@radix-ui/react-progress/node_modules/@radix-ui/react-context/dist/index.mjs":
+/*!***************************************************************************************************!*\
+  !*** ./node_modules/@radix-ui/react-progress/node_modules/@radix-ui/react-context/dist/index.mjs ***!
+  \***************************************************************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createContext: () => (/* binding */ createContext2),
+/* harmony export */   createContextScope: () => (/* binding */ createContextScope)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+// packages/react/context/src/createContext.tsx
+
+
+function createContext2(rootComponentName, defaultContext) {
+  const Context = react__WEBPACK_IMPORTED_MODULE_0__.createContext(defaultContext);
+  function Provider(props) {
+    const { children, ...context } = props;
+    const value = react__WEBPACK_IMPORTED_MODULE_0__.useMemo(() => context, Object.values(context));
+    return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(Context.Provider, { value, children });
+  }
+  function useContext2(consumerName) {
+    const context = react__WEBPACK_IMPORTED_MODULE_0__.useContext(Context);
+    if (context) return context;
+    if (defaultContext !== void 0) return defaultContext;
+    throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+  }
+  Provider.displayName = rootComponentName + "Provider";
+  return [Provider, useContext2];
+}
+function createContextScope(scopeName, createContextScopeDeps = []) {
+  let defaultContexts = [];
+  function createContext3(rootComponentName, defaultContext) {
+    const BaseContext = react__WEBPACK_IMPORTED_MODULE_0__.createContext(defaultContext);
+    const index = defaultContexts.length;
+    defaultContexts = [...defaultContexts, defaultContext];
+    function Provider(props) {
+      const { scope, children, ...context } = props;
+      const Context = scope?.[scopeName][index] || BaseContext;
+      const value = react__WEBPACK_IMPORTED_MODULE_0__.useMemo(() => context, Object.values(context));
+      return /* @__PURE__ */ (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(Context.Provider, { value, children });
+    }
+    function useContext2(consumerName, scope) {
+      const Context = scope?.[scopeName][index] || BaseContext;
+      const context = react__WEBPACK_IMPORTED_MODULE_0__.useContext(Context);
+      if (context) return context;
+      if (defaultContext !== void 0) return defaultContext;
+      throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+    }
+    Provider.displayName = rootComponentName + "Provider";
+    return [Provider, useContext2];
+  }
+  const createScope = () => {
+    const scopeContexts = defaultContexts.map((defaultContext) => {
+      return react__WEBPACK_IMPORTED_MODULE_0__.createContext(defaultContext);
+    });
+    return function useScope(scope) {
+      const contexts = scope?.[scopeName] || scopeContexts;
+      return react__WEBPACK_IMPORTED_MODULE_0__.useMemo(
+        () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
+        [scope, contexts]
+      );
+    };
+  };
+  createScope.scopeName = scopeName;
+  return [createContext3, composeContextScopes(createScope, ...createContextScopeDeps)];
+}
+function composeContextScopes(...scopes) {
+  const baseScope = scopes[0];
+  if (scopes.length === 1) return baseScope;
+  const createScope = () => {
+    const scopeHooks = scopes.map((createScope2) => ({
+      useScope: createScope2(),
+      scopeName: createScope2.scopeName
+    }));
+    return function useComposedScopes(overrideScopes) {
+      const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName }) => {
+        const scopeProps = useScope(overrideScopes);
+        const currentScope = scopeProps[`__scope${scopeName}`];
+        return { ...nextScopes2, ...currentScope };
+      }, {});
+      return react__WEBPACK_IMPORTED_MODULE_0__.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
+    };
+  };
+  createScope.scopeName = baseScope.scopeName;
+  return createScope;
+}
 
 //# sourceMappingURL=index.mjs.map
 
