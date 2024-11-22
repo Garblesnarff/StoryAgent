@@ -46,8 +46,7 @@ const BookUpload: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
+        throw new Error('Upload failed');
       }
 
       const data = await response.json();
@@ -61,8 +60,7 @@ const BookUpload: React.FC = () => {
         throw new Error(data.error || 'Upload failed');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload';
-      setError(errorMessage);
+      setError('Failed to upload file');
       setProgress(0);
       setUploading(false);
     }
