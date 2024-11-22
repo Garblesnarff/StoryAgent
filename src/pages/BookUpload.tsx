@@ -42,15 +42,18 @@ const BookUpload: React.FC = () => {
     try {
       const response = await fetch('/story/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error || `Upload failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Network error occurred' }));
+        throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
       }
 
+      const data = await response.json();
       if (data.status === 'complete') {
         setProgress(100);
         setTimeout(() => {
@@ -64,10 +67,7 @@ const BookUpload: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload';
       setError(errorMessage);
       setProgress(0);
-    } finally {
-      if (error) {
-        setUploading(false);
-      }
+      setUploading(false);
     }
   };
 

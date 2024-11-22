@@ -42,37 +42,28 @@ def upload_file():
         if not allowed_file(file.filename):
             return jsonify({'error': f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
 
-        # Process the file directly using BookProcessor service
-        try:
-            result = book_processor.process_file(file)
+        # Process the file directly without saving
+        result = book_processor.process_file(file)
+        
+        if not result or 'temp_id' not in result:
+            return jsonify({'error': 'Failed to process file'}), 500
             
-            if not result or 'temp_id' not in result:
-                return jsonify({'error': 'Failed to process file'}), 500
-                
-            # Store necessary data in session
-            session['story_data'] = {
-                'temp_id': result['temp_id'],
-                'source_file': result.get('source_file', ''),
-                'paragraphs': result.get('paragraphs', [])
-            }
-            
-            return jsonify({
-                'status': 'complete',
-                'message': 'File processed successfully',
-                'progress': 100,
-                'redirect': '/story/edit'
-            })
-            
-        except ValueError as ve:
-            logger.error(f"Validation error during file processing: {str(ve)}")
-            return jsonify({'error': str(ve)}), 400
-        except Exception as e:
-            logger.error(f"Error processing file: {str(e)}")
-            return jsonify({'error': 'An error occurred while processing the file'}), 500
-            
+        session['story_data'] = {
+            'temp_id': result['temp_id'],
+            'source_file': result.get('source_file', ''),
+            'paragraphs': result.get('paragraphs', [])
+        }
+        
+        return jsonify({
+            'status': 'complete',
+            'message': 'File processed successfully',
+            'progress': 100,
+            'redirect': '/story/edit'
+        })
+        
     except Exception as e:
-        logger.error(f"Unexpected error in upload route: {str(e)}")
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+        logger.error(f"Error in upload route: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
