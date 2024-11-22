@@ -167,9 +167,16 @@ def generate_cards():
             image_prompts = prompt_generator.generate_image_prompt(
                 story_context, 
                 text,
-                style_prefix=prompt_prefix,
                 use_chain=True
             )
+            
+            # Add style-specific prefixes after getting the prompts
+            if style == 'realistic':
+                image_prompts = ["Create a photorealistic image with natural lighting and detailed textures showing: " + prompt for prompt in image_prompts]
+            elif style == 'artistic':
+                image_prompts = ["Create an artistic interpretation with expressive brushstrokes and bold colors showing: " + prompt for prompt in image_prompts]
+            elif style == 'fantasy':
+                image_prompts = ["Create a fantastical and magical scene with ethereal lighting and supernatural elements showing: " + prompt for prompt in image_prompts]
             
             # Generate image with chained prompts
             yield send_json_message('log', 'Generating image through multiple steps...', step='image')
