@@ -15,6 +15,7 @@ import ReactFlow, {
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import 'reactflow/dist/style.css';
 
 interface ParagraphData {
@@ -32,6 +33,8 @@ interface ParagraphData {
     isGenerating: boolean;
     isRegenerating: boolean;
     isRegeneratingAudio: boolean;
+    progressStep?: string;
+    progress?: number;
 }
 
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
@@ -46,17 +49,27 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                 {data.text}
             </div>
             <div className="space-y-4">
-                <Button 
-                    className="w-full"
-                    onClick={() => data.onGenerateCard(data.index)}
-                    disabled={data.isGenerating}>
-                    {data.isGenerating ? (
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                            <span>Generating...</span>
+                <div className="space-y-2">
+                    <Button 
+                        className="w-full"
+                        onClick={() => data.onGenerateCard(data.index)}
+                        disabled={data.isGenerating}>
+                        {data.isGenerating ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                                <span>Generating...</span>
+                            </div>
+                        ) : 'Generate Card'}
+                    </Button>
+                    {data.isGenerating && (
+                        <div className="space-y-2">
+                            <Progress value={data.progress} className="w-full" />
+                            <p className="text-sm text-center text-muted-foreground">
+                                {data.progressStep || 'Processing...'}
+                            </p>
                         </div>
-                    ) : 'Generate Card'}
-                </Button>
+                    )}
+                </div>
                 
                 <div className="mt-4 mb-2">
                     <RadioGroup
@@ -257,7 +270,15 @@ const onNodesChange = useCallback((changes: NodeChange[]) => {
     const handleGenerateCard = useCallback(async (index: number) => {
         try {
             setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+                node.id === `p${index}` ? {
+                    ...node, 
+                    data: {
+                        ...node.data, 
+                        isGenerating: true,
+                        progress: 0,
+                        progressStep: 'Initializing...'
+                    }
+                } : node
             ));
 
             const response = await fetch('/story/generate_cards', {
@@ -289,7 +310,18 @@ const onNodesChange = useCallback((changes: NodeChange[]) => {
                     if (!line.trim()) continue;
                     
                     const data = JSON.parse(line);
-                    if (data.type === 'paragraph') {
+                    if (data.type === 'log') {
+                        setNodes(nodes => nodes.map(node => 
+                            node.id === `p${index}` ? {
+                                ...node,
+                                data: {
+                                    ...node.data,
+                                    progressStep: data.message,
+                                    progress: data.progress || node.data.progress
+                                }
+                            } : node
+                        ));
+                    } else if (data.type === 'paragraph') {
                         setNodes(nodes => nodes.map(node => 
                             node.id === `p${index}` ? {
                                 ...node, 
@@ -298,7 +330,9 @@ const onNodesChange = useCallback((changes: NodeChange[]) => {
                                     imageUrl: data.data.image_url,
                                     imagePrompt: data.data.image_prompt,
                                     audioUrl: data.data.audio_url,
-                                    isGenerating: false
+                                    isGenerating: false,
+                                    progress: 100,
+                                    progressStep: 'Complete'
                                 }
                             } : node
                         ));

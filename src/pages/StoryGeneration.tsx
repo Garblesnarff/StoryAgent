@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
+import { Progress } from '@/components/ui/progress';
 
 const formSchema = z.object({
   prompt: z.string().min(10, 'Story prompt must be at least 10 characters long'),
@@ -34,8 +35,13 @@ const StoryGeneration: React.FC = () => {
     },
   });
 
+  const [generationStep, setGenerationStep] = useState<string>('');
+  const [progress, setProgress] = useState(0);
+
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
+    setProgress(0);
+    setGenerationStep('Initializing');
     try {
       const formData = new FormData();
       Object.entries(values).forEach(([key, value]) => {
@@ -47,12 +53,38 @@ const StoryGeneration: React.FC = () => {
         body: formData,
       });
 
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Failed to get reader');
 
-      if (data.success) {
-        navigate(data.redirect);
-      } else {
-        throw new Error(data.error || 'Failed to generate story');
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          try {
+            const data = JSON.parse(line);
+            if (data.type === 'progress') {
+              setProgress(data.progress);
+              setGenerationStep(data.step);
+            } else if (data.type === 'complete') {
+              navigate(data.redirect);
+              return;
+            } else if (data.type === 'error') {
+              throw new Error(data.message);
+            }
+          } catch (parseError) {
+            console.error('Error parsing JSON:', parseError);
+          }
+        }
       }
     } catch (error) {
       console.error('Error generating story:', error);
@@ -61,6 +93,8 @@ const StoryGeneration: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+      setProgress(0);
+      setGenerationStep('');
     }
   };
 
@@ -204,20 +238,30 @@ const StoryGeneration: React.FC = () => {
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="loading loading-spinner"></span>
-                    Generating Story...
-                  </>
-                ) : (
-                  'Generate Story'
+              <div className="space-y-4">
+                {(isLoading || progress > 0) && (
+                  <div className="space-y-2">
+                    <Progress value={progress} className="w-full" />
+                    <p className="text-sm text-center text-muted-foreground">
+                      {generationStep}
+                    </p>
+                  </div>
                 )}
-              </Button>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      <span>Generating Story...</span>
+                    </div>
+                  ) : (
+                    'Generate Story'
+                  )}
+                </Button>
+              </div>
 
               {form.formState.errors.root && (
                 <div className="text-red-500 text-center mt-2">
