@@ -48,3 +48,37 @@
     --ring: 240 4.9% 83.9%;
   }
 }
+
+/* Node Editor Styles */
+.paragraph-node {
+  @apply rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border transition-all duration-300;
+  background: #ffdab9; /* Default peach */
+}
+
+.realistic-style {
+  background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+  @apply text-gray-800;
+}
+
+.artistic-style {
+  background: linear-gradient(135deg, #dc143c, #800080);
+  @apply text-white;
+}
+
+.fantasy-style {
+  background: linear-gradient(135deg, #008080, #00ffff);
+  @apply text-white;
+}
+
+/* Style-specific text colors */
+.realistic-style .node-content,
+.realistic-style .node-header {
+  @apply text-gray-800;
+}
+
+.artistic-style .node-content,
+.artistic-style .node-header,
+.fantasy-style .node-content,
+.fantasy-style .node-header {
+  @apply text-white;
+}

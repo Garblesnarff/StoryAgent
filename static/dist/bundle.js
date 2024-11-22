@@ -44262,7 +44262,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _styles_globals_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./styles/globals.css */ "./src/styles/globals.css");
 /* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/dist/index.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
 /* harmony import */ var _components_Layout__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/Layout */ "./src/components/Layout.tsx");
 /* harmony import */ var _pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pages/LandingPage */ "./src/pages/LandingPage.tsx");
 /* harmony import */ var _pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./pages/StoryGeneration */ "./src/pages/StoryGeneration.tsx");
@@ -44276,20 +44275,18 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var router = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_7__.createBrowserRouter)((0,react_router_dom__WEBPACK_IMPORTED_MODULE_8__.createRoutesFromElements)(react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_Layout__WEBPACK_IMPORTED_MODULE_2__["default"], null) },
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__["default"], null) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null) }))), {
-    future: {
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-        v7_fetcherPersist: true,
-        v7_normalizeFormMethod: true,
-        v7_partialHydration: true,
-        v7_skipActionErrorRevalidation: true,
+var routes = [
+    {
+        element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_Layout__WEBPACK_IMPORTED_MODULE_2__["default"], null),
+        children: [
+            { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__["default"], null) },
+            { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null) },
+            { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null) },
+            { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null) }
+        ]
     }
-});
+];
+var router = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_7__.createBrowserRouter)(routes);
 function App() {
     return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_7__.RouterProvider, { router: router });
 }

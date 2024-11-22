@@ -37,7 +37,7 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
     const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
 
     return (
-        <div className="bg-card rounded-lg shadow-lg p-4 min-w-[400px] max-w-[400px] border border-border">
+        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} className="!bg-primary" />
             <div className="text-lg font-bold mb-2 text-primary">Paragraph {data.index + 1}</div>
             <div className="text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto">
