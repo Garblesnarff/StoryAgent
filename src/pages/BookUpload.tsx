@@ -39,10 +39,24 @@ const BookUpload: React.FC = () => {
     const formData = new FormData();
     formData.append('file', file);
 
+    // Set content type header based on file type
+    const fileType = file.name.split('.').pop()?.toLowerCase();
+    const contentTypeMap: { [key: string]: string } = {
+      'pdf': 'application/pdf',
+      'epub': 'application/epub+zip',
+      'txt': 'text/plain',
+      'html': 'text/html'
+    };
+
     try {
       const response = await fetch('/story/upload', {
         method: 'POST',
         body: formData,
+        headers: {
+          ...(fileType && contentTypeMap[fileType] 
+            ? { 'Content-Type': contentTypeMap[fileType] }
+            : {})
+        }
       });
 
       if (!response.ok) {
