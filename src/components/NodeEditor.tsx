@@ -189,11 +189,21 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             } : node
         ));
         
-        // Update the prompt based on the new style
-        if (story?.paragraphs[index].image_url) {
-            handleRegenerateImage(index);
-        }
-    }, [story, handleRegenerateImage]);
+        // Update backend about style change
+        fetch('/story/update_style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paragraphs: [{
+                    index,
+                    image_style: newStyle
+                }]
+            })
+        });
+        
+        // Regenerate image with new style
+        handleRegenerateImage(index);
+    }, [handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
         try {
