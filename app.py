@@ -41,10 +41,11 @@ with app.app_context():
     import models
     db.create_all()
 
-@app.route('/')
-def index():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
     # Clear any existing story data when returning to home
-    if 'story_data' in session:
+    if path == '' and 'story_data' in session:
         session.pop('story_data', None)
     return render_template('index.html')
 

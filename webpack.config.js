@@ -2,27 +2,36 @@ const path = require('path');
 
 module.exports = {
     mode: 'development',
-    entry: './static/js/customize.js',
+    entry: './src/App.tsx',
     output: {
         path: path.resolve(__dirname, 'static/dist'),
-        filename: 'bundle.js'
+        filename: 'bundle.js',
+        publicPath: '/static/dist/'
+    },
+    resolve: {
+        extensions: ['.ts', '.tsx', '.js', '.jsx'],
+        alias: {
+            '@': path.resolve(__dirname, 'src'),
+        }
     },
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /\.(ts|tsx)$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['@babel/preset-react']
-                    }
+                    loader: 'ts-loader'
                 }
             },
             {
                 test: /\.css$/,
-                use: ['style-loader', 'css-loader']
+                use: [
+                    'style-loader',
+                    'css-loader',
+                    'postcss-loader'
+                ]
             }
         ]
-    }
+    },
+    devtool: 'source-map'
 };
