@@ -42,14 +42,11 @@ const BookUpload: React.FC = () => {
     try {
       const response = await fetch('/story/upload', {
         method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json'
-        }
+        body: formData
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Network error occurred' }));
+        const errorData = await response.json();
         throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
       }
 
