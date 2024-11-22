@@ -606,6 +606,10 @@ video {
   margin-left: -0.25rem;
   margin-right: -0.25rem;
 }
+.mx-2 {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
 .mx-4 {
   margin-left: 1rem;
   margin-right: 1rem;
@@ -1104,8 +1108,14 @@ video {
 .text-destructive-foreground {
   color: hsl(var(--destructive-foreground));
 }
+.text-foreground {
+  color: hsl(var(--foreground));
+}
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
+}
+.text-muted-foreground\/50 {
+  color: hsl(var(--muted-foreground) / 0.5);
 }
 .text-popover-foreground {
   color: hsl(var(--popover-foreground));
@@ -1175,6 +1185,9 @@ video {
 }
 .blur-xl {
   --tw-blur: blur(24px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .backdrop-blur-sm {
@@ -1335,6 +1348,10 @@ video {
 
 .hover\:text-accent-foreground:hover {
   color: hsl(var(--accent-foreground));
+}
+
+.hover\:text-foreground:hover {
+  color: hsl(var(--foreground));
 }
 
 .hover\:underline:hover {

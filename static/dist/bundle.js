@@ -5475,6 +5475,36 @@ const ChevronDown = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["defaul
 
 /***/ }),
 
+/***/ "./node_modules/lucide-react/dist/esm/icons/chevron-right.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/lucide-react/dist/esm/icons/chevron-right.js ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ ChevronRight)
+/* harmony export */ });
+/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ "./node_modules/lucide-react/dist/esm/createLucideIcon.js");
+/**
+ * @license lucide-react v0.460.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+
+const ChevronRight = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__["default"])("ChevronRight", [
+  ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
+]);
+
+
+//# sourceMappingURL=chevron-right.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/lucide-react/dist/esm/icons/circle.js":
 /*!************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/circle.js ***!
@@ -44357,9 +44387,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/dist/index.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/dist/index.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
 /* harmony import */ var _ui_button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ui/button */ "./src/components/ui/button.tsx");
+/* harmony import */ var _ui_breadcrumb__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ui/breadcrumb */ "./src/components/ui/breadcrumb.tsx");
+
 
 
 
@@ -44367,14 +44399,15 @@ var Layout = function () {
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "min-h-screen bg-background" },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("header", { className: "border-b" },
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("nav", { className: "container mx-auto px-4 h-16 flex items-center justify-between" },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__.Link, { to: "/", className: "text-xl font-bold" }, "Story Generator"),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/", className: "text-xl font-bold" }, "Story Generator"),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-x-4" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__.Link, { to: "/create-story" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/create-story" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost" }, "Create Story")),
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__.Link, { to: "/upload-book" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/upload-book" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost" }, "Upload Book"))))),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("main", { className: "container mx-auto px-4 py-8 relative" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Outlet, null))));
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_breadcrumb__WEBPACK_IMPORTED_MODULE_2__.Breadcrumb, null),
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Outlet, null))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Layout);
 
@@ -44872,6 +44905,65 @@ var AlertCancel = react__WEBPACK_IMPORTED_MODULE_0__.forwardRef(function (_a, re
     return (react__WEBPACK_IMPORTED_MODULE_0__.createElement(_radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Cancel, __assign({ ref: ref, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)((0,_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.buttonVariants)({ variant: "outline" }), "mt-2 sm:mt-0", className) }, props)));
 });
 AlertCancel.displayName = _radix_ui_react_alert_dialog__WEBPACK_IMPORTED_MODULE_3__.Cancel.displayName;
+
+
+
+/***/ }),
+
+/***/ "./src/components/ui/breadcrumb.tsx":
+/*!******************************************!*\
+  !*** ./src/components/ui/breadcrumb.tsx ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Breadcrumb: () => (/* binding */ Breadcrumb)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var lucide_react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lucide-react */ "./node_modules/lucide-react/dist/esm/icons/chevron-right.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/dist/index.js");
+/* harmony import */ var _lib_utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/lib/utils */ "./src/lib/utils.ts");
+var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
+
+
+
+
+var routes = {
+    "/": "Home",
+    "/create-story": "Create Story",
+    "/upload-book": "Upload Book",
+    "/story/edit": "Story Editor"
+};
+var Breadcrumb = function () {
+    var location = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_2__.useLocation)();
+    var pathSegments = location.pathname.split('/').filter(Boolean);
+    var breadcrumbs = __spreadArray([
+        { path: '/', label: 'Home' }
+    ], pathSegments.map(function (_, index) {
+        var path = '/' + pathSegments.slice(0, index + 1).join('/');
+        return {
+            path: path,
+            label: routes[path] || pathSegments[index]
+        };
+    }), true);
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("nav", { "aria-label": "Breadcrumb", className: "mb-4" },
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement("ol", { className: "flex items-center space-x-2 text-sm text-muted-foreground" }, breadcrumbs.map(function (breadcrumb, index) { return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", { key: breadcrumb.path, className: "flex items-center" },
+            index > 0 && (react__WEBPACK_IMPORTED_MODULE_0__.createElement(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], { className: "h-4 w-4 mx-2 text-muted-foreground/50" })),
+            react__WEBPACK_IMPORTED_MODULE_0__.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Link, { to: breadcrumb.path, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("hover:text-foreground transition-colors", index === breadcrumbs.length - 1
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground") }, breadcrumb.label))); }))));
+};
 
 
 
