@@ -44349,9 +44349,10 @@ var Layout = function () {
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost" }, "Create Story")),
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/upload-book" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost" }, "Upload Book"))))),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("main", { className: "container mx-auto px-4 py-8 relative" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_breadcrumb__WEBPACK_IMPORTED_MODULE_2__.Breadcrumb, null),
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Outlet, null))));
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("main", { className: "container mx-auto px-4 py-6 relative" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "max-w-7xl mx-auto" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_breadcrumb__WEBPACK_IMPORTED_MODULE_2__.Breadcrumb, null),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Outlet, null)))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Layout);
 
@@ -44891,7 +44892,9 @@ var routes = {
     "/": "Home",
     "/create-story": "Create Story",
     "/upload-book": "Upload Book",
-    "/story/edit": "Story Editor"
+    "/story/edit": "Story Editor",
+    "/story/generate": "Generate Story",
+    "/story/customize": "Customize Story"
 };
 var Breadcrumb = function () {
     var location = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_2__.useLocation)();
@@ -44905,11 +44908,11 @@ var Breadcrumb = function () {
             label: routes[path] || pathSegments[index]
         };
     }), true);
-    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("nav", { "aria-label": "Breadcrumb", className: "mb-4" },
-        react__WEBPACK_IMPORTED_MODULE_0__.createElement("ol", { className: "flex items-center space-x-2 text-sm text-muted-foreground" }, breadcrumbs.map(function (breadcrumb, index) { return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", { key: breadcrumb.path, className: "flex items-center" },
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("nav", { "aria-label": "Breadcrumb", className: "mb-6" },
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement("ol", { className: "flex items-center space-x-2 text-sm" }, breadcrumbs.map(function (breadcrumb, index) { return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", { key: breadcrumb.path, className: "flex items-center" },
             index > 0 && (react__WEBPACK_IMPORTED_MODULE_0__.createElement(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], { className: "h-4 w-4 mx-2 text-muted-foreground/50" })),
-            react__WEBPACK_IMPORTED_MODULE_0__.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Link, { to: breadcrumb.path, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("hover:text-foreground transition-colors", index === breadcrumbs.length - 1
-                    ? "text-foreground font-medium"
+            react__WEBPACK_IMPORTED_MODULE_0__.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Link, { to: breadcrumb.path, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("hover:text-primary transition-colors duration-200", index === breadcrumbs.length - 1
+                    ? "text-primary font-semibold"
                     : "text-muted-foreground") }, breadcrumb.label))); }))));
 };
 

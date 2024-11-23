@@ -751,6 +751,9 @@ video {
 .max-w-4xl {
   max-width: 56rem;
 }
+.max-w-7xl {
+  max-width: 80rem;
+}
 .max-w-lg {
   max-width: 32rem;
 }
@@ -1112,9 +1115,6 @@ video {
 .text-destructive-foreground {
   color: hsl(var(--destructive-foreground));
 }
-.text-foreground {
-  color: hsl(var(--foreground));
-}
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
 }
@@ -1354,8 +1354,8 @@ video {
   color: hsl(var(--accent-foreground));
 }
 
-.hover\:text-foreground:hover {
-  color: hsl(var(--foreground));
+.hover\:text-primary:hover {
+  color: hsl(var(--primary));
 }
 
 .hover\:underline:hover {
