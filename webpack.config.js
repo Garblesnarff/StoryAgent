@@ -1,43 +1,28 @@
 const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
     mode: 'development',
-    entry: './src/index.tsx',
+    entry: './static/js/customize.js',
     output: {
         path: path.resolve(__dirname, 'static/dist'),
-        filename: 'bundle.js',
-        publicPath: '/static/dist/'
-    },
-    resolve: {
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
-        alias: {
-            '@': path.resolve(__dirname, 'src'),
-        }
+        filename: 'bundle.js'
     },
     module: {
         rules: [
             {
-                test: /\.(ts|tsx)$/,
+                test: /\.js$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: 'ts-loader'
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-react']
+                    }
                 }
             },
             {
                 test: /\.css$/,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    'css-loader',
-                    'postcss-loader'
-                ]
+                use: ['style-loader', 'css-loader']
             }
         ]
-    },
-    plugins: [
-        new MiniCssExtractPlugin({
-            filename: 'main.css'
-        })
-    ],
-    devtool: 'source-map'
+    }
 };

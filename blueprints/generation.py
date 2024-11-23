@@ -153,22 +153,9 @@ def generate_cards():
                 yield send_json_message('error', 'Missing required parameters')
                 return
             
-            # Add style-specific prompt templates
-            style = data.get('style', 'realistic')
-            if style == 'realistic':
-                prompt_prefix = "Create a photorealistic image with natural lighting and detailed textures showing:"
-            elif style == 'artistic':
-                prompt_prefix = "Create an artistic interpretation with expressive brushstrokes and bold colors showing:"
-            elif style == 'fantasy':
-                prompt_prefix = "Create a fantastical and magical scene with ethereal lighting and supernatural elements showing:"
-
             # Generate chain of image prompts using Gemini
             yield send_json_message('log', 'Generating image prompts...', step='prompt')
-            image_prompts = prompt_generator.generate_image_prompt(
-                story_context, 
-                text,
-                use_chain=True
-            )
+            image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
             
             # Generate image with chained prompts
             yield send_json_message('log', 'Generating image through multiple steps...', step='image')
