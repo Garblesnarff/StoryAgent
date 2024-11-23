@@ -282,84 +282,89 @@ const onNodesChange = useCallback((changes: NodeChange[]) => {
     }, [story, handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
-        try {
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {
-                    ...node, 
-                    data: {
-                        ...node.data, 
-                        isGenerating: true,
-                        progress: 0,
-                        progressStep: 'Initializing...'
-                    }
-                } : node
-            ));
+    try {
+        setNodes(prevNodes => prevNodes.map(node => 
+            node.id === `p${index}` ? {
+                ...node, 
+                data: {
+                    ...node.data, 
+                    isGenerating: true,
+                    progress: 0,
+                    progressStep: 'Initializing...'
+                }
+            } : node
+        ));
 
-            const response = await fetch('/story/generate_cards', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    index,
-                    text: story?.paragraphs[index].text,
-                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
-                })
-            });
+        const response = await fetch('/story/generate_cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                index,
+                text: story?.paragraphs[index].text,
+                style: selectedStyle
+            })
+        });
 
-            const reader = response.body?.getReader();
-            if (!reader) throw new Error('Failed to get reader');
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('Failed to get reader');
 
-            // Handle streaming response
-            const decoder = new TextDecoder();
-            let buffer = '';
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
             
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
+            buffer += decoder.decode(value, {stream: true});
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+                if (!line.trim()) continue;
                 
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-                
-                for (const line of lines) {
-                    if (!line.trim()) continue;
+                const data = JSON.parse(line);
+                if (data.type === 'paragraph') {
+                    // Update both local state and story state
+                    setNodes(prevNodes => prevNodes.map(node => 
+                        node.id === `p${index}` ? {
+                            ...node, 
+                            data: {
+                                ...node.data,
+                                imageUrl: data.data.image_url,
+                                imagePrompt: data.data.image_prompt,
+                                audioUrl: data.data.audio_url,
+                                isGenerating: false,
+                                progress: 100,
+                                progressStep: 'Complete'
+                            }
+                        } : node
+                    ));
                     
-                    const data = JSON.parse(line);
-                    if (data.type === 'log') {
-                        setNodes(nodes => nodes.map(node => 
-                            node.id === `p${index}` ? {
-                                ...node,
-                                data: {
-                                    ...node.data,
-                                    progressStep: data.step || data.message,
-                                    progress: data.progress || node.data.progress || 0
-                                }
-                            } : node
-                        ));
-                    } else if (data.type === 'paragraph') {
-                        setNodes(nodes => nodes.map(node => 
-                            node.id === `p${index}` ? {
-                                ...node, 
-                                data: {
-                                    ...node.data,
-                                    imageUrl: data.data.image_url,
-                                    imagePrompt: data.data.image_prompt,
-                                    audioUrl: data.data.audio_url,
-                                    isGenerating: false,
-                                    progress: 100,
-                                    progressStep: 'Complete'
-                                }
-                            } : node
-                        ));
-                    }
+                    // Update story state to maintain persistence
+                    setStory(prevStory => {
+                        if (!prevStory) return prevStory;
+                        const updatedParagraphs = [...prevStory.paragraphs];
+                        updatedParagraphs[index] = {
+                            ...updatedParagraphs[index],
+                            image_url: data.data.image_url,
+                            image_prompt: data.data.image_prompt,
+                            audio_url: data.data.audio_url
+                        };
+                        return {
+                            ...prevStory,
+                            paragraphs: updatedParagraphs
+                        };
+                    });
                 }
             }
-        } catch (error) {
-            console.error('Error generating card:', error);
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
-            ));
         }
-    }, [story, selectedStyle]);
+    } catch (error) {
+        console.error('Error generating card:', error);
+        setNodes(prevNodes => prevNodes.map(node => 
+            node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+        ));
+    }
+}, [story, selectedStyle, setNodes, setStory]);
 
     // Removed duplicate declaration
 
