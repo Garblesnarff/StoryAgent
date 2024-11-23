@@ -16,38 +16,12 @@ import AnimatedTransition from './components/AnimatedTransition';
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<Layout />}>
-      <Route path="/" element={
-        <AnimatedTransition>
-          <LandingPage />
-        </AnimatedTransition>
-      } />
-      <Route path="/create-story" element={
-        <AnimatedTransition>
-          <StoryGeneration />
-        </AnimatedTransition>
-      } />
-      <Route path="/upload-book" element={
-        <AnimatedTransition>
-          <BookUpload />
-        </AnimatedTransition>
-      } />
-      <Route path="/story/edit" element={
-        <AnimatedTransition>
-          <NodeEditor />
-        </AnimatedTransition>
-      } />
+      <Route index element={<LandingPage />} />
+      <Route path="/create-story" element={<StoryGeneration />} />
+      <Route path="/upload-book" element={<BookUpload />} />
+      <Route path="/story/edit" element={<NodeEditor />} />
     </Route>
-  ),
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-      v7_fetcherPersist: true,
-      v7_normalizeFormMethod: true,
-      v7_partialHydration: true,
-      v7_skipActionErrorRevalidation: true,
-    }
-  }
+  )
 );
 
 function App() {

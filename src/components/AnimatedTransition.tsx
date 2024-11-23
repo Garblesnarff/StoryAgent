@@ -31,11 +31,11 @@ const pageVariants = {
 
 const AnimatedTransition: React.FC<AnimatedTransitionProps> = ({ children }) => {
   const location = useLocation();
-
+  
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={location.pathname}
+        key={location.key}
         initial="initial"
         animate="animate"
         exit="exit"
