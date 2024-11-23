@@ -180,13 +180,12 @@ interface NodeEditorProps {
 }
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<ParagraphData>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
-    const [story, setStory] = useState(initialStory);
+    const [story, setStory] = useState<Story | undefined>(initialStory);
     const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>({});
-    const [isLoading, setIsLoading] = useState(!initialStory);
 
     // Handle node drag to save positions
     const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
@@ -374,7 +373,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 }
             } catch (error) {
                 console.error('Error fetching story data:', error);
-                setIsLoading(false);
             }
         };
 
@@ -383,17 +381,314 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story]);
 
+    // Load saved positions from localStorage
+    useEffect(() => {
+        const savedPositions = localStorage.getItem('nodePositions');
+        if (savedPositions) {
+            setNodePositions(JSON.parse(savedPositions));
+        }
+    }, []);
+
+    // Save positions to localStorage whenever they change
+    useEffect(() => {
+        if (Object.keys(nodePositions).length > 0) {
+            localStorage.setItem('nodePositions', JSON.stringify(nodePositions));
+        }
+    }, [nodePositions]);
+
+    // Initialize nodes when story changes
     useEffect(() => {
         if (!story?.paragraphs) {
-            setIsLoading(false);
             return;
         }
 
-        const paragraphNodes = story.paragraphs.map((para, index) => {
-            const nodeId = `p${index}`;
-            const savedPosition = nodePositions[nodeId];
-            const defaultPosition = {
-                x: (index % 3) * 500 + 50,  // Increase horizontal spacing
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            position: nodePositions[`p${index}`] || {
+                x: (index % 3) * 300 + 50,
+                y: Math.floor(index / 3) * 200 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
+            }
+        }));
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, nodePositions]);
+
+    const onConnect = useCallback((params) => {
+        setEdges((eds) => addEdge(params, eds));
+    }, [setEdges]);
+
+    return (
+        <>
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    onNodeDragStop={onNodeDragStop}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    style={{ background: 'var(--bs-dark)' }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </div>
+            
+            {expandedImage && (
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default React.memo(NodeEditor);
+        if (Object.keys(nodePositions).length > 0) {
+            localStorage.setItem('nodePositions', JSON.stringify(nodePositions));
+        }
+    }, [nodePositions]);
+
+    // Initialize nodes when story changes or positions update
+    useEffect(() => {
+        if (!story?.paragraphs) {
+            return;
+        }
+
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            position: nodePositions[`p${index}`] || {
+                x: (index % 3) * 300 + 50,
+                y: Math.floor(index / 3) * 200 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
+            }
+        }));
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions, handleStyleChange]);
+
+    // Save node positions when dragged
+    const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
+        setNodePositions(prev => ({
+            ...prev,
+            [node.id]: { x: node.position.x, y: node.position.y }
+        }));
+    }, []);
+            };
+
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                position,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions, handleStyleChange]);
+            
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                position: savedPosition || defaultPosition,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions, handleStyleChange]);
+                y: Math.floor(index / 3) * 300 + 50
+            };
+
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                position,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions]);
+                y: Math.floor(index / 3) * 300 + 50
+            };
+
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                position: savedPosition || defaultPosition,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions, handleStyleChange]);
+                y: Math.floor(index / 3) * 300 + 50
+            };
+            
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                position: savedPosition || defaultPosition,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions, handleStyleChange]);
+                y: Math.floor(index / 3) * 300 + 50
+            };
+            
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                position: savedPosition || defaultPosition,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        setNodes(paragraphNodes);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes, nodePositions, handleStyleChange]);
                 y: Math.floor(index / 3) * 450 + 50  // Increase vertical spacing
             };
 
@@ -437,7 +732,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     return (
         <>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <ReactFlow
+                {story?.paragraphs && (
+                    <ReactFlow
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
@@ -452,6 +748,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     <Background />
                     <Controls />
                 </ReactFlow>
+                )}
             </div>
             
             {expandedImage && (
