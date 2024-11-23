@@ -202,7 +202,7 @@ interface NodeEditorProps {
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
     const [nodes, setNodes] = useNodesState([]);
 const onNodesChange = useCallback((changes: NodeChange[]) => {
-  setNodes((nds) => applyNodeChanges(changes, nds));
+    setNodes((nds) => applyNodeChanges(changes, nds));
 }, [setNodes]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
