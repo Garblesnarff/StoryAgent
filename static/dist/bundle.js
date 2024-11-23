@@ -44309,22 +44309,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 var router = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_8__.createBrowserRouter)((0,react_router_dom__WEBPACK_IMPORTED_MODULE_9__.createRoutesFromElements)(react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_Layout__WEBPACK_IMPORTED_MODULE_2__["default"], null) },
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null,
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__["default"], null)) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null,
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null)) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null,
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null)) }),
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null,
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null)) }))), {
-    future: {
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-        v7_fetcherPersist: true,
-        v7_normalizeFormMethod: true,
-        v7_partialHydration: true,
-        v7_skipActionErrorRevalidation: true
-    }
+    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null) },
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_LandingPage__WEBPACK_IMPORTED_MODULE_3__["default"], null) }),
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/create-story", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_StoryGeneration__WEBPACK_IMPORTED_MODULE_4__["default"], null) }),
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null) }),
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null) })))), {
+    basename: '/'
 });
 function App() {
     return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.RouterProvider, { router: router });
@@ -44436,14 +44426,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/core/dist/esm/index.mjs");
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/background/dist/esm/index.mjs");
-/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/controls/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/core/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/background/dist/esm/index.mjs");
+/* harmony import */ var reactflow__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! reactflow */ "./node_modules/@reactflow/controls/dist/esm/index.mjs");
 /* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/components/ui/button */ "./src/components/ui/button.tsx");
 /* harmony import */ var _components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/components/ui/radio-group */ "./src/components/ui/radio-group.tsx");
 /* harmony import */ var _components_ui_label__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/components/ui/label */ "./src/components/ui/label.tsx");
-/* harmony import */ var _components_ui_progress__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/components/ui/progress */ "./src/components/ui/progress.tsx");
-/* harmony import */ var reactflow_dist_style_css__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! reactflow/dist/style.css */ "./node_modules/reactflow/dist/style.css");
+/* harmony import */ var reactflow_dist_style_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! reactflow/dist/style.css */ "./node_modules/reactflow/dist/style.css");
 var __assign = (undefined && undefined.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -44491,16 +44480,6 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
-
 
 
 
@@ -44512,29 +44491,15 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
     var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
     var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.globalStyle || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "paragraph-node ".concat(localStyle, "-style") },
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_6__.Position.Left, className: "!bg-primary" }),
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Left, className: "!bg-primary" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-lg font-bold mb-2 text-primary" },
             "Paragraph ",
             data.index + 1),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto" }, data.text),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-2" },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { className: "w-full", onClick: function () { return data.onGenerateCard(data.index); }, disabled: data.isGenerating }, data.isGenerating ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" }),
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", null, "Generating..."))) : 'Generate Card'),
-                (data.isGenerating || data.isRegenerating || data.isRegeneratingAudio) && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-2" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_progress__WEBPACK_IMPORTED_MODULE_4__.Progress, { value: data.progress || 0, className: "w-full h-2 bg-muted" }),
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-sm text-center space-y-1" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-primary font-medium" }, data.progressStep || 'Processing...'),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-xs text-muted-foreground" },
-                            data.isGenerating && 'Generating story elements...',
-                            data.isRegenerating && 'Regenerating image...',
-                            data.isRegeneratingAudio && 'Regenerating audio...'),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" }),
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "text-muted-foreground" },
-                                data.progress || 0,
-                                "%")))))),
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { className: "w-full", onClick: function () { return data.onGenerateCard(data.index); }, disabled: data.isGenerating }, data.isGenerating ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" }),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", null, "Generating..."))) : 'Generate Card'),
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "mt-4 mb-2" },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__.RadioGroup, { value: localStyle, onValueChange: function (value) {
                         var _a;
@@ -44575,7 +44540,7 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { className: "btn btn-secondary btn-sm w-100 mt-2", onClick: function () { return data.onRegenerateAudio(data.index); }, disabled: data.isRegeneratingAudio },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("i", { className: "bi bi-arrow-clockwise" }),
                     " Regenerate Audio")))),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_6__.Position.Right })));
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Right })));
 });
 var nodeTypes = {
     paragraph: ParagraphNode
@@ -44583,11 +44548,8 @@ var nodeTypes = {
 var NodeEditor = function (_a) {
     var _b;
     var initialStory = _a.story, onStyleUpdate = _a.onStyleUpdate;
-    var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_6__.useNodesState)([]), nodes = _c[0], setNodes = _c[1];
-    var onNodesChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (changes) {
-        setNodes(function (nds) { return (0,reactflow__WEBPACK_IMPORTED_MODULE_6__.applyNodeChanges)(changes, nds); });
-    }, [setNodes]);
-    var _d = (0,reactflow__WEBPACK_IMPORTED_MODULE_6__.useEdgesState)([]), edges = _d[0], setEdges = _d[1], onEdgesChange = _d[2];
+    var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useNodesState)([]), nodes = _c[0], setNodes = _c[1], onNodesChange = _c[2];
+    var _d = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useEdgesState)([]), edges = _d[0], setEdges = _d[1], onEdgesChange = _d[2];
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('realistic'), selectedStyle = _e[0], setSelectedStyle = _e[1];
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _f[0], setExpandedImage = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _g[0], setStory = _g[1];
@@ -44660,13 +44622,13 @@ var NodeEditor = function (_a) {
     }, [story, handleRegenerateImage]);
     var handleGenerateCard = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_2;
-        var _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var _b, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    _c.trys.push([0, 5, , 6]);
-                    setNodes(function (prevNodes) { return prevNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: true, progress: 0, progressStep: 'Initializing...' }) }) : node;
+                    _d.trys.push([0, 5, , 6]);
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: true }) }) : node;
                     }); });
                     return [4 /*yield*/, fetch('/story/generate_cards', {
                             method: 'POST',
@@ -44674,22 +44636,22 @@ var NodeEditor = function (_a) {
                             body: JSON.stringify({
                                 index: index,
                                 text: story === null || story === void 0 ? void 0 : story.paragraphs[index].text,
-                                style: selectedStyle
+                                style: ((_b = nodes.find(function (n) { return n.id === "p".concat(index); })) === null || _b === void 0 ? void 0 : _b.data.globalStyle) || 'realistic'
                             })
                         })];
                 case 1:
-                    response = _c.sent();
-                    reader = (_b = response.body) === null || _b === void 0 ? void 0 : _b.getReader();
+                    response = _d.sent();
+                    reader = (_c = response.body) === null || _c === void 0 ? void 0 : _c.getReader();
                     if (!reader)
                         throw new Error('Failed to get reader');
                     decoder = new TextDecoder();
                     buffer = '';
-                    _c.label = 2;
+                    _d.label = 2;
                 case 2:
                     if (false) {}
                     return [4 /*yield*/, reader.read()];
                 case 3:
-                    _a = _c.sent(), done = _a.done, value = _a.value;
+                    _a = _d.sent(), done = _a.done, value = _a.value;
                     if (done)
                         return [3 /*break*/, 4];
                     buffer += decoder.decode(value, { stream: true });
@@ -44700,18 +44662,9 @@ var NodeEditor = function (_a) {
                             return "continue";
                         var data = JSON.parse(line);
                         if (data.type === 'paragraph') {
-                            // Update both local state and story state
-                            setNodes(function (prevNodes) { return prevNodes.map(function (node) {
-                                return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data.data.image_url, imagePrompt: data.data.image_prompt, audioUrl: data.data.audio_url, isGenerating: false, progress: 100, progressStep: 'Complete' }) }) : node;
+                            setNodes(function (nodes) { return nodes.map(function (node) {
+                                return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data.data.image_url, imagePrompt: data.data.image_prompt, audioUrl: data.data.audio_url, isGenerating: false }) }) : node;
                             }); });
-                            // Update story state to maintain persistence
-                            setStory(function (prevStory) {
-                                if (!prevStory)
-                                    return prevStory;
-                                var updatedParagraphs = __spreadArray([], prevStory.paragraphs, true);
-                                updatedParagraphs[index] = __assign(__assign({}, updatedParagraphs[index]), { image_url: data.data.image_url, image_prompt: data.data.image_prompt, audio_url: data.data.audio_url });
-                                return __assign(__assign({}, prevStory), { paragraphs: updatedParagraphs });
-                            });
                         }
                     };
                     for (_i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
@@ -44721,16 +44674,16 @@ var NodeEditor = function (_a) {
                     return [3 /*break*/, 2];
                 case 4: return [3 /*break*/, 6];
                 case 5:
-                    error_2 = _c.sent();
+                    error_2 = _d.sent();
                     console.error('Error generating card:', error_2);
-                    setNodes(function (prevNodes) { return prevNodes.map(function (node) {
+                    setNodes(function (nodes) { return nodes.map(function (node) {
                         return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: false }) }) : node;
                     }); });
                     return [3 /*break*/, 6];
                 case 6: return [2 /*return*/];
             }
         });
-    }); }, [story, selectedStyle, setNodes, setStory]);
+    }); }, [story, selectedStyle]);
     // Removed duplicate declaration
     var handleRegenerateAudio = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_2, error_3;
@@ -44842,9 +44795,9 @@ var NodeEditor = function (_a) {
     }
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_7__.Background, null),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_8__.Controls, null))),
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Background, null),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_7__.Controls, null))),
         expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm", onClick: function () { return setExpandedImage(null); } },
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4", onClick: function (e) { return e.stopPropagation(); } },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost", size: "icon", className: "absolute right-2 top-2", onClick: function () { return setExpandedImage(null); } },
@@ -45872,17 +45825,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
-/* harmony import */ var react_hook_form__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! react-hook-form */ "./node_modules/react-hook-form/dist/index.esm.mjs");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/dist/index.js");
+/* harmony import */ var react_hook_form__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react-hook-form */ "./node_modules/react-hook-form/dist/index.esm.mjs");
 /* harmony import */ var _hookform_resolvers_zod__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @hookform/resolvers/zod */ "./node_modules/@hookform/resolvers/zod/dist/zod.mjs");
-/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! zod */ "./node_modules/zod/lib/index.mjs");
+/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! zod */ "./node_modules/zod/lib/index.mjs");
 /* harmony import */ var _components_ui_button__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/components/ui/button */ "./src/components/ui/button.tsx");
 /* harmony import */ var _components_ui_textarea__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/components/ui/textarea */ "./src/components/ui/textarea.tsx");
 /* harmony import */ var _components_ui_select__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/components/ui/select */ "./src/components/ui/select.tsx");
 /* harmony import */ var _components_ui_form__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/components/ui/form */ "./src/components/ui/form.tsx");
 /* harmony import */ var _components_ui_input__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/components/ui/input */ "./src/components/ui/input.tsx");
-/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! framer-motion */ "./node_modules/framer-motion/dist/es/render/components/motion/proxy.mjs");
-/* harmony import */ var _components_ui_progress__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/components/ui/progress */ "./src/components/ui/progress.tsx");
+/* harmony import */ var framer_motion__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! framer-motion */ "./node_modules/framer-motion/dist/es/render/components/motion/proxy.mjs");
 var __assign = (undefined && undefined.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -45941,40 +45893,34 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
-
-var formSchema = zod__WEBPACK_IMPORTED_MODULE_8__.object({
-    prompt: zod__WEBPACK_IMPORTED_MODULE_8__.string().min(10, 'Story prompt must be at least 10 characters long'),
-    genre: zod__WEBPACK_IMPORTED_MODULE_8__.string().min(1, 'Please select a genre'),
-    mood: zod__WEBPACK_IMPORTED_MODULE_8__.string().min(1, 'Please select a mood'),
-    target_audience: zod__WEBPACK_IMPORTED_MODULE_8__.string().min(1, 'Please select a target audience'),
-    paragraphs: zod__WEBPACK_IMPORTED_MODULE_8__.number().min(1).max(20).default(5),
+var formSchema = zod__WEBPACK_IMPORTED_MODULE_7__.object({
+    prompt: zod__WEBPACK_IMPORTED_MODULE_7__.string().min(10, 'Story prompt must be at least 10 characters long'),
+    genre: zod__WEBPACK_IMPORTED_MODULE_7__.string().min(1, 'Please select a genre'),
+    mood: zod__WEBPACK_IMPORTED_MODULE_7__.string().min(1, 'Please select a mood'),
+    target_audience: zod__WEBPACK_IMPORTED_MODULE_7__.string().min(1, 'Please select a target audience'),
+    paragraphs: zod__WEBPACK_IMPORTED_MODULE_7__.number().min(1).max(20).default(5),
 });
 var genres = ['Fantasy', 'Science Fiction', 'Mystery', 'Romance', 'Adventure', 'Horror', 'Historical Fiction'];
 var moods = ['Happy', 'Mysterious', 'Adventure', 'Dark', 'Romantic', 'Humorous', 'Suspenseful'];
 var audiences = ['Children', 'Young Adult', 'Adult'];
 var StoryGeneration = function () {
     var _a = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), isLoading = _a[0], setIsLoading = _a[1];
-    var navigate = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_9__.useNavigate)();
-    var form = (0,react_hook_form__WEBPACK_IMPORTED_MODULE_10__.useForm)({
+    var navigate = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_8__.useNavigate)();
+    var form = (0,react_hook_form__WEBPACK_IMPORTED_MODULE_9__.useForm)({
         resolver: (0,_hookform_resolvers_zod__WEBPACK_IMPORTED_MODULE_1__.zodResolver)(formSchema),
         defaultValues: {
             paragraphs: 5,
         },
     });
-    var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(''), generationStep = _b[0], setGenerationStep = _b[1];
-    var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(0), progress = _c[0], setProgress = _c[1];
     var onSubmit = function (values) { return __awaiter(void 0, void 0, void 0, function () {
-        var formData_1, response, reader, decoder, buffer, _a, done, value, lines, _i, lines_1, line, data, error_1;
-        var _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var formData_1, response, data, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     setIsLoading(true);
-                    setProgress(0);
-                    setGenerationStep('Initializing');
-                    _c.label = 1;
+                    _a.label = 1;
                 case 1:
-                    _c.trys.push([1, 6, 7, 8]);
+                    _a.trys.push([1, 4, 5, 6]);
                     formData_1 = new FormData();
                     Object.entries(values).forEach(function (_a) {
                         var key = _a[0], value = _a[1];
@@ -45985,69 +45931,34 @@ var StoryGeneration = function () {
                             body: formData_1,
                         })];
                 case 2:
-                    response = _c.sent();
-                    reader = (_b = response.body) === null || _b === void 0 ? void 0 : _b.getReader();
-                    if (!reader)
-                        throw new Error('Failed to get reader');
-                    decoder = new TextDecoder();
-                    buffer = '';
-                    _c.label = 3;
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
                 case 3:
-                    if (false) {}
-                    return [4 /*yield*/, reader.read()];
-                case 4:
-                    _a = _c.sent(), done = _a.done, value = _a.value;
-                    if (done)
-                        return [3 /*break*/, 5];
-                    buffer += decoder.decode(value, { stream: true });
-                    lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    for (_i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
-                        line = lines_1[_i];
-                        if (!line.trim())
-                            continue;
-                        try {
-                            data = JSON.parse(line.trim());
-                            if (data.type === 'progress') {
-                                setProgress(data.progress);
-                                setGenerationStep(data.step);
-                            }
-                            else if (data.type === 'complete') {
-                                // Use navigate instead of window.location for proper SPA navigation
-                                navigate(data.redirect);
-                                return [2 /*return*/];
-                            }
-                            else if (data.type === 'error') {
-                                throw new Error(data.message);
-                            }
-                        }
-                        catch (parseError) {
-                            console.error('Error parsing JSON:', parseError);
-                            // Only log the error and continue, don't break the stream
-                            continue;
-                        }
+                    data = _a.sent();
+                    if (data.success) {
+                        navigate(data.redirect);
                     }
-                    return [3 /*break*/, 3];
-                case 5: return [3 /*break*/, 8];
-                case 6:
-                    error_1 = _c.sent();
+                    else {
+                        throw new Error(data.error || 'Failed to generate story');
+                    }
+                    return [3 /*break*/, 6];
+                case 4:
+                    error_1 = _a.sent();
                     console.error('Error generating story:', error_1);
                     form.setError('root', {
                         message: error_1 instanceof Error ? error_1.message : 'An unexpected error occurred',
                     });
-                    return [3 /*break*/, 8];
-                case 7:
+                    return [3 /*break*/, 6];
+                case 5:
                     setIsLoading(false);
-                    setProgress(0);
-                    setGenerationStep('');
                     return [7 /*endfinally*/];
-                case 8: return [2 /*return*/];
+                case 6: return [2 /*return*/];
             }
         });
     }); };
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-primary/5" },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "container max-w-2xl mx-auto px-4 py-8" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(framer_motion__WEBPACK_IMPORTED_MODULE_11__.motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 }, className: "space-y-8" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(framer_motion__WEBPACK_IMPORTED_MODULE_10__.motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 }, className: "space-y-8" },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-center space-y-2" },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h1", { className: "font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600" }, "Create Your Story"),
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "font-serif text-lg text-muted-foreground" }, "Let AI help you craft your next masterpiece")),
@@ -46105,13 +46016,9 @@ var StoryGeneration = function () {
                                             react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_input__WEBPACK_IMPORTED_MODULE_6__.Input, __assign({ type: "number", min: 1, max: 20 }, field, { onChange: function (event) { return field.onChange(parseInt(event.target.value)); } }))),
                                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_form__WEBPACK_IMPORTED_MODULE_5__.FormMessage, null)));
                                 } })),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4" },
-                            (isLoading || progress > 0) && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-2" },
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_progress__WEBPACK_IMPORTED_MODULE_7__.Progress, { value: progress, className: "w-full" }),
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-center text-muted-foreground" }, generationStep))),
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, { type: "submit", className: "w-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary", disabled: isLoading }, isLoading ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" }),
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", null, "Generating Story..."))) : ('Generate Story'))),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_2__.Button, { type: "submit", className: "w-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary", disabled: isLoading }, isLoading ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "loading loading-spinner" }),
+                            "Generating Story...")) : ('Generate Story')),
                         form.formState.errors.root && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-red-500 text-center mt-2" }, form.formState.errors.root.message))))))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (StoryGeneration);

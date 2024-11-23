@@ -8,14 +8,11 @@ import ReactFlow, {
     Handle,
     Position,
     Node,
-    Edge,
-    NodeChange,
-    applyNodeChanges
+    Edge
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import 'reactflow/dist/style.css';
 
 interface ParagraphData {
@@ -33,8 +30,6 @@ interface ParagraphData {
     isGenerating: boolean;
     isRegenerating: boolean;
     isRegeneratingAudio: boolean;
-    progressStep?: string;
-    progress?: number;
 }
 
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
@@ -49,41 +44,17 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                 {data.text}
             </div>
             <div className="space-y-4">
-                <div className="space-y-2">
-                    <Button 
-                        className="w-full"
-                        onClick={() => data.onGenerateCard(data.index)}
-                        disabled={data.isGenerating}>
-                        {data.isGenerating ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                                <span>Generating...</span>
-                            </div>
-                        ) : 'Generate Card'}
-                    </Button>
-                    {(data.isGenerating || data.isRegenerating || data.isRegeneratingAudio) && (
-                        <div className="space-y-2">
-                            <Progress 
-                                value={data.progress || 0} 
-                                className="w-full h-2 bg-muted" 
-                            />
-                            <div className="text-sm text-center space-y-1">
-                                <p className="text-primary font-medium">
-                                    {data.progressStep || 'Processing...'}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    {data.isGenerating && 'Generating story elements...'}
-                                    {data.isRegenerating && 'Regenerating image...'}
-                                    {data.isRegeneratingAudio && 'Regenerating audio...'}
-                                </p>
-                                <div className="flex items-center justify-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                    <span className="text-muted-foreground">{data.progress || 0}%</span>
-                                </div>
-                            </div>
+                <Button 
+                    className="w-full"
+                    onClick={() => data.onGenerateCard(data.index)}
+                    disabled={data.isGenerating}>
+                    {data.isGenerating ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                            <span>Generating...</span>
                         </div>
-                    )}
-                </div>
+                    ) : 'Generate Card'}
+                </Button>
                 
                 <div className="mt-4 mb-2">
                     <RadioGroup
@@ -200,10 +171,7 @@ interface NodeEditorProps {
 }
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    const [nodes, setNodes] = useNodesState([]);
-const onNodesChange = useCallback((changes: NodeChange[]) => {
-    setNodes((nds) => applyNodeChanges(changes, nds));
-}, [setNodes]);
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -282,89 +250,63 @@ const onNodesChange = useCallback((changes: NodeChange[]) => {
     }, [story, handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
-    try {
-        setNodes(prevNodes => prevNodes.map(node => 
-            node.id === `p${index}` ? {
-                ...node, 
-                data: {
-                    ...node.data, 
-                    isGenerating: true,
-                    progress: 0,
-                    progressStep: 'Initializing...'
-                }
-            } : node
-        ));
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+            ));
 
-        const response = await fetch('/story/generate_cards', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                index,
-                text: story?.paragraphs[index].text,
-                style: selectedStyle
-            })
-        });
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text,
+                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
+                })
+            });
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('Failed to get reader');
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error('Failed to get reader');
 
-        const decoder = new TextDecoder();
-        let buffer = '';
-        
-        while (true) {
-            const {done, value} = await reader.read();
-            if (done) break;
+            // Handle streaming response
+            const decoder = new TextDecoder();
+            let buffer = '';
             
-            buffer += decoder.decode(value, {stream: true});
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-            
-            for (const line of lines) {
-                if (!line.trim()) continue;
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
                 
-                const data = JSON.parse(line);
-                if (data.type === 'paragraph') {
-                    // Update both local state and story state
-                    setNodes(prevNodes => prevNodes.map(node => 
-                        node.id === `p${index}` ? {
-                            ...node, 
-                            data: {
-                                ...node.data,
-                                imageUrl: data.data.image_url,
-                                imagePrompt: data.data.image_prompt,
-                                audioUrl: data.data.audio_url,
-                                isGenerating: false,
-                                progress: 100,
-                                progressStep: 'Complete'
-                            }
-                        } : node
-                    ));
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    if (!line.trim()) continue;
                     
-                    // Update story state to maintain persistence
-                    setStory(prevStory => {
-                        if (!prevStory) return prevStory;
-                        const updatedParagraphs = [...prevStory.paragraphs];
-                        updatedParagraphs[index] = {
-                            ...updatedParagraphs[index],
-                            image_url: data.data.image_url,
-                            image_prompt: data.data.image_prompt,
-                            audio_url: data.data.audio_url
-                        };
-                        return {
-                            ...prevStory,
-                            paragraphs: updatedParagraphs
-                        };
-                    });
+                    const data = JSON.parse(line);
+                    if (data.type === 'paragraph') {
+                        setNodes(nodes => nodes.map(node => 
+                            node.id === `p${index}` ? {
+                                ...node, 
+                                data: {
+                                    ...node.data,
+                                    imageUrl: data.data.image_url,
+                                    imagePrompt: data.data.image_prompt,
+                                    audioUrl: data.data.audio_url,
+                                    isGenerating: false
+                                }
+                            } : node
+                        ));
+                    }
                 }
             }
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+            ));
         }
-    } catch (error) {
-        console.error('Error generating card:', error);
-        setNodes(prevNodes => prevNodes.map(node => 
-            node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
-        ));
-    }
-}, [story, selectedStyle, setNodes, setStory]);
+    }, [story, selectedStyle]);
 
     // Removed duplicate declaration
 
