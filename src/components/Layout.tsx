@@ -21,9 +21,11 @@ const Layout: React.FC = () => {
           </div>
         </nav>
       </header>
-      <main className="container mx-auto px-4 py-8 relative">
-        <Breadcrumb />
-        <Outlet />
+      <main className="container mx-auto px-4 py-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <Breadcrumb />
+          <Outlet />
+        </div>
       </main>
     </div>
   );

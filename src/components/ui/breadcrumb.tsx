@@ -7,7 +7,9 @@ const routes = {
   "/": "Home",
   "/create-story": "Create Story",
   "/upload-book": "Upload Book",
-  "/story/edit": "Story Editor"
+  "/story/edit": "Story Editor",
+  "/story/generate": "Generate Story",
+  "/story/customize": "Customize Story"
 };
 
 const Breadcrumb = () => {
@@ -26,8 +28,8 @@ const Breadcrumb = () => {
   ];
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-4">
-      <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
+    <nav aria-label="Breadcrumb" className="mb-6">
+      <ol className="flex items-center space-x-2 text-sm">
         {breadcrumbs.map((breadcrumb, index) => (
           <li key={breadcrumb.path} className="flex items-center">
             {index > 0 && (
@@ -36,9 +38,9 @@ const Breadcrumb = () => {
             <Link
               to={breadcrumb.path}
               className={cn(
-                "hover:text-foreground transition-colors",
+                "hover:text-primary transition-colors duration-200",
                 index === breadcrumbs.length - 1
-                  ? "text-foreground font-medium"
+                  ? "text-primary font-semibold"
                   : "text-muted-foreground"
               )}
             >
