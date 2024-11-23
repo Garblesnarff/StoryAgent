@@ -189,7 +189,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [isLoading, setIsLoading] = useState(!initialStory);
 
     // Handle node drag to save positions
-    const onNodeDragStop = useCallback((event: any, node: Node) => {
+    const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
         setNodePositions(prev => ({
             ...prev,
             [node.id]: { x: node.position.x, y: node.position.y }
