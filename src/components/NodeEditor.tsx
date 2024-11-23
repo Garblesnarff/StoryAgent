@@ -350,15 +350,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         } catch (error) {
             console.error('Error regenerating audio:', error);
             setNodes(nodes => nodes.map(node => 
-    onNodeDragStop={(e, node) => {
-        setNodes((nds) => {
-            const updatedNodes = nds.map((n) => 
-                n.id === node.id ? { ...n, position: node.position } : n
-            );
-            saveNodePositions(updatedNodes);
-            return updatedNodes;
-        });
-    }}
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
             ));
         }
@@ -463,6 +454,15 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    onNodeDragStop={(event: React.MouseEvent, node: Node) => {
+                        setNodes((nds) => {
+                            const updatedNodes = nds.map((n) => 
+                                n.id === node.id ? { ...n, position: node.position } : n
+                            );
+                            saveNodePositions(updatedNodes);
+                            return updatedNodes;
+                        });
+                    }}
                     nodeTypes={nodeTypes}
                     fitView
                     style={{ background: 'var(--bs-dark)' }}

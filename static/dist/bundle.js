@@ -44362,7 +44362,7 @@ var Layout = function () {
   \***************************************/
 /***/ (() => {
 
-throw new Error("Module parse failed: 'return' outside of function (400:4)\nFile was processed with these loaders:\n * ./node_modules/ts-loader/index.js\nYou may need an additional loader to handle the result of these loaders.\n| // ...\n| if (isLoading) {\n>     return React.createElement(\"div\", { className: \"flex items-center justify-center h-96\" }, \"Loading story data...\");\n| }\n| if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a.length)) {");
+throw new Error("Module parse failed: 'return' outside of function (385:4)\nFile was processed with these loaders:\n * ./node_modules/ts-loader/index.js\nYou may need an additional loader to handle the result of these loaders.\n| // ...\n| if (isLoading) {\n>     return React.createElement(\"div\", { className: \"flex items-center justify-center h-96\" }, \"Loading story data...\");\n| }\n| if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a.length)) {");
 
 /***/ }),
 
