@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!storyAttr) {
             throw new Error('No story data attribute found');
         }
-        storyData = JSON.parse(storyAttr);
+        storyData = JSON.parse(decodeURIComponent(storyAttr));
+        console.log('Parsed story data:', storyData); // Debug log
     } catch (error) {
         console.error('Failed to parse story data:', error);
         showError('Failed to load story data. Please generate a story first.');

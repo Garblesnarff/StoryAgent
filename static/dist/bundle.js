@@ -44362,7 +44362,7 @@ var Layout = function () {
   \***************************************/
 /***/ (() => {
 
-throw new Error("Module parse failed: 'return' outside of function (400:4)\nFile was processed with these loaders:\n * ./node_modules/ts-loader/index.js\nYou may need an additional loader to handle the result of these loaders.\n| // ...\n| if (isLoading) {\n>     return React.createElement(\"div\", { className: \"flex items-center justify-center h-96\" }, \"Loading story data...\");\n| }\n| if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a.length)) {");
+throw new Error("Module parse failed: 'return' outside of function (351:0)\nFile was processed with these loaders:\n * ./node_modules/ts-loader/index.js\nYou may need an additional loader to handle the result of these loaders.\n| [nodes, setNodes];\n| ;\n> return (React.createElement(React.Fragment, null,\n|     isLoading ? (React.createElement(\"div\", { className: \"flex items-center justify-center h-96\" }, \"Loading story data...\")) : !((_a = initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs) === null || _a === void 0 ? void 0 : _a.length) ? (React.createElement(\"div\", { className: \"flex items-center justify-center h-96\" }, \"No story data available.\")) : (React.createElement(\"div\", { className: \"relative w-full h-[600px]\" },\n|         React.createElement(ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, onNodeDragStop: onNodeDragStop, nodeTypes: nodeTypes, fitView: true, className: \"bg-background\", minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },");
 
 /***/ }),
 

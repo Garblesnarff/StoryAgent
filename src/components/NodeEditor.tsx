@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, { 
+    Node,
+    Edge,
     Controls, 
     Background,
     useNodesState,
@@ -7,13 +9,53 @@ import ReactFlow, {
     addEdge,
     Handle,
     Position,
-    Node,
-    Edge
+    NodeProps,
+    NodeDragHandler,
+    Connection,
+    XYPosition
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
+
+interface Story {
+    paragraphs: Array<{
+        text: string;
+        image_url?: string;
+        image_prompt?: string;
+        audio_url?: string;
+    }>;
+}
+
+interface NodeData {
+    index: number;
+    text: string;
+    globalStyle: string;
+    imageUrl?: string;
+    imagePrompt?: string;
+    audioUrl?: string;
+    onGenerateCard: (index: number) => Promise<void>;
+    onRegenerateImage: (index: number) => Promise<void>;
+    onRegenerateAudio: (index: number) => Promise<void>;
+    onExpandImage: (url: string) => void;
+    onStyleChange?: (index: number, style: string) => void;
+    isGenerating: boolean;
+    isRegenerating: boolean;
+    isRegeneratingAudio: boolean;
+}
+
+interface NodeEditorProps {
+    story?: Story;
+    onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
+}
+
+interface SavedNodePosition {
+    x: number;
+    y: number;
+}
+
+type SavedPositions = Record<string, SavedNodePosition>;
 
 interface ParagraphData {
     index: number;
@@ -32,7 +74,7 @@ interface ParagraphData {
     isRegeneratingAudio: boolean;
 }
 
-const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
+const ParagraphNode: React.FC<NodeProps<NodeData>> = ({ data }) => {
     const [showPrompt, setShowPrompt] = useState(false);
     const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
 
@@ -165,27 +207,406 @@ const nodeTypes = {
     paragraph: ParagraphNode
 };
 
-interface Story {
-    paragraphs: Array<{
-        text: string;
-        image_url?: string;
-        image_prompt?: string;
-        audio_url?: string;
-    }>;
-}
-
-interface NodeEditorProps {
-    story?: Story;
-    onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
-}
-
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData>[]>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
-    const [story, setStory] = useState(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
+    const [story, setStory] = useState<Story | undefined>(initialStory);
+
+    // Handle style updates
+    const handleStyleChange = useCallback((index: number, style: string) => {
+        setSelectedStyle(style);
+        if (onStyleUpdate) {
+            onStyleUpdate([{ index, image_style: style }]);
+        }
+    }, [onStyleUpdate]);
+
+    const onConnect = useCallback((params: Connection) => {
+        setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds));
+    }, [setEdges]);
+
+    const onNodeDragStop = useCallback<NodeDragHandler>((event, node) => {
+        const currentPositions = localStorage.getItem('nodePositions');
+        const savedPositions: SavedPositions = currentPositions ? JSON.parse(currentPositions) : {};
+        
+        // Update only the dragged node's position
+        savedPositions[node.id] = node.position;
+        localStorage.setItem('nodePositions', JSON.stringify(savedPositions));
+        
+        setNodes((nds) => nds.map((n) =>
+            n.id === node.id ? { ...n, position: node.position } : n
+        ));
+    }, [setNodes]);
+
+    const handleGenerateCard = useCallback(async (index: number) => {
+        if (!initialStory?.paragraphs?.[index]) return;
+
+        try {
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? { ...n, data: { ...n.data, isGenerating: true } } : n
+            ));
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: initialStory.paragraphs[index].text.trim(),
+                    style: selectedStyle
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate card');
+            
+            const data = await response.json();
+            
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? {
+                    ...n,
+                    data: {
+                        ...n.data,
+                        imageUrl: data.image_url,
+                        imagePrompt: data.image_prompt,
+                        audioUrl: data.audio_url,
+                        isGenerating: false
+                    }
+                } : n
+            ));
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? { ...n, data: { ...n.data, isGenerating: false } } : n
+            ));
+        }
+    }, [initialStory, selectedStyle]);
+
+    const handleRegenerateImage = useCallback(async (index: number) => {
+        if (!initialStory?.paragraphs?.[index]) return;
+
+        try {
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? { ...n, data: { ...n.data, isRegenerating: true } } : n
+            ));
+
+            const response = await fetch('/story/regenerate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: initialStory.paragraphs[index].text.trim(),
+                    style: selectedStyle
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes((nds) => nds.map((n) =>
+                    n.id === `p${index}` ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            imageUrl: data.image_url,
+                            imagePrompt: data.image_prompt,
+                            isRegenerating: false
+                        }
+                    } : n
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating image:', error);
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? { ...n, data: { ...n.data, isRegenerating: false } } : n
+            ));
+        }
+    }, [initialStory, selectedStyle]);
+
+    const handleRegenerateAudio = useCallback(async (index: number) => {
+        if (!initialStory?.paragraphs?.[index]) return;
+
+        try {
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? { ...n, data: { ...n.data, isRegeneratingAudio: true } } : n
+            ));
+
+            const response = await fetch('/story/regenerate_audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: initialStory.paragraphs[index].text.trim()
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes((nds) => nds.map((n) =>
+                    n.id === `p${index}` ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            audioUrl: data.audio_url,
+                            isRegeneratingAudio: false
+                        }
+                    } : n
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating audio:', error);
+            setNodes((nds) => nds.map((n) =>
+                n.id === `p${index}` ? { ...n, data: { ...n.data, isRegeneratingAudio: false } } : n
+            ));
+        }
+    }, [initialStory]);
+
+    // Node drag handler is already defined above
+
+    // Load saved positions and initialize nodes
+    useEffect(() => {
+        if (!initialStory?.paragraphs) return;
+
+        const savedPositions = localStorage.getItem('nodePositions');
+        const positions: SavedPositions = savedPositions ? JSON.parse(savedPositions) : {};
+
+        const newNodes = initialStory.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            position: positions[`p${index}`] || {
+                x: (index % 2) * 300 + 50,
+                y: Math.floor(index / 2) * 250 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
+            }
+        }));
+
+        setNodes(newNodes);
+        setIsLoading(false);
+    }, [initialStory, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
+
+    const renderContent = () => {
+        if (isLoading || !story?.paragraphs) {
+            return (
+                <div className="flex items-center justify-center h-96">
+                    <div className="text-lg">Loading story data...</div>
+                </div>
+            );
+        }
+
+        return (
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    onNodeDragStop={onNodeDragStop}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    style={{ background: 'var(--bs-dark)' }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </div>
+        );
+    };
+
+    return (
+        <>
+            {renderContent()}
+            {expandedImage && (
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+
+    if (!story?.paragraphs?.length) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                No story data available
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    onNodeDragStop={onNodeDragStop}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    style={{ background: 'var(--bs-dark)' }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </div>
+            
+            {expandedImage && (
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+        }, {});
+        
+        localStorage.setItem('nodePositions', JSON.stringify(nodePositions));
+        
+        setNodes((nds) => nds.map((n) =>
+            n.id === node.id ? { ...n, position: node.position } : n
+        ));
+    }, [nodes, setNodes]);
+
+    return (
+        <>
+            {isLoading ? (
+                <div className="flex items-center justify-center h-96">
+                    Loading story data...
+                </div>
+            ) : !initialStory?.paragraphs?.length ? (
+                <div className="flex items-center justify-center h-96">
+                    No story data available.
+                </div>
+            ) : (
+                <div className="relative w-full h-[600px]">
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        onNodeDragStop={onNodeDragStop}
+                        nodeTypes={nodeTypes}
+                        fitView
+                        className="bg-background"
+                        minZoom={0.1}
+                        maxZoom={4}
+                        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    >
+                        <Background />
+                        <Controls />
+                    </ReactFlow>
+                </div>
+            )}
+            
+            {expandedImage && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <div 
+                        className="relative max-w-4xl max-h-[90vh] bg-background rounded-lg p-4"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <img 
+                            src={expandedImage} 
+                            alt="Expanded preview" 
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                        />
+                    </div>
+                </div>
+            )}
+        </>
+    );
+    const [selectedStyle, setSelectedStyle] = useState('realistic');
+    const [expandedImage, setExpandedImage] = useState<string | null>(null);
+    const [story, setStory] = useState<Story | undefined>(initialStory);
+    const [isLoading, setIsLoading] = useState(!initialStory);
+
+    // Load saved node positions from localStorage
+    useEffect(() => {
+        const savedPositions = localStorage.getItem('nodePositions');
+        if (savedPositions && story?.paragraphs) {
+            const positions = JSON.parse(savedPositions);
+            const nodesWithSavedPositions = story.paragraphs.map((para, index) => ({
+                id: `p${index}`,
+                type: 'paragraph',
+                position: positions[`p${index}`] || { 
+                    x: (index % 2) * 300 + 50,
+                    y: Math.floor(index / 2) * 250 + 50
+                },
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            }));
+            setNodes(nodesWithSavedPositions);
+        }
+    }, [story, selectedStyle]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -350,15 +771,133 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         } catch (error) {
             console.error('Error regenerating audio:', error);
             setNodes(nodes => nodes.map(node => 
-    onNodeDragStop={(e, node) => {
+    const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node<NodeData>) => {
         setNodes((nds) => {
             const updatedNodes = nds.map((n) => 
                 n.id === node.id ? { ...n, position: node.position } : n
             );
-            saveNodePositions(updatedNodes);
+            // Save positions to localStorage
+            const positions = updatedNodes.reduce((acc, n) => ({
+                ...acc,
+                [n.id]: n.position
+            }), {});
+            localStorage.setItem('nodePositions', JSON.stringify(positions));
             return updatedNodes;
         });
-    }}
+    }, [setNodes]);
+
+    // Load saved positions on mount
+    useEffect(() => {
+        const savedPositions = localStorage.getItem('nodePositions');
+        if (savedPositions && story?.paragraphs) {
+            const positions = JSON.parse(savedPositions);
+            const nodesWithSavedPositions = story.paragraphs.map((para, index) => ({
+                id: `p${index}`,
+                type: 'paragraph',
+                position: positions[`p${index}`] || { 
+                    x: (index % 2) * 300 + 50,
+                    y: Math.floor(index / 2) * 250 + 50
+                },
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            }));
+            setNodes(nodesWithSavedPositions);
+        }
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange]);
+    }, [setNodes]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <span className="ml-2">Loading story data...</span>
+            </div>
+        );
+    }
+
+    if (!story?.paragraphs?.length) {
+        return (
+            <div className="flex items-center justify-center h-96 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>No story data available</span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative">
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root bg-background">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    onNodeDragStop={onNodeDragStop}
+                    fitView
+                    style={{ background: 'var(--background)' }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </div>
+            
+            {expandedImage && (
+                <div 
+                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <div 
+                        className="relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full m-4"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            type="button" 
+                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div className="mt-4 overflow-auto">
+                            <img 
+                                src={expandedImage} 
+                                alt="Full preview" 
+                                className="max-w-full h-auto"
+                                onError={(e) => {
+                                    console.error('Failed to load expanded image:', expandedImage);
+                                    e.currentTarget.src = '/static/placeholder.png';
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
             ));
         }
@@ -455,8 +994,17 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         return <div className="flex items-center justify-center h-96">No story data available</div>;
     }
 
-    return (
-        <>
+    const renderContent = () => {
+        if (isLoading) {
+            return <div className="flex items-center justify-center h-96">Loading story data...</div>;
+        }
+
+        if (!story?.paragraphs?.length) {
+            return <div className="flex items-center justify-center h-96">No story data available</div>;
+        }
+
+        return (
+            <>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
                 <ReactFlow
                     nodes={nodes}
@@ -505,7 +1053,10 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 </div>
             )}
         </>
-    );
+        );
+    };
+
+    return renderContent();
 };
 
 export default React.memo(NodeEditor);
