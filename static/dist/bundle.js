@@ -44461,7 +44461,10 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_label__WEBPACK_IMPORTED_MODULE_3__.Label, { htmlFor: "fantasy-".concat(data.index) }, "Fantasy")))),
             data.imageUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative rounded-lg overflow-hidden border border-border" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "w-full h-auto" }),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "w-full h-auto object-cover", onError: function (e) {
+                            console.error('Image failed to load:', data.imageUrl);
+                            e.currentTarget.src = '/static/placeholder.png';
+                        } }),
                     showPrompt && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm" }, data.imagePrompt)))),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex gap-2" },
@@ -44477,8 +44480,8 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
                             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" })))))),
             data.audioUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "audio-player mt-2" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("audio", { controls: true, className: "w-100", key: data.audioUrl },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "audio-player mt-4" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("audio", { controls: true, className: "w-full", key: data.audioUrl, onError: function (e) { return console.error('Audio failed to load:', data.audioUrl); } },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("source", { src: data.audioUrl, type: "audio/wav" }),
                         "Your browser does not support the audio element.")),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { className: "btn btn-secondary btn-sm w-100 mt-2", onClick: function () { return data.onRegenerateAudio(data.index); }, disabled: data.isRegeneratingAudio },
@@ -44706,6 +44709,7 @@ var NodeEditor = function (_a) {
         var paragraphNodes = story.paragraphs.map(function (para, index) { return ({
             id: "p".concat(index),
             type: 'paragraph',
+            draggable: true, // Ensure nodes are draggable
             position: {
                 x: (index % 3) * 500 + 50, // Increase horizontal spacing
                 y: Math.floor(index / 3) * 450 + 50 // Increase vertical spacing
