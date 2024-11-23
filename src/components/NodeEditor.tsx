@@ -375,8 +375,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             id: `p${index}`,
             type: 'paragraph',
             position: { 
-                x: (index % 3) * 450 + 50, // Arrange in 3 columns
-                y: Math.floor(index / 3) * 400 + 50 // More vertical spacing
+                x: (index % 3) * 500 + 50,  // Increase horizontal spacing
+                y: Math.floor(index / 3) * 450 + 50  // Increase vertical spacing
             },
             data: {
                 index,

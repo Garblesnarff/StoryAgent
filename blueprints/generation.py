@@ -167,7 +167,6 @@ def generate_cards():
             image_prompts = prompt_generator.generate_image_prompt(
                 story_context, 
                 text,
-                style_prefix=prompt_prefix,
                 use_chain=True
             )
             
