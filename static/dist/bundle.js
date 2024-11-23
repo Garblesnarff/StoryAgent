@@ -46004,8 +46004,8 @@ var StoryGeneration = function () {
                                 setGenerationStep(data.step);
                             }
                             else if (data.type === 'complete') {
-                                // Ensure we're properly redirected
-                                window.location.href = data.redirect;
+                                // Use navigate instead of window.location for proper SPA navigation
+                                navigate(data.redirect);
                                 return [2 /*return*/];
                             }
                             else if (data.type === 'error') {
@@ -46014,7 +46014,7 @@ var StoryGeneration = function () {
                         }
                         catch (parseError) {
                             console.error('Error parsing JSON:', parseError);
-                            // Continue with next line instead of breaking the whole process
+                            // Only log the error and continue, don't break the stream
                             continue;
                         }
                     }
