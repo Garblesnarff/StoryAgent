@@ -86,7 +86,11 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                             <img 
                                 src={data.imageUrl} 
                                 alt="Generated preview" 
-                                className="w-full h-auto"
+                                className="w-full h-auto object-cover"
+                                onError={(e) => {
+                                    console.error('Image failed to load:', data.imageUrl);
+                                    e.currentTarget.src = '/static/placeholder.png';
+                                }}
                             />
                             {showPrompt && (
                                 <div className="absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200">
@@ -132,8 +136,13 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                 
                 {data.audioUrl && (
                     <>
-                        <div className="audio-player mt-2">
-                            <audio controls className="w-100" key={data.audioUrl}>
+                        <div className="audio-player mt-4">
+                            <audio
+                                controls
+                                className="w-full"
+                                key={data.audioUrl}
+                                onError={(e) => console.error('Audio failed to load:', data.audioUrl)}
+                            >
                                 <source src={data.audioUrl} type="audio/wav" />
                                 Your browser does not support the audio element.
                             </audio>
@@ -374,6 +383,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
             type: 'paragraph',
+            draggable: true,  // Ensure nodes are draggable
             position: { 
                 x: (index % 3) * 500 + 50,  // Increase horizontal spacing
                 y: Math.floor(index / 3) * 450 + 50  // Increase vertical spacing
