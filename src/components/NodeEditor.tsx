@@ -185,7 +185,16 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState(initialStory);
+    const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>({});
     const [isLoading, setIsLoading] = useState(!initialStory);
+
+    // Handle node drag to save positions
+    const onNodeDragStop = useCallback((event: any, node: Node) => {
+        setNodePositions(prev => ({
+            ...prev,
+            [node.id]: { x: node.position.x, y: node.position.y }
+        }));
+    }, []);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -380,14 +389,19 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             return;
         }
 
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            draggable: true,  // Ensure nodes are draggable
-            position: { 
+        const paragraphNodes = story.paragraphs.map((para, index) => {
+            const nodeId = `p${index}`;
+            const savedPosition = nodePositions[nodeId];
+            const defaultPosition = {
                 x: (index % 3) * 500 + 50,  // Increase horizontal spacing
                 y: Math.floor(index / 3) * 450 + 50  // Increase vertical spacing
-            },
+            };
+
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                draggable: true,  // Ensure nodes are draggable
+                position: savedPosition || defaultPosition,
             data: {
                 index,
                 text: para.text,
