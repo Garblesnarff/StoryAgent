@@ -350,6 +350,15 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         } catch (error) {
             console.error('Error regenerating audio:', error);
             setNodes(nodes => nodes.map(node => 
+    onNodeDragStop={(e, node) => {
+        setNodes((nds) => {
+            const updatedNodes = nds.map((n) => 
+                n.id === node.id ? { ...n, position: node.position } : n
+            );
+            saveNodePositions(updatedNodes);
+            return updatedNodes;
+        });
+    }}
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
             ));
         }
@@ -374,25 +383,51 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story]);
 
+    // Store node positions in localStorage
+    const saveNodePositions = useCallback((nodes: Node[]) => {
+        const positions = nodes.reduce((acc, node) => ({
+            ...acc,
+            [node.id]: node.position
+        }), {});
+        localStorage.setItem('nodePositions', JSON.stringify(positions));
+    }, []);
+
+    // Load saved positions from localStorage
+    const loadSavedPositions = useCallback(() => {
+        try {
+            const saved = localStorage.getItem('nodePositions');
+            return saved ? JSON.parse(saved) : null;
+        } catch (error) {
+            console.error('Error loading saved positions:', error);
+            return null;
+        }
+    }, []);
+
     useEffect(() => {
         if (!story?.paragraphs) {
             setIsLoading(false);
             return;
         }
 
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            draggable: true,  // Ensure nodes are draggable
-            position: { 
-                x: (index % 3) * 500 + 50,  // Increase horizontal spacing
-                y: Math.floor(index / 3) * 450 + 50  // Increase vertical spacing
-            },
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
+        const savedPositions = loadSavedPositions();
+        
+        const paragraphNodes = story.paragraphs.map((para, index) => {
+            const nodeId = `p${index}`;
+            const defaultPosition = { 
+                x: (index % 3) * 500 + 50,
+                y: Math.floor(index / 3) * 450 + 50
+            };
+
+            return {
+                id: nodeId,
+                type: 'paragraph',
+                draggable: true,
+                position: savedPositions?.[nodeId] || defaultPosition,
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
                 imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
                 onGenerateCard: handleGenerateCard,
