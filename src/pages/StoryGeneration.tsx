@@ -71,18 +71,21 @@ const StoryGeneration: React.FC = () => {
           if (!line.trim()) continue;
 
           try {
-            const data = JSON.parse(line);
+            const data = JSON.parse(line.trim());
             if (data.type === 'progress') {
               setProgress(data.progress);
               setGenerationStep(data.step);
             } else if (data.type === 'complete') {
-              navigate(data.redirect);
+              // Ensure we're properly redirected
+              window.location.href = data.redirect;
               return;
             } else if (data.type === 'error') {
               throw new Error(data.message);
             }
           } catch (parseError) {
             console.error('Error parsing JSON:', parseError);
+            // Continue with next line instead of breaking the whole process
+            continue;
           }
         }
       }

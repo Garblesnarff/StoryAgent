@@ -44316,16 +44316,7 @@ var router = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_8__.createBrowserRoute
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/upload-book", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null,
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_pages_BookUpload__WEBPACK_IMPORTED_MODULE_5__["default"], null)) }),
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_9__.Route, { path: "/story/edit", element: react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_AnimatedTransition__WEBPACK_IMPORTED_MODULE_7__["default"], null,
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null)) }))), {
-    future: {
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-        v7_fetcherPersist: true,
-        v7_normalizeFormMethod: true,
-        v7_partialHydration: true,
-        v7_skipActionErrorRevalidation: true,
-    }
-});
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_NodeEditor__WEBPACK_IMPORTED_MODULE_6__["default"], null)) }))));
 function App() {
     return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_8__.RouterProvider, { router: router });
 }
@@ -46007,13 +45998,14 @@ var StoryGeneration = function () {
                         if (!line.trim())
                             continue;
                         try {
-                            data = JSON.parse(line);
+                            data = JSON.parse(line.trim());
                             if (data.type === 'progress') {
                                 setProgress(data.progress);
                                 setGenerationStep(data.step);
                             }
                             else if (data.type === 'complete') {
-                                navigate(data.redirect);
+                                // Ensure we're properly redirected
+                                window.location.href = data.redirect;
                                 return [2 /*return*/];
                             }
                             else if (data.type === 'error') {
@@ -46022,6 +46014,8 @@ var StoryGeneration = function () {
                         }
                         catch (parseError) {
                             console.error('Error parsing JSON:', parseError);
+                            // Continue with next line instead of breaking the whole process
+                            continue;
                         }
                     }
                     return [3 /*break*/, 3];
