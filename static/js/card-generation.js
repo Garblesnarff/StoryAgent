@@ -45,6 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                         </button>
+                        <button class="btn btn-outline-secondary copy-prompt" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy image prompt">
+                            <div class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                </svg>
+                                <span class="button-text">Copy Prompt</span>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -58,6 +67,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
         regenerateImageBtn?.addEventListener('click', async () => {
             await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
+        });
+
+        const copyPromptBtn = pageDiv.querySelector('.copy-prompt');
+        copyPromptBtn?.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(paragraph.image_prompt || '');
+                const tooltip = bootstrap.Tooltip.getInstance(copyPromptBtn);
+                const originalTitle = copyPromptBtn.getAttribute('data-bs-original-title');
+                
+                copyPromptBtn.setAttribute('data-bs-original-title', 'Copied!');
+                tooltip?.show();
+                
+                setTimeout(() => {
+                    copyPromptBtn.setAttribute('data-bs-original-title', originalTitle);
+                    tooltip?.hide();
+                }, 1500);
+            } catch (err) {
+                console.error('Failed to copy prompt:', err);
+            }
         });
         
         return pageDiv;
@@ -226,6 +254,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                             const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
                                             regenerateImageBtn?.addEventListener('click', () => 
                                                 handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
+                                            
+                                            const copyPromptBtn = pageElement.querySelector('.copy-prompt');
+                                            copyPromptBtn?.addEventListener('click', async () => {
+                                                try {
+                                                    await navigator.clipboard.writeText(data.data.image_prompt || '');
+                                                    const tooltip = bootstrap.Tooltip.getInstance(copyPromptBtn);
+                                                    const originalTitle = copyPromptBtn.getAttribute('data-bs-original-title');
+                                                    
+                                                    copyPromptBtn.setAttribute('data-bs-original-title', 'Copied!');
+                                                    tooltip?.show();
+                                                    
+                                                    setTimeout(() => {
+                                                        copyPromptBtn.setAttribute('data-bs-original-title', originalTitle);
+                                                        tooltip?.hide();
+                                                    }, 1500);
+                                                } catch (err) {
+                                                    console.error('Failed to copy prompt:', err);
+                                                }
+                                            });
                                         }
                                     }
                                     
