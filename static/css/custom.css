@@ -267,21 +267,6 @@
 }
 
 .image-prompt-overlay {
-.copy-prompt-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 5px 10px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: none;
-}
-
-.image-prompt-overlay:hover .copy-prompt-button {
-    display: block;
-}
     position: absolute;
     top: 20%;
     left: 0;
@@ -300,6 +285,37 @@
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
     z-index: 10;
+}
+
+.copy-prompt-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: none;
+    z-index: 20;
+    color: #000;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.copy-prompt-button:hover {
+    background-color: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+}
+
+.image-container:hover .image-prompt-overlay {
+    opacity: 1;
+}
+
+.image-prompt-overlay:hover .copy-prompt-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .image-container img {
