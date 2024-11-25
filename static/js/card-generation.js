@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return pageDiv;
     }
     
-    async function handleRegeneration(type, button, pageDiv, paragraph, index) {
+    async function handleRegeneration(type, button, pageDiv, paragraph, index, isInitialGeneration = false) {
         const spinner = button.querySelector('.spinner-border');
         const buttonText = button.querySelector('.button-text');
         const alert = pageDiv.querySelector('.alert');
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             button.disabled = true;
             spinner.classList.remove('d-none');
-            buttonText.textContent = `Regenerating ${type}...`;
+            buttonText.textContent = isInitialGeneration ? `Generating ${type}...` : `Regenerating ${type}...`;
             alert.classList.add('d-none');
             
             const response = await fetch(`/story/regenerate_${type}`, {
