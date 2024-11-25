@@ -26,9 +26,11 @@ const ParagraphNode = React.memo(({ data }) => {
                             <i className="bi bi-image me-2"></i>
                             <span className="button-text">Generate Image</span>
                         </div>
-                        <div className={`spinner-border spinner-border-sm ms-2 ${!data.isRegenerating ? 'd-none' : ''}`} role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
+                        {data.isRegenerating && (
+                            <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        )}
                     </button>
                     <button 
                         className="btn btn-secondary btn-sm flex-grow-1"
@@ -38,9 +40,11 @@ const ParagraphNode = React.memo(({ data }) => {
                             <i className="bi bi-volume-up me-2"></i>
                             <span className="button-text">Generate Audio</span>
                         </div>
-                        <div className={`spinner-border spinner-border-sm ms-2 ${!data.isRegeneratingAudio ? 'd-none' : ''}`} role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
+                        {data.isRegeneratingAudio && (
+                            <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        )}
                     </button>
                 </div>
                 
