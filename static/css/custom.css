@@ -281,10 +281,10 @@
     font-size: 0.9em;
     line-height: 1.4;
     text-align: left;
-    pointer-events: auto;
+    pointer-events: none;
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
-    z-index: 10;
+    z-index: 20;
 }
 
 .copy-prompt-button {
@@ -292,31 +292,29 @@
     top: 10px;
     right: 10px;
     padding: 5px 10px;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: var(--bs-primary);
+    color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 5px;
-    z-index: 20;
-    color: #000;
+    z-index: 30;
     font-size: 0.9em;
     transition: all 0.2s ease;
     opacity: 0;
 }
 
 .copy-prompt-button:hover {
-    background-color: rgba(255, 255, 255, 1);
+    background-color: var(--bs-primary-hover, #0056b3);
     transform: scale(1.05);
 }
 
-.image-container:hover .image-prompt-overlay {
-    opacity: 1;
-}
-
+.image-container:hover .image-prompt-overlay,
 .image-container:hover .copy-prompt-button {
     opacity: 1;
+    pointer-events: all;
 }
 
 .image-container img {
