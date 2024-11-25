@@ -78,32 +78,16 @@ const ParagraphNode = React.memo(({ data }) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="d-flex gap-2 mt-2">
-                            <button 
-                                className="btn btn-secondary btn-sm flex-grow-1"
-                                onClick={() => data.onRegenerateImage(data.index)}
-                                disabled={data.isRegenerating}>
-                                <i className="bi bi-arrow-clockwise"></i> Regenerate Image
-                            </button>
-                        </div>
                     </>
                 )}
                 
                 {data.audioUrl && (
-                    <>
-                        <div className="audio-player mt-2">
-                            <audio controls className="w-100" key={data.audioUrl}>
-                                <source src={data.audioUrl} type="audio/wav" />
-                                Your browser does not support the audio element.
-                            </audio>
-                        </div>
-                        <button 
-                            className="btn btn-secondary btn-sm w-100 mt-2"
-                            onClick={() => data.onRegenerateAudio(data.index)}
-                            disabled={data.isRegeneratingAudio}>
-                            <i className="bi bi-arrow-clockwise"></i> Regenerate Audio
-                        </button>
-                    </>
+                    <div className="audio-player mt-2">
+                        <audio controls className="w-100" key={data.audioUrl}>
+                            <source src={data.audioUrl} type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
                 )}
             </div>
             <Handle type="source" position={Position.Right} />
