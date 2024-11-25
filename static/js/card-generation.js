@@ -133,7 +133,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`Failed to regenerate ${type}`);
             }
             
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+                if (!data) {
+                    throw new Error(`No data received from ${type} generation`);
+                }
+            } catch (parseError) {
+                console.error('Failed to parse JSON response:', parseError);
+                throw new Error(`Failed to parse ${type} generation response`);
+            }
+            
             if (data.success) {
                 if (type === 'image') {
                     const imgElement = pageDiv.querySelector('.card-img-top');

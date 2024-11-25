@@ -17,12 +17,20 @@ const ParagraphNode = React.memo(({ data }) => {
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text}</div>
             <div className="node-controls">
-                <button 
-                    className="btn btn-primary btn-sm w-100 mb-2" 
-                    onClick={() => data.onGenerateCard(data.index)}
-                    disabled={data.isGenerating}>
-                    {data.isGenerating ? 'Generating...' : 'Generate Card'}
-                </button>
+                <div className="d-flex gap-2 mb-2">
+                    <button 
+                        className="btn btn-secondary btn-sm flex-grow-1" 
+                        onClick={() => data.onRegenerateImage(data.index)}
+                        disabled={data.isRegenerating}>
+                        <i className="bi bi-image"></i> Generate Image
+                    </button>
+                    <button 
+                        className="btn btn-secondary btn-sm flex-grow-1"
+                        onClick={() => data.onRegenerateAudio(data.index)}
+                        disabled={data.isRegeneratingAudio}>
+                        <i className="bi bi-volume-up"></i> Generate Audio
+                    </button>
+                </div>
                 
                 {data.imageUrl && (
                     <>

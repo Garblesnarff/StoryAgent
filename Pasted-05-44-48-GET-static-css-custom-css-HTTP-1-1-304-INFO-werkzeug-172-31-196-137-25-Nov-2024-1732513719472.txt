@@ -1,0 +1,23 @@
+05:44:48] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:44:55] "GET /story/generate HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:44:55] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:44:55] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:44:56] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:__main__:Generating story with prompt: In a post-apocalyptic world where humanity relies ...
+INFO:__main__:Generating story with prompt: In a post-apocalyptic world where humanity relies ...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Saved story data with temp_id: 5f99958c-342c-4d19-b8d0-77c3dfb8253c
+INFO:__main__:Story generation successful, redirecting to edit page
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:45:34] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:45:34] "GET /story/edit HTTP/1.1" 200 -
+INFO:__main__:Saved story data with temp_id: 7bb15035-ef7f-4697-87cb-5538175f7059
+INFO:__main__:Story generation successful, redirecting to edit page
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:45:35] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:47:01] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:47:01] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:47:01] "GET /static/js/story-edit.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:48:00] "GET /story/customize HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:48:00] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:48:00] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.137 - - [25/Nov/2024 05:48:00] "GET /static/dist/bundle.js HTTP/1.1" 304 -
