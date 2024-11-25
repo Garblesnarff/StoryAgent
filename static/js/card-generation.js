@@ -64,9 +64,15 @@ document.addEventListener('DOMContentLoaded', () => {
         initTooltips(pageDiv);
         
         // Add event listeners for regeneration buttons
-        const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
-        regenerateImageBtn?.addEventListener('click', async () => {
-            await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
+        const generateImageBtn = pageDiv.querySelector('.generate-image');
+        const generateAudioBtn = pageDiv.querySelector('.generate-audio');
+        
+        generateImageBtn?.addEventListener('click', async () => {
+            await handleRegeneration('image', generateImageBtn, pageDiv, paragraph, index);
+        });
+
+        generateAudioBtn?.addEventListener('click', async () => {
+            await handleRegeneration('audio', generateAudioBtn, pageDiv, paragraph, index);
         });
 
         const copyPromptBtn = pageDiv.querySelector('.copy-prompt');
