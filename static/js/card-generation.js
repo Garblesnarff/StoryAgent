@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function initTooltips(container = document) {
         const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.forEach(tooltipTriggerEl => {
+            if (tooltipTriggerEl._tooltip) {
+                tooltipTriggerEl._tooltip.dispose();
+            }
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
