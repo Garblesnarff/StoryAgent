@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
+    const paragraphCards = document.getElementById('paragraph-cards');
     let currentPage = 0;
     let totalPages = 0;
     
@@ -23,16 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.style.display = 'block';
         
         pageDiv.innerHTML = `
-            <div class="card h-100">
-                ${paragraph.image_url ? `
+            <div class="card story-card">
                 <div class="card-image position-relative">
+                    ${paragraph.image_url ? `
                     <img src="${paragraph.image_url}" 
                          class="card-img-top" 
                          data-bs-toggle="tooltip" 
                          data-bs-placement="top" 
-                         title="${paragraph.image_prompt || 'Generated image'}" 
-                         alt="Paragraph image">
-                </div>` : ''}
+                         title="${paragraph.image_prompt || ''}" 
+                         alt="Story image">
+                    ` : ''}
+                </div>
                 <div class="card-body">
                     <p class="card-text">${paragraph.text || ''}</p>
                     <div class="d-flex gap-2 mt-3">
@@ -211,19 +213,22 @@ document.addEventListener('DOMContentLoaded', () => {
     initTooltips();
     
     // Add event listeners to all generate buttons
-    document.querySelectorAll('.generate-image, .generate-audio').forEach(button => {
-        button.addEventListener('click', async (e) => {
-            const type = button.classList.contains('generate-image') ? 'image' : 'audio';
-            const pageDiv = button.closest('.book-page');
-            const index = parseInt(pageDiv.dataset.index);
-            const paragraph = {
-                text: pageDiv.querySelector('.card-text').textContent,
-                image_style: 'realistic'
-            };
-            await handleRegeneration(type, button, pageDiv, paragraph, index, true);
+    const initGenerateButtons = () => {
+        document.querySelectorAll('.generate-image, .generate-audio').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const type = button.classList.contains('generate-image') ? 'image' : 'audio';
+                const pageDiv = button.closest('.book-page') || button.closest('.story-card').parentElement;
+                const index = parseInt(pageDiv.dataset.index);
+                const paragraph = {
+                    text: pageDiv.querySelector('.card-text').textContent,
+                    image_style: 'realistic'
+                };
+                await handleRegeneration(type, button, pageDiv, paragraph, index, true);
+            });
         });
-    });
-    
-    // Initialize navigation
+    };
+
+    // Initialize buttons and navigation
+    initGenerateButtons();
     updateNavigation();
 });
