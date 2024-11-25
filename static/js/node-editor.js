@@ -196,86 +196,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         }
     }, [story?.paragraphs, setNodes]);
 
-    const handleGenerateCard = useCallback(async (index) => {
-        if (!story?.paragraphs?.[index]?.text) {
-            console.error('No text found for paragraph');
-            return;
-        }
-
-        try {
-            setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
-            ));
-
-            // Build context including previous image prompts
-            const storyContext = story.paragraphs
-                .slice(0, index)
-                .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
-                .join('\n\n');
-
-            const response = await fetch('/story/generate_cards', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    index: index,
-                    text: story.paragraphs[index].text.trim(),
-                    story_context: storyContext,
-                    style: selectedStyle
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to generate card');
-            
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-                
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
-                        if (data.type === 'paragraph') {
-                            setNodes(currentNodes => 
-                                currentNodes.map(node => 
-                                    node.id === `p${index}` ? {
-                                        ...node, 
-                                        data: {
-                                            ...node.data,
-                                            imageUrl: data.data.image_url,
-                                            imagePrompt: data.data.image_prompt,
-                                            audioUrl: data.data.audio_url,
-                                            isGenerating: false
-                                        }
-                                    } : node
-                                )
-                            );
-                        } else if (data.type === 'error') {
-                            throw new Error(data.message);
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing JSON:', parseError);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error generating card:', error);
-            setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
-            ));
-            alert(error.message || 'Failed to generate card');
-        }
-    }, [story?.paragraphs, selectedStyle, setNodes]);
+    // Removed handleGenerateCard function as it's no longer needed
 
     const handleStyleChange = useCallback((event) => {
         const newStyle = event.target.value;
@@ -320,11 +241,9 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 imageUrl: para.image_url,
                 imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
                 onRegenerateImage: handleRegenerateImage,
                 onRegenerateAudio: handleRegenerateAudio,
                 onExpandImage: setExpandedImage,
-                isGenerating: false,
                 isRegenerating: false,
                 isRegeneratingAudio: false
             }
