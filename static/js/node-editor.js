@@ -17,7 +17,7 @@ const ParagraphNode = React.memo(({ data }) => {
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text}</div>
             <div className="node-controls">
-                <div className="d-flex gap-2 mb-2">
+                <div className="d-flex gap-2">
                     <button 
                         className="btn btn-secondary btn-sm flex-grow-1" 
                         onClick={() => data.onRegenerateImage(data.index)}
@@ -250,7 +250,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
+    }, [story?.paragraphs, selectedStyle, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
