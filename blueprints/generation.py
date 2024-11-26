@@ -132,6 +132,88 @@ def regenerate_audio():
         return jsonify({'error': str(e)}), 500
 
 @generation_bp.route('/story/generate_cards', methods=['POST'])
+@generation_bp.route('/story/generate_image', methods=['POST'])
+def generate_image():
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        text = data['text']
+        index = data.get('index')
+        style = data.get('style', 'realistic')
+        story_context = data.get('story_context', '')
+        
+        # Generate chain of image prompts using Gemini
+        image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
+        
+        # Generate new image with chained prompts
+        result = image_service.generate_image_chain(image_prompts, style=style)
+        if not result:
+            return jsonify({'error': 'Failed to generate image'}), 500
+            
+        # Update data in appropriate storage
+        if index is not None:
+            story_data = session.get('story_data', {})
+            temp_id = story_data.get('temp_id')
+            
+            if temp_id:
+                temp_data = TempBookData.query.get(temp_id)
+                if temp_data:
+                    book_data = temp_data.data
+                    if index < len(book_data['paragraphs']):
+                        book_data['paragraphs'][index]['image_url'] = result['url']
+                        book_data['paragraphs'][index]['image_prompt'] = result['prompt']
+                        temp_data.data = book_data
+                        db.session.commit()
+            
+        return jsonify({
+            'success': True,
+            'image_url': result['url'],
+            'image_prompt': result['prompt']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@generation_bp.route('/story/generate_audio', methods=['POST'])
+def generate_audio():
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        text = data['text']
+        index = data.get('index')
+        
+        # Generate new audio
+        audio_url = audio_service.generate_audio(text)
+        if not audio_url:
+            return jsonify({'error': 'Failed to generate audio'}), 500
+            
+        # Update data in appropriate storage
+        if index is not None:
+            story_data = session.get('story_data', {})
+            temp_id = story_data.get('temp_id')
+            
+            if temp_id:
+                temp_data = TempBookData.query.get(temp_id)
+                if temp_data:
+                    book_data = temp_data.data
+                    if index < len(book_data['paragraphs']):
+                        book_data['paragraphs'][index]['audio_url'] = audio_url
+                        temp_data.data = book_data
+                        db.session.commit()
+            
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating audio: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 def generate_cards():
     def generate():
         try:
