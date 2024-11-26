@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import ErrorBoundary from './ErrorBoundary';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -379,8 +380,18 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
 
     return (
         <>
-            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <ReactFlow
+            <div 
+                style={{ 
+                    width: '100%', 
+                    height: '600px',
+                    position: 'relative',
+                    zIndex: 0,
+                    pointerEvents: 'all'
+                }} 
+                className="node-editor-root"
+            >
+                <ErrorBoundary>
+                    <ReactFlow
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
@@ -397,6 +408,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     <Background />
                     <Controls />
                 </ReactFlow>
+                </ErrorBoundary>
             </div>
             
             {expandedImage && (
