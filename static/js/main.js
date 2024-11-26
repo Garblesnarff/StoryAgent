@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Get form elements with null checks
     const storyForm = document.getElementById('story-form');
     const uploadForm = document.getElementById('upload-form');
+    
+    if (!storyForm && !uploadForm) {
+        console.error('Error: Required form elements not found');
+        return;
+    }
 
     // Helper function to show error messages
     function showError(message) {
@@ -57,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    storyForm?.addEventListener('submit', async (e) => {
+    storyForm && storyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // Show loading state
@@ -100,14 +106,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
-            showError(error.message || 'An unexpected error occurred. Please try again.');
+            const errorMessage = error.response?.status === 429 
+                ? 'Too many requests. Please wait a moment before trying again.'
+                : error.response?.status === 400
+                    ? 'Invalid input. Please check your story parameters.'
+                    : error.message || 'An unexpected error occurred. Please try again.';
+            showError(errorMessage);
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = originalText;
         }
     });
 
-    uploadForm?.addEventListener('submit', async (e) => {
+    uploadForm && uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const formData = new FormData(uploadForm);
@@ -165,8 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error:', error);
-            uploadStatus.innerHTML = `<span class="text-danger"><strong>Error:</strong> ${error.message}</span>`;
+            let errorMessage = 'An unexpected error occurred. Please try again.';
+            
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+            } else if (error.response?.status === 413) {
+                errorMessage = 'File size too large. Please try a smaller file.';
+            } else if (error.response?.status === 415) {
+                errorMessage = 'Unsupported file type. Please upload PDF, EPUB, or HTML files only.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            uploadStatus.innerHTML = `<span class="text-danger"><strong>Error:</strong> ${errorMessage}</span>`;
             progressBar.style.width = '0%';
+            progressBar.style.transition = 'none';
         } finally {
             submitButton.disabled = false;
             spinner.classList.add('d-none');
