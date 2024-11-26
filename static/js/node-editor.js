@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import ErrorBoundary from './ErrorBoundary';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -23,14 +22,14 @@ const ParagraphNode = React.memo(({ data }) => {
                         className="btn btn-primary btn-sm flex-grow-1" 
                         onClick={() => data.onGenerateImage(data.index)}
                         disabled={data.isGeneratingImage}>
-                        <i className="bi bi-image me-1"></i>
+                        <i className="bi bi-image"></i>
                         {data.isGeneratingImage ? 'Generating...' : 'Generate Image'}
                     </button>
                     <button 
                         className="btn btn-primary btn-sm flex-grow-1" 
                         onClick={() => data.onGenerateAudio(data.index)}
                         disabled={data.isGeneratingAudio}>
-                        <i className="bi bi-volume-up me-1"></i>
+                        <i className="bi bi-volume-up"></i>
                         {data.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
                     </button>
                 </div>
@@ -380,18 +379,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
 
     return (
         <>
-            <div 
-                style={{ 
-                    width: '100%', 
-                    height: '600px',
-                    position: 'relative',
-                    zIndex: 0,
-                    pointerEvents: 'all'
-                }} 
-                className="node-editor-root"
-            >
-                <ErrorBoundary>
-                    <ReactFlow
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                <ReactFlow
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
@@ -408,7 +397,6 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     <Background />
                     <Controls />
                 </ReactFlow>
-                </ErrorBoundary>
             </div>
             
             {expandedImage && (
