@@ -45733,7 +45733,7 @@ var ParticleBackground = function () {
             }
         };
     }, []);
-    return react__WEBPACK_IMPORTED_MODULE_0___default().createElement("canvas", { ref: canvasRef, className: "absolute inset-0 -z-10" });
+    return react__WEBPACK_IMPORTED_MODULE_0___default().createElement("canvas", { ref: canvasRef, className: "absolute inset-0 -z-10 pointer-events-none" });
 };
 var FloatingElement = function (_a) {
     var children = _a.children, _b = _a.delay, delay = _b === void 0 ? 0 : _b;
@@ -45744,7 +45744,7 @@ var FloatingElement = function (_a) {
         } }, children));
 };
 var LandingPage = function () {
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10" },
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10 z-0" },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(ParticleBackground, null),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 flex flex-col items-center justify-center text-center px-4" },
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "max-w-4xl mx-auto relative" },
@@ -89070,15 +89070,71 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react_dom_client__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom/client */ "./node_modules/react-dom/client.js");
 /* harmony import */ var _App__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./App */ "./src/App.tsx");
+var __extends = (undefined && undefined.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 
 
 
-var container = document.getElementById('root');
-if (!container)
-    throw new Error('Failed to find the root element');
-var root = (0,react_dom_client__WEBPACK_IMPORTED_MODULE_1__.createRoot)(container);
-root.render(react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().StrictMode), null,
-    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_App__WEBPACK_IMPORTED_MODULE_2__["default"], null)));
+// Error Boundary Component
+var ErrorBoundary = /** @class */ (function (_super) {
+    __extends(ErrorBoundary, _super);
+    function ErrorBoundary(props) {
+        var _this = _super.call(this, props) || this;
+        _this.state = { hasError: false, error: null };
+        return _this;
+    }
+    ErrorBoundary.getDerivedStateFromError = function (error) {
+        return { hasError: true, error: error };
+    };
+    ErrorBoundary.prototype.componentDidCatch = function (error, errorInfo) {
+        console.error('React Error Boundary caught an error:', error, errorInfo);
+    };
+    ErrorBoundary.prototype.render = function () {
+        var _a;
+        if (this.state.hasError) {
+            return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "min-h-screen flex items-center justify-center bg-background" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "max-w-md p-8 rounded-lg bg-card shadow-lg" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h2", { className: "text-2xl font-bold text-destructive mb-4" }, "Something went wrong"),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-muted-foreground mb-4" }, ((_a = this.state.error) === null || _a === void 0 ? void 0 : _a.message) || 'An unexpected error occurred'),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { onClick: function () { return window.location.reload(); }, className: "px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90" }, "Reload Page"))));
+        }
+        return this.props.children;
+    };
+    return ErrorBoundary;
+}((react__WEBPACK_IMPORTED_MODULE_0___default().Component)));
+// Mount app with error handling
+var mountApp = function () {
+    var container = document.getElementById('root');
+    if (!container) {
+        console.error('Failed to find the root element');
+        return;
+    }
+    try {
+        var root = (0,react_dom_client__WEBPACK_IMPORTED_MODULE_1__.createRoot)(container);
+        root.render(react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().StrictMode), null,
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(ErrorBoundary, null,
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_App__WEBPACK_IMPORTED_MODULE_2__["default"], null))));
+    }
+    catch (error) {
+        console.error('Error mounting React application:', error);
+        container.innerHTML = '<div class="p-4">Failed to load application. Please refresh the page.</div>';
+    }
+};
+// Initialize app
+mountApp();
 
 })();
 

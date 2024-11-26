@@ -548,6 +548,12 @@ video {
     max-width: 1400px;
   }
 }
+.pointer-events-none {
+  pointer-events: none;
+}
+.static {
+  position: static;
+}
 .fixed {
   position: fixed;
 }
@@ -595,6 +601,9 @@ video {
 }
 .-z-10 {
   z-index: -10;
+}
+.z-0 {
+  z-index: 0;
 }
 .z-10 {
   z-index: 10;
@@ -765,6 +774,9 @@ video {
 }
 .max-w-lg {
   max-width: 32rem;
+}
+.max-w-md {
+  max-width: 28rem;
 }
 .flex-1 {
   flex: 1 1 0%;
@@ -1075,6 +1087,10 @@ video {
 }
 .font-serif {
   font-family: Crimson Pro, serif;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
 }
 .text-4xl {
   font-size: 2.25rem;

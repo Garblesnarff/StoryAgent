@@ -84,10 +84,10 @@ const FloatingElement = ({ children, delay = 0 }: { children: React.ReactNode; d
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10 z-0">
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10">
       <ParticleBackground />
       
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+      <div className="relative z-10 min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center text-center px-4">
         <div className="max-w-4xl mx-auto relative">
           <FloatingElement>
             <h1 className="font-display text-6xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
