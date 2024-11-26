@@ -8,12 +8,51 @@ import ReactFlow, {
     Handle,
     Position,
     Node,
-    Edge
+    Edge,
+    ReactFlowProvider
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
+
+// Error Boundary Component
+class ReactFlowErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error('ReactFlow Error:', error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-4 border border-red-500 rounded bg-red-50">
+                    <h3 className="text-red-700 font-bold">Something went wrong with the story editor</h3>
+                    <p className="text-red-600">Please try refreshing the page</p>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+// Loading Component
+const LoadingState = () => (
+    <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
+        <div className="space-y-4 text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-muted-foreground">Loading story editor...</p>
+        </div>
+    </div>
+);
 
 interface ParagraphData {
     index: number;
@@ -193,8 +232,76 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState<Story | undefined>(initialStory);
-    const [isLoading, setIsLoading] = useState(!initialStory);
-    const nodesInitializedRef = useRef(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
+    
+    const initializationRef = useRef(false);
+    const nodesRef = useRef<typeof nodes>([]);
+
+    const logDebug = useCallback((message: string, data?: any) => {
+        console.log(`[NodeEditor] ${message}`, data || '');
+    }, []);
+
+    const initializeNodes = useCallback(() => {
+        if (!story?.paragraphs || initializationRef.current) {
+            logDebug('Skipping node initialization - already initialized or no story data');
+            return;
+        }
+
+        logDebug('Initializing nodes with story data', story);
+        
+        try {
+            const paragraphNodes = story.paragraphs.map((para, index) => ({
+                id: `p${index}`,
+                type: 'paragraph',
+                draggable: true,
+                position: { 
+                    x: (index % 3) * 500 + 50,
+                    y: Math.floor(index / 3) * 450 + 50
+                },
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            }));
+
+            logDebug('Setting initial nodes', paragraphNodes);
+            setNodes(paragraphNodes);
+            nodesRef.current = paragraphNodes;
+            initializationRef.current = true;
+            setIsLoading(false);
+        } catch (error) {
+            console.error('Error initializing nodes:', error);
+            setHasError(true);
+            setIsLoading(false);
+        }
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
+
+    useEffect(() => {
+        logDebug('Story data changed', story);
+        if (story?.paragraphs) {
+            initializeNodes();
+        }
+    }, [story, initializeNodes]);
+
+    useEffect(() => {
+        logDebug('Setting initial story data', initialStory);
+        if (initialStory?.paragraphs && !initializationRef.current) {
+            setStory(initialStory);
+        }
+    }, [initialStory]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -363,63 +470,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story]);
 
-    // Initialize nodes when story data changes
-    useEffect(() => {
-        if (!story?.paragraphs || nodesInitializedRef.current) {
-            return;
-        }
-
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            draggable: true,
-            position: { 
-                x: (index % 3) * 500 + 50,
-                y: Math.floor(index / 3) * 450 + 50
-            },
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                onStyleChange: handleStyleChange,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
-            }
-        }));
-
-        setNodes(paragraphNodes);
-        nodesInitializedRef.current = true;
-        setIsLoading(false);
-    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
-
-    // Fetch story data if not provided
-    useEffect(() => {
-        const fetchStoryData = async () => {
-            try {
-                const response = await fetch('/api/story/data');
-                const data = await response.json();
-                if (data.success) {
-                    setStory(data.story);
-                }
-            } catch (error) {
-                console.error('Error fetching story data:', error);
-                setIsLoading(false);
-            }
-        };
-
-        if (!story && !isLoading) {
-            fetchStoryData();
-        }
-    }, [story, isLoading]);
-
     const onConnect = useCallback((params) => {
         if (params.source === params.target) return;
         
@@ -437,31 +487,41 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [setEdges]);
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <LoadingState />;
+    }
+
+    if (hasError) {
+        return (
+            <div className="p-4 border border-red-500 rounded bg-red-50">
+                <h3 className="text-red-700 font-bold">Error loading story editor</h3>
+                <p className="text-red-600">Please try refreshing the page</p>
+            </div>
+        );
     }
 
     return (
-        <>
-            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    nodeTypes={nodeTypes}
-                    fitView
-                    style={{ background: 'var(--bs-dark)' }}
-                    minZoom={0.1}
-                    maxZoom={4}
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    connectOnClick={true}
-                >
-                    <Background />
-                    <Controls />
-                </ReactFlow>
-            </div>
-            
+        <ReactFlowErrorBoundary>
+            <ReactFlowProvider>
+                <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        nodeTypes={nodeTypes}
+                        fitView
+                        style={{ background: 'var(--bs-dark)' }}
+                        minZoom={0.1}
+                        maxZoom={4}
+                        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                        connectOnClick={true}
+                    >
+                        <Background />
+                        <Controls />
+                    </ReactFlow>
+                </div>
+            </ReactFlowProvider>
             {expandedImage && (
                 <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
                     <div className="preview-modal" onClick={e => e.stopPropagation()}>
@@ -478,7 +538,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     </div>
                 </div>
             )}
-        </>
+        </ReactFlowErrorBoundary>
     );
 };
 
