@@ -13,21 +13,21 @@ const ParticleBackground = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles: { x: number; y: number; size: number; speedX: number; speedY: number }[] = [];
-    const particleCount = 50;
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
+    let animationFrameId: number;
+    let particles: { x: number; y: number; size: number; speedX: number; speedY: number }[] = [];
+    
+    const initParticles = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      particles = Array.from({ length: 50 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         size: Math.random() * 2 + 1,
         speedX: (Math.random() - 0.5) * 0.5,
         speedY: (Math.random() - 0.5) * 0.5
-      });
-    }
+      }));
+    };
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -45,18 +45,24 @@ const ParticleBackground = () => {
         ctx.fill();
       });
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
-
-    animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      initParticles();
     };
 
+    initParticles();
+    animate();
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="absolute inset-0 -z-10" />;
@@ -98,21 +104,51 @@ const LandingPage: React.FC = () => {
 
           <FloatingElement delay={0.4}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/create-story">
+              <Link to="/create-story" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="group relative px-8 py-6 text-lg hover:scale-105 transition-transform duration-200 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary"
+                  className="w-full sm:w-auto group relative px-8 py-6 text-lg transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary focus:ring-2 focus:ring-primary/50 focus:outline-none"
                 >
-                  <span className="relative z-10">Begin Your Journey</span>
+                  <span className="relative z-10 flex items-center justify-center">
+                    Begin Your Journey
+                    <svg 
+                      className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                      />
+                    </svg>
+                  </span>
                 </Button>
               </Link>
-              <Link to="/upload-book">
+              <Link to="/upload-book" className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="group px-8 py-6 text-lg border-2 hover:scale-105 transition-transform duration-200"
+                  className="w-full sm:w-auto group px-8 py-6 text-lg border-2 transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 hover:bg-primary/5 focus:ring-2 focus:ring-primary/50 focus:outline-none"
                 >
-                  Upload Your Story
+                  <span className="flex items-center justify-center">
+                    Upload Your Story
+                    <svg 
+                      className="w-5 h-5 ml-2 transform group-hover:translate-y-[-2px] transition-transform" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" 
+                      />
+                    </svg>
+                  </span>
                 </Button>
               </Link>
             </div>
