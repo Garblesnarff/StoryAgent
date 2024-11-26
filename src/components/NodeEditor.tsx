@@ -195,6 +195,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [story, setStory] = useState<Story | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
     const [hasError, setHasError] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
     const initializationRef = useRef(false);
 
     // Validate story data and update state
@@ -240,7 +241,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     // Initialize nodes when story data changes
     useEffect(() => {
-        if (!story?.paragraphs || !initializationRef.current) {
+        if (!story?.paragraphs || isInitialized) {
             return;
         }
 
@@ -278,7 +279,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             console.error('Error initializing nodes:', error);
             setHasError(true);
         }
-    }, [story, selectedStyle, isInitialized]);
+    }, [story, selectedStyle, setNodes, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, isInitialized]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         if (!story?.paragraphs?.[index]) {

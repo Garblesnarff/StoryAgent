@@ -44506,30 +44506,47 @@ var NodeEditor = function (_a) {
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _f[0], setStory = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _g[0], setIsLoading = _g[1];
     var _h = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), hasError = _h[0], setHasError = _h[1];
-    var _j = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), isInitialized = _j[0], setIsInitialized = _j[1];
+    var initializationRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
     // Validate story data and update state
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        var validateAndSetStory = function () {
-            console.log('[%s] Story data update:', new Date().toISOString(), {
-                isValid: !!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs),
-                hasNodes: nodes.length > 0,
-                currentStyle: selectedStyle
-            });
+        if (!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs) || initializationRef.current) {
             if (!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs)) {
                 console.error('Invalid story data:', initialStory);
                 setHasError(true);
-                setIsLoading(false);
-                return;
+            }
+            setIsLoading(false);
+            return;
+        }
+        console.log('Initializing with story:', initialStory);
+        try {
+            // Validate story structure
+            var isValidStory = initialStory.paragraphs.every(function (para) {
+                return typeof para.text === 'string' && para.text.trim().length > 0;
+            });
+            if (!isValidStory) {
+                throw new Error('Invalid story structure: missing or invalid paragraph text');
             }
             setStory(initialStory);
             setHasError(false);
+            initializationRef.current = true;
+        }
+        catch (error) {
+            console.error('Story validation error:', error);
+            setHasError(true);
+        }
+        finally {
             setIsLoading(false);
+        }
+        // Cleanup function
+        return function () {
+            setNodes([]);
+            setEdges([]);
+            initializationRef.current = false;
         };
-        validateAndSetStory();
-    }, [initialStory]);
+    }, [initialStory, setNodes, setEdges]);
     // Initialize nodes when story data changes
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || isInitialized) {
+        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || !initializationRef.current) {
             return;
         }
         try {
@@ -44783,6 +44800,19 @@ var NodeEditor = function (_a) {
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-center p-4" },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" }),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm text-gray-600" }, "Loading story..."))));
+    }
+    // Render loading state or error message
+    if (isLoading) {
+        return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center h-[600px] bg-background" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-center" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" }),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", null, "Loading story data..."))));
+    }
+    if (hasError) {
+        return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center h-[600px] bg-background" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-center text-destructive" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h3", { className: "text-lg font-semibold mb-2" }, "Error Loading Story"),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", null, "Unable to initialize story editor. Please try refreshing the page."))));
     }
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
