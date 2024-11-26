@@ -1,11 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const storyForm = document.getElementById('story-form');
-    const uploadForm = document.getElementById('upload-form');
+    console.log('DOMContentLoaded event triggered');
     
-    if (!storyForm && !uploadForm) {
-        console.error('Error: Required form elements not found');
-        return;
-    }
+    let storyForm, uploadForm;
+    
+    try {
+        storyForm = document.getElementById('story-form');
+        console.log('Story form found:', !!storyForm);
+        
+        uploadForm = document.getElementById('upload-form');
+        console.log('Upload form found:', !!uploadForm);
+        
+        if (!storyForm && !uploadForm) {
+            console.error('Error: Required form elements not found');
+            return;
+        }
 
     // Helper function to show error messages
     function showError(message) {
@@ -63,7 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (storyForm) {
-        storyForm.addEventListener('submit', async (e) => {
+        try {
+            console.log('Initializing story form submit handler');
+            storyForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             // Show loading state
@@ -120,7 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (uploadForm) {
-        uploadForm.addEventListener('submit', async (e) => {
+        try {
+            console.log('Initializing upload form submit handler');
+            uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const formData = new FormData(uploadForm);
@@ -188,6 +200,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     errorMessage = 'Unsupported file type. Please upload PDF, EPUB, or HTML files only.';
                 } else if (error.message) {
                     errorMessage = error.message;
+    } catch (error) {
+        console.error('Error initializing story form:', error);
+    }
+    } catch (error) {
+        console.error('Error initializing upload form:', error);
+    }
+    } catch (error) {
+        console.error('Error during form initialization:', error);
+    }
                 }
                 
                 uploadStatus.innerHTML = `<span class="text-danger"><strong>Error:</strong> ${errorMessage}</span>`;
