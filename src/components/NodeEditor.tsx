@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -147,16 +147,24 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
-                        <button 
-                            className="btn btn-secondary btn-sm w-100 mt-2"
+                        <Button 
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2"
                             onClick={() => data.onRegenerateAudio(data.index)}
                             disabled={data.isRegeneratingAudio}>
-                            <i className="bi bi-arrow-clockwise"></i> Regenerate Audio
-                        </button>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                <path d="M3 3v5h5" />
+                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                <path d="M16 16h5v5" />
+                            </svg>
+                            Regenerate Audio
+                        </Button>
                     </>
                 )}
             </div>
-            <Handle type="source" position={Position.Right} />
+            <Handle type="source" position={Position.Right} className="!bg-primary" />
         </div>
     );
 });
@@ -184,8 +192,9 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
-    const [story, setStory] = useState(initialStory);
+    const [story, setStory] = useState<Story | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
+    const nodesInitializedRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -227,7 +236,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [story, nodes]);
 
     const handleStyleChange = useCallback((index: number, newStyle: string) => {
-        // Update local style
         setNodes(nodes => nodes.map(node => 
             node.id === `p${index}` ? {
                 ...node,
@@ -238,10 +246,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             } : node
         ));
         
-        // Get the current paragraph text
         const paragraphText = story?.paragraphs[index]?.text;
         
-        // Update backend and regenerate image with new style
         fetch('/story/update_style', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -253,7 +259,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 }]
             })
         }).then(() => {
-            // After style is updated, regenerate the image with new prompt
             handleRegenerateImage(index);
         });
     }, [story, handleRegenerateImage]);
@@ -274,10 +279,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 })
             });
 
+            if (!response.ok) throw new Error('Failed to generate card');
+
             const reader = response.body?.getReader();
             if (!reader) throw new Error('Failed to get reader');
 
-            // Handle streaming response
             const decoder = new TextDecoder();
             let buffer = '';
             
@@ -292,20 +298,24 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 for (const line of lines) {
                     if (!line.trim()) continue;
                     
-                    const data = JSON.parse(line);
-                    if (data.type === 'paragraph') {
-                        setNodes(nodes => nodes.map(node => 
-                            node.id === `p${index}` ? {
-                                ...node, 
-                                data: {
-                                    ...node.data,
-                                    imageUrl: data.data.image_url,
-                                    imagePrompt: data.data.image_prompt,
-                                    audioUrl: data.data.audio_url,
-                                    isGenerating: false
-                                }
-                            } : node
-                        ));
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.type === 'paragraph') {
+                            setNodes(nodes => nodes.map(node => 
+                                node.id === `p${index}` ? {
+                                    ...node, 
+                                    data: {
+                                        ...node.data,
+                                        imageUrl: data.data.image_url,
+                                        imagePrompt: data.data.image_prompt,
+                                        audioUrl: data.data.audio_url,
+                                        isGenerating: false
+                                    }
+                                } : node
+                            ));
+                        }
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
                     }
                 }
             }
@@ -315,9 +325,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
             ));
         }
-    }, [story, selectedStyle]);
-
-    // Removed duplicate declaration
+    }, [story, nodes]);
 
     const handleRegenerateAudio = useCallback(async (index: number) => {
         try {
@@ -353,8 +361,46 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
             ));
         }
-    }, [story, selectedStyle]);
+    }, [story]);
 
+    // Initialize nodes when story data changes
+    useEffect(() => {
+        if (!story?.paragraphs || nodesInitializedRef.current) {
+            return;
+        }
+
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            draggable: true,
+            position: { 
+                x: (index % 3) * 500 + 50,
+                y: Math.floor(index / 3) * 450 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
+            }
+        }));
+
+        setNodes(paragraphNodes);
+        nodesInitializedRef.current = true;
+        setIsLoading(false);
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
+
+    // Fetch story data if not provided
     useEffect(() => {
         const fetchStoryData = async () => {
             try {
@@ -369,55 +415,29 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             }
         };
 
-        if (!story) {
+        if (!story && !isLoading) {
             fetchStoryData();
         }
-    }, [story]);
+    }, [story, isLoading]);
 
-    useEffect(() => {
-        if (!story?.paragraphs) {
-            setIsLoading(false);
-            return;
-        }
-
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            draggable: true,  // Ensure nodes are draggable
-            position: { 
-                x: (index % 3) * 500 + 50,  // Increase horizontal spacing
-                y: Math.floor(index / 3) * 450 + 50  // Increase vertical spacing
-            },
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
+    const onConnect = useCallback((params) => {
+        if (params.source === params.target) return;
+        
+        const edge = {
+            ...params,
+            type: 'smoothstep',
+            animated: true,
+            style: { 
+                stroke: 'var(--bs-primary)',
+                strokeWidth: 2,
             }
-        }));
-
-        setNodes(paragraphNodes);
-        setIsLoading(false);
-    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio]);
-
-    // Rest of the component implementation remains the same, just with proper TypeScript types
-    // ...
+        };
+        
+        setEdges(currentEdges => addEdge(edge, currentEdges));
+    }, [setEdges]);
 
     if (isLoading) {
-        return <div className="flex items-center justify-center h-96">Loading story data...</div>;
-    }
-
-    if (!story?.paragraphs?.length) {
-        return <div className="flex items-center justify-center h-96">No story data available</div>;
+        return <div>Loading...</div>;
     }
 
     return (
@@ -428,12 +448,14 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
                     nodeTypes={nodeTypes}
                     fitView
                     style={{ background: 'var(--bs-dark)' }}
                     minZoom={0.1}
                     maxZoom={4}
                     defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
                 >
                     <Background />
                     <Controls />
@@ -441,30 +463,17 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             </div>
             
             {expandedImage && (
-                <div 
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm"
-                    onClick={() => setExpandedImage(null)}
-                >
-                    <div 
-                        className="relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-2 top-2"
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
                             onClick={() => setExpandedImage(null)}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M18 6L6 18M6 6l12 12"/>
-                            </svg>
-                        </Button>
-                        <div className="overflow-auto">
-                            <img 
-                                src={expandedImage} 
-                                alt="Full preview" 
-                                className="w-full h-auto rounded-lg"
-                            />
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
                         </div>
                     </div>
                 </div>
