@@ -587,8 +587,14 @@ video {
 .right-10 {
   right: 2.5rem;
 }
+.right-2 {
+  right: 0.5rem;
+}
 .top-1\/4 {
   top: 25%;
+}
+.top-2 {
+  top: 0.5rem;
 }
 .top-\[50\%\] {
   top: 50%;
@@ -609,6 +615,10 @@ video {
 .mx-2 {
   margin-left: 0.5rem;
   margin-right: 0.5rem;
+}
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 .mx-auto {
   margin-left: auto;
@@ -687,8 +697,8 @@ video {
 .h-9 {
   height: 2.25rem;
 }
-.h-\[600px\] {
-  height: 600px;
+.h-96 {
+  height: 24rem;
 }
 .h-\[var\(--radix-select-trigger-height\)\] {
   height: var(--radix-select-trigger-height);
@@ -704,6 +714,9 @@ video {
 }
 .max-h-\[120px\] {
   max-height: 120px;
+}
+.max-h-\[90vh\] {
+  max-height: 90vh;
 }
 .min-h-\[80px\] {
   min-height: 80px;
@@ -862,6 +875,9 @@ video {
   margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
+.overflow-auto {
+  overflow: auto;
+}
 .overflow-hidden {
   overflow: hidden;
 }
@@ -885,9 +901,6 @@ video {
 }
 .border-2 {
   border-width: 2px;
-}
-.border-4 {
-  border-width: 4px;
 }
 .border-b {
   border-bottom-width: 1px;
@@ -1123,10 +1136,6 @@ video {
 }
 .text-destructive-foreground {
   color: hsl(var(--destructive-foreground));
-}
-.text-gray-600 {
-  --tw-text-opacity: 1;
-  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
 }
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));

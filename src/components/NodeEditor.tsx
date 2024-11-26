@@ -187,80 +187,6 @@ interface NodeEditorProps {
     onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
 }
 
-const handleRegenerateAudio = useCallback(async (index: number) => {
-        if (!story?.paragraphs?.[index]) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-
-        try {
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
-            ));
-
-            const response = await fetch('/story/regenerate_audio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    index,
-                    text: story.paragraphs[index].text
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                setNodes(nodes => nodes.map(node => 
-                    node.id === `p${index}` ? {
-                        ...node, 
-                        data: {
-                            ...node.data,
-                            audioUrl: data.audio_url,
-                            isRegeneratingAudio: false
-                        }
-                    } : node
-                ));
-            }
-        } catch (error) {
-            console.error('Error regenerating audio:', error);
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
-            ));
-        }
-    }, [story, setNodes]);
-
-    const handleStyleChange = useCallback((index: number, newStyle: string) => {
-        if (!story?.paragraphs?.[index]) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-
-        setNodes(nodes => nodes.map(node => 
-            node.id === `p${index}` ? {
-                ...node,
-                data: {
-                    ...node.data,
-                    globalStyle: newStyle
-                }
-            } : node
-        ));
-        
-        fetch('/story/update_style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                paragraphs: [{
-                    index,
-                    image_style: newStyle,
-                    text: story.paragraphs[index].text
-                }]
-            })
-        }).then(() => {
-            handleRegenerateImage(index);
-        }).catch(error => {
-            console.error('Error updating style:', error);
-        });
-    }, [story, handleRegenerateImage]);
-
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -268,99 +194,9 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState<Story | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
-    const [hasError, setHasError] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const initializationRef = useRef(false);
-
-    // Validate story data and update state
-    useEffect(() => {
-        if (!initialStory?.paragraphs || initializationRef.current) {
-            if (!initialStory?.paragraphs) {
-                console.error('Invalid story data:', initialStory);
-                setHasError(true);
-            }
-            setIsLoading(false);
-            return;
-        }
-
-        console.log('Initializing with story:', initialStory);
-        
-        try {
-            // Validate story structure
-            const isValidStory = initialStory.paragraphs.every(para => 
-                typeof para.text === 'string' && para.text.trim().length > 0
-            );
-
-            if (!isValidStory) {
-                throw new Error('Invalid story structure: missing or invalid paragraph text');
-            }
-
-            setStory(initialStory);
-            setHasError(false);
-            initializationRef.current = true;
-        } catch (error) {
-            console.error('Story validation error:', error);
-            setHasError(true);
-        } finally {
-            setIsLoading(false);
-        }
-
-        // Cleanup function
-        return () => {
-            setNodes([]);
-            setEdges([]);
-            initializationRef.current = false;
-        };
-    }, [initialStory, setNodes, setEdges]);
-
-    // Initialize nodes when story data changes
-    useEffect(() => {
-        if (!story?.paragraphs || isInitialized) {
-            return;
-        }
-
-        try {
-            console.log('Initializing nodes with paragraphs:', story.paragraphs.length);
-            const paragraphNodes = story.paragraphs.map((para, index) => ({
-                id: `p${index}`,
-                type: 'paragraph',
-                position: { 
-                    x: (index % 3) * 400 + 50,
-                    y: Math.floor(index / 3) * 300 + 50
-                },
-                draggable: true,
-                data: {
-                    index,
-                    text: para.text,
-                    globalStyle: selectedStyle,
-                    imageUrl: para.image_url,
-                    imagePrompt: para.image_prompt,
-                    audioUrl: para.audio_url,
-                    onGenerateCard: handleGenerateCard,
-                    onRegenerateImage: handleRegenerateImage,
-                    onRegenerateAudio,
-                    onExpandImage: setExpandedImage,
-                    onStyleChange: handleStyleChange,
-                    isGenerating: false,
-                    isRegenerating: false,
-                    isRegeneratingAudio: false
-                }
-            }));
-
-            setNodes(paragraphNodes);
-            setIsInitialized(true);
-        } catch (error) {
-            console.error('Error initializing nodes:', error);
-            setHasError(true);
-        }
-    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes, isInitialized]);
+    const nodesInitializedRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
-        if (!story?.paragraphs?.[index]) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-
         try {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
@@ -371,7 +207,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     index,
-                    text: story.paragraphs[index].text,
+                    text: story?.paragraphs[index].text,
                     style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic',
                     regenerate_prompt: true
                 })
@@ -399,13 +235,35 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story, nodes]);
 
+    const handleStyleChange = useCallback((index: number, newStyle: string) => {
+        setNodes(nodes => nodes.map(node => 
+            node.id === `p${index}` ? {
+                ...node,
+                data: {
+                    ...node.data,
+                    globalStyle: newStyle
+                }
+            } : node
+        ));
+        
+        const paragraphText = story?.paragraphs[index]?.text;
+        
+        fetch('/story/update_style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paragraphs: [{
+                    index,
+                    image_style: newStyle,
+                    text: paragraphText
+                }]
+            })
+        }).then(() => {
+            handleRegenerateImage(index);
+        });
+    }, [story, handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
-        if (!story?.paragraphs?.[index]) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-
         try {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
@@ -416,7 +274,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     index,
-                    text: story.paragraphs[index].text,
+                    text: story?.paragraphs[index].text,
                     style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
                 })
             });
@@ -469,7 +327,100 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story, nodes]);
 
-    const onConnect = useCallback((params: any) => {
+    const handleRegenerateAudio = useCallback(async (index: number) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(nodes => nodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            audioUrl: data.audio_url,
+                            isRegeneratingAudio: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating audio:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
+            ));
+        }
+    }, [story]);
+
+    // Initialize nodes when story data changes
+    useEffect(() => {
+        if (!story?.paragraphs || nodesInitializedRef.current) {
+            return;
+        }
+
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            draggable: true,
+            position: { 
+                x: (index % 3) * 500 + 50,
+                y: Math.floor(index / 3) * 450 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
+            }
+        }));
+
+        setNodes(paragraphNodes);
+        nodesInitializedRef.current = true;
+        setIsLoading(false);
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
+
+    // Fetch story data if not provided
+    useEffect(() => {
+        const fetchStoryData = async () => {
+            try {
+                const response = await fetch('/api/story/data');
+                const data = await response.json();
+                if (data.success) {
+                    setStory(data.story);
+                }
+            } catch (error) {
+                console.error('Error fetching story data:', error);
+                setIsLoading(false);
+            }
+        };
+
+        if (!story && !isLoading) {
+            fetchStoryData();
+        }
+    }, [story, isLoading]);
+
+    const onConnect = useCallback((params) => {
         if (params.source === params.target) return;
         
         const edge = {
@@ -482,52 +433,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             }
         };
         
-        setEdges(edges => addEdge(edge, edges));
+        setEdges(currentEdges => addEdge(edge, currentEdges));
     }, [setEdges]);
 
-    if (hasError) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center p-4">
-                    <h3 className="text-lg font-semibold text-red-500">Error Loading Story</h3>
-                    <p className="text-sm text-gray-600">Please try refreshing the page</p>
-                </div>
-            </div>
-        );
-    }
-
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center p-4">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">Loading story...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Render loading state or error message
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-[600px] bg-background">
-                <div className="text-center">
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p>Loading story data...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (hasError) {
-        return (
-            <div className="flex items-center justify-center h-[600px] bg-background">
-                <div className="text-center text-destructive">
-                    <h3 className="text-lg font-semibold mb-2">Error Loading Story</h3>
-                    <p>Unable to initialize story editor. Please try refreshing the page.</p>
-                </div>
-            </div>
-        );
+        return <div>Loading...</div>;
     }
 
     return (
