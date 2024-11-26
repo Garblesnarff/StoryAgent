@@ -2,6 +2,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyForm = document.getElementById('story-form');
     const uploadForm = document.getElementById('upload-form');
 
+    // Helper function to show error messages
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        errorDiv.innerHTML = `
+            <strong>Error:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const form = document.querySelector('form');
+        const existingError = form.parentElement.querySelector('.alert');
+        if (existingError) {
+            existingError.remove();
+        }
+        form.parentElement.insertBefore(errorDiv, form.nextSibling);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            errorDiv.classList.remove('show');
+            setTimeout(() => errorDiv.remove(), 150);
+        }, 5000);
+    }
+
     // Add easing function for smoother animation
     function easeInOutCubic(x) {
         return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -55,21 +78,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 data = await response.json();
             } catch (parseError) {
                 console.error('Failed to parse JSON response:', parseError);
-                throw new Error('Server returned an invalid response');
+                showError('Server returned an invalid response. Please try again.');
+                return;
             }
             
             if (!response.ok) {
-                throw new Error(data.error || 'Story generation failed');
+                if (response.status === 429) {
+                    showError('Too many requests. Please wait a moment before trying again.');
+                } else if (response.status === 413) {
+                    showError('File size too large. Please try a smaller file.');
+                } else {
+                    showError(data.error || 'Story generation failed. Please try again.');
+                }
+                return;
             }
 
             if (data.success && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                throw new Error(data.error || 'Invalid response from server');
+                showError(data.error || 'Invalid response from server. Please try again.');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error: ' + (error.message || 'An unexpected error occurred'));
+            showError(error.message || 'An unexpected error occurred. Please try again.');
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = originalText;

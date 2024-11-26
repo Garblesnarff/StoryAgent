@@ -115,7 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error:', error);
-            alert.textContent = `Failed to regenerate ${type}. Please try again.`;
+            const errorMessage = error.response?.status === 429 
+                ? 'Too many requests. Please wait a moment before trying again.'
+                : `Failed to regenerate ${type}. ${error.message || 'Please try again.'}`;
+            alert.textContent = errorMessage;
             alert.classList.remove('d-none');
         } finally {
             button.disabled = false;
@@ -247,6 +250,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error.message || 'An unknown error occurred');
+            const paragraphCards = document.getElementById('paragraph-cards');
+            if (paragraphCards) {
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                errorAlert.innerHTML = `
+                    <strong>Error:</strong> Failed to generate story cards. ${error.message || 'Please try again.'}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                paragraphCards.parentElement.insertBefore(errorAlert, paragraphCards);
+                
+                // Auto dismiss after 5 seconds
+                setTimeout(() => {
+                    errorAlert.classList.remove('show');
+                    setTimeout(() => errorAlert.remove(), 150);
+                }, 5000);
+            }
         }
     }
     
