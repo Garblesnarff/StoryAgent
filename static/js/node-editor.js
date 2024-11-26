@@ -344,7 +344,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
+    }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
