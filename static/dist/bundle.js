@@ -45755,16 +45755,28 @@ var LandingPage = function () {
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(FloatingElement, { delay: 0.4 },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex flex-col sm:flex-row gap-4 justify-center items-center" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/create-story", className: "w-full sm:w-auto" },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", className: "w-full sm:w-auto group relative px-8 py-6 text-lg transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary focus:ring-2 focus:ring-primary/50 focus:outline-none" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", className: "w-full sm:w-auto group relative px-8 py-6 text-lg transform transition-all duration-300 ease-out hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none", onMouseEnter: function (e) {
+                                    var target = e.currentTarget;
+                                    target.style.transform = 'scale(1.05)';
+                                }, onMouseLeave: function (e) {
+                                    var target = e.currentTarget;
+                                    target.style.transform = 'scale(1)';
+                                } },
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "relative z-10 flex items-center justify-center" },
                                     "Begin Your Journey",
-                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { className: "w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24" },
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { className: "w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24" },
                                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M13 7l5 5m0 0l-5 5m5-5H6" }))))),
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/upload-book", className: "w-full sm:w-auto" },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", variant: "outline", className: "w-full sm:w-auto group px-8 py-6 text-lg border-2 transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 hover:bg-primary/5 focus:ring-2 focus:ring-primary/50 focus:outline-none" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", variant: "outline", className: "w-full sm:w-auto group px-8 py-6 text-lg border-2 transform transition-all duration-300 ease-out hover:scale-105 active:scale-95 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none", onMouseEnter: function (e) {
+                                    var target = e.currentTarget;
+                                    target.style.transform = 'scale(1.05)';
+                                }, onMouseLeave: function (e) {
+                                    var target = e.currentTarget;
+                                    target.style.transform = 'scale(1)';
+                                } },
                                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "flex items-center justify-center" },
                                     "Upload Your Story",
-                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { className: "w-5 h-5 ml-2 transform group-hover:translate-y-[-2px] transition-transform", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24" },
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { className: "w-5 h-5 ml-2 transform group-hover:translate-y-[-2px] transition-transform duration-300", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24" },
                                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" }))))))),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute -z-10 inset-0 blur-3xl opacity-20 bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse" }))),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-background to-transparent" }),
