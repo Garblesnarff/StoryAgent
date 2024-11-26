@@ -133,6 +133,39 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState(null);
 
+    // Create separate effect for style change event listeners
+    useEffect(() => {
+        const handleStyleChange = (e) => {
+            const newStyle = e.target.value;
+            setSelectedStyle(newStyle);
+            
+            setNodes(currentNodes => currentNodes.map(node => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    globalStyle: newStyle
+                }
+            })));
+            
+            const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
+                index,
+                image_style: newStyle
+            })) || [];
+            
+            onStyleUpdate(updatedParagraphs);
+        };
+        
+        document.querySelectorAll('input[name="imageStyle"]').forEach(radio => {
+            radio.addEventListener('change', handleStyleChange);
+        });
+        
+        return () => {
+            document.querySelectorAll('input[name="imageStyle"]').forEach(radio => {
+                radio.removeEventListener('change', handleStyleChange);
+            });
+        };
+    }, [setNodes, story?.paragraphs, onStyleUpdate]);
+
     const handleRegenerateImage = useCallback(async (index) => {
         try {
             setNodes(currentNodes => currentNodes.map(node => 
@@ -389,29 +422,30 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         }
     }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
-    useEffect(() => {
-        console.log('Setting up style change event listeners');
-        let mounted = true;
-        const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
-        const handler = (e) => {
-            if (mounted) {
-                console.log('Style changed to:', e.target.value);
-                handleStyleChange(e);
-            }
-        };
-        
-        radioButtons.forEach(radio => {
-            radio.addEventListener('change', handler);
-        });
-
-        return () => {
-            console.log('Cleaning up style change event listeners');
-            mounted = false;
-            radioButtons.forEach(radio => {
-                radio.removeEventListener('change', handler);
-            });
-        };
-    }, [handleStyleChange]);
+    // Render ReactFlow with ErrorBoundary
+    return (
+        <div className="node-editor">
+            <ErrorBoundary>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    fitView
+                >
+                    <Controls />
+                    <Background />
+                </ReactFlow>
+            </ErrorBoundary>
+            {expandedImage && (
+                <div className="image-modal" onClick={() => setExpandedImage(null)}>
+                    <img src={expandedImage} alt="Expanded view" />
+                </div>
+            )}
+        </div>
+    );
 
     const onConnect = useCallback((params) => {
         if (params.source === params.target) return;
