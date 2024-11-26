@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, Component } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -6,45 +6,9 @@ import ReactFlow, {
     useEdgesState,
     addEdge,
     Handle,
-    Position,
-    ReactFlowProvider
+    Position
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-
-// Error Boundary Component
-class ErrorBoundary extends Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error) {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        console.error('ReactFlow Error:', error);
-        console.error('Error Info:', errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div className="error-boundary p-4 text-center">
-                    <h3>Something went wrong</h3>
-                    <p>{this.state.error?.message}</p>
-                    <button 
-                        className="btn btn-primary"
-                        onClick={() => this.setState({ hasError: false })}
-                    >
-                        Try Again
-                    </button>
-                </div>
-            );
-        }
-        return this.props.children;
-    }
-}
 
 const ParagraphNode = React.memo(({ data }) => {
     return (
@@ -132,39 +96,6 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState(null);
-
-    // Create separate effect for style change event listeners
-    useEffect(() => {
-        const handleStyleChange = (e) => {
-            const newStyle = e.target.value;
-            setSelectedStyle(newStyle);
-            
-            setNodes(currentNodes => currentNodes.map(node => ({
-                ...node,
-                data: {
-                    ...node.data,
-                    globalStyle: newStyle
-                }
-            })));
-            
-            const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
-                index,
-                image_style: newStyle
-            })) || [];
-            
-            onStyleUpdate(updatedParagraphs);
-        };
-        
-        document.querySelectorAll('input[name="imageStyle"]').forEach(radio => {
-            radio.addEventListener('change', handleStyleChange);
-        });
-        
-        return () => {
-            document.querySelectorAll('input[name="imageStyle"]').forEach(radio => {
-                radio.removeEventListener('change', handleStyleChange);
-            });
-        };
-    }, [setNodes, story?.paragraphs, onStyleUpdate]);
 
     const handleRegenerateImage = useCallback(async (index) => {
         try {
@@ -378,13 +309,10 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [setNodes, story?.paragraphs, onStyleUpdate]);
 
     useEffect(() => {
-        console.log('Initializing nodes from story data');
         if (!story?.paragraphs) {
             console.error('No story paragraphs found');
             return;
         }
-        
-        try {
 
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
@@ -415,37 +343,23 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             }
         }));
 
-        console.log('Setting nodes:', paragraphNodes.length);
-            setNodes(paragraphNodes);
-        } catch (error) {
-            console.error('Error initializing nodes:', error);
-        }
+        setNodes(paragraphNodes);
     }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
-    // Render ReactFlow with ErrorBoundary
-    return (
-        <div className="node-editor">
-            <ErrorBoundary>
-                <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    nodeTypes={nodeTypes}
-                    fitView
-                >
-                    <Controls />
-                    <Background />
-                </ReactFlow>
-            </ErrorBoundary>
-            {expandedImage && (
-                <div className="image-modal" onClick={() => setExpandedImage(null)}>
-                    <img src={expandedImage} alt="Expanded view" />
-                </div>
-            )}
-        </div>
-    );
+    useEffect(() => {
+        const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
+        const handler = (e) => handleStyleChange(e);
+        
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', handler);
+        });
+
+        return () => {
+            radioButtons.forEach(radio => {
+                radio.removeEventListener('change', handler);
+            });
+        };
+    }, [handleStyleChange]);
 
     const onConnect = useCallback((params) => {
         if (params.source === params.target) return;
@@ -463,37 +377,26 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         setEdges(currentEdges => addEdge(edge, currentEdges));
     }, [setEdges]);
 
-    console.log('Initializing NodeEditor with:', { 
-        nodesCount: nodes.length, 
-        edgesCount: edges.length,
-        selectedStyle 
-    });
-
     return (
         <>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <ErrorBoundary>
-                    <ReactFlowProvider>
-                        <ReactFlow
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            nodeTypes={nodeTypes}
-                            fitView
-                            style={{ background: 'var(--bs-dark)' }}
-                            minZoom={0.1}
-                            maxZoom={4}
-                            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                            connectOnClick={true}
-                            onError={(error) => console.error('ReactFlow Error:', error)}
-                        >
-                            <Background />
-                            <Controls />
-                        </ReactFlow>
-                    </ReactFlowProvider>
-                </ErrorBoundary>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    style={{ background: 'var(--bs-dark)' }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
             </div>
             
             {expandedImage && (
