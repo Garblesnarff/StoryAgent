@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Component } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -6,9 +6,45 @@ import ReactFlow, {
     useEdgesState,
     addEdge,
     Handle,
-    Position
+    Position,
+    ReactFlowProvider
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+// Error Boundary Component
+class ErrorBoundary extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error('ReactFlow Error:', error);
+        console.error('Error Info:', errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="error-boundary p-4 text-center">
+                    <h3>Something went wrong</h3>
+                    <p>{this.state.error?.message}</p>
+                    <button 
+                        className="btn btn-primary"
+                        onClick={() => this.setState({ hasError: false })}
+                    >
+                        Try Again
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 const ParagraphNode = React.memo(({ data }) => {
     return (
@@ -309,10 +345,13 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [setNodes, story?.paragraphs, onStyleUpdate]);
 
     useEffect(() => {
+        console.log('Initializing nodes from story data');
         if (!story?.paragraphs) {
             console.error('No story paragraphs found');
             return;
         }
+        
+        try {
 
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
@@ -343,18 +382,31 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             }
         }));
 
-        setNodes(paragraphNodes);
+        console.log('Setting nodes:', paragraphNodes.length);
+            setNodes(paragraphNodes);
+        } catch (error) {
+            console.error('Error initializing nodes:', error);
+        }
     }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
     useEffect(() => {
+        console.log('Setting up style change event listeners');
+        let mounted = true;
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
-        const handler = (e) => handleStyleChange(e);
+        const handler = (e) => {
+            if (mounted) {
+                console.log('Style changed to:', e.target.value);
+                handleStyleChange(e);
+            }
+        };
         
         radioButtons.forEach(radio => {
             radio.addEventListener('change', handler);
         });
 
         return () => {
+            console.log('Cleaning up style change event listeners');
+            mounted = false;
             radioButtons.forEach(radio => {
                 radio.removeEventListener('change', handler);
             });
@@ -377,26 +429,37 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         setEdges(currentEdges => addEdge(edge, currentEdges));
     }, [setEdges]);
 
+    console.log('Initializing NodeEditor with:', { 
+        nodesCount: nodes.length, 
+        edgesCount: edges.length,
+        selectedStyle 
+    });
+
     return (
         <>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    nodeTypes={nodeTypes}
-                    fitView
-                    style={{ background: 'var(--bs-dark)' }}
-                    minZoom={0.1}
-                    maxZoom={4}
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    connectOnClick={true}
-                >
-                    <Background />
-                    <Controls />
-                </ReactFlow>
+                <ErrorBoundary>
+                    <ReactFlowProvider>
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={edges}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={onConnect}
+                            nodeTypes={nodeTypes}
+                            fitView
+                            style={{ background: 'var(--bs-dark)' }}
+                            minZoom={0.1}
+                            maxZoom={4}
+                            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                            connectOnClick={true}
+                            onError={(error) => console.error('ReactFlow Error:', error)}
+                        >
+                            <Background />
+                            <Controls />
+                        </ReactFlow>
+                    </ReactFlowProvider>
+                </ErrorBoundary>
             </div>
             
             {expandedImage && (
