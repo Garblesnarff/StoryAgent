@@ -195,35 +195,52 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [story, setStory] = useState<Story | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
     const [hasError, setHasError] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
+    const initializationRef = useRef(false);
 
     // Validate story data and update state
     useEffect(() => {
-        const validateAndSetStory = () => {
-            console.log('[%s] Story data update:', new Date().toISOString(), {
-                isValid: !!initialStory?.paragraphs,
-                hasNodes: nodes.length > 0,
-                currentStyle: selectedStyle
-            });
-
+        if (!initialStory?.paragraphs || initializationRef.current) {
             if (!initialStory?.paragraphs) {
                 console.error('Invalid story data:', initialStory);
                 setHasError(true);
-                setIsLoading(false);
-                return;
+            }
+            setIsLoading(false);
+            return;
+        }
+
+        console.log('Initializing with story:', initialStory);
+        
+        try {
+            // Validate story structure
+            const isValidStory = initialStory.paragraphs.every(para => 
+                typeof para.text === 'string' && para.text.trim().length > 0
+            );
+
+            if (!isValidStory) {
+                throw new Error('Invalid story structure: missing or invalid paragraph text');
             }
 
             setStory(initialStory);
             setHasError(false);
+            initializationRef.current = true;
+        } catch (error) {
+            console.error('Story validation error:', error);
+            setHasError(true);
+        } finally {
             setIsLoading(false);
-        };
+        }
 
-        validateAndSetStory();
-    }, [initialStory]);
+        // Cleanup function
+        return () => {
+            setNodes([]);
+            setEdges([]);
+            initializationRef.current = false;
+        };
+    }, [initialStory, setNodes, setEdges]);
 
     // Initialize nodes when story data changes
     useEffect(() => {
-        if (!story?.paragraphs || isInitialized) {
+        if (!story?.paragraphs || !initializationRef.current) {
             return;
         }
 
@@ -483,6 +500,29 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 <div className="text-center p-4">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                     <p className="text-sm text-gray-600">Loading story...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Render loading state or error message
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-[600px] bg-background">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p>Loading story data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (hasError) {
+        return (
+            <div className="flex items-center justify-center h-[600px] bg-background">
+                <div className="text-center text-destructive">
+                    <h3 className="text-lg font-semibold mb-2">Error Loading Story</h3>
+                    <p>Unable to initialize story editor. Please try refreshing the page.</p>
                 </div>
             </div>
         );
