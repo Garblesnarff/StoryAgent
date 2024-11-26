@@ -17,36 +17,12 @@ const ParagraphNode = React.memo(({ data }) => {
             <div className="node-header">Paragraph {data.index + 1}</div>
             <div className="node-content">{data.text}</div>
             <div className="node-controls">
-                <div className="d-flex gap-2">
-                    <button 
-                        className="btn btn-secondary btn-sm flex-grow-1" 
-                        onClick={() => data.onRegenerateImage(data.index)}
-                        disabled={data.isRegenerating}>
-                        <div className="d-flex align-items-center">
-                            <i className="bi bi-image me-2"></i>
-                            <span className="button-text">Generate Image</span>
-                        </div>
-                        {data.isRegenerating && (
-                            <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                        )}
-                    </button>
-                    <button 
-                        className="btn btn-secondary btn-sm flex-grow-1"
-                        onClick={() => data.onRegenerateAudio(data.index)}
-                        disabled={data.isRegeneratingAudio}>
-                        <div className="d-flex align-items-center">
-                            <i className="bi bi-volume-up me-2"></i>
-                            <span className="button-text">Generate Audio</span>
-                        </div>
-                        {data.isRegeneratingAudio && (
-                            <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                        )}
-                    </button>
-                </div>
+                <button 
+                    className="btn btn-primary btn-sm w-100 mb-2" 
+                    onClick={() => data.onGenerateCard(data.index)}
+                    disabled={data.isGenerating}>
+                    {data.isGenerating ? 'Generating...' : 'Generate Card'}
+                </button>
                 
                 {data.imageUrl && (
                     <>
@@ -64,34 +40,36 @@ const ParagraphNode = React.memo(({ data }) => {
                                     <i className="bi bi-arrows-fullscreen"></i>
                                 </div>
                                 <div className="image-prompt-overlay">
-                                    <button 
-                                        className="copy-prompt-button"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(data.imagePrompt);
-                                            const button = document.activeElement;
-                                            const originalText = button.innerHTML;
-                                            button.innerHTML = '<i class="bi bi-check"></i> Copied!';
-                                            setTimeout(() => {
-                                                button.innerHTML = originalText;
-                                            }, 2000);
-                                        }}
-                                    >
-                                        <i className="bi bi-clipboard"></i> Copy
-                                    </button>
                                     {data.imagePrompt}
                                 </div>
                             </div>
+                        </div>
+                        <div className="d-flex gap-2 mt-2">
+                            <button 
+                                className="btn btn-secondary btn-sm flex-grow-1"
+                                onClick={() => data.onRegenerateImage(data.index)}
+                                disabled={data.isRegenerating}>
+                                <i className="bi bi-arrow-clockwise"></i> Regenerate Image
+                            </button>
                         </div>
                     </>
                 )}
                 
                 {data.audioUrl && (
-                    <div className="audio-player mt-2">
-                        <audio controls className="w-100" key={data.audioUrl}>
-                            <source src={data.audioUrl} type="audio/wav" />
-                            Your browser does not support the audio element.
-                        </audio>
-                    </div>
+                    <>
+                        <div className="audio-player mt-2">
+                            <audio controls className="w-100" key={data.audioUrl}>
+                                <source src={data.audioUrl} type="audio/wav" />
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <button 
+                            className="btn btn-secondary btn-sm w-100 mt-2"
+                            onClick={() => data.onRegenerateAudio(data.index)}
+                            disabled={data.isRegeneratingAudio}>
+                            <i className="bi bi-arrow-clockwise"></i> Regenerate Audio
+                        </button>
+                    </>
                 )}
             </div>
             <Handle type="source" position={Position.Right} />
@@ -196,7 +174,86 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         }
     }, [story?.paragraphs, setNodes]);
 
-    // Removed handleGenerateCard function as it's no longer needed
+    const handleGenerateCard = useCallback(async (index) => {
+        if (!story?.paragraphs?.[index]?.text) {
+            console.error('No text found for paragraph');
+            return;
+        }
+
+        try {
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+            ));
+
+            // Build context including previous image prompts
+            const storyContext = story.paragraphs
+                .slice(0, index)
+                .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
+                .join('\n\n');
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    index: index,
+                    text: story.paragraphs[index].text.trim(),
+                    story_context: storyContext,
+                    style: selectedStyle
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate card');
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.type === 'paragraph') {
+                            setNodes(currentNodes => 
+                                currentNodes.map(node => 
+                                    node.id === `p${index}` ? {
+                                        ...node, 
+                                        data: {
+                                            ...node.data,
+                                            imageUrl: data.data.image_url,
+                                            imagePrompt: data.data.image_prompt,
+                                            audioUrl: data.data.audio_url,
+                                            isGenerating: false
+                                        }
+                                    } : node
+                                )
+                            );
+                        } else if (data.type === 'error') {
+                            throw new Error(data.message);
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing JSON:', parseError);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes(currentNodes => currentNodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+            ));
+            alert(error.message || 'Failed to generate card');
+        }
+    }, [story?.paragraphs, selectedStyle, setNodes]);
 
     const handleStyleChange = useCallback((event) => {
         const newStyle = event.target.value;
@@ -241,16 +298,18 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 imageUrl: para.image_url,
                 imagePrompt: para.image_prompt,
                 audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
                 onRegenerateImage: handleRegenerateImage,
                 onRegenerateAudio: handleRegenerateAudio,
                 onExpandImage: setExpandedImage,
+                isGenerating: false,
                 isRegenerating: false,
                 isRegeneratingAudio: false
             }
         }));
 
         setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleRegenerateImage, handleRegenerateAudio, setNodes]);
+    }, [story?.paragraphs, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');

@@ -1,16 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
-    const paragraphCards = document.getElementById('paragraph-cards');
     let currentPage = 0;
     let totalPages = 0;
+    let session = { story_data: { paragraphs: [] } };
     
     // Initialize tooltips for all elements
     function initTooltips(container = document) {
         const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.forEach(tooltipTriggerEl => {
-            if (tooltipTriggerEl._tooltip) {
-                tooltipTriggerEl._tooltip.dispose();
-            }
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
@@ -24,40 +21,25 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.style.display = 'block';
         
         pageDiv.innerHTML = `
-            <div class="card story-card">
+            <div class="card h-100">
+                ${paragraph.image_url ? `
                 <div class="card-image position-relative">
-                    ${paragraph.image_url ? `
                     <img src="${paragraph.image_url}" 
                          class="card-img-top" 
                          data-bs-toggle="tooltip" 
                          data-bs-placement="top" 
-                         title="${paragraph.image_prompt || ''}" 
-                         alt="Story image">
-                    ` : ''}
-                </div>
+                         title="${paragraph.image_prompt || 'Generated image'}" 
+                         alt="Paragraph image">
+                </div>` : ''}
                 <div class="card-body">
                     <p class="card-text">${paragraph.text || ''}</p>
                     <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-secondary generate-image">
+                        <button class="btn btn-secondary regenerate-image">
                             <div class="d-flex align-items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                    <path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H4z"/>
-                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                    <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
                                 </svg>
-                                <span class="button-text">Generate Image</span>
-                            </div>
-                            <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </button>
-                        <button class="btn btn-secondary generate-audio">
-                            <div class="d-flex align-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                    <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
-                                    <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
-                                    <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
-                                </svg>
-                                <span class="button-text">Generate Audio</span>
+                                <span class="button-text">Regenerate Image</span>
                             </div>
                             <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
                                 <span class="visually-hidden">Loading...</span>
@@ -73,40 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
         initTooltips(pageDiv);
         
         // Add event listeners for regeneration buttons
-        const generateImageBtn = pageDiv.querySelector('.generate-image');
-        const generateAudioBtn = pageDiv.querySelector('.generate-audio');
-        
-        generateImageBtn?.addEventListener('click', async () => {
-            await handleRegeneration('image', generateImageBtn, pageDiv, paragraph, index);
-        });
-
-        generateAudioBtn?.addEventListener('click', async () => {
-            await handleRegeneration('audio', generateAudioBtn, pageDiv, paragraph, index);
-        });
-
-        const copyPromptBtn = pageDiv.querySelector('.copy-prompt');
-        copyPromptBtn?.addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(paragraph.image_prompt || '');
-                const tooltip = bootstrap.Tooltip.getInstance(copyPromptBtn);
-                const originalTitle = copyPromptBtn.getAttribute('data-bs-original-title');
-                
-                copyPromptBtn.setAttribute('data-bs-original-title', 'Copied!');
-                tooltip?.show();
-                
-                setTimeout(() => {
-                    copyPromptBtn.setAttribute('data-bs-original-title', originalTitle);
-                    tooltip?.hide();
-                }, 1500);
-            } catch (err) {
-                console.error('Failed to copy prompt:', err);
-            }
+        const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
+        regenerateImageBtn?.addEventListener('click', async () => {
+            await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
         });
         
         return pageDiv;
     }
     
-    async function handleRegeneration(type, button, pageDiv, paragraph, index, isInitialGeneration = false) {
+    async function handleRegeneration(type, button, pageDiv, paragraph, index) {
         const spinner = button.querySelector('.spinner-border');
         const buttonText = button.querySelector('.button-text');
         const alert = pageDiv.querySelector('.alert');
@@ -114,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             button.disabled = true;
             spinner.classList.remove('d-none');
-            buttonText.textContent = isInitialGeneration ? `Generating ${type}...` : `Regenerating ${type}...`;
+            buttonText.textContent = `Regenerating ${type}...`;
             alert.classList.add('d-none');
             
             const response = await fetch(`/story/regenerate_${type}`, {
@@ -133,17 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`Failed to regenerate ${type}`);
             }
             
-            let data;
-            try {
-                data = await response.json();
-                if (!data) {
-                    throw new Error(`No data received from ${type} generation`);
-                }
-            } catch (parseError) {
-                console.error('Failed to parse JSON response:', parseError);
-                throw new Error(`Failed to parse ${type} generation response`);
-            }
-            
+            const data = await response.json();
             if (data.success) {
                 if (type === 'image') {
                     const imgElement = pageDiv.querySelector('.card-img-top');
@@ -219,26 +166,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Initialize tooltips and bind event listeners for initial content
+    async function generateCards() {
+        try {
+            if (storyOutput) {
+                storyOutput.style.display = 'block';
+                storyOutput.classList.add('visible');
+            }
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to generate cards');
+            }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        switch (data.type) {
+                            case 'log':
+                                console.log(data.message);
+                                break;
+                            case 'paragraph':
+                                const paragraphCards = document.getElementById('paragraph-cards');
+                                if (paragraphCards && data.data) {
+                                    const index = data.data.index;
+                                    let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
+                                    
+                                    if (!pageElement) {
+                                        pageElement = createPageElement(data.data, index);
+                                        if (pageElement) {
+                                            paragraphCards.appendChild(pageElement);
+                                            pageElement.offsetHeight;
+                                            pageElement.classList.add('visible');
+                                        }
+                                    } else {
+                                        const newPage = createPageElement(data.data, index);
+                                        if (newPage) {
+                                            pageElement.innerHTML = newPage.innerHTML;
+                                            // Initialize tooltips for updated content
+                                            initTooltips(pageElement);
+                                            
+                                            // Reattach event listeners
+                                            const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
+                                            regenerateImageBtn?.addEventListener('click', () => 
+                                                handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
+                                        }
+                                    }
+                                    
+                                    updateNavigation();
+                                }
+                                break;
+                            case 'error':
+                                console.error('Error:', data.message);
+                                break;
+                            case 'complete':
+                                console.log(data.message);
+                                break;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing message:', line, error);
+                    }
+                }
+                buffer = lines[lines.length - 1];
+            }
+        } catch (error) {
+            console.error('Error:', error.message || 'An unknown error occurred');
+        }
+    }
+    
+    // Initialize tooltips for initial content
     initTooltips();
     
-    // Add event listeners to all generate buttons
-    const initGenerateButtons = () => {
-        document.querySelectorAll('.generate-image, .generate-audio').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const type = button.classList.contains('generate-image') ? 'image' : 'audio';
-                const pageDiv = button.closest('.book-page') || button.closest('.story-card').parentElement;
-                const index = parseInt(pageDiv.dataset.index);
-                const paragraph = {
-                    text: pageDiv.querySelector('.card-text').textContent,
-                    image_style: 'realistic'
-                };
-                await handleRegeneration(type, button, pageDiv, paragraph, index, true);
-            });
-        });
-    };
-
-    // Initialize buttons and navigation
-    initGenerateButtons();
-    updateNavigation();
+    if (document.getElementById('paragraph-cards')) {
+        generateCards();
+    }
 });
