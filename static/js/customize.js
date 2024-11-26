@@ -38,18 +38,39 @@ document.addEventListener('DOMContentLoaded', () => {
     // Parse story data
     let storyData;
     try {
+        console.log('Initializing node editor...');
         const storyAttr = container.getAttribute('data-story');
+        console.log('Raw story attribute:', storyAttr ? 'Found' : 'Not found');
+        
         if (!storyAttr) {
             throw new Error('No story data attribute found');
         }
+        
         storyData = JSON.parse(storyAttr);
-        console.log('Parsed story data:', storyData);
+        console.log('Successfully parsed story data:', {
+            paragraphCount: storyData?.paragraphs?.length,
+            structure: storyData ? Object.keys(storyData) : 'Invalid data'
+        });
         
         if (!storyData?.paragraphs?.length) {
-            throw new Error('Invalid story data structure');
+            throw new Error('Invalid story data structure: Missing paragraphs array');
         }
+        
+        // Validate paragraph structure
+        const invalidParagraphs = storyData.paragraphs.filter(p => !p.text);
+        if (invalidParagraphs.length > 0) {
+            console.warn('Found invalid paragraphs:', invalidParagraphs);
+            throw new Error('Some paragraphs are missing required text property');
+        }
+        
+        console.log('Story data validation successful');
     } catch (error) {
         console.error('Failed to parse story data:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         showError('Failed to load story data. Please generate a story first.');
         return;
     }

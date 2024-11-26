@@ -44505,7 +44505,7 @@ var NodeEditor = function (_a) {
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _e[0], setExpandedImage = _e[1];
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _f[0], setStory = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _g[0], setIsLoading = _g[1];
-    var nodesInitializedRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
+    console.log('Story data received:', initialStory);
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_1, error_1;
         var _a;
@@ -44680,16 +44680,19 @@ var NodeEditor = function (_a) {
     }); }, [story]);
     // Initialize nodes when story data changes
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || nodesInitializedRef.current) {
+        if (!(story === null || story === void 0 ? void 0 : story.paragraphs)) {
+            console.error('No story paragraphs found:', story);
+            setIsLoading(false);
             return;
         }
+        console.log('Initializing nodes with story data:', story);
         var paragraphNodes = story.paragraphs.map(function (para, index) { return ({
             id: "p".concat(index),
             type: 'paragraph',
             draggable: true,
             position: {
-                x: (index % 3) * 500 + 50,
-                y: Math.floor(index / 3) * 450 + 50
+                x: (index % 2) * 600 + 100, // Increased spacing and offset
+                y: Math.floor(index / 2) * 500 + 100 // Increased vertical spacing
             },
             data: {
                 index: index,
@@ -44757,7 +44760,12 @@ var NodeEditor = function (_a) {
     }
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 }, connectOnClick: true },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 0.8 }, fitViewOptions: {
+                    padding: 100,
+                    includeHiddenNodes: true,
+                    minZoom: 0.5,
+                    maxZoom: 1.5
+                }, connectOnClick: true },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Background, null),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_7__.Controls, null))),
         expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "modal-backdrop", onClick: function () { return setExpandedImage(null); } },

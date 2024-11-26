@@ -8,7 +8,9 @@ import ReactFlow, {
     Handle,
     Position,
     Node,
-    Edge
+    Edge,
+    Connection,
+    Viewport
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -32,7 +34,7 @@ interface ParagraphData {
     isRegeneratingAudio: boolean;
 }
 
-const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
+const ParagraphNode: React.FC<{ data: ParagraphData }> = ({ data }) => {
     const [showPrompt, setShowPrompt] = useState(false);
     const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
 
@@ -188,13 +190,13 @@ interface NodeEditorProps {
 }
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node<ParagraphData>[]>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState<Story | undefined>(initialStory);
-    const [isLoading, setIsLoading] = useState(!initialStory);
-    console.log('Story data received:', initialStory);
+    const [isLoading, setIsLoading] = useState(true);
+    const isInitializedRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -365,65 +367,91 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     // Initialize nodes when story data changes
     useEffect(() => {
+        console.log('NodeEditor: useEffect triggered with story:', {
+            hasStory: !!story,
+            paragraphCount: story?.paragraphs?.length,
+            isInitialized: isInitializedRef.current
+        });
+
         if (!story?.paragraphs) {
-            console.error('No story paragraphs found:', story);
+            console.error('No story paragraphs found:', {
+                story,
+                type: typeof story,
+                keys: story ? Object.keys(story) : 'undefined'
+            });
             setIsLoading(false);
             return;
         }
 
-        console.log('Initializing nodes with story data:', story);
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            draggable: true,
-            position: { 
-                x: (index % 2) * 600 + 100,  // Increased spacing and offset
-                y: Math.floor(index / 2) * 500 + 100  // Increased vertical spacing
-            },
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                onStyleChange: handleStyleChange,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
-            }
-        }));
+        if (isInitializedRef.current) {
+            console.log('Nodes already initialized, skipping...');
+            return;
+        }
+
+        console.log('Initializing nodes with story data:', {
+            paragraphCount: story.paragraphs.length,
+            firstParagraph: story.paragraphs[0]
+        });
+
+        const VIEWPORT_WIDTH = 1200;
+        const NODE_WIDTH = 400;
+        const NODE_HEIGHT = 300;
+        const HORIZONTAL_SPACING = NODE_WIDTH + 200;
+        const VERTICAL_SPACING = NODE_HEIGHT + 150;
+
+        const paragraphNodes = story.paragraphs.map((para, index) => {
+            const row = Math.floor(index / 2);
+            const col = index % 2;
+            const xPos = (col * HORIZONTAL_SPACING) + (VIEWPORT_WIDTH - HORIZONTAL_SPACING) / 4;
+            const yPos = (row * VERTICAL_SPACING) + 100;
+
+            console.log(`Creating node ${index}:`, {
+                position: { x: xPos, y: yPos },
+                text: para.text.substring(0, 50) + '...'
+            });
+
+            return {
+                id: `p${index}`,
+                type: 'paragraph',
+                position: { x: xPos, y: yPos },
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            };
+        });
+
+        console.log('Setting nodes:', {
+            nodeCount: paragraphNodes.length,
+            firstNode: paragraphNodes[0]
+        });
 
         setNodes(paragraphNodes);
-        nodesInitializedRef.current = true;
+        isInitializedRef.current = true;
         setIsLoading(false);
-    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
+    }, [
+        story, 
+        selectedStyle, 
+        handleGenerateCard, 
+        handleRegenerateImage, 
+        handleRegenerateAudio,
+        handleStyleChange,
+        setNodes
+    ]);
 
-    // Fetch story data if not provided
-    useEffect(() => {
-        const fetchStoryData = async () => {
-            try {
-                const response = await fetch('/api/story/data');
-                const data = await response.json();
-                if (data.success) {
-                    setStory(data.story);
-                }
-            } catch (error) {
-                console.error('Error fetching story data:', error);
-                setIsLoading(false);
-            }
-        };
-
-        if (!story && !isLoading) {
-            fetchStoryData();
-        }
-    }, [story, isLoading]);
-
-    const onConnect = useCallback((params) => {
+    const onConnect = useCallback((params: Connection) => {
         if (params.source === params.target) return;
         
         const edge = {
@@ -436,11 +464,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             }
         };
         
-        setEdges(currentEdges => addEdge(edge, currentEdges));
+        setEdges(edges => addEdge(edge, edges));
     }, [setEdges]);
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <div className="flex items-center justify-center h-full">Loading...</div>;
     }
 
     return (
@@ -457,14 +485,13 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     style={{ background: 'var(--bs-dark)' }}
                     minZoom={0.1}
                     maxZoom={4}
-                    defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
                     fitViewOptions={{ 
                         padding: 100,
                         includeHiddenNodes: true,
                         minZoom: 0.5,
                         maxZoom: 1.5
                     }}
-                    connectOnClick={true}
+                    defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
                 >
                     <Background />
                     <Controls />
