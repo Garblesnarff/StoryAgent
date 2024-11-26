@@ -44520,6 +44520,12 @@ var NodeEditor = function (_a) {
             currentNodes: nodes.length,
             isInitialized: isInitializedRef.current
         });
+        // Prevent re-initialization if nodes are already set up correctly
+        if (isInitializedRef.current && nodes.length > 0) {
+            console.log('Nodes already initialized, skipping initialization');
+            setIsLoading(false);
+            return;
+        }
         if (!(story === null || story === void 0 ? void 0 : story.paragraphs)) {
             console.error('No story paragraphs found:', {
                 story: story,
@@ -44528,6 +44534,10 @@ var NodeEditor = function (_a) {
             });
             setIsLoading(false);
             return;
+        }
+        // Reset initialization flag when story data changes
+        if (story !== initialStory) {
+            isInitializedRef.current = false;
         }
         // Skip initialization if nodes are already set up correctly
         if (isInitializedRef.current && nodes.length === story.paragraphs.length) {
@@ -44637,9 +44647,16 @@ var NodeEditor = function (_a) {
     }); }, [story, nodes]);
     var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
         var _a;
-        setNodes(function (nodes) { return nodes.map(function (node) {
-            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
-        }); });
+        setNodes(function (prevNodes) {
+            // Ensure we're not losing any nodes during the update
+            if (prevNodes.length === 0) {
+                console.warn('No nodes present during style update');
+                return prevNodes;
+            }
+            return prevNodes.map(function (node) {
+                return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
+            });
+        });
         var paragraphText = (_a = story === null || story === void 0 ? void 0 : story.paragraphs[index]) === null || _a === void 0 ? void 0 : _a.text;
         fetch('/story/update_style', {
             method: 'POST',
