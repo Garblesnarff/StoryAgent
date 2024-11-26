@@ -44506,6 +44506,7 @@ var NodeEditor = function (_a) {
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _f[0], setStory = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _g[0], setIsLoading = _g[1];
     var _h = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), hasError = _h[0], setHasError = _h[1];
+    var _j = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), isInitialized = _j[0], setIsInitialized = _j[1];
     var initializationRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
     // Validate story data and update state
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
@@ -44546,7 +44547,7 @@ var NodeEditor = function (_a) {
     }, [initialStory, setNodes, setEdges]);
     // Initialize nodes when story data changes
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || !initializationRef.current) {
+        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || isInitialized) {
             return;
         }
         try {
@@ -44583,7 +44584,7 @@ var NodeEditor = function (_a) {
             console.error('Error initializing nodes:', error);
             setHasError(true);
         }
-    }, [story, selectedStyle, isInitialized]);
+    }, [story, selectedStyle, setNodes, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, isInitialized]);
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_1, error_1;
         var _a, _b;

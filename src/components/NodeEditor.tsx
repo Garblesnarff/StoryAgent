@@ -187,6 +187,80 @@ interface NodeEditorProps {
     onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
 }
 
+const handleRegenerateAudio = useCallback(async (index: number) => {
+        if (!story?.paragraphs?.[index]) {
+            console.error('Invalid paragraph index:', index);
+            return;
+        }
+
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
+            ));
+
+            const response = await fetch('/story/regenerate_audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story.paragraphs[index].text
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setNodes(nodes => nodes.map(node => 
+                    node.id === `p${index}` ? {
+                        ...node, 
+                        data: {
+                            ...node.data,
+                            audioUrl: data.audio_url,
+                            isRegeneratingAudio: false
+                        }
+                    } : node
+                ));
+            }
+        } catch (error) {
+            console.error('Error regenerating audio:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
+            ));
+        }
+    }, [story, setNodes]);
+
+    const handleStyleChange = useCallback((index: number, newStyle: string) => {
+        if (!story?.paragraphs?.[index]) {
+            console.error('Invalid paragraph index:', index);
+            return;
+        }
+
+        setNodes(nodes => nodes.map(node => 
+            node.id === `p${index}` ? {
+                ...node,
+                data: {
+                    ...node.data,
+                    globalStyle: newStyle
+                }
+            } : node
+        ));
+        
+        fetch('/story/update_style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paragraphs: [{
+                    index,
+                    image_style: newStyle,
+                    text: story.paragraphs[index].text
+                }]
+            })
+        }).then(() => {
+            handleRegenerateImage(index);
+        }).catch(error => {
+            console.error('Error updating style:', error);
+        });
+    }, [story, handleRegenerateImage]);
+
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -264,7 +338,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     audioUrl: para.audio_url,
                     onGenerateCard: handleGenerateCard,
                     onRegenerateImage: handleRegenerateImage,
-                    onRegenerateAudio: handleRegenerateAudio,
+                    onRegenerateAudio,
                     onExpandImage: setExpandedImage,
                     onStyleChange: handleStyleChange,
                     isGenerating: false,
@@ -279,7 +353,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             console.error('Error initializing nodes:', error);
             setHasError(true);
         }
-    }, [story, selectedStyle, setNodes, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, isInitialized]);
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes, isInitialized]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         if (!story?.paragraphs?.[index]) {
@@ -325,38 +399,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story, nodes]);
 
-    const handleStyleChange = useCallback((index: number, newStyle: string) => {
-        if (!story?.paragraphs?.[index]) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-
-        setNodes(nodes => nodes.map(node => 
-            node.id === `p${index}` ? {
-                ...node,
-                data: {
-                    ...node.data,
-                    globalStyle: newStyle
-                }
-            } : node
-        ));
-        
-        fetch('/story/update_style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                paragraphs: [{
-                    index,
-                    image_style: newStyle,
-                    text: story.paragraphs[index].text
-                }]
-            })
-        }).then(() => {
-            handleRegenerateImage(index);
-        }).catch(error => {
-            console.error('Error updating style:', error);
-        });
-    }, [story, handleRegenerateImage]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
         if (!story?.paragraphs?.[index]) {
@@ -426,47 +468,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             ));
         }
     }, [story, nodes]);
-
-    const handleRegenerateAudio = useCallback(async (index: number) => {
-        if (!story?.paragraphs?.[index]) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-
-        try {
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
-            ));
-
-            const response = await fetch('/story/regenerate_audio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    index,
-                    text: story.paragraphs[index].text
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                setNodes(nodes => nodes.map(node => 
-                    node.id === `p${index}` ? {
-                        ...node, 
-                        data: {
-                            ...node.data,
-                            audioUrl: data.audio_url,
-                            isRegeneratingAudio: false
-                        }
-                    } : node
-                ));
-            }
-        } catch (error) {
-            console.error('Error regenerating audio:', error);
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
-            ));
-        }
-    }, [story]);
 
     const onConnect = useCallback((params: any) => {
         if (params.source === params.target) return;
