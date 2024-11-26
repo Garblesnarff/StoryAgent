@@ -575,9 +575,6 @@ video {
 .left-0 {
   left: 0px;
 }
-.left-1\/2 {
-  left: 50%;
-}
 .left-10 {
   left: 2.5rem;
 }
@@ -592,9 +589,6 @@ video {
 }
 .right-2 {
   right: 0.5rem;
-}
-.top-1\/2 {
-  top: 50%;
 }
 .top-1\/4 {
   top: 25%;
@@ -621,6 +615,10 @@ video {
 .mx-2 {
   margin-left: 0.5rem;
   margin-right: 0.5rem;
+}
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 .mx-auto {
   margin-left: auto;
@@ -699,8 +697,8 @@ video {
 .h-9 {
   height: 2.25rem;
 }
-.h-\[600px\] {
-  height: 600px;
+.h-96 {
+  height: 24rem;
 }
 .h-\[var\(--radix-select-trigger-height\)\] {
   height: var(--radix-select-trigger-height);
@@ -771,9 +769,6 @@ video {
 .max-w-7xl {
   max-width: 80rem;
 }
-.max-w-\[90vw\] {
-  max-width: 90vw;
-}
 .max-w-lg {
   max-width: 32rem;
 }
@@ -782,14 +777,6 @@ video {
 }
 .flex-1 {
   flex: 1 1 0%;
-}
-.-translate-x-1\/2 {
-  --tw-translate-x: -50%;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.-translate-y-1\/2 {
-  --tw-translate-y: -50%;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .translate-x-\[-50\%\] {
   --tw-translate-x: -50%;
@@ -888,6 +875,9 @@ video {
   margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
+.overflow-auto {
+  overflow: auto;
+}
 .overflow-hidden {
   overflow: hidden;
 }
@@ -911,9 +901,6 @@ video {
 }
 .border-2 {
   border-width: 2px;
-}
-.border-4 {
-  border-width: 4px;
 }
 .border-b {
   border-bottom-width: 1px;
@@ -941,9 +928,6 @@ video {
 }
 .bg-background {
   background-color: hsl(var(--background));
-}
-.bg-background\/80 {
-  background-color: hsl(var(--background) / 0.8);
 }
 .bg-black\/50 {
   background-color: rgb(0 0 0 / 0.5);
@@ -1034,10 +1018,6 @@ video {
 }
 .fill-current {
   fill: currentColor;
-}
-.object-contain {
-  -o-object-fit: contain;
-     object-fit: contain;
 }
 .object-cover {
   -o-object-fit: cover;

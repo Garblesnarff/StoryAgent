@@ -1,0 +1,245 @@
+# Node-Based Story Customization Implementation Plan
+
+## 1. UI Flow Update
+```
+Current Flow:
+Story Prompt -> Story Edit (text editing) -> Card Generation
+
+New Flow:
+Story Prompt -> Story Edit (text editing) -> Style Customization (node editor) -> Card Generation
+```
+
+## 2. Required Changes
+
+### 2.1 Add New Route and Template
+```python
+@story_bp.route('/story/customize', methods=['GET'])
+def customize_story():
+    if 'story_data' not in session:
+        return redirect(url_for('main.index'))
+        
+    return render_template('story/customize.html', story=session['story_data'])
+```
+
+### 2.2 Update Edit Page Template
+```html
+<!-- templates/story/edit.html -->
+<!-- Add at the bottom of the edit page -->
+<div class="d-flex justify-content-center gap-3 mt-4">
+    <button class="btn btn-secondary" onclick="window.location.href='/'">Back</button>
+    <button class="btn btn-primary" onclick="proceedToCustomization()">Customize Style</button>
+</div>
+
+<script>
+async function proceedToCustomization() {
+    // Save any pending changes first
+    const unsavedChanges = await saveAllChanges();
+    if (unsavedChanges) {
+        window.location.href = '/story/customize';
+    }
+}
+
+async function saveAllChanges() {
+    // Implement logic to ensure all changes are saved
+    return true;
+}
+</script>
+```
+
+### 2.3 Create Customization Page
+```html
+<!-- templates/story/customize.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <h1 class="display-4 mb-5 text-center">Style Your Story</h1>
+    <div id="node-editor" class="w-full h-screen"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/node-editor.js') }}"></script>
+<script>
+    const storyData = {{ story|tojson|safe }};
+    initializeNodeEditor({
+        containerId: 'node-editor',
+        paragraphs: storyData.paragraphs,
+        onComplete: async (customizedData) => {
+            const response = await fetch('/story/update_style', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(customizedData)
+            });
+            
+            if (response.ok) {
+                window.location.href = '/story/generate';
+            }
+        }
+    });
+</script>
+{% endblock %}
+```
+
+### 2.4 Add New Model Fields
+```python
+# models.py
+
+class Scene(db.Model):
+    # Existing fields...
+    image_style = db.Column(db.String(50))
+    mood_enhancement = db.Column(db.String(50))
+    voice_style = db.Column(db.String(50))
+    text_enhancement = db.Column(db.String(50))
+```
+
+### 2.5 Add Style Update Endpoint
+```python
+@story_bp.route('/story/update_style', methods=['POST'])
+def update_style():
+    try:
+        data = request.get_json()
+        story_id = session['story_data'].get('id')
+        
+        for paragraph_data in data['paragraphs']:
+            scene = Scene.query.filter_by(
+                story_id=story_id,
+                scene_number=paragraph_data['index']
+            ).first()
+            
+            if scene:
+                scene.image_style = paragraph_data.get('image_style')
+                scene.mood_enhancement = paragraph_data.get('mood_enhancement')
+                scene.voice_style = paragraph_data.get('voice_style')
+                scene.text_enhancement = paragraph_data.get('text_enhancement')
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+```
+
+### 2.6 Update Card Generation Logic
+```python
+@generation_bp.route('/story/generate_cards', methods=['POST'])
+def generate_cards():
+    def generate():
+        try:
+            story_data = session['story_data']
+            
+            for index, paragraph in enumerate(story_data['paragraphs']):
+                scene = Scene.query.filter_by(
+                    story_id=story_data['id'],
+                    scene_number=index
+                ).first()
+                
+                # Generate image with style
+                if scene.image_style:
+                    paragraph['image_url'] = image_service.generate_image(
+                        paragraph['text'],
+                        style=scene.image_style
+                    )
+                    
+                # Generate audio with voice style
+                if scene.voice_style:
+                    paragraph['audio_url'] = audio_service.generate_audio(
+                        paragraph['text'],
+                        voice=scene.voice_style
+                    )
+                    
+                yield json.dumps({
+                    'type': 'paragraph',
+                    'data': paragraph,
+                    'index': index
+                }) + '\n'
+                
+        except Exception as e:
+            yield json.dumps({'type': 'error', 'message': str(e)}) + '\n'
+            
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream'
+    )
+```
+
+## 3. Frontend Components
+
+### 3.1 Node Editor Component
+Create a new React component that will handle the node-based customization:
+
+```javascript
+// static/js/node-editor.js
+
+function initializeNodeEditor({ containerId, paragraphs, onComplete }) {
+    const container = document.getElementById(containerId);
+    
+    // Initialize nodes for each paragraph
+    const nodes = paragraphs.map((paragraph, index) => ({
+        id: `p-${index}`,
+        type: 'paragraph',
+        position: { x: 100, y: 100 + (index * 150) },
+        data: { text: paragraph.text }
+    }));
+    
+    // Render node editor
+    ReactDOM.render(
+        <NodeEditor
+            nodes={nodes}
+            onComplete={onComplete}
+        />,
+        container
+    );
+}
+```
+
+### 3.2 Update Progress Navigation
+```html
+<!-- Update in base.html -->
+<div class="progress-nav">
+    <div class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+        1. Story Prompt
+    </div>
+    <div class="nav-item {% if request.endpoint == 'story.edit' %}active{% endif %}">
+        2. Story Edit
+    </div>
+    <div class="nav-item {% if request.endpoint == 'story.customize' %}active{% endif %}">
+        3. Style Customization
+    </div>
+    <div class="nav-item {% if request.endpoint == 'generation.generate' %}active{% endif %}">
+        4. Card Generation
+    </div>
+</div>
+```
+
+## 4. Implementation Steps
+
+1. Add new route and template for customization page
+2. Update database schema with new style fields
+3. Create node editor React component
+4. Update navigation flow
+5. Implement style update endpoint
+6. Modify card generation to use styles
+7. Add save/load functionality for styles
+8. Test entire workflow
+
+## 5. Testing Requirements
+
+1. Test style saving/loading
+2. Verify style application in card generation
+3. Test navigation flow
+4. Verify database updates
+5. Test error handling
+6. Verify session management
+7. Test UI responsiveness
+
+## 6. Additional Considerations
+
+- Add loading states during style updates
+- Implement auto-save for style changes
+- Add preview functionality for styles
+- Implement undo/redo for style changes
+- Add validation for style combinations
