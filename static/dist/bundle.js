@@ -44497,6 +44497,77 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
 var nodeTypes = {
     paragraph: ParagraphNode
 };
+var handleRegenerateAudio = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
+    var response, data_1, error_1;
+    var _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a[index])) {
+                    console.error('Invalid paragraph index:', index);
+                    return [2 /*return*/];
+                }
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 4, , 5]);
+                setNodes(function (nodes) { return nodes.map(function (node) {
+                    return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: true }) }) : node;
+                }); });
+                return [4 /*yield*/, fetch('/story/regenerate_audio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            index: index,
+                            text: story.paragraphs[index].text
+                        })
+                    })];
+            case 2:
+                response = _b.sent();
+                return [4 /*yield*/, response.json()];
+            case 3:
+                data_1 = _b.sent();
+                if (data_1.success) {
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { audioUrl: data_1.audio_url, isRegeneratingAudio: false }) }) : node;
+                    }); });
+                }
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _b.sent();
+                console.error('Error regenerating audio:', error_1);
+                setNodes(function (nodes) { return nodes.map(function (node) {
+                    return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: false }) }) : node;
+                }); });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); }, [story, setNodes]);
+var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
+    var _a;
+    if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a[index])) {
+        console.error('Invalid paragraph index:', index);
+        return;
+    }
+    setNodes(function (nodes) { return nodes.map(function (node) {
+        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
+    }); });
+    fetch('/story/update_style', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            paragraphs: [{
+                    index: index,
+                    image_style: newStyle,
+                    text: story.paragraphs[index].text
+                }]
+        })
+    }).then(function () {
+        handleRegenerateImage(index);
+    }).catch(function (error) {
+        console.error('Error updating style:', error);
+    });
+}, [story, handleRegenerateImage]);
 var NodeEditor = function (_a) {
     var initialStory = _a.story, onStyleUpdate = _a.onStyleUpdate;
     var _b = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useNodesState)([]), nodes = _b[0], setNodes = _b[1], onNodesChange = _b[2];
@@ -44569,7 +44640,7 @@ var NodeEditor = function (_a) {
                     audioUrl: para.audio_url,
                     onGenerateCard: handleGenerateCard,
                     onRegenerateImage: handleRegenerateImage,
-                    onRegenerateAudio: handleRegenerateAudio,
+                    onRegenerateAudio: onRegenerateAudio,
                     onExpandImage: setExpandedImage,
                     onStyleChange: handleStyleChange,
                     isGenerating: false,
@@ -44584,9 +44655,9 @@ var NodeEditor = function (_a) {
             console.error('Error initializing nodes:', error);
             setHasError(true);
         }
-    }, [story, selectedStyle, setNodes, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, isInitialized]);
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes, isInitialized]);
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, data_1, error_1;
+        var response, data_2, error_2;
         var _a, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
@@ -44615,16 +44686,16 @@ var NodeEditor = function (_a) {
                     response = _c.sent();
                     return [4 /*yield*/, response.json()];
                 case 3:
-                    data_1 = _c.sent();
-                    if (data_1.success) {
+                    data_2 = _c.sent();
+                    if (data_2.success) {
                         setNodes(function (nodes) { return nodes.map(function (node) {
-                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_1.image_url, imagePrompt: data_1.image_prompt, isRegenerating: false }) }) : node;
+                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_2.image_url, imagePrompt: data_2.image_prompt, isRegenerating: false }) }) : node;
                         }); });
                     }
                     return [3 /*break*/, 5];
                 case 4:
-                    error_1 = _c.sent();
-                    console.error('Error regenerating image:', error_1);
+                    error_2 = _c.sent();
+                    console.error('Error regenerating image:', error_2);
                     setNodes(function (nodes) { return nodes.map(function (node) {
                         return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: false }) }) : node;
                     }); });
@@ -44633,33 +44704,8 @@ var NodeEditor = function (_a) {
             }
         });
     }); }, [story, nodes]);
-    var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
-        var _a;
-        if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a[index])) {
-            console.error('Invalid paragraph index:', index);
-            return;
-        }
-        setNodes(function (nodes) { return nodes.map(function (node) {
-            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
-        }); });
-        fetch('/story/update_style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                paragraphs: [{
-                        index: index,
-                        image_style: newStyle,
-                        text: story.paragraphs[index].text
-                    }]
-            })
-        }).then(function () {
-            handleRegenerateImage(index);
-        }).catch(function (error) {
-            console.error('Error updating style:', error);
-        });
-    }, [story, handleRegenerateImage]);
     var handleGenerateCard = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_2;
+        var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_3;
         var _b, _c, _d;
         return __generator(this, function (_e) {
             switch (_e.label) {
@@ -44707,10 +44753,10 @@ var NodeEditor = function (_a) {
                         if (!line.trim())
                             return "continue";
                         try {
-                            var data_2 = JSON.parse(line);
-                            if (data_2.type === 'paragraph') {
+                            var data_3 = JSON.parse(line);
+                            if (data_3.type === 'paragraph') {
                                 setNodes(function (nodes) { return nodes.map(function (node) {
-                                    return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_2.data.image_url, imagePrompt: data_2.data.image_prompt, audioUrl: data_2.data.audio_url, isGenerating: false }) }) : node;
+                                    return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_3.data.image_url, imagePrompt: data_3.data.image_prompt, audioUrl: data_3.data.audio_url, isGenerating: false }) }) : node;
                                 }); });
                             }
                         }
@@ -44725,8 +44771,8 @@ var NodeEditor = function (_a) {
                     return [3 /*break*/, 3];
                 case 5: return [3 /*break*/, 7];
                 case 6:
-                    error_2 = _e.sent();
-                    console.error('Error generating card:', error_2);
+                    error_3 = _e.sent();
+                    console.error('Error generating card:', error_3);
                     setNodes(function (nodes) { return nodes.map(function (node) {
                         return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: false }) }) : node;
                     }); });
@@ -44735,52 +44781,6 @@ var NodeEditor = function (_a) {
             }
         });
     }); }, [story, nodes]);
-    var handleRegenerateAudio = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, data_3, error_3;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    if (!((_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a[index])) {
-                        console.error('Invalid paragraph index:', index);
-                        return [2 /*return*/];
-                    }
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 4, , 5]);
-                    setNodes(function (nodes) { return nodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: true }) }) : node;
-                    }); });
-                    return [4 /*yield*/, fetch('/story/regenerate_audio', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                index: index,
-                                text: story.paragraphs[index].text
-                            })
-                        })];
-                case 2:
-                    response = _b.sent();
-                    return [4 /*yield*/, response.json()];
-                case 3:
-                    data_3 = _b.sent();
-                    if (data_3.success) {
-                        setNodes(function (nodes) { return nodes.map(function (node) {
-                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { audioUrl: data_3.audio_url, isRegeneratingAudio: false }) }) : node;
-                        }); });
-                    }
-                    return [3 /*break*/, 5];
-                case 4:
-                    error_3 = _b.sent();
-                    console.error('Error regenerating audio:', error_3);
-                    setNodes(function (nodes) { return nodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: false }) }) : node;
-                    }); });
-                    return [3 /*break*/, 5];
-                case 5: return [2 /*return*/];
-            }
-        });
-    }); }, [story]);
     var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (params) {
         if (params.source === params.target)
             return;
