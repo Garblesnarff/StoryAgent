@@ -270,10 +270,13 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     // Story Initialization Effect
     useEffect(() => {
-        console.log('Story data update:', {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] Story data update:`, {
             initialStory,
             isValid: isValidStory(initialStory),
-            paragraphCount: initialStory?.paragraphs?.length
+            paragraphCount: initialStory?.paragraphs?.length,
+            hasNodes: nodes.length > 0,
+            currentStyle: selectedStyle
         });
 
         if (!isValidStory(initialStory)) {

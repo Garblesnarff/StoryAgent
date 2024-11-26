@@ -40,7 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         console.log('Initializing node editor...');
         const storyAttr = container.getAttribute('data-story');
-        console.log('Raw story attribute:', storyAttr);
+        const isDebugMode = container.getAttribute('data-debug') === 'true';
+        
+        // Enhanced logging for debugging
+        console.log('Story Editor Initialization:', {
+            timestamp: new Date().toISOString(),
+            containerFound: !!container,
+            rawStoryAttribute: storyAttr,
+            attributeLength: storyAttr?.length,
+            debugMode: isDebugMode
+        });
         
         if (!storyAttr) {
             throw new Error('No story data attribute found');
