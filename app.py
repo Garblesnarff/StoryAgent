@@ -41,12 +41,18 @@ with app.app_context():
     import models
     db.create_all()
 
-@app.route('/')
-def index():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
     # Clear any existing story data when returning to home
-    if 'story_data' in session:
+    if path == '' and 'story_data' in session:
         session.pop('story_data', None)
-    return render_template('index.html')
+    
+    # Only serve API routes, everything else goes to React
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+        
+    return render_template('react.html')
 
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
@@ -103,7 +109,7 @@ def generate_story():
         }
         session.modified = True
         
-        logger.info("Story generation successful, redirecting to edit page")
+        logger.info("Story generation successful, redirecting to editor")
         return jsonify({'success': True, 'redirect': '/story/edit'})
         
     except Exception as e:
@@ -153,6 +159,40 @@ def check_story_data():
        (request.path.startswith('/story/') or request.path.startswith('/save')):
         flash('Please generate a story first', 'warning')
         return redirect(url_for('index'))
+
+@app.route('/')
+def index():
+    return render_template('react.html')
+
+@app.route('/create-story')
+def create_story():
+    return render_template('react.html')
+
+@app.route('/upload-book')
+def upload_book():
+    return render_template('react.html')
+
+@app.route('/story/edit')
+def story_edit():
+    return render_template('react.html')
+
+@app.route('/api/story/data')
+def get_story_data():
+    if 'story_data' not in session:
+        return jsonify({'error': 'No story data found'}), 404
+        
+    temp_id = session['story_data'].get('temp_id')
+    if not temp_id:
+        return jsonify({'error': 'No temp data found'}), 404
+        
+    temp_data = TempBookData.query.get(temp_id)
+    if not temp_data:
+        return jsonify({'error': 'Temp data not found'}), 404
+        
+    return jsonify({
+        'success': True,
+        'story': temp_data.data
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

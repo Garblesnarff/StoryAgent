@@ -1,4 +1,4 @@
-modules = ["python-3.11", "nodejs-20", "postgresql-16"]
+modules = ["python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -65,7 +65,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run build"
+args = "npx webpack --config webpack.config.js"
 
 [deployment]
 run = ["sh", "-c", "python3 app.py"]
