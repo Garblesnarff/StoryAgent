@@ -194,7 +194,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState<Story | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
-    const nodesInitializedRef = useRef(false);
+    console.log('Story data received:', initialStory);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -365,17 +365,20 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     // Initialize nodes when story data changes
     useEffect(() => {
-        if (!story?.paragraphs || nodesInitializedRef.current) {
+        if (!story?.paragraphs) {
+            console.error('No story paragraphs found:', story);
+            setIsLoading(false);
             return;
         }
 
+        console.log('Initializing nodes with story data:', story);
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
             type: 'paragraph',
             draggable: true,
             position: { 
-                x: (index % 3) * 500 + 50,
-                y: Math.floor(index / 3) * 450 + 50
+                x: (index % 2) * 600 + 100,  // Increased spacing and offset
+                y: Math.floor(index / 2) * 500 + 100  // Increased vertical spacing
             },
             data: {
                 index,
@@ -454,7 +457,13 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     style={{ background: 'var(--bs-dark)' }}
                     minZoom={0.1}
                     maxZoom={4}
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+                    fitViewOptions={{ 
+                        padding: 100,
+                        includeHiddenNodes: true,
+                        minZoom: 0.5,
+                        maxZoom: 1.5
+                    }}
                     connectOnClick={true}
                 >
                     <Background />

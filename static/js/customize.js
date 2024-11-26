@@ -43,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('No story data attribute found');
         }
         storyData = JSON.parse(storyAttr);
+        console.log('Parsed story data:', storyData);
+        
+        if (!storyData?.paragraphs?.length) {
+            throw new Error('Invalid story data structure');
+        }
     } catch (error) {
         console.error('Failed to parse story data:', error);
         showError('Failed to load story data. Please generate a story first.');
