@@ -22,14 +22,14 @@ const ParagraphNode = React.memo(({ data }) => {
                         className="btn btn-primary btn-sm flex-grow-1" 
                         onClick={() => data.onGenerateImage(data.index)}
                         disabled={data.isGeneratingImage}>
-                        <i className="bi bi-image"></i>
+                        <i className="bi bi-image me-1"></i>
                         {data.isGeneratingImage ? 'Generating...' : 'Generate Image'}
                     </button>
                     <button 
                         className="btn btn-primary btn-sm flex-grow-1" 
                         onClick={() => data.onGenerateAudio(data.index)}
                         disabled={data.isGeneratingAudio}>
-                        <i className="bi bi-volume-up"></i>
+                        <i className="bi bi-volume-up me-1"></i>
                         {data.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
                     </button>
                 </div>
