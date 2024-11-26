@@ -44349,9 +44349,10 @@ var Layout = function () {
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost" }, "Create Story")),
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/upload-book" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost" }, "Upload Book"))))),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("main", { className: "container mx-auto px-4 py-8 relative" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_breadcrumb__WEBPACK_IMPORTED_MODULE_2__.Breadcrumb, null),
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Outlet, null))));
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("main", { className: "container mx-auto px-4 py-6 relative" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "max-w-7xl mx-auto" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_ui_breadcrumb__WEBPACK_IMPORTED_MODULE_2__.Breadcrumb, null),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Outlet, null)))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Layout);
 
@@ -44891,7 +44892,9 @@ var routes = {
     "/": "Home",
     "/create-story": "Create Story",
     "/upload-book": "Upload Book",
-    "/story/edit": "Story Editor"
+    "/story/edit": "Story Editor",
+    "/story/generate": "Generate Story",
+    "/story/customize": "Customize Story"
 };
 var Breadcrumb = function () {
     var location = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_2__.useLocation)();
@@ -44905,11 +44908,11 @@ var Breadcrumb = function () {
             label: routes[path] || pathSegments[index]
         };
     }), true);
-    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("nav", { "aria-label": "Breadcrumb", className: "mb-4" },
-        react__WEBPACK_IMPORTED_MODULE_0__.createElement("ol", { className: "flex items-center space-x-2 text-sm text-muted-foreground" }, breadcrumbs.map(function (breadcrumb, index) { return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", { key: breadcrumb.path, className: "flex items-center" },
+    return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("nav", { "aria-label": "Breadcrumb", className: "mb-6" },
+        react__WEBPACK_IMPORTED_MODULE_0__.createElement("ol", { className: "flex items-center space-x-2 text-sm" }, breadcrumbs.map(function (breadcrumb, index) { return (react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", { key: breadcrumb.path, className: "flex items-center" },
             index > 0 && (react__WEBPACK_IMPORTED_MODULE_0__.createElement(lucide_react__WEBPACK_IMPORTED_MODULE_3__["default"], { className: "h-4 w-4 mx-2 text-muted-foreground/50" })),
-            react__WEBPACK_IMPORTED_MODULE_0__.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Link, { to: breadcrumb.path, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("hover:text-foreground transition-colors", index === breadcrumbs.length - 1
-                    ? "text-foreground font-medium"
+            react__WEBPACK_IMPORTED_MODULE_0__.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_4__.Link, { to: breadcrumb.path, className: (0,_lib_utils__WEBPACK_IMPORTED_MODULE_1__.cn)("hover:text-primary transition-colors duration-200", index === breadcrumbs.length - 1
+                    ? "text-primary font-semibold"
                     : "text-muted-foreground") }, breadcrumb.label))); }))));
 };
 
@@ -45688,19 +45691,19 @@ var ParticleBackground = function () {
         var ctx = canvas.getContext('2d');
         if (!ctx)
             return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        var animationFrameId;
         var particles = [];
-        var particleCount = 50;
-        for (var i = 0; i < particleCount; i++) {
-            particles.push({
+        var initParticles = function () {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = Array.from({ length: 50 }, function () { return ({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
                 size: Math.random() * 2 + 1,
                 speedX: (Math.random() - 0.5) * 0.5,
                 speedY: (Math.random() - 0.5) * 0.5
-            });
-        }
+            }); });
+        };
         var animate = function () {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             particles.forEach(function (particle) {
@@ -45715,15 +45718,20 @@ var ParticleBackground = function () {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
                 ctx.fill();
             });
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
         };
-        animate();
         var handleResize = function () {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            initParticles();
         };
+        initParticles();
+        animate();
         window.addEventListener('resize', handleResize);
-        return function () { return window.removeEventListener('resize', handleResize); };
+        return function () {
+            window.removeEventListener('resize', handleResize);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        };
     }, []);
     return react__WEBPACK_IMPORTED_MODULE_0___default().createElement("canvas", { ref: canvasRef, className: "absolute inset-0 -z-10" });
 };
@@ -45746,11 +45754,18 @@ var LandingPage = function () {
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "font-serif text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-muted-foreground" }, "Craft extraordinary tales with the power of AI, where imagination meets innovation in a symphony of storytelling magic")),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(FloatingElement, { delay: 0.4 },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex flex-col sm:flex-row gap-4 justify-center items-center" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/create-story" },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", className: "group relative px-8 py-6 text-lg hover:scale-105 transition-transform duration-200 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary" },
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "relative z-10" }, "Begin Your Journey"))),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/upload-book" },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", variant: "outline", className: "group px-8 py-6 text-lg border-2 hover:scale-105 transition-transform duration-200" }, "Upload Your Story")))),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/create-story", className: "w-full sm:w-auto" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", className: "w-full sm:w-auto group relative px-8 py-6 text-lg transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary focus:ring-2 focus:ring-primary/50 focus:outline-none" },
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "relative z-10 flex items-center justify-center" },
+                                    "Begin Your Journey",
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { className: "w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24" },
+                                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M13 7l5 5m0 0l-5 5m5-5H6" }))))),
+                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_3__.Link, { to: "/upload-book", className: "w-full sm:w-auto" },
+                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { size: "lg", variant: "outline", className: "w-full sm:w-auto group px-8 py-6 text-lg border-2 transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 hover:bg-primary/5 focus:ring-2 focus:ring-primary/50 focus:outline-none" },
+                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "flex items-center justify-center" },
+                                    "Upload Your Story",
+                                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { className: "w-5 h-5 ml-2 transform group-hover:translate-y-[-2px] transition-transform", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24" },
+                                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" }))))))),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute -z-10 inset-0 blur-3xl opacity-20 bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse" }))),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-background to-transparent" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute top-1/4 left-10 w-32 h-32 bg-purple-500/10 rounded-full blur-xl animate-pulse" }),

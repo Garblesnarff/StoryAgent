@@ -65,7 +65,7 @@ const ParticleBackground = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 -z-10" />;
+  return <canvas ref={canvasRef} className="absolute inset-0 -z-10 pointer-events-none" />;
 };
 
 const FloatingElement = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
@@ -84,7 +84,7 @@ const FloatingElement = ({ children, delay = 0 }: { children: React.ReactNode; d
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10">
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10 z-0">
       <ParticleBackground />
       
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
