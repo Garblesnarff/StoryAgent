@@ -45744,9 +45744,9 @@ var FloatingElement = function (_a) {
         } }, children));
 };
 var LandingPage = function () {
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10 z-0" },
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-primary/5 to-primary/10" },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(ParticleBackground, null),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 flex flex-col items-center justify-center text-center px-4" },
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative z-10 min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center text-center px-4" },
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "max-w-4xl mx-auto relative" },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(FloatingElement, null,
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h1", { className: "font-display text-6xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600" }, "Unleash Your Story")),

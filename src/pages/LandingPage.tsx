@@ -107,12 +107,20 @@ const LandingPage: React.FC = () => {
               <Link to="/create-story" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto group relative px-8 py-6 text-lg transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                  className="w-full sm:w-auto group relative px-8 py-6 text-lg transform transition-all duration-300 ease-out hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                  onMouseEnter={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transform = 'scale(1)';
+                  }}
                 >
                   <span className="relative z-10 flex items-center justify-center">
                     Begin Your Journey
                     <svg 
-                      className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" 
+                      className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -131,12 +139,20 @@ const LandingPage: React.FC = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto group px-8 py-6 text-lg border-2 transform transition-all duration-200 ease-out hover:scale-105 active:scale-95 hover:bg-primary/5 focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                  className="w-full sm:w-auto group px-8 py-6 text-lg border-2 transform transition-all duration-300 ease-out hover:scale-105 active:scale-95 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                  onMouseEnter={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transform = 'scale(1)';
+                  }}
                 >
                   <span className="flex items-center justify-center">
                     Upload Your Story
                     <svg 
-                      className="w-5 h-5 ml-2 transform group-hover:translate-y-[-2px] transition-transform" 
+                      className="w-5 h-5 ml-2 transform group-hover:translate-y-[-2px] transition-transform duration-300" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
