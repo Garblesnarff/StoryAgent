@@ -44655,10 +44655,13 @@ var NodeEditor = function (_a) {
     // Story Initialization Effect
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
         var _a;
-        console.log('Story data update:', {
+        var timestamp = new Date().toISOString();
+        console.log("[".concat(timestamp, "] Story data update:"), {
             initialStory: initialStory,
             isValid: isValidStory(initialStory),
-            paragraphCount: (_a = initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs) === null || _a === void 0 ? void 0 : _a.length
+            paragraphCount: (_a = initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs) === null || _a === void 0 ? void 0 : _a.length,
+            hasNodes: nodes.length > 0,
+            currentStyle: selectedStyle
         });
         if (!isValidStory(initialStory)) {
             console.error('Invalid story data:', initialStory);
