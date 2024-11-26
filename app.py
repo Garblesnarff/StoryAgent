@@ -195,4 +195,9 @@ def get_story_data():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    try:
+        logging.info("Starting Flask application...")
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    except Exception as e:
+        logging.error(f"Failed to start Flask application: {str(e)}")
+        raise

@@ -197,6 +197,112 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [story, setStory] = useState<Story | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(true);
     const isInitializedRef = useRef(false);
+    const nodesRef = useRef<Node<ParagraphData>[]>([]);
+
+    // Update nodesRef when nodes change
+    useEffect(() => {
+        nodesRef.current = nodes;
+    }, [nodes]);
+
+    // Initialize nodes when story data changes
+    useEffect(() => {
+        console.log('NodeEditor: Story data update detected', {
+            hasStory: !!story,
+            paragraphCount: story?.paragraphs?.length,
+            currentNodes: nodes.length,
+            isInitialized: isInitializedRef.current
+        });
+
+        // Prevent re-initialization if nodes are already set up correctly
+        if (isInitializedRef.current && nodes.length > 0) {
+            console.log('Nodes already initialized, skipping initialization');
+            setIsLoading(false);
+            return;
+        }
+
+        if (!story?.paragraphs) {
+            console.error('No story paragraphs found:', {
+                story,
+                type: typeof story,
+                keys: story ? Object.keys(story) : 'undefined'
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        // Reset initialization flag when story data changes
+        if (story !== initialStory) {
+            isInitializedRef.current = false;
+        }
+
+        // Skip initialization if nodes are already set up correctly
+        if (isInitializedRef.current && nodes.length === story.paragraphs.length) {
+            console.log('Nodes already properly initialized, skipping');
+            setIsLoading(false);
+            return;
+        }
+
+        console.log('Initializing nodes with story data:', {
+            paragraphCount: story.paragraphs.length,
+            firstParagraph: story.paragraphs[0]
+        });
+
+        // Calculate viewport dimensions for better positioning
+        const VIEWPORT_WIDTH = 1200;
+        const VIEWPORT_HEIGHT = 800;
+        const NODE_WIDTH = 400;
+        const NODE_HEIGHT = 300;
+        const HORIZONTAL_SPACING = NODE_WIDTH + 200;
+        const VERTICAL_SPACING = NODE_HEIGHT + 150;
+
+        try {
+            const paragraphNodes = story.paragraphs.map((para, index) => {
+                // Calculate grid-based position with proper spacing
+                const row = Math.floor(index / 2);
+                const col = index % 2;
+                const xPos = (col * HORIZONTAL_SPACING) + (VIEWPORT_WIDTH - HORIZONTAL_SPACING) / 4;
+                const yPos = (row * VERTICAL_SPACING) + 100;
+
+                console.log(`Creating node ${index}:`, {
+                    position: { x: xPos, y: yPos },
+                    text: para.text.substring(0, 50) + '...'
+                });
+
+                return {
+                    id: `p${index}`,
+                    type: 'paragraph',
+                    position: { x: xPos, y: yPos },
+                    data: {
+                        index,
+                        text: para.text,
+                        globalStyle: selectedStyle,
+                        imageUrl: para.image_url,
+                        imagePrompt: para.image_prompt,
+                        audioUrl: para.audio_url,
+                        onGenerateCard: handleGenerateCard,
+                        onRegenerateImage: handleRegenerateImage,
+                        onRegenerateAudio: handleRegenerateAudio,
+                        onExpandImage: setExpandedImage,
+                        onStyleChange: handleStyleChange,
+                        isGenerating: false,
+                        isRegenerating: false,
+                        isRegeneratingAudio: false
+                    }
+                };
+            });
+
+            setNodes(paragraphNodes);
+            isInitializedRef.current = true;
+            console.log('Successfully initialized nodes:', {
+                nodeCount: paragraphNodes.length,
+                firstNodePosition: paragraphNodes[0]?.position
+            });
+        } catch (error) {
+            console.error('Error initializing nodes:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -238,15 +344,23 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [story, nodes]);
 
     const handleStyleChange = useCallback((index: number, newStyle: string) => {
-        setNodes(nodes => nodes.map(node => 
-            node.id === `p${index}` ? {
-                ...node,
-                data: {
-                    ...node.data,
-                    globalStyle: newStyle
-                }
-            } : node
-        ));
+        setNodes(prevNodes => {
+            // Ensure we're not losing any nodes during the update
+            if (prevNodes.length === 0) {
+                console.warn('No nodes present during style update');
+                return prevNodes;
+            }
+            
+            return prevNodes.map(node => 
+                node.id === `p${index}` ? {
+                    ...node,
+                    data: {
+                        ...node.data,
+                        globalStyle: newStyle
+                    }
+                } : node
+            );
+        });
         
         const paragraphText = story?.paragraphs[index]?.text;
         
@@ -365,92 +479,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story]);
 
-    // Initialize nodes when story data changes
-    useEffect(() => {
-        console.log('NodeEditor: useEffect triggered with story:', {
-            hasStory: !!story,
-            paragraphCount: story?.paragraphs?.length,
-            isInitialized: isInitializedRef.current
-        });
-
-        if (!story?.paragraphs) {
-            console.error('No story paragraphs found:', {
-                story,
-                type: typeof story,
-                keys: story ? Object.keys(story) : 'undefined'
-            });
-            setIsLoading(false);
-            return;
-        }
-
-        if (isInitializedRef.current) {
-            console.log('Nodes already initialized, skipping...');
-            return;
-        }
-
-        console.log('Initializing nodes with story data:', {
-            paragraphCount: story.paragraphs.length,
-            firstParagraph: story.paragraphs[0]
-        });
-
-        const VIEWPORT_WIDTH = 1200;
-        const NODE_WIDTH = 400;
-        const NODE_HEIGHT = 300;
-        const HORIZONTAL_SPACING = NODE_WIDTH + 200;
-        const VERTICAL_SPACING = NODE_HEIGHT + 150;
-
-        const paragraphNodes = story.paragraphs.map((para, index) => {
-            const row = Math.floor(index / 2);
-            const col = index % 2;
-            const xPos = (col * HORIZONTAL_SPACING) + (VIEWPORT_WIDTH - HORIZONTAL_SPACING) / 4;
-            const yPos = (row * VERTICAL_SPACING) + 100;
-
-            console.log(`Creating node ${index}:`, {
-                position: { x: xPos, y: yPos },
-                text: para.text.substring(0, 50) + '...'
-            });
-
-            return {
-                id: `p${index}`,
-                type: 'paragraph',
-                position: { x: xPos, y: yPos },
-                data: {
-                    index,
-                    text: para.text,
-                    globalStyle: selectedStyle,
-                    imageUrl: para.image_url,
-                    imagePrompt: para.image_prompt,
-                    audioUrl: para.audio_url,
-                    onGenerateCard: handleGenerateCard,
-                    onRegenerateImage: handleRegenerateImage,
-                    onRegenerateAudio: handleRegenerateAudio,
-                    onExpandImage: setExpandedImage,
-                    onStyleChange: handleStyleChange,
-                    isGenerating: false,
-                    isRegenerating: false,
-                    isRegeneratingAudio: false
-                }
-            };
-        });
-
-        console.log('Setting nodes:', {
-            nodeCount: paragraphNodes.length,
-            firstNode: paragraphNodes[0]
-        });
-
-        setNodes(paragraphNodes);
-        isInitializedRef.current = true;
-        setIsLoading(false);
-    }, [
-        story, 
-        selectedStyle, 
-        handleGenerateCard, 
-        handleRegenerateImage, 
-        handleRegenerateAudio,
-        handleStyleChange,
-        setNodes
-    ]);
-
     const onConnect = useCallback((params: Connection) => {
         if (params.source === params.target) return;
         
@@ -468,7 +496,14 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [setEdges]);
 
     if (isLoading) {
-        return <div className="flex items-center justify-center h-full">Loading...</div>;
+        return (
+            <div className="flex items-center justify-center h-[600px] bg-background">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-foreground">Initializing editor...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -485,13 +520,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     style={{ background: 'var(--bs-dark)' }}
                     minZoom={0.1}
                     maxZoom={4}
-                    fitViewOptions={{ 
-                        padding: 100,
-                        includeHiddenNodes: true,
-                        minZoom: 0.5,
-                        maxZoom: 1.5
-                    }}
-                    defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
                 >
                     <Background />
                     <Controls />

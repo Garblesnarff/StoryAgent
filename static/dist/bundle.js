@@ -44431,7 +44431,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
-var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (_a) {
+var ParagraphNode = function (_a) {
     var data = _a.data;
     var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
     var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.globalStyle || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
@@ -44493,7 +44493,7 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M16 16h5v5" })),
                     "Regenerate Audio")))),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Right, className: "!bg-primary" })));
-});
+};
 var nodeTypes = {
     paragraph: ParagraphNode
 };
@@ -44504,8 +44504,95 @@ var NodeEditor = function (_a) {
     var _d = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('realistic'), selectedStyle = _d[0], setSelectedStyle = _d[1];
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _e[0], setExpandedImage = _e[1];
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(initialStory), story = _f[0], setStory = _f[1];
-    var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _g[0], setIsLoading = _g[1];
-    console.log('Story data received:', initialStory);
+    var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(true), isLoading = _g[0], setIsLoading = _g[1];
+    var isInitializedRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
+    var nodesRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)([]);
+    // Update nodesRef when nodes change
+    (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+        nodesRef.current = nodes;
+    }, [nodes]);
+    // Initialize nodes when story data changes
+    (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+        var _a, _b;
+        console.log('NodeEditor: Story data update detected', {
+            hasStory: !!story,
+            paragraphCount: (_a = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _a === void 0 ? void 0 : _a.length,
+            currentNodes: nodes.length,
+            isInitialized: isInitializedRef.current
+        });
+        if (!(story === null || story === void 0 ? void 0 : story.paragraphs)) {
+            console.error('No story paragraphs found:', {
+                story: story,
+                type: typeof story,
+                keys: story ? Object.keys(story) : 'undefined'
+            });
+            setIsLoading(false);
+            return;
+        }
+        // Skip initialization if nodes are already set up correctly
+        if (isInitializedRef.current && nodes.length === story.paragraphs.length) {
+            console.log('Nodes already properly initialized, skipping');
+            setIsLoading(false);
+            return;
+        }
+        console.log('Initializing nodes with story data:', {
+            paragraphCount: story.paragraphs.length,
+            firstParagraph: story.paragraphs[0]
+        });
+        // Calculate viewport dimensions for better positioning
+        var VIEWPORT_WIDTH = 1200;
+        var VIEWPORT_HEIGHT = 800;
+        var NODE_WIDTH = 400;
+        var NODE_HEIGHT = 300;
+        var HORIZONTAL_SPACING = NODE_WIDTH + 200;
+        var VERTICAL_SPACING = NODE_HEIGHT + 150;
+        try {
+            var paragraphNodes = story.paragraphs.map(function (para, index) {
+                // Calculate grid-based position with proper spacing
+                var row = Math.floor(index / 2);
+                var col = index % 2;
+                var xPos = (col * HORIZONTAL_SPACING) + (VIEWPORT_WIDTH - HORIZONTAL_SPACING) / 4;
+                var yPos = (row * VERTICAL_SPACING) + 100;
+                console.log("Creating node ".concat(index, ":"), {
+                    position: { x: xPos, y: yPos },
+                    text: para.text.substring(0, 50) + '...'
+                });
+                return {
+                    id: "p".concat(index),
+                    type: 'paragraph',
+                    position: { x: xPos, y: yPos },
+                    data: {
+                        index: index,
+                        text: para.text,
+                        globalStyle: selectedStyle,
+                        imageUrl: para.image_url,
+                        imagePrompt: para.image_prompt,
+                        audioUrl: para.audio_url,
+                        onGenerateCard: handleGenerateCard,
+                        onRegenerateImage: handleRegenerateImage,
+                        onRegenerateAudio: handleRegenerateAudio,
+                        onExpandImage: setExpandedImage,
+                        onStyleChange: handleStyleChange,
+                        isGenerating: false,
+                        isRegenerating: false,
+                        isRegeneratingAudio: false
+                    }
+                };
+            });
+            setNodes(paragraphNodes);
+            isInitializedRef.current = true;
+            console.log('Successfully initialized nodes:', {
+                nodeCount: paragraphNodes.length,
+                firstNodePosition: (_b = paragraphNodes[0]) === null || _b === void 0 ? void 0 : _b.position
+            });
+        }
+        catch (error) {
+            console.error('Error initializing nodes:', error);
+        }
+        finally {
+            setIsLoading(false);
+        }
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, setNodes]);
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_1, error_1;
         var _a;
@@ -44678,74 +44765,6 @@ var NodeEditor = function (_a) {
             }
         });
     }); }, [story]);
-    // Initialize nodes when story data changes
-    (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        if (!(story === null || story === void 0 ? void 0 : story.paragraphs)) {
-            console.error('No story paragraphs found:', story);
-            setIsLoading(false);
-            return;
-        }
-        console.log('Initializing nodes with story data:', story);
-        var paragraphNodes = story.paragraphs.map(function (para, index) { return ({
-            id: "p".concat(index),
-            type: 'paragraph',
-            draggable: true,
-            position: {
-                x: (index % 2) * 600 + 100, // Increased spacing and offset
-                y: Math.floor(index / 2) * 500 + 100 // Increased vertical spacing
-            },
-            data: {
-                index: index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                onStyleChange: handleStyleChange,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
-            }
-        }); });
-        setNodes(paragraphNodes);
-        nodesInitializedRef.current = true;
-        setIsLoading(false);
-    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
-    // Fetch story data if not provided
-    (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        var fetchStoryData = function () { return __awaiter(void 0, void 0, void 0, function () {
-            var response, data, error_4;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 3, , 4]);
-                        return [4 /*yield*/, fetch('/api/story/data')];
-                    case 1:
-                        response = _a.sent();
-                        return [4 /*yield*/, response.json()];
-                    case 2:
-                        data = _a.sent();
-                        if (data.success) {
-                            setStory(data.story);
-                        }
-                        return [3 /*break*/, 4];
-                    case 3:
-                        error_4 = _a.sent();
-                        console.error('Error fetching story data:', error_4);
-                        setIsLoading(false);
-                        return [3 /*break*/, 4];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        }); };
-        if (!story && !isLoading) {
-            fetchStoryData();
-        }
-    }, [story, isLoading]);
     var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (params) {
         if (params.source === params.target)
             return;
@@ -44753,19 +44772,17 @@ var NodeEditor = function (_a) {
                 stroke: 'var(--bs-primary)',
                 strokeWidth: 2,
             } });
-        setEdges(function (currentEdges) { return (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.addEdge)(edge, currentEdges); });
+        setEdges(function (edges) { return (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.addEdge)(edge, edges); });
     }, [setEdges]);
     if (isLoading) {
-        return react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", null, "Loading...");
+        return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center h-[600px] bg-background" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex flex-col items-center gap-4" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" }),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-foreground" }, "Initializing editor..."))));
     }
     return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 0.8 }, fitViewOptions: {
-                    padding: 100,
-                    includeHiddenNodes: true,
-                    minZoom: 0.5,
-                    maxZoom: 1.5
-                }, connectOnClick: true },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 }, connectOnClick: true },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Background, null),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_7__.Controls, null))),
         expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "modal-backdrop", onClick: function () { return setExpandedImage(null); } },

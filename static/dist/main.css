@@ -687,6 +687,9 @@ video {
 .h-9 {
   height: 2.25rem;
 }
+.h-\[600px\] {
+  height: 600px;
+}
 .h-\[var\(--radix-select-trigger-height\)\] {
   height: var(--radix-select-trigger-height);
 }
@@ -882,6 +885,9 @@ video {
 }
 .border-2 {
   border-width: 2px;
+}
+.border-4 {
+  border-width: 4px;
 }
 .border-b {
   border-bottom-width: 1px;
@@ -1117,6 +1123,9 @@ video {
 }
 .text-destructive-foreground {
   color: hsl(var(--destructive-foreground));
+}
+.text-foreground {
+  color: hsl(var(--foreground));
 }
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
