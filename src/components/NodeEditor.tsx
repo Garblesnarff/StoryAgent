@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useState, useCallback, useLayoutEffect } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -13,41 +13,7 @@ import ReactFlow, {
     ReactFlowProvider
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
-
-// Error Boundary Component
-class ReactFlowErrorBoundary extends React.Component<
-    { children: React.ReactNode },
-    { hasError: boolean; error: Error | null }
-> {
-    constructor(props: { children: React.ReactNode }) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error: Error) {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error('[ReactFlowErrorBoundary] Error:', error, errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div className="p-4 border border-red-500 rounded bg-red-50">
-                    <h3 className="text-red-700 font-bold">Something went wrong with the story editor</h3>
-                    <p className="text-red-600">Please try refreshing the page</p>
-                    <Button onClick={() => window.location.reload()}>Refresh Page</Button>
-                </div>
-            );
-        }
-        return this.props.children;
-    }
-}
 
 // Loading Component
 const LoadingState = () => (
@@ -74,6 +40,20 @@ interface NodeData {
     isGenerating: boolean;
     isRegenerating: boolean;
     isRegeneratingAudio: boolean;
+}
+
+interface Story {
+    paragraphs: Array<{
+        text: string;
+        image_url?: string;
+        image_prompt?: string;
+        audio_url?: string;
+    }>;
+}
+
+interface NodeEditorProps {
+    story?: Story;
+    onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
 }
 
 const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
@@ -112,7 +92,7 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
                                 }}
                             />
                             {showPrompt && data.imagePrompt && (
-                                <div className="absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200">
+                                <div className="absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto">
                                     <p className="text-sm">{data.imagePrompt}</p>
                                 </div>
                             )}
@@ -122,8 +102,7 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
                                     size="sm"
                                     className="flex-1"
                                     onClick={() => data.onRegenerateImage(data.index)}
-                                    disabled={data.isRegenerating}
-                                >
+                                    disabled={data.isRegenerating}>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                                         <path d="M3 3v5h5" />
@@ -135,15 +114,13 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setShowPrompt(!showPrompt)}
-                                >
+                                    onClick={() => setShowPrompt(!showPrompt)}>
                                     {showPrompt ? 'Hide Prompt' : 'Show Prompt'}
                                 </Button>
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => data.onExpandImage(data.imageUrl!)}
-                                >
+                                    onClick={() => data.onExpandImage(data.imageUrl!)}>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
                                     </svg>
@@ -160,8 +137,7 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
                                 controls
                                 className="w-full"
                                 key={data.audioUrl}
-                                onError={(e) => console.error('[ParagraphNode] Audio failed to load:', data.audioUrl)}
-                            >
+                                onError={(e) => console.error('[ParagraphNode] Audio failed to load:', data.audioUrl)}>
                                 <source src={data.audioUrl} type="audio/wav" />
                                 Your browser does not support the audio element.
                             </audio>
@@ -188,20 +164,6 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
     );
 });
 
-interface Story {
-    paragraphs: Array<{
-        text: string;
-        image_url?: string;
-        image_prompt?: string;
-        audio_url?: string;
-    }>;
-}
-
-interface NodeEditorProps {
-    story?: Story;
-    onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
-}
-
 const nodeTypes = {
     paragraph: ParagraphNode
 };
@@ -215,7 +177,6 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const initializationRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -229,7 +190,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 body: JSON.stringify({
                     index,
                     text: initialStory?.paragraphs[index].text,
-                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
+                    style: selectedStyle
                 })
             });
 
@@ -253,7 +214,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
             ));
         }
-    }, [initialStory, nodes]);
+    }, [initialStory, selectedStyle]);
 
     const handleRegenerateAudio = useCallback(async (index: number) => {
         try {
@@ -308,7 +269,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 body: JSON.stringify({
                     index,
                     text: initialStory.paragraphs[index].text,
-                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
+                    style: selectedStyle
                 })
             });
 
@@ -335,7 +296,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
             ));
         }
-    }, [initialStory, nodes]);
+    }, [initialStory, selectedStyle]);
 
     const handleStyleChange = useCallback((index: number, newStyle: string) => {
         setNodes(nodes => nodes.map(node => 
@@ -354,18 +315,15 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [onStyleUpdate]);
 
     useLayoutEffect(() => {
-        console.log('[NodeEditor] Initialization started');
-        if (initializationRef.current) return;
+        console.log('[NodeEditor] Initializing with story:', initialStory);
         
         if (!initialStory?.paragraphs) {
-            console.error('[NodeEditor] No story data available');
             setError('Story data is missing');
             setIsLoading(false);
             return;
         }
 
         try {
-            console.log('[NodeEditor] Setting up nodes with story:', initialStory);
             const newNodes = initialStory.paragraphs.map((para, index) => ({
                 id: `p${index}`,
                 type: 'paragraph',
@@ -388,24 +346,28 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 }
             }));
             
-            console.log('[NodeEditor] Setting initial nodes:', newNodes);
+            console.log('[NodeEditor] Setting up nodes:', newNodes);
             setNodes(newNodes);
-            initializationRef.current = true;
+            setIsLoading(false);
         } catch (err) {
-            console.error('[NodeEditor] Initialization error:', err);
+            console.error('[NodeEditor] Error setting up nodes:', err);
             setError('Failed to initialize story editor');
-        } finally {
             setIsLoading(false);
         }
     }, [initialStory, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange]);
 
     const onConnect = useCallback((params: Connection) => {
-        setEdges(edges => addEdge({
+        const edge = {
             ...params,
             type: 'smoothstep',
             animated: true,
-            style: { stroke: 'var(--primary)', strokeWidth: 2 }
-        }, edges));
+            style: { 
+                stroke: 'var(--primary)',
+                strokeWidth: 2,
+            }
+        };
+        
+        setEdges(edges => addEdge(edge, edges));
     }, [setEdges]);
 
     if (error) {
@@ -413,8 +375,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
                 <div className="text-center space-y-4">
                     <p className="text-red-500">{error}</p>
-                    <Button onClick={() => window.location.href = '/'}>
-                        Return to Home
+                    <Button onClick={() => window.location.reload()}>
+                        Retry
                     </Button>
                 </div>
             </div>
@@ -425,61 +387,48 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         return <LoadingState />;
     }
 
-    console.log('[NodeEditor] Current state:', { isLoading, error, nodes });
-
     return (
-        <ReactFlowProvider>
-            <ReactFlowErrorBoundary>
-                <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
-                        nodeTypes={nodeTypes}
-                        fitView
-                        style={{ background: 'var(--background)' }}
-                        minZoom={0.1}
-                        maxZoom={4}
-                        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    >
-                        <Background />
-                        <Controls />
-                    </ReactFlow>
-                </div>
-            </ReactFlowErrorBoundary>
+        <>
+            <div style={{ width: '100%', height: '600px' }} className="bg-background border rounded-lg">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}>
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </div>
             
             {expandedImage && (
                 <div 
                     className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                    onClick={() => setExpandedImage(null)}
-                >
+                    onClick={() => setExpandedImage(null)}>
                     <div 
-                        className="relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <Button
+                        className="bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] overflow-auto"
+                        onClick={e => e.stopPropagation()}>
+                        <Button 
                             variant="ghost"
                             size="sm"
-                            className="absolute right-2 top-2"
-                            onClick={() => setExpandedImage(null)}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            className="absolute top-2 right-2"
+                            onClick={() => setExpandedImage(null)}>
+                            ×
                         </Button>
-                        <div className="mt-6">
-                            <img 
-                                src={expandedImage} 
-                                alt="Full preview" 
-                                className="max-w-full max-h-[80vh] object-contain mx-auto"
-                            />
-                        </div>
+                        <img 
+                            src={expandedImage} 
+                            alt="Full preview" 
+                            className="max-w-full h-auto"
+                        />
                     </div>
                 </div>
             )}
-        </ReactFlowProvider>
+        </>
     );
 };
 

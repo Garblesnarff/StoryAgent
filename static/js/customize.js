@@ -32,76 +32,36 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-function validateStoryData(data) {
-    console.log('[customize.js] Validating story data:', data);
-    
-    if (!data) {
-        throw new Error('No story data provided');
-    }
-    
-    if (!Array.isArray(data.paragraphs)) {
-        throw new Error('Invalid story format: paragraphs must be an array');
-    }
-    
-    if (data.paragraphs.length === 0) {
-        throw new Error('Story has no paragraphs');
-    }
-    
-    data.paragraphs.forEach((para, index) => {
-        if (!para.text) {
-            throw new Error(`Paragraph ${index + 1} is missing text content`);
-        }
-    });
-    
-    return true;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[customize.js] DOM Content Loaded');
-    
     const container = document.getElementById('node-editor');
     if (!container) {
         console.error('[customize.js] Node editor container not found');
         return;
     }
 
-    let storyData;
     try {
         const storyAttr = container.getAttribute('data-story');
-        console.log('[customize.js] Raw story data attribute:', storyAttr);
+        console.log('[customize.js] Raw story data:', storyAttr);
         
         if (!storyAttr) {
             throw new Error('No story data attribute found');
         }
         
-        storyData = JSON.parse(storyAttr);
+        const storyData = JSON.parse(storyAttr);
         console.log('[customize.js] Parsed story data:', storyData);
         
-        if (!storyData || !storyData.paragraphs) {
+        // Validate story data structure
+        if (!storyData || !storyData.paragraphs || !Array.isArray(storyData.paragraphs)) {
             throw new Error('Invalid story data structure');
         }
 
-        validateStoryData(storyData);
-    } catch (error) {
-        console.error('[customize.js] Story data error:', error);
-        container.innerHTML = `
-            <div class="alert alert-danger">
-                <h4>Story Editor Error</h4>
-                <p>${error.message}</p>
-                <button onclick="window.location.href='/'">Return to Home</button>
-            </div>
-        `;
-        return;
-    }
-
-    // Only proceed with React rendering if we have valid data
-    try {
-        console.log('[customize.js] Creating React root and rendering NodeEditor');
+        // Create root and render only if we have valid data
         const root = createRoot(container);
         root.render(
             <React.StrictMode>
                 <ErrorBoundary>
                     <NodeEditor 
+                        key={storyData.id || 'story'} 
                         story={storyData} 
                         onStyleUpdate={(updatedParagraphs) => {
                             console.log('[customize.js] Updating paragraph styles:', updatedParagraphs);
@@ -154,11 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </React.StrictMode>
         );
     } catch (error) {
-        console.error('[customize.js] Error rendering NodeEditor:', error);
+        console.error('[customize.js] Story data error:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
                 <h4>Story Editor Error</h4>
-                <p>Failed to initialize story editor</p>
+                <p>${error.message}</p>
                 <button onclick="window.location.href='/'">Return to Home</button>
             </div>
         `;
