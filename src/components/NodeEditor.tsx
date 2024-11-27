@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useState, useCallback, useLayoutEffect } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -210,9 +210,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    
-    const initRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -350,37 +349,45 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [onStyleUpdate]);
 
-    // Use useLayoutEffect for synchronous updates
     useLayoutEffect(() => {
-        if (!initialStory?.paragraphs || initRef.current) return;
+        if (!initialStory?.paragraphs) {
+            setError('No story data available');
+            setIsLoading(false);
+            return;
+        }
         
-        console.log('Initializing nodes with story:', initialStory);
-        const nodes = initialStory.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                onStyleChange: handleStyleChange,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
-            }
-        }));
-        
-        console.log('Setting initial nodes:', nodes);
-        setNodes(nodes);
-        initRef.current = true;
-        setIsLoading(false);
+        try {
+            console.log('Initializing nodes with story:', initialStory);
+            const nodes = initialStory.paragraphs.map((para, index) => ({
+                id: `p${index}`,
+                type: 'paragraph',
+                position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
+                data: {
+                    index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            }));
+            
+            console.log('Setting initial nodes:', nodes);
+            setNodes(nodes);
+            setIsLoading(false);
+        } catch (err) {
+            console.error('Error initializing nodes:', err);
+            setError('Failed to initialize story editor');
+            setIsLoading(false);
+        }
     }, [initialStory, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange]);
 
     const onConnect = useCallback((params: Connection) => {
@@ -392,54 +399,64 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }, edges));
     }, [setEdges]);
 
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
+                <div className="text-center space-y-4">
+                    <p className="text-red-500">{error}</p>
+                    <Button onClick={() => window.location.reload()}>
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return <LoadingState />;
     }
 
     return (
-        <>
-            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <ReactFlowErrorBoundary>
-                    <ReactFlowProvider>
-                        <ReactFlow
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            nodeTypes={nodeTypes}
-                            fitView
-                            style={{ background: 'var(--background)' }}
-                            minZoom={0.1}
-                            maxZoom={4}
-                            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                        >
-                            <Background />
-                            <Controls />
-                        </ReactFlow>
-                    </ReactFlowProvider>
-                </ReactFlowErrorBoundary>
-            </div>
+        <ReactFlowErrorBoundary>
+            <ReactFlowProvider>
+                <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        nodeTypes={nodeTypes}
+                        fitView
+                        style={{ background: 'var(--bs-dark)' }}
+                        minZoom={0.1}
+                        maxZoom={4}
+                        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                        connectOnClick={true}
+                    >
+                        <Background />
+                        <Controls />
+                    </ReactFlow>
+                </div>
+            </ReactFlowProvider>
             
             {expandedImage && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setExpandedImage(null)}>
-                    <div className="bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-end mb-2">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setExpandedImage(null)}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M18 6L6 18M6 6l12 12" />
-                                </svg>
-                            </Button>
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
                         </div>
-                        <img src={expandedImage} alt="Full preview" className="max-h-[calc(90vh-4rem)] w-auto mx-auto" />
                     </div>
                 </div>
             )}
-        </>
+        </ReactFlowErrorBoundary>
     );
 };
 

@@ -36,8 +36,9 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-// Validate story data structure
 function validateStoryData(data) {
+    console.log('Validating story data:', data);
+    
     if (!data) {
         throw new Error('No story data provided');
     }
@@ -59,7 +60,6 @@ function validateStoryData(data) {
     return true;
 }
 
-// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[customize.js] Initializing story editor');
     
@@ -67,6 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) {
         console.error('Node editor container not found');
         return;
+    }
+
+    function showError(message) {
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <h4 class="alert-heading">Story Editor Error</h4>
+                <p>${message}</p>
+                <hr>
+                <p class="mb-0">Redirecting to story generation page...</p>
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 3000);
     }
 
     // Parse and validate story data
@@ -86,20 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('[customize.js] Failed to parse or validate story data:', error);
         showError(error.message);
         return;
-    }
-
-    function showError(message) {
-        container.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <h4 class="alert-heading">Story Editor Error</h4>
-                <p>${message}</p>
-                <hr>
-                <p class="mb-0">Redirecting to story generation page...</p>
-            </div>
-        `;
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 3000);
     }
 
     // Create root and render with ErrorBoundary
