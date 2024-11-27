@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useCallback, useLayoutEffect, useRef } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -21,6 +21,16 @@ const LoadingState = () => (
         <div className="space-y-4 text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
             <p className="text-muted-foreground">Loading story editor...</p>
+        </div>
+    </div>
+);
+
+// Error Component
+const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }) => (
+    <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
+        <div className="text-center space-y-4">
+            <p className="text-red-500">{message}</p>
+            <Button onClick={onRetry}>Retry</Button>
         </div>
     </div>
 );
@@ -57,8 +67,6 @@ interface NodeEditorProps {
 }
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    console.log('[NodeEditor] Props received:', { initialStory });
-    
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
@@ -66,10 +74,14 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
+    const initializationAttempts = useRef(0);
 
+    // Initialize nodes with proper error handling and retries
     useLayoutEffect(() => {
+        console.log('[NodeEditor] Initialization attempt:', initializationAttempts.current);
+        
         if (!initialStory?.paragraphs) {
-            console.error('[NodeEditor] No story data available');
+            console.error('[NodeEditor] Story data is missing');
             setError('Story data is missing');
             setIsLoading(false);
             return;
@@ -77,6 +89,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
         try {
             console.log('[NodeEditor] Setting up nodes for story:', initialStory);
+            
             const newNodes = initialStory.paragraphs.map((para, index) => ({
                 id: `p${index}`,
                 type: 'paragraph',
@@ -96,21 +109,39 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     isGenerating: false,
                     isRegenerating: false,
                     isRegeneratingAudio: false
-                }
+                },
+                sourcePosition: Position.Right,
+                targetPosition: Position.Left,
             }));
-            
-            console.log('[NodeEditor] Setting up nodes:', newNodes);
+
+            console.log('[NodeEditor] Created nodes:', newNodes);
             setNodes(newNodes);
             setIsInitialized(true);
+            setError(null);
+            initializationAttempts.current += 1;
+
         } catch (err) {
             console.error('[NodeEditor] Error setting up nodes:', err);
             setError('Failed to initialize story editor');
+            
+            // Retry initialization if under threshold
+            if (initializationAttempts.current < 3) {
+                setTimeout(() => {
+                    initializationAttempts.current += 1;
+                    setIsLoading(true);
+                }, 1000);
+            }
         } finally {
             setIsLoading(false);
         }
     }, [initialStory, selectedStyle]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
+        if (!initialStory?.paragraphs?.[index]) {
+            console.error('[NodeEditor] Invalid paragraph index for image regeneration');
+            return;
+        }
+
         try {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
@@ -121,7 +152,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     index,
-                    text: initialStory?.paragraphs[index].text,
+                    text: initialStory.paragraphs[index].text,
                     style: selectedStyle
                 })
             });
@@ -149,6 +180,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [initialStory, selectedStyle]);
 
     const handleRegenerateAudio = useCallback(async (index: number) => {
+        if (!initialStory?.paragraphs?.[index]) {
+            console.error('[NodeEditor] Invalid paragraph index for audio regeneration');
+            return;
+        }
+
         try {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
@@ -159,7 +195,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     index,
-                    text: initialStory?.paragraphs[index].text
+                    text: initialStory.paragraphs[index].text
                 })
             });
 
@@ -186,7 +222,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     const handleGenerateCard = useCallback(async (index: number) => {
         if (!initialStory?.paragraphs?.[index]?.text) {
-            console.error('[NodeEditor] No text found for paragraph');
+            console.error('[NodeEditor] Invalid paragraph data for card generation');
             return;
         }
 
@@ -247,7 +283,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [onStyleUpdate]);
 
     const onConnect = useCallback((params: Connection) => {
-        const edge = {
+        const edge: Edge = {
             ...params,
             type: 'smoothstep',
             animated: true,
@@ -262,14 +298,14 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     if (error) {
         return (
-            <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
-                <div className="text-center space-y-4">
-                    <p className="text-red-500">{error}</p>
-                    <Button onClick={() => window.location.reload()}>
-                        Retry
-                    </Button>
-                </div>
-            </div>
+            <ErrorState 
+                message={error} 
+                onRetry={() => {
+                    setError(null);
+                    setIsLoading(true);
+                    initializationAttempts.current = 0;
+                }} 
+            />
         );
     }
 
@@ -279,20 +315,23 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     return (
         <div style={{ width: '100%', height: '600px' }} className="bg-background border rounded-lg">
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeTypes}
-                fitView
-                minZoom={0.1}
-                maxZoom={4}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}>
-                <Background />
-                <Controls />
-            </ReactFlow>
+            <ReactFlowProvider>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    minZoom={0.1}
+                    maxZoom={4}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}>
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </ReactFlowProvider>
+            
             {expandedImage && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] overflow-auto">

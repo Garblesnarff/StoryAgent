@@ -33,6 +33,8 @@ class ErrorBoundary extends React.Component {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[customize.js] Initializing Node Editor...');
+    
     const container = document.getElementById('node-editor');
     if (!container) {
         console.error('[customize.js] Node editor container not found');
@@ -40,15 +42,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        // Add debug logging
-        console.log('[customize.js] Container found:', container);
-        console.log('[customize.js] Data story attribute:', container.getAttribute('data-story'));
-        
+        // Get and validate story data
         const storyAttr = container.getAttribute('data-story');
+        console.log('[customize.js] Raw story data:', storyAttr);
+
         if (!storyAttr) {
-            throw new Error('No story data attribute found');
+            throw new Error('Story data is missing');
         }
-        
+
         let storyData;
         try {
             storyData = JSON.parse(storyAttr);
@@ -57,13 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('[customize.js] Failed to parse story data:', parseError);
             throw new Error('Invalid story data format');
         }
-        
+
         if (!storyData || !storyData.paragraphs || !Array.isArray(storyData.paragraphs)) {
             console.error('[customize.js] Invalid story structure:', storyData);
             throw new Error('Invalid story data structure');
         }
 
-        // Add key with timestamp to force remount
+        // Create root and render with strict validation
         const root = createRoot(container);
         root.render(
             <React.StrictMode>
@@ -87,12 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             })
                             .then(response => {
                                 if (!response.ok) {
-                                    if (response.status === 403) {
-                                        throw new Error('Session expired. Please generate a new story.');
-                                    }
-                                    return response.json().then(data => {
-                                        throw new Error(data.error || 'Failed to update style');
-                                    });
+                                    throw new Error(response.status === 403 
+                                        ? 'Session expired. Please generate a new story.'
+                                        : 'Failed to update style');
                                 }
                                 return response.json();
                             })
@@ -104,23 +102,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             })
                             .catch(error => {
                                 console.error('[customize.js] Error updating style:', error);
-                                if (error.message.includes('Session expired')) {
-                                    container.innerHTML = `
-                                        <div class="alert alert-warning">
-                                            <h4>Session Expired</h4>
-                                            <p>${error.message}</p>
-                                            <button onclick="window.location.href='/'">Return to Home</button>
-                                        </div>
-                                    `;
-                                } else {
-                                    alert(error.message || 'Failed to update style');
-                                }
+                                const isSessionExpired = error.message.includes('Session expired');
+                                
+                                container.innerHTML = `
+                                    <div class="alert alert-${isSessionExpired ? 'warning' : 'danger'}">
+                                        <h4>${isSessionExpired ? 'Session Expired' : 'Error'}</h4>
+                                        <p>${error.message}</p>
+                                        <button onclick="window.location.href='/'">Return to Home</button>
+                                    </div>
+                                `;
                             });
                         }}
                     />
                 </ErrorBoundary>
             </React.StrictMode>
         );
+
+        console.log('[customize.js] NodeEditor mounted successfully');
+
     } catch (error) {
         console.error('[customize.js] Story editor error:', error);
         container.innerHTML = `

@@ -44402,56 +44402,6 @@ var LoadingState = function () { return (react__WEBPACK_IMPORTED_MODULE_0___defa
     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4 text-center" },
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" }),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-muted-foreground" }, "Loading story editor...")))); };
-var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (_a) {
-    var data = _a.data;
-    var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "paragraph-node ".concat(data.globalStyle, "-style") },
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "target", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Left, className: "!bg-primary" }),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-lg font-bold mb-2 text-primary" },
-            "Paragraph ",
-            data.index + 1),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto" }, data.text),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "space-y-4" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { className: "w-full", onClick: function () { return data.onGenerateCard(data.index); }, disabled: data.isGenerating }, data.isGenerating ? (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center gap-2" },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" }),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", null, "Generating..."))) : 'Generate Card'),
-            data.imageUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative rounded-lg overflow-hidden border border-border" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "w-full h-auto object-cover", onError: function (e) {
-                            console.error('[ParagraphNode] Image failed to load:', data.imageUrl);
-                            e.currentTarget.src = '/static/placeholder.png';
-                        } }),
-                    showPrompt && data.imagePrompt && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm" }, data.imagePrompt))),
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex gap-2 p-2" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", className: "flex-1", onClick: function () { return data.onRegenerateImage(data.index); }, disabled: data.isRegenerating },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4 mr-2", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }),
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M3 3v5h5" }),
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" }),
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M16 16h5v5" })),
-                            "Regenerate"),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", onClick: function () { return setShowPrompt(!showPrompt); } }, showPrompt ? 'Hide Prompt' : 'Show Prompt'),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", onClick: function () { return data.onExpandImage(data.imageUrl); } },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-                                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" }))))))),
-            data.audioUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "audio-player mt-4" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("audio", { controls: true, className: "w-full", key: data.audioUrl, onError: function (e) { return console.error('[ParagraphNode] Audio failed to load:', data.audioUrl); } },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("source", { src: data.audioUrl, type: "audio/wav" }),
-                        "Your browser does not support the audio element.")),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", className: "w-full mt-2", onClick: function () { return data.onRegenerateAudio(data.index); }, disabled: data.isRegeneratingAudio },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-4 h-4 mr-2", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M3 3v5h5" }),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" }),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M16 16h5v5" })),
-                    "Regenerate Audio")))),
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_3__.Position.Right, className: "!bg-primary" })));
-});
-var nodeTypes = {
-    paragraph: ParagraphNode
-};
 var NodeEditor = function (_a) {
     var initialStory = _a.story, onStyleUpdate = _a.onStyleUpdate;
     console.log('[NodeEditor] Props received:', { initialStory: initialStory });
@@ -44461,6 +44411,49 @@ var NodeEditor = function (_a) {
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _e[0], setExpandedImage = _e[1];
     var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), error = _f[0], setError = _f[1];
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(true), isLoading = _g[0], setIsLoading = _g[1];
+    var _h = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), isInitialized = _h[0], setIsInitialized = _h[1];
+    (0,react__WEBPACK_IMPORTED_MODULE_0__.useLayoutEffect)(function () {
+        if (!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs)) {
+            console.error('[NodeEditor] No story data available');
+            setError('Story data is missing');
+            setIsLoading(false);
+            return;
+        }
+        try {
+            console.log('[NodeEditor] Setting up nodes for story:', initialStory);
+            var newNodes = initialStory.paragraphs.map(function (para, index) { return ({
+                id: "p".concat(index),
+                type: 'paragraph',
+                position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
+                data: {
+                    index: index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            }); });
+            console.log('[NodeEditor] Setting up nodes:', newNodes);
+            setNodes(newNodes);
+            setIsInitialized(true);
+        }
+        catch (err) {
+            console.error('[NodeEditor] Error setting up nodes:', err);
+            setError('Failed to initialize story editor');
+        }
+        finally {
+            setIsLoading(false);
+        }
+    }, [initialStory, selectedStyle]);
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_1, error_1;
         return __generator(this, function (_a) {
@@ -44597,45 +44590,6 @@ var NodeEditor = function (_a) {
             onStyleUpdate([{ index: index, image_style: newStyle }]);
         }
     }, [onStyleUpdate]);
-    (0,react__WEBPACK_IMPORTED_MODULE_0__.useLayoutEffect)(function () {
-        console.log('[NodeEditor] Initializing with story:', initialStory);
-        if (!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs)) {
-            setError('Story data is missing');
-            setIsLoading(false);
-            return;
-        }
-        try {
-            var newNodes = initialStory.paragraphs.map(function (para, index) { return ({
-                id: "p".concat(index),
-                type: 'paragraph',
-                position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
-                data: {
-                    index: index,
-                    text: para.text,
-                    globalStyle: selectedStyle,
-                    imageUrl: para.image_url,
-                    imagePrompt: para.image_prompt,
-                    audioUrl: para.audio_url,
-                    onGenerateCard: handleGenerateCard,
-                    onRegenerateImage: handleRegenerateImage,
-                    onRegenerateAudio: handleRegenerateAudio,
-                    onExpandImage: setExpandedImage,
-                    onStyleChange: handleStyleChange,
-                    isGenerating: false,
-                    isRegenerating: false,
-                    isRegeneratingAudio: false
-                }
-            }); });
-            console.log('[NodeEditor] Setting up nodes:', newNodes);
-            setNodes(newNodes);
-            setIsLoading(false);
-        }
-        catch (err) {
-            console.error('[NodeEditor] Error setting up nodes:', err);
-            setError('Failed to initialize story editor');
-            setIsLoading(false);
-        }
-    }, [initialStory, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange]);
     var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (params) {
         var edge = __assign(__assign({}, params), { type: 'smoothstep', animated: true, style: {
                 stroke: 'var(--primary)',
@@ -44652,15 +44606,14 @@ var NodeEditor = function (_a) {
     if (isLoading) {
         return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(LoadingState, null);
     }
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "bg-background border rounded-lg" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Background, null),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Controls, null))),
-        expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "fixed inset-0 bg-black/50 flex items-center justify-center z-50", onClick: function () { return setExpandedImage(null); } },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] overflow-auto", onClick: function (e) { return e.stopPropagation(); } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost", size: "sm", className: "absolute top-2 right-2", onClick: function () { return setExpandedImage(null); } }, "\u00D7"),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: expandedImage, alt: "Full preview", className: "max-w-full h-auto" }))))));
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "bg-background border rounded-lg" },
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Background, null),
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Controls, null)),
+        expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "fixed inset-0 bg-black/50 flex items-center justify-center z-50" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] overflow-auto" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: expandedImage, alt: "Full preview", className: "max-w-full h-auto" }),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { onClick: function () { return setExpandedImage(null); }, className: "mt-4" }, "Close"))))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (react__WEBPACK_IMPORTED_MODULE_0___default().memo(NodeEditor));
 
