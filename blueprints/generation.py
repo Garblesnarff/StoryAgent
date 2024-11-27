@@ -16,6 +16,7 @@ from flask import Blueprint, render_template, request, Response, stream_with_con
 import sys
 import json
 from services.text_generator import TextGenerator
+from services.regeneration_service import RegenerationService
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from services.prompt_generator import PromptGenerator
@@ -33,6 +34,7 @@ text_service = TextGenerator()
 image_service = ImageGenerator()
 audio_service = HumeAudioGenerator()
 prompt_generator = PromptGenerator()
+regeneration_service = RegenerationService(image_service, audio_service)
 
 def send_json_message(message_type: str, message_data: Union[str, Dict], step: Optional[str] = None) -> str:
     """
