@@ -15,6 +15,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
 
+/**
+ * Types for story and paragraph data structures
+ */
 interface ParagraphData {
     index: number;
     text: string;
@@ -22,14 +25,30 @@ interface ParagraphData {
     imageUrl?: string;
     imagePrompt?: string;
     audioUrl?: string;
-    onGenerateCard: (index: number) => void;
-    onRegenerateImage: (index: number) => void;
-    onRegenerateAudio: (index: number) => void;
+    onGenerateCard: (index: number) => Promise<void>;
+    onRegenerateImage: (index: number) => Promise<void>;
+    onRegenerateAudio: (index: number) => Promise<void>;
     onExpandImage: (url: string) => void;
     onStyleChange?: (index: number, style: string) => void;
     isGenerating: boolean;
     isRegenerating: boolean;
     isRegeneratingAudio: boolean;
+    error?: string;
+}
+
+interface StoryData {
+    paragraphs: Array<{
+        text: string;
+        image_url?: string;
+        image_prompt?: string;
+        audio_url?: string;
+        style?: string;
+    }>;
+    metadata?: {
+        title?: string;
+        created_at?: string;
+        modified_at?: string;
+    };
 }
 
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
@@ -187,14 +206,39 @@ interface NodeEditorProps {
     onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
 }
 
+/**
+ * NodeEditor Component
+ * 
+ * A React component that provides a visual node-based editor for story paragraphs.
+ * Handles story data management, media generation, and style customization.
+ */
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
+    // State management
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
-    const [story, setStory] = useState<Story | undefined>(initialStory);
+    const [story, setStory] = useState<StoryData | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
+    const [error, setError] = useState<string | null>(null);
     const nodesInitializedRef = useRef(false);
+
+    // Error handling display
+    useEffect(() => {
+        const errorContainer = document.getElementById('error-container');
+        const loadingContainer = document.getElementById('loading-container');
+        
+        if (errorContainer && loadingContainer) {
+            if (error) {
+                errorContainer.textContent = error;
+                errorContainer.classList.remove('d-none');
+                loadingContainer.classList.add('d-none');
+            } else {
+                errorContainer.classList.add('d-none');
+                loadingContainer.classList.toggle('d-none', !isLoading);
+            }
+        }
+    }, [error, isLoading]);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {

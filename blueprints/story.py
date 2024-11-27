@@ -1,3 +1,25 @@
+"""
+Story Blueprint Module
+
+This module handles all story-related operations including:
+- Story editing and customization
+- File upload and processing
+- Media generation and regeneration
+- Session management and data persistence
+
+The blueprint provides routes for:
+1. Story editing interface
+2. File upload handling
+3. Style customization
+4. Paragraph updates
+5. Media regeneration
+
+Dependencies:
+- Flask for web framework
+- SQLAlchemy for database operations
+- Various service modules for content generation
+"""
+
 from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, flash
 from services.text_generator import TextGenerator
 from services.image_generator import ImageGenerator
@@ -9,11 +31,13 @@ import os
 from werkzeug.utils import secure_filename
 from models import TempBookData, StyleCustomization
 import logging
+from typing import Dict, Any, Optional
 
-# Set up logging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize blueprint and services
 story_bp = Blueprint('story', __name__)
 text_service = TextGenerator()
 image_service = ImageGenerator()
@@ -21,6 +45,7 @@ audio_service = HumeAudioGenerator()
 book_processor = BookProcessor()
 regeneration_service = RegenerationService(image_service, audio_service)
 
+# File handling configuration
 ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html'}
 UPLOAD_FOLDER = 'uploads'
 
@@ -65,11 +90,33 @@ def upload_file():
 
 @story_bp.route('/story/edit', methods=['GET'])
 def edit():
+    """
+    Render the story editing interface with the current story data.
+    
+    This route:
+    1. Validates session data exists
+    2. Retrieves story data from temporary storage
+    3. Provides the data to the React NodeEditor component
+    
+    Returns:
+        Rendered template with story data or redirect response
+        
+    Note:
+        Story data structure:
+        {
+            'temp_id': str,
+            'paragraphs': List[Dict],
+            'metadata': Dict,
+            ...
+        }
+    """
     try:
+        # Verify session data exists
         if 'story_data' not in session:
+            logger.warning("No story data in session, redirecting to index")
             return redirect(url_for('index'))
             
-        # Get full data from temp storage
+        # Retrieve story data from temporary storage
         temp_id = session['story_data'].get('temp_id')
         if not temp_id:
             logger.error("No temp_id found in session")
@@ -80,10 +127,12 @@ def edit():
             logger.error(f"No temp data found for ID: {temp_id}")
             return redirect(url_for('index'))
             
+        # Render template with story data for React component
         return render_template('story/edit.html', story=temp_data.data)
         
     except Exception as e:
-        logger.error(f"Error in edit route: {str(e)}")
+        logger.error(f"Error in edit route: {str(e)}", exc_info=True)
+        flash('An error occurred while loading the story editor', 'error')
         return redirect(url_for('index'))
 
 @story_bp.route('/story/customize', methods=['GET'])
