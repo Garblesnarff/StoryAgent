@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
 
 /**
- * Interface definitions for story and node data structures
+ * Type definitions for story and node data structures
  */
 interface ParagraphData {
     index: number;
@@ -60,8 +60,28 @@ interface NodeEditorProps {
 }
 
 /**
+ * Calculate optimal node position to prevent overlapping
+ * @param index Node index in the story
+ * @param totalNodes Total number of nodes
+ * @returns Calculated x,y coordinates
+ */
+const calculateNodePosition = (index: number, totalNodes: number) => {
+    const SPACING_X = 350; // Horizontal spacing between nodes
+    const SPACING_Y = 300; // Vertical spacing between rows
+    const NODES_PER_ROW = Math.ceil(Math.sqrt(totalNodes)); // Dynamic row size
+
+    const row = Math.floor(index / NODES_PER_ROW);
+    const col = index % NODES_PER_ROW;
+
+    return {
+        x: col * SPACING_X + 50,
+        y: row * SPACING_Y + 50
+    };
+};
+
+/**
  * ErrorBoundary Component
- * Provides error handling and recovery for the node editor
+ * Handles runtime errors in the node editor and provides recovery options
  */
 class ErrorBoundary extends React.Component<
     { children: React.ReactNode },
@@ -159,6 +179,12 @@ const ParagraphNode = React.memo<NodeProps<ParagraphData>>(({ data }) => {
                     </RadioGroup>
                 </div>
 
+                {data.error && (
+                    <div className="alert alert-danger mb-4">
+                        {data.error}
+                    </div>
+                )}
+
                 {data.imageUrl && (
                     <>
                         <div className="relative rounded-lg overflow-hidden border border-border">
@@ -255,13 +281,21 @@ const nodeTypes: NodeTypes = {
 /**
  * NodeEditor Component
  * Main component for the story flow editor interface
+ * 
+ * Features:
+ * - Interactive node-based story visualization
+ * - Media generation and regeneration capabilities
+ * - Style customization for each paragraph
+ * - Error boundaries and loading states
+ * - Responsive layout with dynamic node positioning
  */
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
+    // State management
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<ParagraphData>[]>([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
-    const [story, setStory] = useState(initialStory);
+    const [story, setStory] = useState<StoryData | undefined>(initialStory);
     const [isLoading, setIsLoading] = useState(!initialStory);
     const [error, setError] = useState<string | null>(null);
     const nodesInitializedRef = useRef(false);
@@ -270,40 +304,48 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     useEffect(() => {
         if (!story?.paragraphs || nodesInitializedRef.current) return;
 
-        const paragraphNodes: Node<ParagraphData>[] = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            position: { 
-                x: (index % 2) * 300 + 50,
-                y: Math.floor(index / 2) * 250 + 50
-            },
-            data: {
-                index,
-                text: para.text,
-                style: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                onStyleChange: handleStyleChange,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
-            }
-        }));
+        try {
+            const totalNodes = story.paragraphs.length;
+            const paragraphNodes: Node<ParagraphData>[] = story.paragraphs.map((para, index) => {
+                const position = calculateNodePosition(index, totalNodes);
+                return {
+                    id: `p${index}`,
+                    type: 'paragraph',
+                    position,
+                    data: {
+                        index,
+                        text: para.text,
+                        style: selectedStyle,
+                        imageUrl: para.image_url,
+                        imagePrompt: para.image_prompt,
+                        audioUrl: para.audio_url,
+                        onGenerateCard: handleGenerateCard,
+                        onRegenerateImage: handleRegenerateImage,
+                        onRegenerateAudio: handleRegenerateAudio,
+                        onExpandImage: setExpandedImage,
+                        onStyleChange: handleStyleChange,
+                        isGenerating: false,
+                        isRegenerating: false,
+                        isRegeneratingAudio: false
+                    }
+                };
+            });
 
-        setNodes(paragraphNodes);
-        nodesInitializedRef.current = true;
+            setNodes(paragraphNodes);
+            nodesInitializedRef.current = true;
+            setIsLoading(false);
+        } catch (error) {
+            console.error('Error initializing nodes:', error);
+            setError('Failed to initialize story nodes');
+            setIsLoading(false);
+        }
     }, [story?.paragraphs, selectedStyle]);
 
     // Handle image regeneration
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true, error: null}} : node
             ));
 
             const response = await fetch('/story/regenerate_image', {
@@ -332,9 +374,15 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             ));
         } catch (error) {
             console.error('Error regenerating image:', error);
-            setError(error instanceof Error ? error.message : 'Failed to regenerate image');
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
+                node.id === `p${index}` ? {
+                    ...node,
+                    data: {
+                        ...node.data,
+                        isRegenerating: false,
+                        error: error instanceof Error ? error.message : 'Failed to regenerate image'
+                    }
+                } : node
             ));
         }
     }, [story, selectedStyle]);
@@ -343,7 +391,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const handleRegenerateAudio = useCallback(async (index: number) => {
         try {
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
+                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true, error: null}} : node
             ));
 
             const response = await fetch('/story/regenerate_audio', {
@@ -370,9 +418,15 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             ));
         } catch (error) {
             console.error('Error regenerating audio:', error);
-            setError(error instanceof Error ? error.message : 'Failed to regenerate audio');
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
+                node.id === `p${index}` ? {
+                    ...node,
+                    data: {
+                        ...node.data,
+                        isRegeneratingAudio: false,
+                        error: error instanceof Error ? error.message : 'Failed to regenerate audio'
+                    }
+                } : node
             ));
         }
     }, [story]);
@@ -381,7 +435,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const handleGenerateCard = useCallback(async (index: number) => {
         try {
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true, error: null}} : node
             ));
 
             const response = await fetch('/story/generate_cards', {
@@ -397,10 +451,9 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             if (!response.ok) throw new Error('Failed to generate card');
 
             const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-
             if (!reader) throw new Error('Failed to read response');
 
+            const decoder = new TextDecoder();
             let buffer = '';
             
             while (true) {
@@ -436,34 +489,36 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                         }
                     } catch (parseError) {
                         console.error('Error parsing JSON:', parseError);
+                        throw new Error('Invalid response format');
                     }
                 }
             }
         } catch (error) {
             console.error('Error generating card:', error);
-            setError(error instanceof Error ? error.message : 'Failed to generate card');
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+                node.id === `p${index}` ? {
+                    ...node,
+                    data: {
+                        ...node.data,
+                        isGenerating: false,
+                        error: error instanceof Error ? error.message : 'Failed to generate card'
+                    }
+                } : node
             ));
         }
     }, [story, selectedStyle]);
 
     // Handle style changes
     const handleStyleChange = useCallback((index: number, newStyle: string) => {
-        setNodes(currentNodes => currentNodes.map(node => 
-            node.id === `p${index}` ? {
-                ...node,
-                data: {
-                    ...node.data,
-                    style: newStyle
-                }
-            } : node
-        ));
+        setNodes(currentNodes => currentNodes.map(node => ({
+            ...node,
+            data: node.id === `p${index}` ? {
+                ...node.data,
+                style: newStyle
+            } : node.data
+        })));
 
-        onStyleUpdate?.([{
-            index,
-            image_style: newStyle
-        }]);
+        onStyleUpdate?.([{ index, image_style: newStyle }]);
     }, [onStyleUpdate]);
 
     // Handle node connections
@@ -476,27 +531,32 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             animated: true,
             style: { 
                 stroke: 'var(--bs-primary)',
-                strokeWidth: 2
+                strokeWidth: 2,
             }
         }, currentEdges));
     }, [setEdges]);
 
-    // Update error and loading states
-    useEffect(() => {
-        const errorContainer = document.getElementById('error-container');
-        const loadingContainer = document.getElementById('loading-container');
-        
-        if (errorContainer && loadingContainer) {
-            if (error) {
-                errorContainer.innerHTML = `<h4 class="alert-heading">Error</h4><p>${error}</p>`;
-                errorContainer.classList.remove('d-none');
-                loadingContainer.classList.add('d-none');
-            } else {
-                errorContainer.classList.add('d-none');
-                loadingContainer.classList.toggle('d-none', !isLoading);
-            }
-        }
-    }, [error, isLoading]);
+    if (error) {
+        return (
+            <div className="alert alert-danger">
+                <h4>Error</h4>
+                <p>{error}</p>
+                <Button onClick={() => setError(null)} variant="secondary">
+                    Try Again
+                </Button>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-[600px]">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <ErrorBoundary>
@@ -519,7 +579,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     <Controls />
                 </ReactFlow>
             </div>
-
+            
             {expandedImage && (
                 <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
                     <div className="preview-modal" onClick={e => e.stopPropagation()}>
