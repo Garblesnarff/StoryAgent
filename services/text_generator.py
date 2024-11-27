@@ -10,8 +10,26 @@ from models import PromptMetric
 logger = logging.getLogger(__name__)
 
 class TextGenerator:
-    def _record_metrics(self, prompt_type, generation_time, success, prompt_length=0, error_msg=None):
-        """Record prompt generation metrics"""
+    """
+    A service class for generating story text using the Groq LLM API.
+    
+    This class handles story generation tasks including text cleaning,
+    validation, and performance metrics recording. It uses the Groq API
+    for text generation with configurable parameters.
+    """
+    
+    def _record_metrics(self, prompt_type: str, generation_time: float, success: bool, 
+                       prompt_length: int = 0, error_msg: str = None) -> None:
+        """
+        Record metrics for prompt generation attempts.
+        
+        Args:
+            prompt_type: Type of the prompt (e.g., 'story', 'chapter')
+            generation_time: Time taken for generation in seconds
+            success: Whether the generation was successful
+            prompt_length: Length of the input prompt in characters
+            error_msg: Error message if generation failed
+        """
         try:
             metric = PromptMetric(
                 prompt_type=prompt_type,
@@ -25,12 +43,35 @@ class TextGenerator:
             db.session.commit()
         except Exception as e:
             logger.error(f"Error recording metrics: {str(e)}")
+            
     def __init__(self):
-        # Initialize Groq client
-        self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
+        """
+        Initialize the TextGenerator with Groq API client.
+        Raises ValueError if GROQ_API_KEY environment variable is not set.
+        """
+        api_key = os.environ.get('GROQ_API_KEY')
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
+        self.client = groq.Groq(api_key=api_key)
     
-    def clean_paragraph(self, text):
-        """Clean paragraph text of any markers, numbers, or labels"""
+    def clean_paragraph(self, text: str) -> str:
+        """
+        Clean paragraph text by removing markers, numbers, and labels.
+        
+        Performs the following cleaning operations:
+        1. Removes leading numbers with dots, parentheses, or brackets
+        2. Removes segment/section markers with optional numbers
+        3. Removes standalone numbers at start
+        4. Removes bracketed/parenthesized numbers
+        5. Removes remaining segment markers
+        6. Normalizes whitespace
+        
+        Args:
+            text: The input text to clean
+            
+        Returns:
+            str: The cleaned text with all markers removed
+        """
         # Remove any leading numbers with dots, parentheses, or brackets
         text = re.sub(r'^\s*(?:\d+[.)\]]\s*|\[\d+\]\s*)', '', text.strip())
         
@@ -51,13 +92,42 @@ class TextGenerator:
         
         return text.strip()
     
-    def validate_cleaned_text(self, text):
-        """Check if text still contains any unwanted markers"""
+    def validate_cleaned_text(self, text: str) -> bool:
+        """
+        Validate that cleaned text contains no unwanted markers.
+        
+        Args:
+            text: The text to validate
+            
+        Returns:
+            bool: True if text is clean, False if it contains unwanted markers
+        """
         # Pattern to detect common segment markers
         marker_pattern = r'(?i)(segment|section|part|chapter|scene|\[\d+\]|\(\d+\)|^\d+\.)'
         return not bool(re.search(marker_pattern, text))
 
-    def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
+    def generate_story(self, prompt: str, genre: str, mood: str, 
+                      target_audience: str, paragraphs: int) -> list[str]:
+        """
+        Generate a story based on given parameters using the Groq LLM.
+        
+        This method generates a story with the specified characteristics and
+        cleans the output to ensure consistent formatting. It also records
+        metrics about the generation process.
+        
+        Args:
+            prompt: The main story prompt/idea
+            genre: The story genre (e.g., 'sci-fi', 'fantasy')
+            mood: The emotional tone of the story
+            target_audience: The intended audience
+            paragraphs: Number of paragraphs to generate
+            
+        Returns:
+            list[str]: List of generated story paragraphs
+            
+        Raises:
+            Exception: If story generation fails or API returns invalid response
+        """
         start_time = time.time()
         success = False
         error_msg = None
