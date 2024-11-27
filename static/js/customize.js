@@ -40,31 +40,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        const storyAttr = container.getAttribute('data-story');
-        console.log('[customize.js] Raw story data:', storyAttr);
+        // Add debug logging
+        console.log('[customize.js] Container found:', container);
+        console.log('[customize.js] Data story attribute:', container.getAttribute('data-story'));
         
+        const storyAttr = container.getAttribute('data-story');
         if (!storyAttr) {
             throw new Error('No story data attribute found');
         }
         
-        const storyData = JSON.parse(storyAttr);
-        console.log('[customize.js] Parsed story data:', storyData);
+        let storyData;
+        try {
+            storyData = JSON.parse(storyAttr);
+            console.log('[customize.js] Parsed story data:', storyData);
+        } catch (parseError) {
+            console.error('[customize.js] Failed to parse story data:', parseError);
+            throw new Error('Invalid story data format');
+        }
         
-        // Validate story data structure
         if (!storyData || !storyData.paragraphs || !Array.isArray(storyData.paragraphs)) {
+            console.error('[customize.js] Invalid story structure:', storyData);
             throw new Error('Invalid story data structure');
         }
 
-        // Create root and render only if we have valid data
+        // Add key with timestamp to force remount
         const root = createRoot(container);
         root.render(
             <React.StrictMode>
                 <ErrorBoundary>
                     <NodeEditor 
-                        key={storyData.id || 'story'} 
+                        key={`story-${Date.now()}`}
                         story={storyData} 
                         onStyleUpdate={(updatedParagraphs) => {
-                            console.log('[customize.js] Updating paragraph styles:', updatedParagraphs);
+                            console.log('[customize.js] Style update:', updatedParagraphs);
                             fetch('/story/update_style', {
                                 method: 'POST',
                                 headers: {
@@ -114,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </React.StrictMode>
         );
     } catch (error) {
-        console.error('[customize.js] Story data error:', error);
+        console.error('[customize.js] Story editor error:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
                 <h4>Story Editor Error</h4>
