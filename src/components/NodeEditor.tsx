@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, ErrorInfo } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -8,7 +8,8 @@ import ReactFlow, {
     Handle,
     Position,
     Node,
-    Edge
+    Edge,
+    Connection
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -16,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
 
 /**
- * Types for story and paragraph data structures
+ * Interface definitions for story and component data structures
  */
 interface ParagraphData {
     index: number;
@@ -51,22 +52,81 @@ interface StoryData {
     };
 }
 
+interface NodeEditorProps {
+    story?: StoryData;
+    onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
+}
+
+interface ErrorBoundaryState {
+    hasError: boolean;
+    error?: Error;
+}
+
+interface ErrorBoundaryProps {
+    children: React.ReactNode;
+}
+
+/**
+ * ErrorBoundary Component
+ * Catches and handles errors in the component tree
+ */
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+        console.error('Error caught by boundary:', error, errorInfo);
+    }
+
+    render(): React.ReactNode {
+        if (this.state.hasError) {
+            return (
+                <div className="alert alert-danger">
+                    <h4>Something went wrong</h4>
+                    <p>{this.state.error?.message}</p>
+                    <button 
+                        className="btn btn-primary mt-2"
+                        onClick={() => this.setState({ hasError: false })}
+                    >
+                        Try again
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+/**
+ * ParagraphNode Component
+ * Represents a single paragraph node in the story flow
+ */
 const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
-    const [showPrompt, setShowPrompt] = useState(false);
-    const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
+    const [showPrompt, setShowPrompt] = useState<boolean>(false);
+    const [localStyle, setLocalStyle] = useState<string>(data.globalStyle || 'realistic');
 
     return (
         <div className={`paragraph-node ${localStyle}-style`}>
             <Handle type="target" position={Position.Left} className="!bg-primary" />
-            <div className="text-lg font-bold mb-2 text-primary">Paragraph {data.index + 1}</div>
+            <div className="text-lg font-bold mb-2 text-primary">
+                Paragraph {data.index + 1}
+            </div>
             <div className="text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto">
                 {data.text}
             </div>
+            {/* Controls section */}
             <div className="space-y-4">
                 <Button 
                     className="w-full"
                     onClick={() => data.onGenerateCard(data.index)}
-                    disabled={data.isGenerating}>
+                    disabled={data.isGenerating}
+                >
                     {data.isGenerating ? (
                         <div className="flex items-center justify-center gap-2">
                             <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
@@ -75,30 +135,28 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                     ) : 'Generate Card'}
                 </Button>
                 
+                {/* Style selection */}
                 <div className="mt-4 mb-2">
                     <RadioGroup
                         value={localStyle}
-                        onValueChange={(value) => {
+                        onValueChange={(value: string) => {
                             setLocalStyle(value);
                             data.onStyleChange?.(data.index, value);
                         }}
                         className="flex gap-4 justify-center"
                     >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="realistic" id={`realistic-${data.index}`} />
-                            <Label htmlFor={`realistic-${data.index}`}>Realistic</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="artistic" id={`artistic-${data.index}`} />
-                            <Label htmlFor={`artistic-${data.index}`}>Artistic</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="fantasy" id={`fantasy-${data.index}`} />
-                            <Label htmlFor={`fantasy-${data.index}`}>Fantasy</Label>
-                        </div>
+                        {['realistic', 'artistic', 'fantasy'].map((style) => (
+                            <div key={style} className="flex items-center space-x-2">
+                                <RadioGroupItem value={style} id={`${style}-${data.index}`} />
+                                <Label htmlFor={`${style}-${data.index}`}>
+                                    {style.charAt(0).toUpperCase() + style.slice(1)}
+                                </Label>
+                            </div>
+                        ))}
                     </RadioGroup>
                 </div>
                 
+                {/* Image preview and controls */}
                 {data.imageUrl && (
                     <>
                         <div className="relative rounded-lg overflow-hidden border border-border">
@@ -106,7 +164,7 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                                 src={data.imageUrl} 
                                 alt="Generated preview" 
                                 className="w-full h-auto object-cover"
-                                onError={(e) => {
+                                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                     console.error('Image failed to load:', data.imageUrl);
                                     e.currentTarget.src = '/static/placeholder.png';
                                 }}
@@ -117,6 +175,8 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                                 </div>
                             )}
                         </div>
+                        
+                        {/* Image control buttons */}
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -153,6 +213,7 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                     </>
                 )}
                 
+                {/* Audio player and controls */}
                 {data.audioUrl && (
                     <>
                         <div className="audio-player mt-4">
@@ -160,7 +221,7 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                                 controls
                                 className="w-full"
                                 key={data.audioUrl}
-                                onError={(e) => console.error('Audio failed to load:', data.audioUrl)}
+                                onError={() => console.error('Audio failed to load:', data.audioUrl)}
                             >
                                 <source src={data.audioUrl} type="audio/wav" />
                                 Your browser does not support the audio element.
@@ -171,7 +232,8 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
                             size="sm"
                             className="w-full mt-2"
                             onClick={() => data.onRegenerateAudio(data.index)}
-                            disabled={data.isRegeneratingAudio}>
+                            disabled={data.isRegeneratingAudio}
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                                 <path d="M3 3v5h5" />
@@ -188,42 +250,27 @@ const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
     );
 });
 
+ParagraphNode.displayName = 'ParagraphNode';
+
 const nodeTypes = {
     paragraph: ParagraphNode
 };
 
-interface Story {
-    paragraphs: Array<{
-        text: string;
-        image_url?: string;
-        image_prompt?: string;
-        audio_url?: string;
-    }>;
-}
-
-interface NodeEditorProps {
-    story?: Story;
-    onStyleUpdate?: (paragraphs: Array<{ index: number; image_style: string }>) => void;
-}
-
 /**
  * NodeEditor Component
- * 
- * A React component that provides a visual node-based editor for story paragraphs.
- * Handles story data management, media generation, and style customization.
+ * Main component for the story editor interface
  */
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
-    // State management
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-    const [selectedStyle, setSelectedStyle] = useState('realistic');
+    const [selectedStyle, setSelectedStyle] = useState<string>('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [story, setStory] = useState<StoryData | undefined>(initialStory);
-    const [isLoading, setIsLoading] = useState(!initialStory);
+    const [isLoading, setIsLoading] = useState<boolean>(!initialStory);
     const [error, setError] = useState<string | null>(null);
-    const nodesInitializedRef = useRef(false);
+    const nodesInitializedRef = useRef<boolean>(false);
 
-    // Error handling display
+    // Error handling and loading state management
     useEffect(() => {
         const errorContainer = document.getElementById('error-container');
         const loadingContainer = document.getElementById('loading-container');
@@ -240,6 +287,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [error, isLoading]);
 
+    // Handle image regeneration
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
             setNodes(nodes => nodes.map(node => 
@@ -279,6 +327,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story, nodes]);
 
+    // Handle style changes
     const handleStyleChange = useCallback((index: number, newStyle: string) => {
         setNodes(nodes => nodes.map(node => 
             node.id === `p${index}` ? {
@@ -290,22 +339,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             } : node
         ));
         
-        const paragraphText = story?.paragraphs[index]?.text;
-        
-        fetch('/story/update_style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                paragraphs: [{
-                    index,
-                    image_style: newStyle,
-                    text: paragraphText
-                }]
-            })
-        }).then(() => {
-            handleRegenerateImage(index);
-        });
-    }, [story, handleRegenerateImage]);
+        onStyleUpdate?.([{
+            index,
+            image_style: newStyle
+        }]);
+    }, [onStyleUpdate]);
 
     const handleGenerateCard = useCallback(async (index: number) => {
         try {
@@ -407,19 +445,16 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         }
     }, [story]);
 
-    // Initialize nodes when story data changes
+    // Initialize nodes from story data
     useEffect(() => {
-        if (!story?.paragraphs || nodesInitializedRef.current) {
-            return;
-        }
-
+        if (!story?.paragraphs || nodesInitializedRef.current) return;
+        
         const paragraphNodes = story.paragraphs.map((para, index) => ({
             id: `p${index}`,
-            type: 'paragraph',
-            draggable: true,
+            type: 'paragraph' as const,
             position: { 
-                x: (index % 3) * 500 + 50,
-                y: Math.floor(index / 3) * 450 + 50
+                x: (index % 2) * 300 + 50,
+                y: Math.floor(index / 2) * 250 + 50
             },
             data: {
                 index,
@@ -441,33 +476,13 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
         setNodes(paragraphNodes);
         nodesInitializedRef.current = true;
-        setIsLoading(false);
-    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
+    }, [story, selectedStyle, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
 
-    // Fetch story data if not provided
-    useEffect(() => {
-        const fetchStoryData = async () => {
-            try {
-                const response = await fetch('/api/story/data');
-                const data = await response.json();
-                if (data.success) {
-                    setStory(data.story);
-                }
-            } catch (error) {
-                console.error('Error fetching story data:', error);
-                setIsLoading(false);
-            }
-        };
-
-        if (!story && !isLoading) {
-            fetchStoryData();
-        }
-    }, [story, isLoading]);
-
-    const onConnect = useCallback((params) => {
+    // Handle node connections
+    const onConnect = useCallback((params: Connection) => {
         if (params.source === params.target) return;
         
-        const edge = {
+        setEdges(edges => addEdge({
             ...params,
             type: 'smoothstep',
             animated: true,
@@ -475,17 +490,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 stroke: 'var(--bs-primary)',
                 strokeWidth: 2,
             }
-        };
-        
-        setEdges(currentEdges => addEdge(edge, currentEdges));
+        }, edges));
     }, [setEdges]);
 
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
-
     return (
-        <>
+        <ErrorBoundary>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
                 <ReactFlow
                     nodes={nodes}
@@ -507,8 +516,14 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             </div>
             
             {expandedImage && (
-                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
-                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                <div 
+                    className="modal-backdrop" 
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <div 
+                        className="preview-modal" 
+                        onClick={e => e.stopPropagation()}
+                    >
                         <button 
                             type="button" 
                             className="close-button"
@@ -522,7 +537,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     </div>
                 </div>
             )}
-        </>
+        </ErrorBoundary>
     );
 };
 

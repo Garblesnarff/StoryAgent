@@ -93,42 +93,72 @@ def edit():
     """
     Render the story editing interface with the current story data.
     
-    This route:
-    1. Validates session data exists
-    2. Retrieves story data from temporary storage
-    3. Provides the data to the React NodeEditor component
+    This route handles the story editing interface by:
+    1. Validating session data exists and is properly structured
+    2. Retrieving and validating story data from temporary storage
+    3. Processing and preparing data for the React NodeEditor component
+    4. Handling various error cases with appropriate user feedback
     
     Returns:
         Rendered template with story data or redirect response
         
-    Note:
-        Story data structure:
+    Data Flow:
+        1. Session validation -> temp storage retrieval -> data validation -> template rendering
+        2. Error states are logged and handled at each step
+        
+    Story Data Structure:
         {
-            'temp_id': str,
-            'paragraphs': List[Dict],
-            'metadata': Dict,
-            ...
+            'temp_id': str,           # Unique identifier for temporary storage
+            'paragraphs': List[Dict],  # List of paragraph objects with text and media URLs
+            'metadata': Dict,          # Optional metadata about the story
+            'created_at': str,         # Timestamp of creation
+            'modified_at': str         # Timestamp of last modification
         }
     """
     try:
-        # Verify session data exists
+        # Step 1: Validate session data
         if 'story_data' not in session:
             logger.warning("No story data in session, redirecting to index")
+            flash('Please start by creating a new story', 'warning')
             return redirect(url_for('index'))
+        
+        session_data = session['story_data']
+        logger.info(f"Processing story edit request with session data: {session_data.keys()}")
             
-        # Retrieve story data from temporary storage
-        temp_id = session['story_data'].get('temp_id')
+        # Step 2: Validate and retrieve temp_id
+        temp_id = session_data.get('temp_id')
         if not temp_id:
-            logger.error("No temp_id found in session")
+            logger.error("Missing temp_id in session data")
+            flash('Invalid story data. Please create a new story.', 'error')
             return redirect(url_for('index'))
             
+        # Step 3: Retrieve and validate temporary storage data
         temp_data = TempBookData.query.get(temp_id)
         if not temp_data:
-            logger.error(f"No temp data found for ID: {temp_id}")
+            logger.error(f"No temporary data found for ID: {temp_id}")
+            flash('Story data not found. Please create a new story.', 'error')
             return redirect(url_for('index'))
             
-        # Render template with story data for React component
-        return render_template('story/edit.html', story=temp_data.data)
+        # Step 4: Validate story data structure
+        story_data = temp_data.data
+        if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
+            logger.error(f"Invalid story data structure for ID: {temp_id}")
+            flash('Invalid story format. Please create a new story.', 'error')
+            return redirect(url_for('index'))
+            
+        # Step 5: Ensure all paragraphs have required fields
+        for i, paragraph in enumerate(story_data['paragraphs']):
+            if 'text' not in paragraph:
+                logger.error(f"Missing text in paragraph {i}")
+                flash('Invalid paragraph data. Please create a new story.', 'error')
+                return redirect(url_for('index'))
+                
+        logger.info(f"Successfully prepared story data with {len(story_data['paragraphs'])} paragraphs")
+            
+        # Step 6: Render template with validated story data
+        return render_template('story/edit.html', 
+                            story=story_data,
+                            error_handling=True)
         
     except Exception as e:
         logger.error(f"Error in edit route: {str(e)}", exc_info=True)
