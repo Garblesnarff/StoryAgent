@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -8,34 +8,14 @@ import ReactFlow, {
     Handle,
     Position,
     Node,
-    Edge,
-    Connection,
-    ReactFlowProvider
+    Edge
 } from 'reactflow';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import 'reactflow/dist/style.css';
 
-// Loading Component
-const LoadingState = () => (
-    <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
-        <div className="space-y-4 text-center">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-muted-foreground">Loading story editor...</p>
-        </div>
-    </div>
-);
-
-// Error Component
-const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }) => (
-    <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
-        <div className="text-center space-y-4">
-            <p className="text-red-500">{message}</p>
-            <Button onClick={onRetry}>Retry</Button>
-        </div>
-    </div>
-);
-
-interface NodeData {
+interface ParagraphData {
     index: number;
     text: string;
     globalStyle: string;
@@ -51,6 +31,147 @@ interface NodeData {
     isRegenerating: boolean;
     isRegeneratingAudio: boolean;
 }
+
+const ParagraphNode = React.memo(({ data }: { data: ParagraphData }) => {
+    const [showPrompt, setShowPrompt] = useState(false);
+    const [localStyle, setLocalStyle] = useState(data.globalStyle || 'realistic');
+
+    return (
+        <div className={`paragraph-node ${localStyle}-style`}>
+            <Handle type="target" position={Position.Left} className="!bg-primary" />
+            <div className="text-lg font-bold mb-2 text-primary">Paragraph {data.index + 1}</div>
+            <div className="text-sm text-card-foreground mb-4 max-h-[120px] overflow-y-auto">
+                {data.text}
+            </div>
+            <div className="space-y-4">
+                <Button 
+                    className="w-full"
+                    onClick={() => data.onGenerateCard(data.index)}
+                    disabled={data.isGenerating}>
+                    {data.isGenerating ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                            <span>Generating...</span>
+                        </div>
+                    ) : 'Generate Card'}
+                </Button>
+                
+                <div className="mt-4 mb-2">
+                    <RadioGroup
+                        value={localStyle}
+                        onValueChange={(value) => {
+                            setLocalStyle(value);
+                            data.onStyleChange?.(data.index, value);
+                        }}
+                        className="flex gap-4 justify-center"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="realistic" id={`realistic-${data.index}`} />
+                            <Label htmlFor={`realistic-${data.index}`}>Realistic</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="artistic" id={`artistic-${data.index}`} />
+                            <Label htmlFor={`artistic-${data.index}`}>Artistic</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="fantasy" id={`fantasy-${data.index}`} />
+                            <Label htmlFor={`fantasy-${data.index}`}>Fantasy</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                
+                {data.imageUrl && (
+                    <>
+                        <div className="relative rounded-lg overflow-hidden border border-border">
+                            <img 
+                                src={data.imageUrl} 
+                                alt="Generated preview" 
+                                className="w-full h-auto object-cover"
+                                onError={(e) => {
+                                    console.error('Image failed to load:', data.imageUrl);
+                                    e.currentTarget.src = '/static/placeholder.png';
+                                }}
+                            />
+                            {showPrompt && (
+                                <div className="absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200">
+                                    <p className="text-sm">{data.imagePrompt}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => data.onRegenerateImage(data.index)}
+                                disabled={data.isRegenerating}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                    <path d="M16 16h5v5" />
+                                </svg>
+                                Regenerate
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowPrompt(!showPrompt)}
+                            >
+                                {showPrompt ? 'Hide Prompt' : 'Show Prompt'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => data.onExpandImage(data.imageUrl!)}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                                </svg>
+                            </Button>
+                        </div>
+                    </>
+                )}
+                
+                {data.audioUrl && (
+                    <>
+                        <div className="audio-player mt-4">
+                            <audio
+                                controls
+                                className="w-full"
+                                key={data.audioUrl}
+                                onError={(e) => console.error('Audio failed to load:', data.audioUrl)}
+                            >
+                                <source src={data.audioUrl} type="audio/wav" />
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <Button 
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2"
+                            onClick={() => data.onRegenerateAudio(data.index)}
+                            disabled={data.isRegeneratingAudio}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                <path d="M3 3v5h5" />
+                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                <path d="M16 16h5v5" />
+                            </svg>
+                            Regenerate Audio
+                        </Button>
+                    </>
+                )}
+            </div>
+            <Handle type="source" position={Position.Right} className="!bg-primary" />
+        </div>
+    );
+});
+
+const nodeTypes = {
+    paragraph: ParagraphNode
+};
 
 interface Story {
     paragraphs: Array<{
@@ -71,77 +192,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const initializationAttempts = useRef(0);
-
-    // Initialize nodes with proper error handling and retries
-    useLayoutEffect(() => {
-        console.log('[NodeEditor] Initialization attempt:', initializationAttempts.current);
-        
-        if (!initialStory?.paragraphs) {
-            console.error('[NodeEditor] Story data is missing');
-            setError('Story data is missing');
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            console.log('[NodeEditor] Setting up nodes for story:', initialStory);
-            
-            const newNodes = initialStory.paragraphs.map((para, index) => ({
-                id: `p${index}`,
-                type: 'paragraph',
-                position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
-                data: {
-                    index,
-                    text: para.text,
-                    globalStyle: selectedStyle,
-                    imageUrl: para.image_url,
-                    imagePrompt: para.image_prompt,
-                    audioUrl: para.audio_url,
-                    onGenerateCard: handleGenerateCard,
-                    onRegenerateImage: handleRegenerateImage,
-                    onRegenerateAudio: handleRegenerateAudio,
-                    onExpandImage: setExpandedImage,
-                    onStyleChange: handleStyleChange,
-                    isGenerating: false,
-                    isRegenerating: false,
-                    isRegeneratingAudio: false
-                },
-                sourcePosition: Position.Right,
-                targetPosition: Position.Left,
-            }));
-
-            console.log('[NodeEditor] Created nodes:', newNodes);
-            setNodes(newNodes);
-            setIsInitialized(true);
-            setError(null);
-            initializationAttempts.current += 1;
-
-        } catch (err) {
-            console.error('[NodeEditor] Error setting up nodes:', err);
-            setError('Failed to initialize story editor');
-            
-            // Retry initialization if under threshold
-            if (initializationAttempts.current < 3) {
-                setTimeout(() => {
-                    initializationAttempts.current += 1;
-                    setIsLoading(true);
-                }, 1000);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [initialStory, selectedStyle]);
+    const [story, setStory] = useState<Story | undefined>(initialStory);
+    const [isLoading, setIsLoading] = useState(!initialStory);
+    const nodesInitializedRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
-        if (!initialStory?.paragraphs?.[index]) {
-            console.error('[NodeEditor] Invalid paragraph index for image regeneration');
-            return;
-        }
-
         try {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
@@ -152,8 +207,9 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     index,
-                    text: initialStory.paragraphs[index].text,
-                    style: selectedStyle
+                    text: story?.paragraphs[index].text,
+                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic',
+                    regenerate_prompt: true
                 })
             });
 
@@ -172,19 +228,106 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 ));
             }
         } catch (error) {
-            console.error('[NodeEditor] Error regenerating image:', error);
+            console.error('Error regenerating image:', error);
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
             ));
         }
-    }, [initialStory, selectedStyle]);
+    }, [story, nodes]);
+
+    const handleStyleChange = useCallback((index: number, newStyle: string) => {
+        setNodes(nodes => nodes.map(node => 
+            node.id === `p${index}` ? {
+                ...node,
+                data: {
+                    ...node.data,
+                    globalStyle: newStyle
+                }
+            } : node
+        ));
+        
+        const paragraphText = story?.paragraphs[index]?.text;
+        
+        fetch('/story/update_style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paragraphs: [{
+                    index,
+                    image_style: newStyle,
+                    text: paragraphText
+                }]
+            })
+        }).then(() => {
+            handleRegenerateImage(index);
+        });
+    }, [story, handleRegenerateImage]);
+
+    const handleGenerateCard = useCallback(async (index: number) => {
+        try {
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
+            ));
+
+            const response = await fetch('/story/generate_cards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index,
+                    text: story?.paragraphs[index].text,
+                    style: nodes.find(n => n.id === `p${index}`)?.data.globalStyle || 'realistic'
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate card');
+
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error('Failed to get reader');
+
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.type === 'paragraph') {
+                            setNodes(nodes => nodes.map(node => 
+                                node.id === `p${index}` ? {
+                                    ...node, 
+                                    data: {
+                                        ...node.data,
+                                        imageUrl: data.data.image_url,
+                                        imagePrompt: data.data.image_prompt,
+                                        audioUrl: data.data.audio_url,
+                                        isGenerating: false
+                                    }
+                                } : node
+                            ));
+                        }
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error generating card:', error);
+            setNodes(nodes => nodes.map(node => 
+                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
+            ));
+        }
+    }, [story, nodes]);
 
     const handleRegenerateAudio = useCallback(async (index: number) => {
-        if (!initialStory?.paragraphs?.[index]) {
-            console.error('[NodeEditor] Invalid paragraph index for audio regeneration');
-            return;
-        }
-
         try {
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
@@ -195,7 +338,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     index,
-                    text: initialStory.paragraphs[index].text
+                    text: story?.paragraphs[index].text
                 })
             });
 
@@ -213,109 +356,93 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 ));
             }
         } catch (error) {
-            console.error('[NodeEditor] Error regenerating audio:', error);
+            console.error('Error regenerating audio:', error);
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
             ));
         }
-    }, [initialStory]);
+    }, [story]);
 
-    const handleGenerateCard = useCallback(async (index: number) => {
-        if (!initialStory?.paragraphs?.[index]?.text) {
-            console.error('[NodeEditor] Invalid paragraph data for card generation');
+    // Initialize nodes when story data changes
+    useEffect(() => {
+        if (!story?.paragraphs || nodesInitializedRef.current) {
             return;
         }
 
-        try {
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: true}} : node
-            ));
-
-            const response = await fetch('/story/generate_cards', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    index,
-                    text: initialStory.paragraphs[index].text,
-                    style: selectedStyle
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to generate card');
-            
-            const data = await response.json();
-            if (data.success) {
-                setNodes(nodes => nodes.map(node => 
-                    node.id === `p${index}` ? {
-                        ...node, 
-                        data: {
-                            ...node.data,
-                            imageUrl: data.image_url,
-                            imagePrompt: data.image_prompt,
-                            audioUrl: data.audio_url,
-                            isGenerating: false
-                        }
-                    } : node
-                ));
+        const paragraphNodes = story.paragraphs.map((para, index) => ({
+            id: `p${index}`,
+            type: 'paragraph',
+            draggable: true,
+            position: { 
+                x: (index % 3) * 500 + 50,
+                y: Math.floor(index / 3) * 450 + 50
+            },
+            data: {
+                index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
             }
-        } catch (error) {
-            console.error('[NodeEditor] Error generating card:', error);
-            setNodes(nodes => nodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
-            ));
-        }
-    }, [initialStory, selectedStyle]);
+        }));
 
-    const handleStyleChange = useCallback((index: number, newStyle: string) => {
-        setNodes(nodes => nodes.map(node => 
-            node.id === `p${index}` ? {
-                ...node,
-                data: {
-                    ...node.data,
-                    globalStyle: newStyle
+        setNodes(paragraphNodes);
+        nodesInitializedRef.current = true;
+        setIsLoading(false);
+    }, [story, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange, setNodes]);
+
+    // Fetch story data if not provided
+    useEffect(() => {
+        const fetchStoryData = async () => {
+            try {
+                const response = await fetch('/api/story/data');
+                const data = await response.json();
+                if (data.success) {
+                    setStory(data.story);
                 }
-            } : node
-        ));
+            } catch (error) {
+                console.error('Error fetching story data:', error);
+                setIsLoading(false);
+            }
+        };
 
-        if (onStyleUpdate) {
-            onStyleUpdate([{ index, image_style: newStyle }]);
+        if (!story && !isLoading) {
+            fetchStoryData();
         }
-    }, [onStyleUpdate]);
+    }, [story, isLoading]);
 
-    const onConnect = useCallback((params: Connection) => {
-        const edge: Edge = {
+    const onConnect = useCallback((params) => {
+        if (params.source === params.target) return;
+        
+        const edge = {
             ...params,
             type: 'smoothstep',
             animated: true,
             style: { 
-                stroke: 'var(--primary)',
+                stroke: 'var(--bs-primary)',
                 strokeWidth: 2,
             }
         };
         
-        setEdges(edges => addEdge(edge, edges));
+        setEdges(currentEdges => addEdge(edge, currentEdges));
     }, [setEdges]);
 
-    if (error) {
-        return (
-            <ErrorState 
-                message={error} 
-                onRetry={() => {
-                    setError(null);
-                    setIsLoading(true);
-                    initializationAttempts.current = 0;
-                }} 
-            />
-        );
-    }
-
     if (isLoading) {
-        return <LoadingState />;
+        return <div>Loading...</div>;
     }
 
     return (
-        <div style={{ width: '100%', height: '600px' }} className="bg-background border rounded-lg">
-            <ReactFlowProvider>
+        <>
+            <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
@@ -324,25 +451,34 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                     onConnect={onConnect}
                     nodeTypes={nodeTypes}
                     fitView
+                    style={{ background: 'var(--bs-dark)' }}
                     minZoom={0.1}
                     maxZoom={4}
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}>
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    connectOnClick={true}
+                >
                     <Background />
                     <Controls />
                 </ReactFlow>
-            </ReactFlowProvider>
+            </div>
             
             {expandedImage && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] overflow-auto">
-                        <img src={expandedImage} alt="Full preview" className="max-w-full h-auto" />
-                        <Button onClick={() => setExpandedImage(null)} className="mt-4">
-                            Close
-                        </Button>
+                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
+                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
+                        <button 
+                            type="button" 
+                            className="close-button"
+                            onClick={() => setExpandedImage(null)}
+                        >
+                            ×
+                        </button>
+                        <div className="preview-content">
+                            <img src={expandedImage} alt="Full preview" />
+                        </div>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 

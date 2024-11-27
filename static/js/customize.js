@@ -5,26 +5,22 @@ import NodeEditor from './node-editor';
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, errorMessage: null };
+        this.state = { hasError: false };
     }
 
     static getDerivedStateFromError(error) {
-        return { hasError: true, errorMessage: error.message };
+        return { hasError: true };
     }
 
     componentDidCatch(error, errorInfo) {
-        console.error('[ErrorBoundary] Error caught:', error, errorInfo);
+        console.error('Error caught by boundary:', error, errorInfo);
     }
 
     render() {
         if (this.state.hasError) {
             return (
                 <div className="alert alert-danger">
-                    <h4>Story Editor Error</h4>
-                    <p>{this.state.errorMessage || 'Something went wrong. Please try refreshing the page.'}</p>
-                    <button onClick={() => window.location.href = '/'}>
-                        Return to Home
-                    </button>
+                    Something went wrong. Please try refreshing the page.
                 </div>
             );
         }
@@ -33,101 +29,91 @@ class ErrorBoundary extends React.Component {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[customize.js] Initializing Node Editor...');
-    
     const container = document.getElementById('node-editor');
     if (!container) {
-        console.error('[customize.js] Node editor container not found');
+        console.error('Node editor container not found');
         return;
     }
 
+    // Parse story data
+    let storyData;
     try {
-        // Get and validate story data
         const storyAttr = container.getAttribute('data-story');
-        console.log('[customize.js] Raw story data:', storyAttr);
-
         if (!storyAttr) {
-            throw new Error('Story data is missing');
+            throw new Error('No story data attribute found');
         }
-
-        let storyData;
-        try {
-            storyData = JSON.parse(storyAttr);
-            console.log('[customize.js] Parsed story data:', storyData);
-        } catch (parseError) {
-            console.error('[customize.js] Failed to parse story data:', parseError);
-            throw new Error('Invalid story data format');
-        }
-
-        if (!storyData || !storyData.paragraphs || !Array.isArray(storyData.paragraphs)) {
-            console.error('[customize.js] Invalid story structure:', storyData);
-            throw new Error('Invalid story data structure');
-        }
-
-        // Create root and render with strict validation
-        const root = createRoot(container);
-        root.render(
-            <React.StrictMode>
-                <ErrorBoundary>
-                    <NodeEditor 
-                        key={`story-${Date.now()}`}
-                        story={storyData} 
-                        onStyleUpdate={(updatedParagraphs) => {
-                            console.log('[customize.js] Style update:', updatedParagraphs);
-                            fetch('/story/update_style', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ 
-                                    paragraphs: updatedParagraphs.map(p => ({
-                                        index: p.index,
-                                        image_style: p.image_style || 'realistic'
-                                    }))
-                                })
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error(response.status === 403 
-                                        ? 'Session expired. Please generate a new story.'
-                                        : 'Failed to update style');
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (!data.success) {
-                                    throw new Error(data.error || 'Failed to update style');
-                                }
-                                console.log('[customize.js] Style update successful');
-                            })
-                            .catch(error => {
-                                console.error('[customize.js] Error updating style:', error);
-                                const isSessionExpired = error.message.includes('Session expired');
-                                
-                                container.innerHTML = `
-                                    <div class="alert alert-${isSessionExpired ? 'warning' : 'danger'}">
-                                        <h4>${isSessionExpired ? 'Session Expired' : 'Error'}</h4>
-                                        <p>${error.message}</p>
-                                        <button onclick="window.location.href='/'">Return to Home</button>
-                                    </div>
-                                `;
-                            });
-                        }}
-                    />
-                </ErrorBoundary>
-            </React.StrictMode>
-        );
-
-        console.log('[customize.js] NodeEditor mounted successfully');
-
+        storyData = JSON.parse(storyAttr);
     } catch (error) {
-        console.error('[customize.js] Story editor error:', error);
+        console.error('Failed to parse story data:', error);
+        showError('Failed to load story data. Please generate a story first.');
+        return;
+    }
+
+    function showError(message) {
         container.innerHTML = `
-            <div class="alert alert-danger">
-                <h4>Story Editor Error</h4>
-                <p>${error.message}</p>
-                <button onclick="window.location.href='/'">Return to Home</button>
+            <div class="alert alert-warning text-center">
+                <h4 class="alert-heading">Oops!</h4>
+                <p>${message}</p>
+                <hr>
+                <p class="mb-0">You will be redirected to the story generation page...</p>
             </div>
         `;
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 3000);
     }
+
+    // Check if we have valid story data
+    if (!storyData || !storyData.paragraphs || !storyData.paragraphs.length) {
+        showError('No story found. Please generate a story first.');
+        return;
+    }
+
+    // Create root and render with ErrorBoundary
+    const root = createRoot(container);
+    root.render(
+        <ErrorBoundary>
+            <NodeEditor 
+                story={storyData} 
+                onStyleUpdate={(updatedParagraphs) => {
+                    fetch('/story/update_style', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            paragraphs: updatedParagraphs.map((p, index) => ({
+                                index,
+                                image_style: p.image_style || 'realistic'
+                            }))
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 403) {
+                                throw new Error('Session expired. Please generate a new story.');
+                            }
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Failed to update style');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.error || 'Failed to update style');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating style:', error);
+                        if (error.message.includes('Session expired')) {
+                            showError(error.message);
+                        } else {
+                            alert(error.message || 'Failed to update style');
+                        }
+                    });
+                }}
+            />
+        </ErrorBoundary>
+    );
 });

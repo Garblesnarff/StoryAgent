@@ -587,8 +587,14 @@ video {
 .right-10 {
   right: 2.5rem;
 }
+.right-2 {
+  right: 0.5rem;
+}
 .top-1\/4 {
   top: 25%;
+}
+.top-2 {
+  top: 0.5rem;
 }
 .top-\[50\%\] {
   top: 50%;
@@ -609,6 +615,10 @@ video {
 .mx-2 {
   margin-left: 0.5rem;
   margin-right: 0.5rem;
+}
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 .mx-auto {
   margin-left: auto;
@@ -633,6 +643,9 @@ video {
 .ml-2 {
   margin-left: 0.5rem;
 }
+.mr-2 {
+  margin-right: 0.5rem;
+}
 .mt-2 {
   margin-top: 0.5rem;
 }
@@ -656,9 +669,6 @@ video {
 }
 .h-10 {
   height: 2.5rem;
-}
-.h-12 {
-  height: 3rem;
 }
 .h-16 {
   height: 4rem;
@@ -687,8 +697,8 @@ video {
 .h-9 {
   height: 2.25rem;
 }
-.h-\[600px\] {
-  height: 600px;
+.h-96 {
+  height: 24rem;
 }
 .h-\[var\(--radix-select-trigger-height\)\] {
   height: var(--radix-select-trigger-height);
@@ -702,6 +712,9 @@ video {
 .h-px {
   height: 1px;
 }
+.max-h-\[120px\] {
+  max-height: 120px;
+}
 .max-h-\[90vh\] {
   max-height: 90vh;
 }
@@ -713,9 +726,6 @@ video {
 }
 .min-h-screen {
   min-height: 100vh;
-}
-.w-12 {
-  width: 3rem;
 }
 .w-16 {
   width: 4rem;
@@ -758,9 +768,6 @@ video {
 }
 .max-w-7xl {
   max-width: 80rem;
-}
-.max-w-full {
-  max-width: 100%;
 }
 .max-w-lg {
   max-width: 32rem;
@@ -874,6 +881,9 @@ video {
 .overflow-hidden {
   overflow: hidden;
 }
+.overflow-y-auto {
+  overflow-y: auto;
+}
 .rounded-full {
   border-radius: 9999px;
 }
@@ -892,9 +902,6 @@ video {
 .border-2 {
   border-width: 2px;
 }
-.border-4 {
-  border-width: 4px;
-}
 .border-b {
   border-bottom-width: 1px;
 }
@@ -910,14 +917,23 @@ video {
 .border-primary {
   border-color: hsl(var(--primary));
 }
+.border-primary-foreground {
+  border-color: hsl(var(--primary-foreground));
+}
 .border-t-transparent {
   border-top-color: transparent;
+}
+.\!bg-primary {
+  background-color: hsl(var(--primary)) !important;
 }
 .bg-background {
   background-color: hsl(var(--background));
 }
 .bg-black\/50 {
   background-color: rgb(0 0 0 / 0.5);
+}
+.bg-black\/75 {
+  background-color: rgb(0 0 0 / 0.75);
 }
 .bg-card {
   background-color: hsl(var(--card));
@@ -1002,6 +1018,10 @@ video {
 }
 .fill-current {
   fill: currentColor;
+}
+.object-cover {
+  -o-object-fit: cover;
+     object-fit: cover;
 }
 .p-1 {
   padding: 0.25rem;
@@ -1105,6 +1125,9 @@ video {
 .leading-none {
   line-height: 1;
 }
+.text-card-foreground {
+  color: hsl(var(--card-foreground));
+}
 .text-current {
   color: currentColor;
 }
@@ -1138,6 +1161,10 @@ video {
 }
 .text-transparent {
   color: transparent;
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 .underline-offset-4 {
   text-underline-offset: 4px;
