@@ -44447,25 +44447,8 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 /**
- * Calculate optimal node position to prevent overlapping
- * @param index Node index in the story
- * @param totalNodes Total number of nodes
- * @returns Calculated x,y coordinates
- */
-var calculateNodePosition = function (index, totalNodes) {
-    var SPACING_X = 350; // Horizontal spacing between nodes
-    var SPACING_Y = 300; // Vertical spacing between rows
-    var NODES_PER_ROW = Math.ceil(Math.sqrt(totalNodes)); // Dynamic row size
-    var row = Math.floor(index / NODES_PER_ROW);
-    var col = index % NODES_PER_ROW;
-    return {
-        x: col * SPACING_X + 50,
-        y: row * SPACING_Y + 50
-    };
-};
-/**
  * ErrorBoundary Component
- * Handles runtime errors in the node editor and provides recovery options
+ * Provides error handling and recovery for the component tree
  */
 var ErrorBoundary = /** @class */ (function (_super) {
     __extends(ErrorBoundary, _super);
@@ -44478,7 +44461,7 @@ var ErrorBoundary = /** @class */ (function (_super) {
         return { hasError: true, error: error };
     };
     ErrorBoundary.prototype.componentDidCatch = function (error, errorInfo) {
-        console.error('NodeEditor error:', error, errorInfo);
+        console.error('Error caught by boundary:', error, errorInfo);
     };
     ErrorBoundary.prototype.render = function () {
         var _this = this;
@@ -44495,12 +44478,13 @@ var ErrorBoundary = /** @class */ (function (_super) {
 }((react__WEBPACK_IMPORTED_MODULE_0___default().Component)));
 /**
  * ParagraphNode Component
- * Renders individual story paragraph nodes with media controls
+ * Renders an individual paragraph node in the story flow
  */
-var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (_a) {
+var ParagraphNode = function (_a) {
     var data = _a.data;
     var _b = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false), showPrompt = _b[0], setShowPrompt = _b[1];
-    var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.style || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
+    var _c = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.globalStyle || 'realistic'), localStyle = _c[0], setLocalStyle = _c[1];
+    // Handler for image load errors
     var handleImageError = function (e) {
         console.error('Image failed to load:', data.imageUrl);
         e.currentTarget.src = '/static/placeholder.png';
@@ -44523,11 +44507,10 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                     }, className: "flex gap-4 justify-center" }, ['realistic', 'artistic', 'fantasy'].map(function (style) { return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { key: style, className: "flex items-center space-x-2" },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_radio_group__WEBPACK_IMPORTED_MODULE_2__.RadioGroupItem, { value: style, id: "".concat(style, "-").concat(data.index) }),
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_label__WEBPACK_IMPORTED_MODULE_3__.Label, { htmlFor: "".concat(style, "-").concat(data.index) }, style.charAt(0).toUpperCase() + style.slice(1)))); }))),
-            data.error && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "alert alert-danger mb-4" }, data.error)),
             data.imageUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "relative rounded-lg overflow-hidden border border-border" },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: data.imageUrl, alt: "Generated preview", className: "w-full h-auto object-cover", onError: handleImageError }),
-                    showPrompt && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto" },
+                    showPrompt && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "absolute inset-0 bg-black/75 p-4 text-white overflow-y-auto transition-all duration-200" },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-sm" }, data.imagePrompt)))),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex gap-2" },
                     react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", className: "flex-1", onClick: function () { return data.onRegenerateImage(data.index); }, disabled: data.isRegenerating },
@@ -44543,7 +44526,7 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                             react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" })))))),
             data.audioUrl && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "audio-player mt-4" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("audio", { controls: true, className: "w-full", key: data.audioUrl },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("audio", { controls: true, className: "w-full", key: data.audioUrl, onError: function () { return console.error('Audio failed to load:', data.audioUrl); } },
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("source", { src: data.audioUrl, type: "audio/wav" }),
                         "Your browser does not support the audio element.")),
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "outline", size: "sm", className: "w-full mt-2", onClick: function () { return data.onRegenerateAudio(data.index); }, disabled: data.isRegeneratingAudio },
@@ -44554,25 +44537,17 @@ var ParagraphNode = react__WEBPACK_IMPORTED_MODULE_0___default().memo(function (
                         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M16 16h5v5" })),
                     "Regenerate Audio")))),
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Handle, { type: "source", position: reactflow__WEBPACK_IMPORTED_MODULE_5__.Position.Right, className: "!bg-primary" })));
-});
+};
 ParagraphNode.displayName = 'ParagraphNode';
 var nodeTypes = {
     paragraph: ParagraphNode
 };
 /**
  * NodeEditor Component
- * Main component for the story flow editor interface
- *
- * Features:
- * - Interactive node-based story visualization
- * - Media generation and regeneration capabilities
- * - Style customization for each paragraph
- * - Error boundaries and loading states
- * - Responsive layout with dynamic node positioning
+ * Main component for the story editor interface
  */
 var NodeEditor = function (_a) {
     var initialStory = _a.story, onStyleUpdate = _a.onStyleUpdate;
-    // State management
     var _b = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useNodesState)([]), nodes = _b[0], setNodes = _b[1], onNodesChange = _b[2];
     var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.useEdgesState)([]), edges = _c[0], setEdges = _c[1], onEdgesChange = _c[2];
     var _d = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('realistic'), selectedStyle = _d[0], setSelectedStyle = _d[1];
@@ -44581,55 +44556,32 @@ var NodeEditor = function (_a) {
     var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!initialStory), isLoading = _g[0], setIsLoading = _g[1];
     var _h = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), error = _h[0], setError = _h[1];
     var nodesInitializedRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
-    // Initialize nodes from story data
+    // Initialize error handling and loading state
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || nodesInitializedRef.current)
-            return;
-        try {
-            var totalNodes_1 = story.paragraphs.length;
-            var paragraphNodes = story.paragraphs.map(function (para, index) {
-                var position = calculateNodePosition(index, totalNodes_1);
-                return {
-                    id: "p".concat(index),
-                    type: 'paragraph',
-                    position: position,
-                    data: {
-                        index: index,
-                        text: para.text,
-                        style: selectedStyle,
-                        imageUrl: para.image_url,
-                        imagePrompt: para.image_prompt,
-                        audioUrl: para.audio_url,
-                        onGenerateCard: handleGenerateCard,
-                        onRegenerateImage: handleRegenerateImage,
-                        onRegenerateAudio: handleRegenerateAudio,
-                        onExpandImage: setExpandedImage,
-                        onStyleChange: handleStyleChange,
-                        isGenerating: false,
-                        isRegenerating: false,
-                        isRegeneratingAudio: false
-                    }
-                };
-            });
-            setNodes(paragraphNodes);
-            nodesInitializedRef.current = true;
-            setIsLoading(false);
+        var errorContainer = document.getElementById('error-container');
+        var loadingContainer = document.getElementById('loading-container');
+        if (errorContainer && loadingContainer) {
+            if (error) {
+                errorContainer.innerHTML = "<h4 class=\"alert-heading\">Error</h4><p>".concat(error, "</p>");
+                errorContainer.classList.remove('d-none');
+                loadingContainer.classList.add('d-none');
+            }
+            else {
+                errorContainer.classList.add('d-none');
+                loadingContainer.classList.toggle('d-none', !isLoading);
+            }
         }
-        catch (error) {
-            console.error('Error initializing nodes:', error);
-            setError('Failed to initialize story nodes');
-            setIsLoading(false);
-        }
-    }, [story === null || story === void 0 ? void 0 : story.paragraphs, selectedStyle]);
+    }, [error, isLoading]);
     // Handle image regeneration
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_1, error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
-                    _a.trys.push([0, 3, , 4]);
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: true, error: null }) }) : node;
+                    _b.trys.push([0, 3, , 4]);
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: true }) }) : node;
                     }); });
                     return [4 /*yield*/, fetch('/story/regenerate_image', {
                             method: 'POST',
@@ -44637,40 +44589,177 @@ var NodeEditor = function (_a) {
                             body: JSON.stringify({
                                 index: index,
                                 text: story === null || story === void 0 ? void 0 : story.paragraphs[index].text,
-                                style: selectedStyle
+                                style: ((_a = nodes.find(function (n) { return n.id === "p".concat(index); })) === null || _a === void 0 ? void 0 : _a.data.globalStyle) || 'realistic'
                             })
                         })];
                 case 1:
-                    response = _a.sent();
+                    response = _b.sent();
                     return [4 /*yield*/, response.json()];
                 case 2:
-                    data_1 = _a.sent();
+                    data_1 = _b.sent();
                     if (!response.ok)
                         throw new Error(data_1.error || 'Failed to regenerate image');
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_1.image_url, imagePrompt: data_1.image_prompt, isRegenerating: false }) }) : node;
-                    }); });
+                    if (data_1.success) {
+                        setNodes(function (nodes) { return nodes.map(function (node) {
+                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_1.image_url, imagePrompt: data_1.image_prompt, isRegenerating: false }) }) : node;
+                        }); });
+                    }
                     return [3 /*break*/, 4];
                 case 3:
-                    error_1 = _a.sent();
+                    error_1 = _b.sent();
                     console.error('Error regenerating image:', error_1);
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: false, error: error_1 instanceof Error ? error_1.message : 'Failed to regenerate image' }) }) : node;
+                    setError(error_1 instanceof Error ? error_1.message : 'Failed to regenerate image');
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegenerating: false }) }) : node;
                     }); });
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
         });
-    }); }, [story, selectedStyle]);
+    }); }, [story, nodes]);
+    // Handle style changes
+    var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
+        setNodes(function (nodes) { return nodes.map(function (node) {
+            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { globalStyle: newStyle }) }) : node;
+        }); });
+        onStyleUpdate === null || onStyleUpdate === void 0 ? void 0 : onStyleUpdate([{
+                index: index,
+                image_style: newStyle
+            }]);
+    }, [onStyleUpdate]);
+    // Initialize nodes from story data
+    (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+        if (!(story === null || story === void 0 ? void 0 : story.paragraphs) || nodesInitializedRef.current)
+            return;
+        var paragraphNodes = story.paragraphs.map(function (para, index) { return ({
+            id: "p".concat(index),
+            type: 'paragraph',
+            position: {
+                x: (index % 2) * 300 + 50,
+                y: Math.floor(index / 2) * 250 + 50
+            },
+            data: {
+                index: index,
+                text: para.text,
+                globalStyle: selectedStyle,
+                imageUrl: para.image_url,
+                imagePrompt: para.image_prompt,
+                audioUrl: para.audio_url,
+                onGenerateCard: handleGenerateCard,
+                onRegenerateImage: handleRegenerateImage,
+                onRegenerateAudio: handleRegenerateAudio,
+                onExpandImage: setExpandedImage,
+                onStyleChange: handleStyleChange,
+                isGenerating: false,
+                isRegenerating: false,
+                isRegeneratingAudio: false
+            }
+        }); });
+        setNodes(paragraphNodes);
+        nodesInitializedRef.current = true;
+    }, [story === null || story === void 0 ? void 0 : story.paragraphs, selectedStyle, handleStyleChange]);
+    // Handle node connections
+    var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (params) {
+        if (params.source === params.target)
+            return;
+        var edge = __assign(__assign({}, params), { type: 'smoothstep', animated: true, style: {
+                stroke: 'var(--bs-primary)',
+                strokeWidth: 2,
+            } });
+        setEdges(function (edges) { return (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.addEdge)(edge, edges); });
+    }, [setEdges]);
+    // Handle card generation
+    var handleGenerateCard = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
+        var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_2;
+        var _b, _c, _d, _e;
+        return __generator(this, function (_f) {
+            switch (_f.label) {
+                case 0:
+                    if (!((_c = (_b = story === null || story === void 0 ? void 0 : story.paragraphs) === null || _b === void 0 ? void 0 : _b[index]) === null || _c === void 0 ? void 0 : _c.text)) {
+                        setError('No text found for paragraph');
+                        return [2 /*return*/];
+                    }
+                    _f.label = 1;
+                case 1:
+                    _f.trys.push([1, 6, , 7]);
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: true }) }) : node;
+                    }); });
+                    return [4 /*yield*/, fetch('/story/generate_cards', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                index: index,
+                                text: story.paragraphs[index].text,
+                                style: ((_d = nodes.find(function (n) { return n.id === "p".concat(index); })) === null || _d === void 0 ? void 0 : _d.data.globalStyle) || 'realistic'
+                            })
+                        })];
+                case 2:
+                    response = _f.sent();
+                    if (!response.ok)
+                        throw new Error('Failed to generate card');
+                    reader = (_e = response.body) === null || _e === void 0 ? void 0 : _e.getReader();
+                    if (!reader)
+                        throw new Error('Failed to get reader');
+                    decoder = new TextDecoder();
+                    buffer = '';
+                    _f.label = 3;
+                case 3:
+                    if (false) {}
+                    return [4 /*yield*/, reader.read()];
+                case 4:
+                    _a = _f.sent(), done = _a.done, value = _a.value;
+                    if (done)
+                        return [3 /*break*/, 5];
+                    buffer += decoder.decode(value, { stream: true });
+                    lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    _loop_1 = function (line) {
+                        if (!line.trim())
+                            return "continue";
+                        try {
+                            var data_2 = JSON.parse(line);
+                            if (data_2.type === 'paragraph') {
+                                setNodes(function (nodes) { return nodes.map(function (node) {
+                                    return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_2.data.image_url, imagePrompt: data_2.data.image_prompt, audioUrl: data_2.data.audio_url, isGenerating: false }) }) : node;
+                                }); });
+                            }
+                            else if (data_2.type === 'error') {
+                                throw new Error(data_2.message);
+                            }
+                        }
+                        catch (error) {
+                            console.error('Error parsing JSON:', error);
+                            throw new Error('Failed to parse server response');
+                        }
+                    };
+                    for (_i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
+                        line = lines_1[_i];
+                        _loop_1(line);
+                    }
+                    return [3 /*break*/, 3];
+                case 5: return [3 /*break*/, 7];
+                case 6:
+                    error_2 = _f.sent();
+                    console.error('Error generating card:', error_2);
+                    setError(error_2 instanceof Error ? error_2.message : 'Failed to generate card');
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: false }) }) : node;
+                    }); });
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    }); }, [story === null || story === void 0 ? void 0 : story.paragraphs, nodes]);
     // Handle audio regeneration
     var handleRegenerateAudio = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, data_2, error_2;
+        var response, data_3, error_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 3, , 4]);
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: true, error: null }) }) : node;
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: true }) }) : node;
                     }); });
                     return [4 /*yield*/, fetch('/story/regenerate_audio', {
                             method: 'POST',
@@ -44684,128 +44773,28 @@ var NodeEditor = function (_a) {
                     response = _a.sent();
                     return [4 /*yield*/, response.json()];
                 case 2:
-                    data_2 = _a.sent();
+                    data_3 = _a.sent();
                     if (!response.ok)
-                        throw new Error(data_2.error || 'Failed to regenerate audio');
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { audioUrl: data_2.audio_url, isRegeneratingAudio: false }) }) : node;
-                    }); });
+                        throw new Error(data_3.error || 'Failed to regenerate audio');
+                    if (data_3.success) {
+                        setNodes(function (nodes) { return nodes.map(function (node) {
+                            return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { audioUrl: data_3.audio_url, isRegeneratingAudio: false }) }) : node;
+                        }); });
+                    }
                     return [3 /*break*/, 4];
                 case 3:
-                    error_2 = _a.sent();
-                    console.error('Error regenerating audio:', error_2);
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: false, error: error_2 instanceof Error ? error_2.message : 'Failed to regenerate audio' }) }) : node;
+                    error_3 = _a.sent();
+                    console.error('Error regenerating audio:', error_3);
+                    setError(error_3 instanceof Error ? error_3.message : 'Failed to regenerate audio');
+                    setNodes(function (nodes) { return nodes.map(function (node) {
+                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isRegeneratingAudio: false }) }) : node;
                     }); });
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
         });
-    }); }, [story]);
-    // Handle card generation
-    var handleGenerateCard = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, reader, decoder, buffer, _a, done, value, lines, _loop_1, _i, lines_1, line, error_3;
-        var _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    _c.trys.push([0, 5, , 6]);
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: true, error: null }) }) : node;
-                    }); });
-                    return [4 /*yield*/, fetch('/story/generate_cards', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                index: index,
-                                text: story === null || story === void 0 ? void 0 : story.paragraphs[index].text,
-                                style: selectedStyle
-                            })
-                        })];
-                case 1:
-                    response = _c.sent();
-                    if (!response.ok)
-                        throw new Error('Failed to generate card');
-                    reader = (_b = response.body) === null || _b === void 0 ? void 0 : _b.getReader();
-                    if (!reader)
-                        throw new Error('Failed to read response');
-                    decoder = new TextDecoder();
-                    buffer = '';
-                    _c.label = 2;
-                case 2:
-                    if (false) {}
-                    return [4 /*yield*/, reader.read()];
-                case 3:
-                    _a = _c.sent(), done = _a.done, value = _a.value;
-                    if (done)
-                        return [3 /*break*/, 4];
-                    buffer += decoder.decode(value, { stream: true });
-                    lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    _loop_1 = function (line) {
-                        if (!line.trim())
-                            return "continue";
-                        try {
-                            var data_3 = JSON.parse(line);
-                            if (data_3.type === 'paragraph') {
-                                setNodes(function (currentNodes) {
-                                    return currentNodes.map(function (node) {
-                                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { imageUrl: data_3.data.image_url, imagePrompt: data_3.data.image_prompt, audioUrl: data_3.data.audio_url, isGenerating: false }) }) : node;
-                                    });
-                                });
-                            }
-                            else if (data_3.type === 'error') {
-                                throw new Error(data_3.message);
-                            }
-                        }
-                        catch (parseError) {
-                            console.error('Error parsing JSON:', parseError);
-                            throw new Error('Invalid response format');
-                        }
-                    };
-                    for (_i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
-                        line = lines_1[_i];
-                        _loop_1(line);
-                    }
-                    return [3 /*break*/, 2];
-                case 4: return [3 /*break*/, 6];
-                case 5:
-                    error_3 = _c.sent();
-                    console.error('Error generating card:', error_3);
-                    setNodes(function (currentNodes) { return currentNodes.map(function (node) {
-                        return node.id === "p".concat(index) ? __assign(__assign({}, node), { data: __assign(__assign({}, node.data), { isGenerating: false, error: error_3 instanceof Error ? error_3.message : 'Failed to generate card' }) }) : node;
-                    }); });
-                    return [3 /*break*/, 6];
-                case 6: return [2 /*return*/];
-            }
-        });
-    }); }, [story, selectedStyle]);
-    // Handle style changes
-    var handleStyleChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index, newStyle) {
-        setNodes(function (currentNodes) { return currentNodes.map(function (node) { return (__assign(__assign({}, node), { data: node.id === "p".concat(index) ? __assign(__assign({}, node.data), { style: newStyle }) : node.data })); }); });
-        onStyleUpdate === null || onStyleUpdate === void 0 ? void 0 : onStyleUpdate([{ index: index, image_style: newStyle }]);
-    }, [onStyleUpdate]);
-    // Handle node connections
-    var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (params) {
-        if (params.source === params.target)
-            return;
-        setEdges(function (currentEdges) { return (0,reactflow__WEBPACK_IMPORTED_MODULE_5__.addEdge)(__assign(__assign({}, params), { type: 'smoothstep', animated: true, style: {
-                stroke: 'var(--bs-primary)',
-                strokeWidth: 2,
-            } }), currentEdges); });
-    }, [setEdges]);
-    if (error) {
-        return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "alert alert-danger" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h4", null, "Error"),
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", null, error),
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { onClick: function () { return setError(null); }, variant: "secondary" }, "Try Again")));
-    }
-    if (isLoading) {
-        return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center h-[600px]" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "spinner-border text-primary", role: "status" },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("span", { className: "visually-hidden" }, "Loading..."))));
-    }
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(ErrorBoundary, null,
+    }); }, [story === null || story === void 0 ? void 0 : story.paragraphs]);
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
         react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
             react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 }, connectOnClick: true },
                 react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_6__.Background, null),

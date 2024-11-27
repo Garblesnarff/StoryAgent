@@ -687,9 +687,6 @@ video {
 .h-9 {
   height: 2.25rem;
 }
-.h-\[600px\] {
-  height: 600px;
-}
 .h-\[var\(--radix-select-trigger-height\)\] {
   height: var(--radix-select-trigger-height);
 }
