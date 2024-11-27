@@ -44497,8 +44497,8 @@ var NodeEditor = function (_a) {
     var _c = (0,reactflow__WEBPACK_IMPORTED_MODULE_3__.useEdgesState)([]), edges = _c[0], setEdges = _c[1], onEdgesChange = _c[2];
     var _d = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('realistic'), selectedStyle = _d[0], setSelectedStyle = _d[1];
     var _e = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), expandedImage = _e[0], setExpandedImage = _e[1];
-    var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(true), isLoading = _f[0], setIsLoading = _f[1];
-    var initRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
+    var _f = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null), error = _f[0], setError = _f[1];
+    var _g = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(true), isLoading = _g[0], setIsLoading = _g[1];
     var handleRegenerateImage = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (index) { return __awaiter(void 0, void 0, void 0, function () {
         var response, data_1, error_1;
         var _a;
@@ -44636,57 +44636,68 @@ var NodeEditor = function (_a) {
             onStyleUpdate([{ index: index, image_style: newStyle }]);
         }
     }, [onStyleUpdate]);
-    // Use useLayoutEffect for synchronous updates
     (0,react__WEBPACK_IMPORTED_MODULE_0__.useLayoutEffect)(function () {
-        if (!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs) || initRef.current)
+        if (!(initialStory === null || initialStory === void 0 ? void 0 : initialStory.paragraphs)) {
+            setError('No story data available');
+            setIsLoading(false);
             return;
-        console.log('Initializing nodes with story:', initialStory);
-        var nodes = initialStory.paragraphs.map(function (para, index) { return ({
-            id: "p".concat(index),
-            type: 'paragraph',
-            position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
-            data: {
-                index: index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateCard: handleGenerateCard,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                onStyleChange: handleStyleChange,
-                isGenerating: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false
-            }
-        }); });
-        console.log('Setting initial nodes:', nodes);
-        setNodes(nodes);
-        initRef.current = true;
-        setIsLoading(false);
+        }
+        try {
+            console.log('Initializing nodes with story:', initialStory);
+            var nodes_1 = initialStory.paragraphs.map(function (para, index) { return ({
+                id: "p".concat(index),
+                type: 'paragraph',
+                position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
+                data: {
+                    index: index,
+                    text: para.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: para.image_url,
+                    imagePrompt: para.image_prompt,
+                    audioUrl: para.audio_url,
+                    onGenerateCard: handleGenerateCard,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    onStyleChange: handleStyleChange,
+                    isGenerating: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false
+                }
+            }); });
+            console.log('Setting initial nodes:', nodes_1);
+            setNodes(nodes_1);
+            setIsLoading(false);
+        }
+        catch (err) {
+            console.error('Error initializing nodes:', err);
+            setError('Failed to initialize story editor');
+            setIsLoading(false);
+        }
     }, [initialStory, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange]);
     var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (params) {
         setEdges(function (edges) { return (0,reactflow__WEBPACK_IMPORTED_MODULE_3__.addEdge)(__assign(__assign({}, params), { type: 'smoothstep', animated: true, style: { stroke: 'var(--primary)', strokeWidth: 2 } }), edges); });
     }, [setEdges]);
+    if (error) {
+        return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex items-center justify-center h-[600px] bg-background border rounded-lg" },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "text-center space-y-4" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("p", { className: "text-red-500" }, error),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { onClick: function () { return window.location.reload(); } }, "Retry"))));
+    }
     if (isLoading) {
         return react__WEBPACK_IMPORTED_MODULE_0___default().createElement(LoadingState, null);
     }
-    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null,
-        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement(ReactFlowErrorBoundary, null,
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlowProvider, null,
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--background)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 } },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Background, null),
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Controls, null))))),
-        expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "fixed inset-0 bg-black/50 flex items-center justify-center z-50", onClick: function () { return setExpandedImage(null); } },
-            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "bg-background p-4 rounded-lg max-w-4xl max-h-[90vh] w-full mx-4", onClick: function (e) { return e.stopPropagation(); } },
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "flex justify-end mb-2" },
-                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_components_ui_button__WEBPACK_IMPORTED_MODULE_1__.Button, { variant: "ghost", size: "sm", onClick: function () { return setExpandedImage(null); } },
-                        react__WEBPACK_IMPORTED_MODULE_0___default().createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-6 h-6", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
-                            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("path", { d: "M18 6L6 18M6 6l12 12" })))),
-                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: expandedImage, alt: "Full preview", className: "max-h-[calc(90vh-4rem)] w-auto mx-auto" }))))));
+    return (react__WEBPACK_IMPORTED_MODULE_0___default().createElement(ReactFlowErrorBoundary, null,
+        react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlowProvider, null,
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { style: { width: '100%', height: '600px' }, className: "node-editor-root" },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_3__.ReactFlow, { nodes: nodes, edges: edges, onNodesChange: onNodesChange, onEdgesChange: onEdgesChange, onConnect: onConnect, nodeTypes: nodeTypes, fitView: true, style: { background: 'var(--bs-dark)' }, minZoom: 0.1, maxZoom: 4, defaultViewport: { x: 0, y: 0, zoom: 1 }, connectOnClick: true },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_4__.Background, null),
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement(reactflow__WEBPACK_IMPORTED_MODULE_5__.Controls, null)))),
+        expandedImage && (react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "modal-backdrop", onClick: function () { return setExpandedImage(null); } },
+            react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "preview-modal", onClick: function (e) { return e.stopPropagation(); } },
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", { type: "button", className: "close-button", onClick: function () { return setExpandedImage(null); } }, "\u00D7"),
+                react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", { className: "preview-content" },
+                    react__WEBPACK_IMPORTED_MODULE_0___default().createElement("img", { src: expandedImage, alt: "Full preview" })))))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (react__WEBPACK_IMPORTED_MODULE_0___default().memo(NodeEditor));
 

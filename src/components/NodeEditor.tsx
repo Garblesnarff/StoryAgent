@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useCallback, useLayoutEffect, useRef } from 'react';
 import ReactFlow, { 
     Controls, 
     Background,
@@ -32,7 +32,7 @@ class ReactFlowErrorBoundary extends React.Component<
     }
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error('ReactFlow Error:', error, errorInfo);
+        console.error('[ReactFlowErrorBoundary] Error:', error, errorInfo);
     }
 
     render() {
@@ -41,6 +41,7 @@ class ReactFlowErrorBoundary extends React.Component<
                 <div className="p-4 border border-red-500 rounded bg-red-50">
                     <h3 className="text-red-700 font-bold">Something went wrong with the story editor</h3>
                     <p className="text-red-600">Please try refreshing the page</p>
+                    <Button onClick={() => window.location.reload()}>Refresh Page</Button>
                 </div>
             );
         }
@@ -106,7 +107,7 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
                                 alt="Generated preview" 
                                 className="w-full h-auto object-cover"
                                 onError={(e) => {
-                                    console.error('Image failed to load:', data.imageUrl);
+                                    console.error('[ParagraphNode] Image failed to load:', data.imageUrl);
                                     e.currentTarget.src = '/static/placeholder.png';
                                 }}
                             />
@@ -159,7 +160,7 @@ const ParagraphNode = React.memo(({ data }: { data: NodeData }) => {
                                 controls
                                 className="w-full"
                                 key={data.audioUrl}
-                                onError={(e) => console.error('Audio failed to load:', data.audioUrl)}
+                                onError={(e) => console.error('[ParagraphNode] Audio failed to load:', data.audioUrl)}
                             >
                                 <source src={data.audioUrl} type="audio/wav" />
                                 Your browser does not support the audio element.
@@ -206,12 +207,15 @@ const nodeTypes = {
 };
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpdate }) => {
+    console.log('[NodeEditor] Props received:', { initialStory });
+    
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const initializationRef = useRef(false);
 
     const handleRegenerateImage = useCallback(async (index: number) => {
         try {
@@ -244,7 +248,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 ));
             }
         } catch (error) {
-            console.error('Error regenerating image:', error);
+            console.error('[NodeEditor] Error regenerating image:', error);
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
             ));
@@ -280,7 +284,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 ));
             }
         } catch (error) {
-            console.error('Error regenerating audio:', error);
+            console.error('[NodeEditor] Error regenerating audio:', error);
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
             ));
@@ -289,7 +293,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
 
     const handleGenerateCard = useCallback(async (index: number) => {
         if (!initialStory?.paragraphs?.[index]?.text) {
-            console.error('No text found for paragraph');
+            console.error('[NodeEditor] No text found for paragraph');
             return;
         }
 
@@ -326,7 +330,7 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 ));
             }
         } catch (error) {
-            console.error('Error generating card:', error);
+            console.error('[NodeEditor] Error generating card:', error);
             setNodes(nodes => nodes.map(node => 
                 node.id === `p${index}` ? {...node, data: {...node.data, isGenerating: false}} : node
             ));
@@ -350,15 +354,19 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
     }, [onStyleUpdate]);
 
     useLayoutEffect(() => {
+        console.log('[NodeEditor] Initialization started');
+        if (initializationRef.current) return;
+        
         if (!initialStory?.paragraphs) {
-            setError('No story data available');
+            console.error('[NodeEditor] No story data available');
+            setError('Story data is missing');
             setIsLoading(false);
             return;
         }
-        
+
         try {
-            console.log('Initializing nodes with story:', initialStory);
-            const nodes = initialStory.paragraphs.map((para, index) => ({
+            console.log('[NodeEditor] Setting up nodes with story:', initialStory);
+            const newNodes = initialStory.paragraphs.map((para, index) => ({
                 id: `p${index}`,
                 type: 'paragraph',
                 position: { x: (index % 3) * 500 + 50, y: Math.floor(index / 3) * 450 + 50 },
@@ -380,12 +388,13 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                 }
             }));
             
-            console.log('Setting initial nodes:', nodes);
-            setNodes(nodes);
-            setIsLoading(false);
+            console.log('[NodeEditor] Setting initial nodes:', newNodes);
+            setNodes(newNodes);
+            initializationRef.current = true;
         } catch (err) {
-            console.error('Error initializing nodes:', err);
+            console.error('[NodeEditor] Initialization error:', err);
             setError('Failed to initialize story editor');
+        } finally {
             setIsLoading(false);
         }
     }, [initialStory, selectedStyle, handleGenerateCard, handleRegenerateImage, handleRegenerateAudio, handleStyleChange]);
@@ -404,8 +413,8 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
             <div className="flex items-center justify-center h-[600px] bg-background border rounded-lg">
                 <div className="text-center space-y-4">
                     <p className="text-red-500">{error}</p>
-                    <Button onClick={() => window.location.reload()}>
-                        Retry
+                    <Button onClick={() => window.location.href = '/'}>
+                        Return to Home
                     </Button>
                 </div>
             </div>
@@ -416,9 +425,11 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
         return <LoadingState />;
     }
 
+    console.log('[NodeEditor] Current state:', { isLoading, error, nodes });
+
     return (
-        <ReactFlowErrorBoundary>
-            <ReactFlowProvider>
+        <ReactFlowProvider>
+            <ReactFlowErrorBoundary>
                 <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
                     <ReactFlow
                         nodes={nodes}
@@ -428,35 +439,47 @@ const NodeEditor: React.FC<NodeEditorProps> = ({ story: initialStory, onStyleUpd
                         onConnect={onConnect}
                         nodeTypes={nodeTypes}
                         fitView
-                        style={{ background: 'var(--bs-dark)' }}
+                        style={{ background: 'var(--background)' }}
                         minZoom={0.1}
                         maxZoom={4}
                         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                        connectOnClick={true}
                     >
                         <Background />
                         <Controls />
                     </ReactFlow>
                 </div>
-            </ReactFlowProvider>
+            </ReactFlowErrorBoundary>
             
             {expandedImage && (
-                <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
-                    <div className="preview-modal" onClick={e => e.stopPropagation()}>
-                        <button 
-                            type="button" 
-                            className="close-button"
+                <div 
+                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <div 
+                        className="relative bg-background rounded-lg p-4 max-w-4xl max-h-[90vh] w-full mx-4"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-2"
                             onClick={() => setExpandedImage(null)}
                         >
-                            ×
-                        </button>
-                        <div className="preview-content">
-                            <img src={expandedImage} alt="Full preview" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </Button>
+                        <div className="mt-6">
+                            <img 
+                                src={expandedImage} 
+                                alt="Full preview" 
+                                className="max-w-full max-h-[80vh] object-contain mx-auto"
+                            />
                         </div>
                     </div>
                 </div>
             )}
-        </ReactFlowErrorBoundary>
+        </ReactFlowProvider>
     );
 };
 
