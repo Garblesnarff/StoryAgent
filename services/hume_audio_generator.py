@@ -1,16 +1,35 @@
 """
 Hume Audio Generator Service
 
-This module provides audio generation capabilities using Hume AI's websocket-based
-text-to-speech API. It handles:
-- Chunked text-to-speech conversion
-- WebSocket connection management
-- Audio data concatenation
-- Rate limiting and retries
-- Error handling and logging
+A robust text-to-speech service utilizing Hume AI's WebSocket API for high-quality
+audio generation with advanced error handling and chunking capabilities.
 
-The service automatically splits long text into manageable chunks and handles
-reconnection logic for reliable audio generation.
+Key Features:
+    - Automatic text chunking for optimal processing
+    - WebSocket connection management with retry logic
+    - Concurrent audio generation for improved performance
+    - Error handling with graceful degradation
+    - Comprehensive logging for debugging
+    - Rate limiting to prevent API throttling
+
+Technical Details:
+    - Uses WebSocket protocol for real-time communication
+    - Implements automatic reconnection with exponential backoff
+    - Manages audio data concatenation for seamless output
+    - Provides both synchronous and asynchronous interfaces
+
+Usage Example:
+    ```python
+    generator = HumeAudioGenerator()
+    audio_url = generator.generate_audio("Text to convert to speech")
+    if audio_url:
+        print(f"Audio generated successfully: {audio_url}")
+    ```
+
+Note:
+    Requires valid Hume API credentials in environment variables:
+    - HUME_CONFIG_ID
+    - HUME_API_KEY
 """
 
 import websockets

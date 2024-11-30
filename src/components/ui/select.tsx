@@ -1,15 +1,57 @@
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 
+/**
+ * Select Component Module
+ * 
+ * A collection of components that create an accessible and customizable select/dropdown
+ * interface using Radix UI primitives. This module provides all necessary components
+ * for building complex select interfaces that maintain accessibility and usability.
+ * 
+ * Key Features:
+ * - Fully accessible dropdown implementation
+ * - Keyboard navigation support
+ * - Custom styling with consistent design system
+ * - Support for grouping options
+ * - Custom triggers and item rendering
+ * 
+ * @module Select
+ */
+
+/** Base Select component for managing selection state */
 const Select = SelectPrimitive.Root
 
+/** Component for grouping related select items */
 const SelectGroup = SelectPrimitive.Group
 
+/** Component for displaying the current selection */
 const SelectValue = SelectPrimitive.Value
 
+/**
+ * SelectTrigger Component
+ * 
+ * The button that triggers the select dropdown. This component handles the
+ * visual representation of the select control and its various states.
+ * 
+ * Features:
+ * - Custom styling with consistent design system
+ * - Focus and hover states
+ * - Disabled state handling
+ * - Dropdown indicator icon
+ * - Full width by default
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <Select>
+ *   <SelectTrigger>
+ *     <SelectValue placeholder="Select an option" />
+ *   </SelectTrigger>
+ * </Select>
+ * ```
+ */
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
@@ -30,6 +72,33 @@ const SelectTrigger = React.forwardRef<
 ))
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
+/**
+ * SelectContent Component
+ * 
+ * The dropdown content container that appears when the select is opened.
+ * Handles positioning, animations, and rendering of select options.
+ * 
+ * Features:
+ * - Automatic positioning relative to trigger
+ * - Smooth animations for enter/exit
+ * - Portal rendering to avoid clipping
+ * - Responsive sizing based on trigger width
+ * - Custom styling support
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <Select>
+ *   <SelectTrigger>
+ *     <SelectValue />
+ *   </SelectTrigger>
+ *   <SelectContent>
+ *     <SelectItem value="option1">Option 1</SelectItem>
+ *     <SelectItem value="option2">Option 2</SelectItem>
+ *   </SelectContent>
+ * </Select>
+ * ```
+ */
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
@@ -60,6 +129,28 @@ const SelectContent = React.forwardRef<
 ))
 SelectContent.displayName = SelectPrimitive.Content.displayName
 
+/**
+ * SelectLabel Component
+ * 
+ * A label component for grouping select items with a heading.
+ * Provides visual organization and semantic structure to select options.
+ * 
+ * Features:
+ * - Consistent styling with other select components
+ * - Proper spacing and typography
+ * - Semantic HTML structure
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <Select>
+ *   <SelectContent>
+ *     <SelectLabel>Category</SelectLabel>
+ *     <SelectItem value="1">Option 1</SelectItem>
+ *   </SelectContent>
+ * </Select>
+ * ```
+ */
 const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
@@ -72,6 +163,30 @@ const SelectLabel = React.forwardRef<
 ))
 SelectLabel.displayName = SelectPrimitive.Label.displayName
 
+/**
+ * SelectItem Component
+ * 
+ * An individual selectable option within the select dropdown.
+ * Handles selection state, focus management, and option rendering.
+ * 
+ * Features:
+ * - Selection indicator
+ * - Focus and hover states
+ * - Keyboard navigation support
+ * - Disabled state handling
+ * - Custom content rendering
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <Select>
+ *   <SelectContent>
+ *     <SelectItem value="option1">Regular Option</SelectItem>
+ *     <SelectItem value="option2" disabled>Disabled Option</SelectItem>
+ *   </SelectContent>
+ * </Select>
+ * ```
+ */
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>

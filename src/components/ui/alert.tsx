@@ -1,15 +1,42 @@
+/**
+ * Alert Component
+ * 
+ * An accessible alert dialog system built on Radix UI's AlertDialog primitive.
+ * Provides modal dialogs for important messages, warnings, and confirmations.
+ * 
+ * Features:
+ * - ARIA compliant accessibility
+ * - Animated transitions
+ * - Backdrop blur effect
+ * - Responsive design
+ * - Keyboard navigation
+ * 
+ * @module components/ui/alert
+ */
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
+/**
+ * Root alert component that manages the dialog's open state
+ */
 const Alert = AlertDialogPrimitive.Root
 
+/**
+ * Button that triggers the alert dialog
+ */
 const AlertTrigger = AlertDialogPrimitive.Trigger
 
+/** Portal for rendering alert outside of parent DOM hierarchy */
 const AlertPortal = AlertDialogPrimitive.Portal
 
+/**
+ * Semi-transparent overlay behind the alert dialog
+ * Provides visual focus and prevents interaction with background
+ */
 const AlertOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
@@ -25,6 +52,30 @@ const AlertOverlay = React.forwardRef<
 ))
 AlertOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
+/**
+ * Alert Content Container
+ * 
+ * Main container component that handles the positioning and animation
+ * of the alert dialog content.
+ * 
+ * Features:
+ * - Centered modal positioning
+ * - Responsive width constraints
+ * - Enter/exit animations with zoom and fade
+ * - Focus trap for accessibility
+ * - Responsive padding and spacing
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <Alert>
+ *   <AlertContent>
+ *     <AlertTitle>Confirmation</AlertTitle>
+ *     <AlertDescription>Are you sure?</AlertDescription>
+ *   </AlertContent>
+ * </Alert>
+ * ```
+ */
 const AlertContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>

@@ -1,15 +1,33 @@
 """
 Story Generation Blueprint Module
 
-This module handles all story generation related routes and functionality including:
-- Story generation with customizable parameters
-- Image generation with style customization
-- Audio generation for story narration
-- Real-time progress streaming
-- Media regeneration capabilities
+This module handles all story generation related routes and functionality, providing
+a comprehensive interface for story content generation and management.
 
-The blueprint uses various services to handle different aspects of content generation
-and maintains state through both session storage and temporary database records.
+Features:
+- Story generation with customizable parameters and styles
+- Image generation with multiple style options (realistic, artistic, fantasy)
+- Audio narration generation with emotion-aware processing
+- Real-time progress streaming using Server-Sent Events (SSE)
+- Media regeneration capabilities with context preservation
+- Session-based state management with temporary database storage
+
+Technical Implementation:
+- Uses Flask Blueprint for route organization
+- Implements streaming responses for real-time feedback
+- Manages state through Flask sessions and PostgreSQL
+- Integrates with multiple service layers for content generation
+- Provides error handling and logging throughout the pipeline
+
+Dependencies:
+- Flask for web framework functionality
+- SQLAlchemy for database operations
+- Custom services for text, image, and audio generation
+- Logging for operation tracking and debugging
+
+Note: All routes in this blueprint require an active session with story data.
+Session data is managed through Flask's session interface and temporary
+database records for larger datasets.
 """
 
 from flask import Blueprint, render_template, request, Response, stream_with_context, session, redirect, url_for, jsonify
@@ -41,23 +59,51 @@ def send_json_message(message_type: str, message_data: Union[str, Dict], step: O
     Format and serialize JSON messages for SSE (Server-Sent Events) streaming.
     
     This helper function ensures consistent message formatting across all
-    streaming responses in the generation process.
+    streaming responses in the generation process. It handles both string
+    and dictionary payloads, automatically selecting the appropriate key
+    based on the data type.
     
     Args:
-        message_type: Type identifier for the message (e.g., 'log', 'error', 'complete')
-        message_data: The actual message content or data payload
-        step: Optional step identifier for progress tracking
+        message_type: Type identifier for the message. Valid types include:
+            - 'log': For general progress updates and information
+            - 'error': For error messages and failure notifications
+            - 'paragraph': For paragraph-specific data updates
+            - 'complete': For completion notifications
+        message_data: The actual message content or data payload.
+            - If string: Used as a simple message
+            - If dict: Used as a structured data payload
+        step: Optional step identifier for progress tracking in the UI
         
     Returns:
         str: Formatted JSON string with newline terminator for SSE
+        
+    Examples:
+        >>> send_json_message('log', 'Processing started')
+        '{"type":"log","message":"Processing started"}\n'
+        
+        >>> send_json_message('paragraph', {'text': 'Once upon a time'}, 'content')
+        '{"type":"paragraph","data":{"text":"Once upon a time"},"step":"content"}\n'
+    
+    Note:
+        The function automatically escapes newlines in the output to ensure
+        proper SSE formatting. The returned string always ends with a newline
+        character as required by the SSE protocol.
     """
-    message = {
-        'type': message_type,
-        'message' if isinstance(message_data, str) else 'data': message_data
-    }
-    if step:
-        message['step'] = step
-    return json.dumps(message).replace('\n', ' ') + '\n'
+    try:
+        message = {
+            'type': message_type,
+            'message' if isinstance(message_data, str) else 'data': message_data
+        }
+        if step:
+            message['step'] = step
+        return json.dumps(message).replace('\n', ' ') + '\n'
+    except Exception as e:
+        logger.error(f"Error formatting SSE message: {str(e)}")
+        # Return a valid SSE message even in case of error
+        return json.dumps({
+            'type': 'error',
+            'message': 'Failed to format message'
+        }) + '\n'
 
 @generation_bp.route('/story/generate', methods=['GET'])
 def generate():

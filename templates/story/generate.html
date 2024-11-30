@@ -1,3 +1,48 @@
+{# 
+  Story Generation Template
+  
+  A Jinja2 template that renders the story generation interface, featuring an
+  interactive book-like layout with comprehensive accessibility support and
+  responsive design patterns.
+  
+  Features:
+  - Responsive card layout with fluid transitions and animations
+  - Dynamic image and text content display with lazy loading
+  - Accessible navigation buttons with ARIA labels and keyboard support
+  - Tooltip-enabled image prompts with descriptive alt text
+  - Progressive loading of story content for performance
+  - Comprehensive error state handling with user feedback
+  - Screen reader optimized content structure
+  
+  Template Variables:
+  story (dict): Story object containing generated content
+    - id (str): Unique identifier for the story
+    - title (str): Story title
+    - created_at (datetime): Story creation timestamp
+    - paragraphs (list): List of paragraph objects containing:
+      - text (str): The generated story text content
+      - image_url (str): URL to the generated illustration
+      - image_prompt (str): Prompt used for image generation
+      - style (str): Applied visual style ('realistic', 'artistic', etc.)
+      - index (int): Paragraph position in the story
+  
+  Template Blocks:
+  - content: Main content area for story display
+  - scripts: JavaScript dependencies for interactivity
+  
+  Dependencies:
+  - base.html: Parent template providing layout structure
+  - card-generation.js: Handles card interactions and animations
+  - custom.css: Provides styling and responsive design rules
+  
+  Accessibility:
+  - ARIA landmarks for navigation
+  - Semantic HTML structure
+  - Keyboard navigation support
+  - Screen reader optimized content
+  - Focus management for modals
+#}
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -5,22 +50,26 @@
     <h1 class="display-4 mb-5 text-center">Generated Story Cards</h1>
     
     <div id="story-output" class="mt-5">
-        <div class="book-container">
-            <button class="book-nav prev">
-                <svg viewBox="0 0 24 24">
+        <div class="book-container" role="region" aria-label="Story book viewer">
+            <button class="book-nav prev" aria-label="Previous page">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                 </svg>
             </button>
+            
             <div class="book-pages" id="paragraph-cards">
                 {% if story and story.paragraphs %}
                     {% for paragraph in story.paragraphs %}
                     <div class="card story-card">
                         <div class="card-image position-relative">
                             {% if paragraph.image_url %}
-                            <img src="{{ paragraph.image_url }}" class="card-img-top" 
-                                 data-bs-toggle="tooltip" data-bs-placement="top" 
+                            <img src="{{ paragraph.image_url }}" 
+                                 class="card-img-top" 
+                                 data-bs-toggle="tooltip" 
+                                 data-bs-placement="top" 
                                  title="{{ paragraph.image_prompt }}" 
-                                 alt="Story image">
+                                 alt="Generated illustration for paragraph {{ loop.index }}"
+                                 loading="lazy">
                             {% endif %}
                         </div>
                         <div class="card-body">
@@ -28,10 +77,15 @@
                         </div>
                     </div>
                     {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        No story has been generated yet. Please start the generation process.
+                    </div>
                 {% endif %}
             </div>
-            <button class="book-nav next">
-                <svg viewBox="0 0 24 24">
+            
+            <button class="book-nav next" aria-label="Next page">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                 </svg>
             </button>

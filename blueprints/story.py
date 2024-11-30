@@ -33,6 +33,57 @@ from models import TempBookData, StyleCustomization
 import logging
 from typing import Dict, Any, Optional
 
+from functools import wraps
+from typing import Callable, Any
+from flask import session, redirect, url_for, flash
+
+def require_story_data(f: Callable) -> Callable:
+    """
+    Decorator to validate story data presence in session.
+    Ensures routes have access to required story data before processing.
+    
+    Args:
+        f: The route function to wrap
+        
+    Returns:
+        Wrapped function that validates session data
+        
+    Redirects:
+        To index page with warning if story data is missing
+    """
+    @wraps(f)
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
+        if 'story_data' not in session:
+            logger.warning("No story data in session, redirecting to index")
+            flash('Please start by creating a new story', 'warning')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def validate_temp_data(temp_id: str) -> Optional[TempBookData]:
+    """
+    Validates and retrieves temporary book data.
+    
+    Args:
+        temp_id: Temporary storage identifier
+        
+    Returns:
+        TempBookData if found and valid, None otherwise
+        
+    Raises:
+        ValueError: If temp_id is invalid or data is corrupted
+    """
+    if not temp_id:
+        raise ValueError("Missing temp_id")
+        
+    temp_data = TempBookData.query.get(temp_id)
+    if not temp_data:
+        raise ValueError(f"No temporary data found for ID: {temp_id}")
+        
+    if not isinstance(temp_data.data, dict) or 'paragraphs' not in temp_data.data:
+        raise ValueError(f"Invalid story data structure for ID: {temp_id}")
+        
+    return temp_data
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,6 +107,43 @@ def allowed_file(filename):
 
 @story_bp.route('/story/upload', methods=['POST'])
 def upload_file():
+    """
+    Handle book file upload and processing.
+
+    Accepts multipart/form-data POST request with a file field.
+    Processes supported file types (PDF, EPUB, HTML) and prepares
+    them for story generation.
+
+    Request:
+        - file: File object (required)
+            Supported formats: PDF, EPUB, HTML
+            Max size: Determined by Flask config
+
+    Returns:
+        JSON Response:
+        - Success (200):
+            {
+                'status': 'complete',
+                'message': 'Processing complete',
+                'progress': 100,
+                'redirect': '/story/edit'
+            }
+        
+        - Error (400):
+            {'error': 'Error message'} for client errors:
+            - No file provided
+            - Empty filename
+            - Invalid file type
+            
+        - Error (500):
+            {'error': 'Error message'} for server processing errors
+
+    Session:
+        Stores processed data under 'story_data' key:
+        - temp_id: Unique identifier for temporary storage
+        - source_file: Original filename
+        - paragraphs: Extracted text content
+    """
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
         
@@ -89,111 +177,88 @@ def upload_file():
     return jsonify({'error': 'Invalid file type'}), 400
 
 @story_bp.route('/story/edit', methods=['GET'])
+@require_story_data
 def edit():
     """
     Render the story editing interface with the current story data.
-    
-    This route handles the story editing interface by:
-    1. Validating session data exists and is properly structured
-    2. Retrieving and validating story data from temporary storage
-    3. Processing and preparing data for the React NodeEditor component
-    4. Handling various error cases with appropriate user feedback
-    
+
+    This endpoint provides the main story editing interface, combining text content,
+    generated media, and customization options. It performs extensive validation
+    to ensure data integrity and proper state management.
+
     Returns:
-        Rendered template with story data or redirect response
-        
-    Data Flow:
-        1. Session validation -> temp storage retrieval -> data validation -> template rendering
-        2. Error states are logged and handled at each step
-        
-    Story Data Structure:
-        {
-            'temp_id': str,           # Unique identifier for temporary storage
-            'paragraphs': List[Dict],  # List of paragraph objects with text and media URLs
-            'metadata': Dict,          # Optional metadata about the story
-            'created_at': str,         # Timestamp of creation
-            'modified_at': str         # Timestamp of last modification
+        Success:
+            Rendered template 'story/edit.html' with formatted story data
+        Error:
+            Redirect to index with appropriate error message
+
+    Session Requirements:
+        - story_data: {
+            temp_id: str,              # Temporary storage ID
+            source_file: str,          # Original file name
+            paragraphs: List[dict]     # Story content
         }
     """
     try:
-        # Step 1: Validate session data
-        if 'story_data' not in session:
-            logger.warning("No story data in session, redirecting to index")
-            flash('Please start by creating a new story', 'warning')
-            return redirect(url_for('index'))
-        
         session_data = session['story_data']
         logger.info(f"Processing story edit request with session data: {session_data.keys()}")
             
-        # Step 2: Validate and retrieve temp_id
-        temp_id = session_data.get('temp_id')
-        if not temp_id:
-            logger.error("Missing temp_id in session data")
-            flash('Invalid story data. Please create a new story.', 'error')
-            return redirect(url_for('index'))
-            
-        # Step 3: Retrieve and validate temporary storage data
-        temp_data = TempBookData.query.get(temp_id)
-        if not temp_data:
-            logger.error(f"No temporary data found for ID: {temp_id}")
-            flash('Story data not found. Please create a new story.', 'error')
-            return redirect(url_for('index'))
-            
-        # Step 4: Validate story data structure
+        # Validate and retrieve temp data
+        temp_data = validate_temp_data(session_data.get('temp_id'))
         story_data = temp_data.data
-        if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
-            logger.error(f"Invalid story data structure for ID: {temp_id}")
-            flash('Invalid story format. Please create a new story.', 'error')
-            return redirect(url_for('index'))
             
-        # Step 5: Ensure all paragraphs have required fields
-        for i, paragraph in enumerate(story_data['paragraphs']):
-            if 'text' not in paragraph:
-                logger.error(f"Missing text in paragraph {i}")
-                flash('Invalid paragraph data. Please create a new story.', 'error')
-                return redirect(url_for('index'))
-                
         logger.info(f"Successfully prepared story data with {len(story_data['paragraphs'])} paragraphs")
             
-        # Step 6: Render template with validated story data
+        # Transform data for the node editor
+        formatted_story = {
+            'paragraphs': [{
+                'text': p.get('text', ''),
+                'image_url': p.get('image_url'),
+                'image_prompt': p.get('image_prompt'),
+                'audio_url': p.get('audio_url'),
+                'style': p.get('style', 'realistic'),
+                'index': idx
+            } for idx, p in enumerate(story_data.get('paragraphs', []))],
+            'metadata': story_data.get('metadata', {}),
+            'created_at': story_data.get('created_at'),
+            'modified_at': story_data.get('modified_at')
+        }
+        
         return render_template('story/edit.html', 
-                            story=story_data,
+                            story=formatted_story,
                             error_handling=True)
         
+    except ValueError as e:
+        logger.error(f"Validation error in edit route: {str(e)}")
+        flash(str(e), 'error')
+        return redirect(url_for('index'))
     except Exception as e:
         logger.error(f"Error in edit route: {str(e)}", exc_info=True)
         flash('An error occurred while loading the story editor', 'error')
         return redirect(url_for('index'))
 
 @story_bp.route('/story/customize', methods=['GET'])
+@require_story_data
 def customize_story():
+    """
+    Customize story visualization styles and parameters.
+    
+    Provides interface for customizing image and audio generation
+    parameters for each paragraph. Initializes default styles
+    if not already present.
+    
+    Returns:
+        Success: Rendered customize.html template with story data
+        Error: Redirect to index with error message
+    """
     try:
-        # Check if story data exists in session
-        if 'story_data' not in session:
-            logger.warning("No story data in session, redirecting to home with flash message")
-            flash('Please generate a story first before customizing', 'warning')
-            return redirect(url_for('index'))
-
         story_data = session['story_data']
         
-        # Validate story data structure
-        if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
-            logger.error("Invalid story data structure")
-            flash('Invalid story data. Please generate a new story.', 'error')
-            return redirect(url_for('index'))
-
         # Get data from temp storage if available
         temp_id = story_data.get('temp_id')
         if temp_id:
-            temp_data = TempBookData.query.get(temp_id)
-            if temp_data:
-                story_data = temp_data.data
-
-        # Ensure paragraphs exist and are properly formatted
-        if not story_data.get('paragraphs'):
-            logger.error("No paragraphs found in story data")
-            flash('No story content found. Please generate a new story.', 'error')
-            return redirect(url_for('index'))
+            temp_data = validate_temp_data(temp_id)
+            story_data = temp_data.data
 
         # Initialize default styles if not present
         for paragraph in story_data['paragraphs']:
@@ -206,6 +271,10 @@ def customize_story():
 
         return render_template('story/customize.html', story=story_data)
 
+    except ValueError as e:
+        logger.error(f"Validation error in customize route: {str(e)}")
+        flash(str(e), 'error')
+        return redirect(url_for('index'))
     except Exception as e:
         logger.error(f"Error in customize route: {str(e)}")
         flash('An error occurred while loading the customization page.', 'error')

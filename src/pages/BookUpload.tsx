@@ -1,3 +1,15 @@
+/**
+ * BookUpload Component
+ * 
+ * Handles file upload and processing with validation,
+ * progress tracking, and error handling.
+ * Supports PDF, EPUB, and TXT formats.
+ * 
+ * @component
+ * @example
+ * <Route path="/upload-book" element={<BookUpload />} />
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
@@ -6,15 +18,46 @@ import { Alert, AlertContent, AlertDescription, AlertHeader, AlertTitle, AlertFo
 import { motion } from 'framer-motion';
 
 const BookUpload: React.FC = () => {
+  // Selected file for upload
   const [file, setFile] = useState<File | null>(null);
+  
+  // Upload status
   const [uploading, setUploading] = useState(false);
+  
+  // Upload progress (0-100)
   const [progress, setProgress] = useState(0);
+  
+  // Error message if any
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Handles file selection from input or drag-and-drop
+   * Validates file type and updates state accordingly
+   * 
+   * @param event - Input change event containing the selected file
+   */
+  /**
+ * Handles file selection from input or drag-and-drop
+ * Validates file type and size before updating state
+ * 
+ * @param {React.ChangeEvent<HTMLInputElement>} event - File input change event
+ * @returns {void}
+ * @throws {Error} Sets error state if validation fails
+ */
+const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      setError('No file selected');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setError('File size exceeds 10MB limit');
+      return;
+    }
 
     const fileType = selectedFile.name.split('.').pop()?.toLowerCase();
     if (!fileType || !['pdf', 'epub', 'txt'].includes(fileType)) {
@@ -26,6 +69,15 @@ const BookUpload: React.FC = () => {
     setError(null);
   };
 
+  /**
+   * Handles file upload process
+   * - Validates file presence
+   * - Tracks upload progress
+   * - Handles success/failure states
+   * - Navigates to next step on success
+   * 
+   * @throws Will set error state if upload fails
+   */
   const handleUpload = async () => {
     if (!file) {
       setError('Please select a file first');

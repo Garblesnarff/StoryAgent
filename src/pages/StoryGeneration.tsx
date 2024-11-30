@@ -1,6 +1,26 @@
-import React, { useState } from 'react';
+/**
+ * StoryGeneration Component
+ * 
+ * Form interface for AI story generation with validation,
+ * customizable parameters, and animated transitions.
+ * 
+ * Features:
+ * - Form validation with Zod
+ * - Custom styling with Tailwind
+ * - Animated transitions
+ * - Error handling and feedback
+ * - Type-safe form handling
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <Route path="/create-story" element={<StoryGeneration />} />
+ * ```
+ */
+
+import React, { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -10,23 +30,108 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 
+/** 
+ * Form validation schema for story generation
+ * Defines the structure and validation rules for the story generation form
+ * 
+ * @constant
+ * @type {z.ZodObject}
+ */
+/** Available literary genres for story generation */
+const genres = [
+  'fantasy',
+  'science fiction',
+  'mystery',
+  'romance',
+  'adventure',
+  'horror',
+  'historical fiction'
+] as const;
+
+/** Available mood options to set story atmosphere */
+const moods = [
+  'happy',
+  'mysterious',
+  'adventure',
+  'dark',
+  'romantic',
+  'humorous',
+  'suspenseful'
+] as const;
+
+/** Target audience age groups */
+const audiences = [
+  'children',
+  'young adult',
+  'adult'
+] as const;
+
+/** Type definition for genre values */
+type Genre = typeof genres[number];
+
+/** Type definition for mood values */
+type Mood = typeof moods[number];
+
+/** Type definition for target audience values */
+type TargetAudience = typeof audiences[number];
+
+/**
+ * Form validation schema for story generation
+ * Defines the structure and validation rules for the story generation form
+ * 
+ * @constant
+ * @type {z.ZodObject}
+ */
 const formSchema = z.object({
-  prompt: z.string().min(10, 'Story prompt must be at least 10 characters long'),
-  genre: z.string().min(1, 'Please select a genre'),
-  mood: z.string().min(1, 'Please select a mood'),
-  target_audience: z.string().min(1, 'Please select a target audience'),
-  paragraphs: z.number().min(1).max(20).default(5),
+  prompt: z.string()
+    .min(10, 'Story prompt must be at least 10 characters long')
+    .max(1000, 'Story prompt must not exceed 1000 characters')
+    .trim(),
+    
+  genre: z.enum(genres, {
+    required_error: 'Please select a genre',
+    invalid_type_error: 'Invalid genre selected'
+  }),
+    
+  mood: z.enum(moods, {
+    required_error: 'Please select a mood',
+    invalid_type_error: 'Invalid mood selected'
+  }),
+    
+  target_audience: z.enum(audiences, {
+    required_error: 'Please select a target audience',
+    invalid_type_error: 'Invalid target audience selected'
+  }),
+    
+  paragraphs: z.number()
+    .int('Must be a whole number')
+    .min(1, 'Must generate at least one paragraph')
+    .max(20, 'Maximum 20 paragraphs allowed')
+    .default(5),
 });
 
+/** Type definition for form values derived from schema */
 type FormValues = z.infer<typeof formSchema>;
 
-const genres = ['Fantasy', 'Science Fiction', 'Mystery', 'Romance', 'Adventure', 'Horror', 'Historical Fiction'];
-const moods = ['Happy', 'Mysterious', 'Adventure', 'Dark', 'Romantic', 'Humorous', 'Suspenseful'];
-const audiences = ['Children', 'Young Adult', 'Adult'];
+/** API Response structure for story generation */
+interface StoryGenerationResponse {
+  success: boolean;
+  redirect?: string;
+  error?: string;
+}
 
+/**
+ * Main story generation form component with validation
+ * and error handling.
+ * 
+ * @component
+ */
 const StoryGeneration: React.FC = () => {
+  // Loading state for form submission
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Initialize form with validation and default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,30 +139,53 @@ const StoryGeneration: React.FC = () => {
     },
   });
 
-  const onSubmit = async (values: FormValues) => {
+  /**
+   * Handles form submission and story generation
+   * 
+   * @param values - Validated form values
+   */
+  /**
+   * Handles form submission and story generation
+   * 
+   * @param values - Validated form values
+   */
+  const onSubmit: SubmitHandler<FormValues> = async (values) => {
     setIsLoading(true);
     try {
+      // Prepare form data for submission
       const formData = new FormData();
       Object.entries(values).forEach(([key, value]) => {
         formData.append(key, value.toString());
       });
 
+      // Send generation request
       const response = await fetch('/generate_story', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Accept': 'application/json',
+        },
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      if (data.success) {
+      const data = await response.json() as StoryGenerationResponse;
+
+      if (data.success && data.redirect) {
         navigate(data.redirect);
       } else {
         throw new Error(data.error || 'Failed to generate story');
       }
     } catch (error) {
       console.error('Error generating story:', error);
+      // Set form error for user feedback
       form.setError('root', {
-        message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        type: 'submit',
+        message: error instanceof Error 
+          ? error.message 
+          : 'An unexpected error occurred while generating your story'
       });
     } finally {
       setIsLoading(false);
