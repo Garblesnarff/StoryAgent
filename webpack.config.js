@@ -1,79 +1,28 @@
-/**
- * Webpack Configuration
- * 
- * This configuration file sets up the build process for the React/TypeScript
- * frontend application. It handles TypeScript compilation, CSS processing,
- * and asset bundling.
- * 
- * Key Features:
- * - TypeScript and React/JSX support
- * - CSS processing with PostCSS and Tailwind
- * - Source map generation for debugging
- * - Path aliases for clean imports
- * - Development mode with enhanced debugging
- */
-
 const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-    // Development mode for better debugging and faster builds
     mode: 'development',
-
-    // Main application entry point
-    entry: './src/index.tsx',
-
-    // Output configuration for bundled files
+    entry: './static/js/customize.js',
     output: {
         path: path.resolve(__dirname, 'static/dist'),
-        filename: 'bundle.js',
-        publicPath: '/static/dist/'
+        filename: 'bundle.js'
     },
-
-    // Configure module resolution and imports
-    resolve: {
-        // File extensions to handle (order matters for performance)
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
-        // Path aliases for cleaner imports (e.g., @/components)
-        alias: {
-            '@': path.resolve(__dirname, 'src'),
-        }
-    },
-
-    // Module rules for different file types
     module: {
         rules: [
-            // TypeScript and React/JSX processing
             {
-                test: /\.(ts|tsx)$/,
+                test: /\.js$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: 'ts-loader'
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-react']
+                    }
                 }
             },
-            // CSS processing pipeline
             {
                 test: /\.css$/,
-                use: [
-                    // Extract CSS into separate files
-                    MiniCssExtractPlugin.loader,
-                    // Process CSS imports
-                    'css-loader',
-                    // Apply PostCSS transformations
-                    'postcss-loader'
-                ]
+                use: ['style-loader', 'css-loader']
             }
         ]
-    },
-
-    // Plugins for additional processing
-    plugins: [
-        // Extract CSS into separate files
-        new MiniCssExtractPlugin({
-            filename: 'main.css'
-        })
-    ],
-
-    // Source map generation for debugging
-    devtool: 'source-map'
+    }
 };

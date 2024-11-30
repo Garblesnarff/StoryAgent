@@ -1,37 +1,3 @@
-"""
-Hume Audio Generator Service
-
-A robust text-to-speech service utilizing Hume AI's WebSocket API for high-quality
-audio generation with advanced error handling and chunking capabilities.
-
-Key Features:
-    - Automatic text chunking for optimal processing
-    - WebSocket connection management with retry logic
-    - Concurrent audio generation for improved performance
-    - Error handling with graceful degradation
-    - Comprehensive logging for debugging
-    - Rate limiting to prevent API throttling
-
-Technical Details:
-    - Uses WebSocket protocol for real-time communication
-    - Implements automatic reconnection with exponential backoff
-    - Manages audio data concatenation for seamless output
-    - Provides both synchronous and asynchronous interfaces
-
-Usage Example:
-    ```python
-    generator = HumeAudioGenerator()
-    audio_url = generator.generate_audio("Text to convert to speech")
-    if audio_url:
-        print(f"Audio generated successfully: {audio_url}")
-    ```
-
-Note:
-    Requires valid Hume API credentials in environment variables:
-    - HUME_CONFIG_ID
-    - HUME_API_KEY
-"""
-
 import websockets
 import json
 import asyncio
@@ -41,35 +7,12 @@ import time
 from datetime import datetime
 import logging
 import wave
-from typing import Optional, Dict, List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class HumeAudioGenerator:
-    """
-    Audio generation service using Hume AI's websocket API.
-    
-    This class manages websocket connections to Hume's API and handles
-    text-to-speech generation with automatic chunking and retry logic.
-    
-    Attributes:
-        audio_dir: Directory for storing generated audio files
-        ws_url: WebSocket URL for Hume API connection
-    """
-    
     def __init__(self):
-        """
-        Initialize the audio generator with required configurations.
-        
-        Sets up:
-        - Audio storage directory
-        - WebSocket connection parameters
-        - API authentication
-        
-        Raises:
-            EnvironmentError: If required API credentials are not set
-        """
         self.audio_dir = os.path.join('static', 'audio')
         os.makedirs(self.audio_dir, exist_ok=True)
 
@@ -77,9 +20,6 @@ class HumeAudioGenerator:
         base_url = "wss://api.hume.ai/v0/evi/chat"
         config_id = os.environ.get('HUME_CONFIG_ID')
         api_key = os.environ.get('HUME_API_KEY')
-        
-        if not config_id or not api_key:
-            raise EnvironmentError("Missing required Hume API credentials")
 
         params = [
             f"config_id={config_id}",
@@ -89,40 +29,19 @@ class HumeAudioGenerator:
 
         self.ws_url = f"{base_url}?{'&'.join(params)}"
 
-    async def _connect(self) -> Dict:
-        """
-        Establish WebSocket connection to Hume API.
-        
-        Returns:
-            Dict: Connection metadata from the server
-            
-        Raises:
-            websockets.exceptions.WebSocketException: If connection fails
-        """
+    async def _connect(self):
         self.ws = await websockets.connect(self.ws_url)
         metadata = await self.ws.recv()
         return json.loads(metadata)
 
-    async def _generate_audio_async(self, text: str) -> Optional[str]:
-        """
-        Generate audio asynchronously with chunking and retry logic.
-        
-        Args:
-            text: Input text to convert to speech
-            
-        Returns:
-            Optional[str]: URL path to the generated audio file, or None if generation fails
-            
-        Raises:
-            Exception: If audio generation fails after all retries
-        """
+    async def _generate_audio_async(self, text):
         try:
             # Initialize audio data collection
             audio_data = bytearray()
             
             # Split text into smaller chunks (around 100 characters each)
             chunks = []
-            max_chunk_size = 100
+            max_chunk_size = 100  # Reduced from 200 to 100
             sentences = text.split('. ')
             current_chunk = []
             current_length = 0
@@ -229,19 +148,7 @@ class HumeAudioGenerator:
             logger.error(f"Error generating audio with Hume: {str(e)}")
             return None
 
-    def generate_audio(self, text: str) -> Optional[str]:
-        """
-        Generate audio from text using Hume's text-to-speech service.
-        
-        This is the main entry point for audio generation. It handles the async
-        execution and provides a synchronous interface for the rest of the application.
-        
-        Args:
-            text: The text to convert to speech
-            
-        Returns:
-            Optional[str]: URL path to the generated audio file, or None if generation fails
-        """
+    def generate_audio(self, text):
         try:
             return asyncio.run(self._generate_audio_async(text))
         except Exception as e:

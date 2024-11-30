@@ -1,47 +1,13 @@
-"""
-Story Generation Blueprint Module
-
-This module handles all story generation related routes and functionality, providing
-a comprehensive interface for story content generation and management.
-
-Features:
-- Story generation with customizable parameters and styles
-- Image generation with multiple style options (realistic, artistic, fantasy)
-- Audio narration generation with emotion-aware processing
-- Real-time progress streaming using Server-Sent Events (SSE)
-- Media regeneration capabilities with context preservation
-- Session-based state management with temporary database storage
-
-Technical Implementation:
-- Uses Flask Blueprint for route organization
-- Implements streaming responses for real-time feedback
-- Manages state through Flask sessions and PostgreSQL
-- Integrates with multiple service layers for content generation
-- Provides error handling and logging throughout the pipeline
-
-Dependencies:
-- Flask for web framework functionality
-- SQLAlchemy for database operations
-- Custom services for text, image, and audio generation
-- Logging for operation tracking and debugging
-
-Note: All routes in this blueprint require an active session with story data.
-Session data is managed through Flask's session interface and temporary
-database records for larger datasets.
-"""
-
 from flask import Blueprint, render_template, request, Response, stream_with_context, session, redirect, url_for, jsonify
 import sys
 import json
 from services.text_generator import TextGenerator
-from services.regeneration_service import RegenerationService
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from services.prompt_generator import PromptGenerator
 from database import db
 from models import TempBookData
 import logging
-from typing import Dict, Union, Optional
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -52,146 +18,64 @@ text_service = TextGenerator()
 image_service = ImageGenerator()
 audio_service = HumeAudioGenerator()
 prompt_generator = PromptGenerator()
-regeneration_service = RegenerationService(image_service, audio_service)
 
-def send_json_message(message_type: str, message_data: Union[str, Dict], step: Optional[str] = None) -> str:
-    """
-    Format and serialize JSON messages for SSE (Server-Sent Events) streaming.
-    
-    This helper function ensures consistent message formatting across all
-    streaming responses in the generation process. It handles both string
-    and dictionary payloads, automatically selecting the appropriate key
-    based on the data type.
-    
-    Args:
-        message_type: Type identifier for the message. Valid types include:
-            - 'log': For general progress updates and information
-            - 'error': For error messages and failure notifications
-            - 'paragraph': For paragraph-specific data updates
-            - 'complete': For completion notifications
-        message_data: The actual message content or data payload.
-            - If string: Used as a simple message
-            - If dict: Used as a structured data payload
-        step: Optional step identifier for progress tracking in the UI
-        
-    Returns:
-        str: Formatted JSON string with newline terminator for SSE
-        
-    Examples:
-        >>> send_json_message('log', 'Processing started')
-        '{"type":"log","message":"Processing started"}\n'
-        
-        >>> send_json_message('paragraph', {'text': 'Once upon a time'}, 'content')
-        '{"type":"paragraph","data":{"text":"Once upon a time"},"step":"content"}\n'
-    
-    Note:
-        The function automatically escapes newlines in the output to ensure
-        proper SSE formatting. The returned string always ends with a newline
-        character as required by the SSE protocol.
-    """
-    try:
-        message = {
-            'type': message_type,
-            'message' if isinstance(message_data, str) else 'data': message_data
-        }
-        if step:
-            message['step'] = step
-        return json.dumps(message).replace('\n', ' ') + '\n'
-    except Exception as e:
-        logger.error(f"Error formatting SSE message: {str(e)}")
-        # Return a valid SSE message even in case of error
-        return json.dumps({
-            'type': 'error',
-            'message': 'Failed to format message'
-        }) + '\n'
+def send_json_message(message_type, message_data, step=None):
+    """Helper function to ensure consistent JSON message formatting"""
+    message = {
+        'type': message_type,
+        'message' if isinstance(message_data, str) else 'data': message_data
+    }
+    if step:
+        message['step'] = step
+    return json.dumps(message).replace('\n', ' ') + '\n'
 
 @generation_bp.route('/story/generate', methods=['GET'])
 def generate():
-    """
-    Render the story generation page with current story data.
-    
-    This route checks for existing story data in the session and renders
-    the generation template. If no story data exists, redirects to the index page.
-    
-    Returns:
-        Response: Rendered template with story data or redirect response
-    """
     if 'story_data' not in session:
-        logger.info("No story data found in session, redirecting to index")
         return redirect(url_for('index'))
     return render_template('story/generate.html', story=session['story_data'])
 
 @generation_bp.route('/story/regenerate_image', methods=['POST'])
 def regenerate_image():
-    """
-    Regenerate an image for a specific story paragraph.
-    
-    This endpoint handles image regeneration requests, including:
-    1. Generating new image prompts using context-aware chaining
-    2. Creating the image using the specified style
-    3. Updating both temporary and session storage with new image data
-    
-    Request JSON parameters:
-        text (str): The paragraph text to generate an image for
-        index (int, optional): The paragraph index in the story
-        style (str, optional): Image style preference (default: 'realistic')
-    
-    Returns:
-        JSON Response: Contains success status, image URL and prompt,
-                      or error details if generation fails
-    """
     try:
-        # Validate request data
         data = request.get_json()
         if not data or 'text' not in data:
-            logger.warning("Invalid request: missing text parameter")
             return jsonify({'error': 'No text provided'}), 400
             
         text = data['text']
         index = data.get('index')
         style = data.get('style', 'realistic')
         
-        # Get story context and generate image prompts
+        # Generate chain of image prompts using Gemini
         story_context = session.get('story_data', {}).get('story_context', '')
-        logger.info(f"Generating image prompts for paragraph {index}")
-        image_prompts = prompt_generator.generate_image_prompt(
-            story_context, text, use_chain=True
-        )
+        image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
         
-        # Generate new image
-        logger.info(f"Generating image with style: {style}")
+        # Generate new image with chained prompts
         result = image_service.generate_image_chain(image_prompts, style=style)
         if not result:
-            logger.error("Image generation failed: no result returned")
             return jsonify({'error': 'Failed to generate image'}), 500
             
-        # Update storage based on availability
+        # Update data in appropriate storage
         if index is not None:
             story_data = session.get('story_data', {})
             temp_id = story_data.get('temp_id')
             
             if temp_id:
-                # Update in temporary storage
+                # Update in temp storage
                 temp_data = TempBookData.query.get(temp_id)
                 if temp_data:
                     book_data = temp_data.data
                     if index < len(book_data['paragraphs']):
-                        book_data['paragraphs'][index].update({
-                            'image_url': result['url'],
-                            'image_prompt': result['prompt']
-                        })
+                        book_data['paragraphs'][index]['image_url'] = result['url']
+                        book_data['paragraphs'][index]['image_prompt'] = result['prompt']
                         temp_data.data = book_data
                         db.session.commit()
-                        logger.info(f"Updated image in temp storage for paragraph {index}")
             else:
                 # Update in session storage
                 if 'paragraphs' in story_data and index < len(story_data['paragraphs']):
-                    story_data['paragraphs'][index].update({
-                        'image_url': result['url'],
-                        'image_prompt': result['prompt']
-                    })
+                    story_data['paragraphs'][index]['image_url'] = result['url']
+                    story_data['paragraphs'][index]['image_prompt'] = result['prompt']
                     session['story_data'] = story_data
-                    logger.info(f"Updated image in session storage for paragraph {index}")
         
         return jsonify({
             'success': True,
@@ -200,11 +84,8 @@ def regenerate_image():
         })
         
     except Exception as e:
-        logger.error(f"Error regenerating image: {str(e)}", exc_info=True)
-        return jsonify({
-            'error': 'Failed to regenerate image',
-            'details': str(e)
-        }), 500
+        logger.error(f"Error regenerating image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @generation_bp.route('/story/regenerate_audio', methods=['POST'])
 def regenerate_audio():
@@ -272,22 +153,9 @@ def generate_cards():
                 yield send_json_message('error', 'Missing required parameters')
                 return
             
-            # Add style-specific prompt templates
-            style = data.get('style', 'realistic')
-            if style == 'realistic':
-                prompt_prefix = "Create a photorealistic image with natural lighting and detailed textures showing:"
-            elif style == 'artistic':
-                prompt_prefix = "Create an artistic interpretation with expressive brushstrokes and bold colors showing:"
-            elif style == 'fantasy':
-                prompt_prefix = "Create a fantastical and magical scene with ethereal lighting and supernatural elements showing:"
-
             # Generate chain of image prompts using Gemini
             yield send_json_message('log', 'Generating image prompts...', step='prompt')
-            image_prompts = prompt_generator.generate_image_prompt(
-                story_context, 
-                text,
-                use_chain=True
-            )
+            image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
             
             # Generate image with chained prompts
             yield send_json_message('log', 'Generating image through multiple steps...', step='image')

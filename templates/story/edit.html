@@ -1,121 +1,31 @@
-{# Story Editor Template
-   
-   Interactive node-based interface for story customization with:
-   - Real-time preview and editing
-   - Media generation controls
-   - Style customization options
-   - Responsive layout
-#}
-
 {% extends "base.html" %}
-
-{% block head %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="description" content="Story Editor - Interactive node-based story customization interface" />
-<link href="https://unpkg.com/reactflow/dist/style.css" rel="stylesheet" />
-
-{# Preload critical resources for improved performance #}
-<link rel="preload" href="{{ url_for('static', filename='dist/bundle.js') }}" as="script" />
-<link rel="preload" href="https://unpkg.com/react@17/umd/react.production.min.js" as="script" />
-<link rel="preload" href="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" as="script" />
-{% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
-    {# Page Header #}
-    <header class="mb-5 text-center">
-        <h1 class="display-4">Edit Your Story</h1>
-        <p class="text-muted">Customize and enhance your story with AI-generated media</p>
-    </header>
+    <h1 class="display-4 mb-5 text-center">Edit Your Story</h1>
     
-    {# System Messages #}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="story-editor mb-5">
+        {% for paragraph in story.paragraphs %}
+        <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
+            <div class="card">
+                <div class="card-body">
+                    <textarea class="form-control paragraph-text mb-3" rows="4">{{ paragraph.text }}</textarea>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary save-paragraph">Save Changes</button>
+                    </div>
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    {# Error Handling #}
-    <div id="error-container" class="alert alert-danger d-none" role="alert">
-        <h4 class="alert-heading">Error</h4>
-        <p class="mb-0"></p>
-    </div>
-    
-    {# Loading Indicator #}
-    <div id="loading-container" class="text-center mb-4">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading story editor...</span>
+            </div>
         </div>
-        <p class="mt-2">Loading your story...</p>
+        {% endfor %}
     </div>
     
-    {# Story Editor Interface #}
-    <div id="node-editor" 
-         class="node-editor-container mb-5" 
-         data-story='{{ story|tojson|safe }}'
-         data-error-handling="{{ 'true' if error_handling else 'false' }}"
-         style="min-height: 600px;">
-    </div>
-    
-    <!-- Navigation buttons -->
     <div class="d-flex justify-content-center gap-3">
-        <a href="/" class="btn btn-secondary" data-bs-toggle="tooltip" title="Return to story creation">
-            <i class="bi bi-arrow-left me-2"></i>Back to Prompt
-        </a>
-        <a href="/story/customize" class="btn btn-primary" data-bs-toggle="tooltip" title="Customize story style">
-            <i class="bi bi-palette me-2"></i>Customize Style
-        </a>
-    </div>
-    
-    <!-- Help section -->
-    <div class="mt-5 text-center text-muted">
-        <p class="mb-2">Need help? Check out our <a href="#" data-bs-toggle="modal" data-bs-target="#helpModal">quick guide</a></p>
-    </div>
-</div>
-
-{# Help Modal - Quick guide for story editor usage #}
-<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="helpModalLabel">Story Editor Guide</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h6>Getting Started</h6>
-                <ul class="list-unstyled">
-                    <li>✏️ Each box represents a paragraph from your story</li>
-                    <li>🎨 Click "Generate Card" to create images and audio</li>
-                    <li>🔄 Use regenerate buttons to try different variations</li>
-                    <li>🎯 Connect paragraphs to show story flow</li>
-                </ul>
-            </div>
-        </div>
+        <a href="/" class="btn btn-secondary">Back to Prompt</a>
+        <a href="/story/customize" class="btn btn-primary">Customize Style</a>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{# Core Dependencies #}
-<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-
-{# Application Scripts #}
-<script src="{{ url_for('static', filename='dist/bundle.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='js/story-edit.js') }}"></script>
-
-{# Initialize UI Components #}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-});
-</script>
 {% endblock %}

@@ -1,32 +1,4 @@
-/**
- * Navigation Component Styles
- * 
- * Defines the layout and appearance of the progress navigation bar
- * with animated transitions and state indicators. Implements a
- * responsive design pattern that adapts to various screen sizes.
- *
- * Component Structure:
- * - progress-nav: Main navigation container
- *   - Uses flexbox for responsive layout
- *   - Maintains consistent spacing with gap property
- *   - Adapts to container width changes
- * 
- * - nav-item: Individual navigation items
- *   - Implements state transitions for active/inactive
- *   - Provides visual feedback for user interaction
- *   - Maintains accessibility through high contrast states
- *
- * Animation Details:
- * - Opacity transitions: 300ms ease timing
- * - State changes: Smooth transitions for active/completed states
- * - Focus states: Visible outlines for keyboard navigation
- *
- * Accessibility Features:
- * - High contrast state indicators
- * - Focus visible states for keyboard navigation
- * - Adequate touch targets for mobile
- * - Screen reader compatible structure
- */
+/* Navigation styles */
 .progress-nav {
     display: flex;
     align-items: center;
@@ -61,18 +33,7 @@
     opacity: 0.2;
 }
 
-/**
- * Progress Bar Component
- * 
- * Implements an animated progress bar with wave effect and dynamic state feedback.
- * Uses CSS variables for theming and maintains consistent styling with the app.
- *
- * Features:
- * - Animated background wave effect
- * - Dynamic progress updates
- * - Consistent theme integration
- * - Responsive shadow effects
- */
+/* Progress bar animations */
 @keyframes progress-wave {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
@@ -306,6 +267,21 @@
 }
 
 .image-prompt-overlay {
+.copy-prompt-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: none;
+}
+
+.image-prompt-overlay:hover .copy-prompt-button {
+    display: block;
+}
     position: absolute;
     top: 20%;
     left: 0;
@@ -324,22 +300,6 @@
     scrollbar-width: thin;
     scrollbar-color: var(--bs-primary) transparent;
     z-index: 10;
-}
-
-.image-prompt-overlay .copy-prompt-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 5px 10px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: none;
-}
-
-.image-prompt-overlay:hover .copy-prompt-button {
-    display: block;
 }
 
 .image-container img {
