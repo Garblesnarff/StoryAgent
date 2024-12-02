@@ -2,153 +2,184 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
     let currentPage = 0;
     let totalPages = 0;
-    let session = { story_data: { paragraphs: [] } };
+    let session = { 
+        story_data: { 
+            paragraphs: [],
+            story_context: ''
+        } 
+    };
     
-    // Initialize tooltips for all elements
     function initTooltips(container = document) {
         const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.forEach(tooltipTriggerEl => {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
-    
-    function createPageElement(paragraph, index) {
-        if (!paragraph) return null;
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'book-page';
-        pageDiv.dataset.index = index;
-        pageDiv.style.opacity = '1';
-        pageDiv.style.display = 'block';
-        
-        pageDiv.innerHTML = `
-            <div class="card h-100">
-                ${paragraph.image_url ? `
-                <div class="card-image position-relative">
-                    <img src="${paragraph.image_url}" 
-                         class="card-img-top" 
-                         data-bs-toggle="tooltip" 
-                         data-bs-placement="top" 
-                         title="${paragraph.image_prompt || 'Generated image'}" 
-                         alt="Paragraph image">
-                </div>` : ''}
-                <div class="card-body">
-                    <p class="card-text">${paragraph.text || ''}</p>
-                    <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-secondary regenerate-image">
-                            <div class="d-flex align-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                    <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
-                                </svg>
-                                <span class="button-text">Regenerate Image</span>
-                            </div>
-                            <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="alert alert-danger mt-2 d-none" role="alert"></div>
-        `;
-        
-        // Initialize tooltips for the new page
-        initTooltips(pageDiv);
-        
-        // Add event listeners for regeneration buttons
-        const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
-        regenerateImageBtn?.addEventListener('click', async () => {
-            await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
-        });
-        
-        return pageDiv;
-    }
-    
-    async function handleRegeneration(type, button, pageDiv, paragraph, index) {
+
+    async function handleGeneration(type, button) {
         const spinner = button.querySelector('.spinner-border');
         const buttonText = button.querySelector('.button-text');
-        const alert = pageDiv.querySelector('.alert');
+        const card = button.closest('.card');
+        const index = parseInt(button.dataset.index);
+        const text = card.querySelector('.card-text').textContent;
         
         try {
             button.disabled = true;
             spinner.classList.remove('d-none');
-            buttonText.textContent = `Regenerating ${type}...`;
-            alert.classList.add('d-none');
+            button.classList.add('processing');
             
-            const response = await fetch(`/story/regenerate_${type}`, {
+            // Custom messages for each type
+            if (type === 'image') {
+                buttonText.textContent = 'Creating Scene...';
+                button.title = 'Creating visual scene from the text...';
+            } else {
+                buttonText.textContent = 'Creating Voice...';
+                button.title = 'Generating audio narration...';
+            }
+            
+            const response = await fetch(`/story/generate_${type}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    text: paragraph.text,
-                    index: parseInt(index),
-                    style: paragraph.image_style || 'realistic'
+                    text: text,
+                    index: index,
+                    style: session.story_data.paragraphs[index]?.image_style || 'realistic',
+                    story_context: session.story_data.story_context || ''
                 })
             });
             
             if (!response.ok) {
-                throw new Error(`Failed to regenerate ${type}`);
+                const errorData = await response.json().catch(() => ({ error: `Failed to generate ${type}` }));
+                throw new Error(errorData.error || `Server error while generating ${type}`);
             }
             
             const data = await response.json();
             if (data.success) {
                 if (type === 'image') {
-                    const imgElement = pageDiv.querySelector('.card-img-top');
-                    if (imgElement && data.image_url) {
-                        const newImage = new Image();
-                        newImage.onload = () => {
-                            imgElement.src = data.image_url;
-                            imgElement.title = data.image_prompt;
-                            // Reinitialize tooltip with new content
-                            const tooltip = bootstrap.Tooltip.getInstance(imgElement);
-                            if (tooltip) {
-                                tooltip.dispose();
-                            }
-                            new bootstrap.Tooltip(imgElement);
-                        };
-                        newImage.src = data.image_url;
-                    }
+                    updateImage(card, data);
+                } else if (type === 'audio') {
+                    updateAudio(card, data);
                 }
             } else {
-                throw new Error(data.error || `Failed to regenerate ${type}`);
+                throw new Error(data.error || `Failed to generate ${type}`);
             }
             
         } catch (error) {
-            console.error('Error:', error);
-            alert.textContent = `Failed to regenerate ${type}. Please try again.`;
-            alert.classList.remove('d-none');
+            console.error('Error generating card:', error);
+            const errorMessage = error.response ? await error.response.json().then(data => data.error) : error.message;
+            showError(card, `Failed to generate ${type}. ${errorMessage || 'An unexpected error occurred. Please try again.'}`);
         } finally {
             button.disabled = false;
             spinner.classList.add('d-none');
-            buttonText.textContent = `Regenerate ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            button.classList.remove('processing');
+            buttonText.textContent = type === 'image' ? 'Generate Visual Scene' : 'Generate Narration';
         }
     }
-    
+
+    function updateImage(card, data) {
+        const imgElement = card.querySelector('.card-img-top');
+        const imgContainer = card.querySelector('.card-image');
+        
+        if (data.image_url) {
+            if (!imgElement) {
+                const newImgContainer = document.createElement('div');
+                newImgContainer.className = 'card-image position-relative';
+                newImgContainer.innerHTML = `
+                    <img src="${data.image_url}" 
+                         class="card-img-top" 
+                         data-bs-toggle="tooltip" 
+                         data-bs-placement="top" 
+                         title="${data.image_prompt || ''}" 
+                         alt="Generated image">
+                `;
+                card.insertBefore(newImgContainer, card.querySelector('.card-body'));
+                initTooltips(newImgContainer);
+            } else {
+                imgElement.src = data.image_url;
+                imgElement.title = data.image_prompt || '';
+                const tooltip = bootstrap.Tooltip.getInstance(imgElement);
+                if (tooltip) {
+                    tooltip.dispose();
+                }
+                new bootstrap.Tooltip(imgElement);
+            }
+        }
+    }
+
+    function updateAudio(card, data) {
+        if (data.audio_url) {
+            let audioPlayer = card.querySelector('.audio-player');
+            if (!audioPlayer) {
+                audioPlayer = document.createElement('div');
+                audioPlayer.className = 'audio-player mt-3';
+                audioPlayer.innerHTML = `
+                    <audio controls class="w-100">
+                        <source src="${data.audio_url}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                `;
+                card.querySelector('.card-body').appendChild(audioPlayer);
+            } else {
+                const audioElement = audioPlayer.querySelector('audio');
+                audioElement.src = data.audio_url;
+            }
+        }
+    }
+
+    function showError(card, message) {
+        let alertDiv = card.querySelector('.alert');
+        if (!alertDiv) {
+            alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger mt-2';
+            alertDiv.role = 'alert';
+            const cardBody = card.querySelector('.card-body');
+            cardBody.appendChild(alertDiv);
+        }
+        alertDiv.textContent = message;
+        alertDiv.classList.remove('d-none');
+        
+        // Add a close button
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.onclick = () => alertDiv.classList.add('d-none');
+        alertDiv.appendChild(closeButton);
+    }
+
     function updateNavigation() {
-        const pages = document.querySelectorAll('.book-page');
+        const pages = document.querySelectorAll('.story-card');
         totalPages = pages.length;
         const prevButton = document.querySelector('.book-nav.prev');
         const nextButton = document.querySelector('.book-nav.next');
         
         if (!prevButton || !nextButton) return;
         
-        if (totalPages > 1) {
-            prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
-            nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
-        } else {
-            prevButton.style.display = 'none';
-            nextButton.style.display = 'none';
-        }
+        prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
+        nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
         
         pages.forEach((page, index) => {
-            if (index === currentPage) {
-                page.style.display = 'block';
-            } else {
-                page.style.display = 'none';
-            }
+            page.style.display = index === currentPage ? 'block' : 'none';
         });
     }
-    
+
+    // Event Listeners for generation buttons
+    document.querySelectorAll('.generate-image').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleGeneration('image', button);
+        });
+    });
+
+    document.querySelectorAll('.generate-audio').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleGeneration('audio', button);
+        });
+    });
+
     const nextButton = document.querySelector('.book-nav.next');
     const prevButton = document.querySelector('.book-nav.prev');
     
@@ -165,95 +196,40 @@ document.addEventListener('DOMContentLoaded', () => {
             updateNavigation();
         }
     });
-    
-    async function generateCards() {
+
+    // Initialize
+    async function init() {
         try {
+            const response = await fetch('/story/get_data');
+            if (!response.ok) {
+                throw new Error('Failed to get story data');
+            }
+            
+            const data = await response.json();
+            if (data && data.paragraphs) {
+                session.story_data = data;
+            }
+            
             if (storyOutput) {
                 storyOutput.style.display = 'block';
                 storyOutput.classList.add('visible');
             }
-
-            const response = await fetch('/story/generate_cards', {
-                method: 'POST'
-            });
             
-            if (!response.ok) {
-                throw new Error('Failed to generate cards');
-            }
+            initTooltips();
+            updateNavigation();
             
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-                
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'log':
-                                console.log(data.message);
-                                break;
-                            case 'paragraph':
-                                const paragraphCards = document.getElementById('paragraph-cards');
-                                if (paragraphCards && data.data) {
-                                    const index = data.data.index;
-                                    let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
-                                    
-                                    if (!pageElement) {
-                                        pageElement = createPageElement(data.data, index);
-                                        if (pageElement) {
-                                            paragraphCards.appendChild(pageElement);
-                                            pageElement.offsetHeight;
-                                            pageElement.classList.add('visible');
-                                        }
-                                    } else {
-                                        const newPage = createPageElement(data.data, index);
-                                        if (newPage) {
-                                            pageElement.innerHTML = newPage.innerHTML;
-                                            // Initialize tooltips for updated content
-                                            initTooltips(pageElement);
-                                            
-                                            // Reattach event listeners
-                                            const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
-                                            regenerateImageBtn?.addEventListener('click', () => 
-                                                handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
-                                        }
-                                    }
-                                    
-                                    updateNavigation();
-                                }
-                                break;
-                            case 'error':
-                                console.error('Error:', data.message);
-                                break;
-                            case 'complete':
-                                console.log(data.message);
-                                break;
-                        }
-                    } catch (error) {
-                        console.error('Error parsing message:', line, error);
-                    }
-                }
-                buffer = lines[lines.length - 1];
-            }
         } catch (error) {
-            console.error('Error:', error.message || 'An unknown error occurred');
+            console.error('Error:', error);
+            if (storyOutput) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger mt-3';
+                alertDiv.textContent = 'Failed to initialize story data. Please refresh the page.';
+                storyOutput.prepend(alertDiv);
+            }
         }
     }
-    
-    // Initialize tooltips for initial content
-    initTooltips();
-    
+
     if (document.getElementById('paragraph-cards')) {
-        generateCards();
+        init();
     }
 });
