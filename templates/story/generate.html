@@ -25,28 +25,6 @@
                         </div>
                         <div class="card-body">
                             <p class="card-text">{{ paragraph.text }}</p>
-                            <div class="generation-controls mt-4">
-                                <div class="d-flex flex-column gap-2">
-                                    <button class="btn btn-outline-primary generate-image w-100 mb-2" data-index="{{ loop.index0 }}" data-bs-toggle="tooltip" title="Generate an AI image visualization for this passage">
-                                        <div class="d-flex align-items-center justify-content-center">
-                                            <i class="bi bi-image-fill me-2"></i>
-                                            <span class="button-text">Generate Visual Scene</span>
-                                            <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                                                <span class="visually-hidden">Generating image...</span>
-                                            </div>
-                                        </div>
-                                    </button>
-                                    <button class="btn btn-outline-success generate-audio w-100" data-index="{{ loop.index0 }}" data-bs-toggle="tooltip" title="Generate AI voice narration">
-                                        <div class="d-flex align-items-center justify-content-center">
-                                            <i class="bi bi-volume-up-fill me-2"></i>
-                                            <span class="button-text">Generate Narration</span>
-                                            <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                                                <span class="visually-hidden">Generating audio...</span>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     {% endfor %}

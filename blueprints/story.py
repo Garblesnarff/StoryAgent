@@ -244,22 +244,3 @@ def update_style():
     except Exception as e:
         logger.error(f"Error updating style: {str(e)}")
         return jsonify({'error': str(e)}), 500
-@story_bp.route('/story/get_data', methods=['GET'])
-def get_story_data():
-    try:
-        if 'story_data' not in session:
-            return jsonify({'error': 'No story data found'}), 404
-            
-        story_data = session['story_data']
-        temp_id = story_data.get('temp_id')
-        
-        if temp_id:
-            temp_data = TempBookData.query.get(temp_id)
-            if temp_data:
-                return jsonify(temp_data.data)
-        
-        return jsonify(story_data)
-        
-    except Exception as e:
-        logger.error(f"Error getting story data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
