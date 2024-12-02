@@ -1,0 +1,57 @@
+@generation_bp.route('/story/generate_cards', methods=['POST'])
+def generate_cards():
+    def generate():
+        try:
+            if 'story_data' not in session:
+                yield send_json_message('error', 'No story data found in session')
+                return
+                
+            data = request.get_json()
+            if not data:
+                yield send_json_message('error', 'Invalid request data')
+                return
+                
+            index = data.get('index')
+            text = data.get('text')
+            story_context = data.get('story_context', '')
+            style = data.get('style', 'realistic')
+            generate_type = data.get('generate_type', 'both')  # New parameter
+            
+            if index is None or not text:
+                yield send_json_message('error', 'Missing required parameters')
+                return
+            
+            # Generate based on type
+            if generate_type in ['both', 'image']:
+                yield send_json_message('log', 'Generating image prompts...', step='prompt')
+                image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
+                
+                yield send_json_message('log', 'Generating image...', step='image')
+                result = image_service.generate_image_chain(image_prompts, style=style)
+                
+                if result:
+                    paragraph_data = {
+                        'image_url': result['url'],
+                        'image_prompt': result.get('prompt', ''),
+                        'index': index
+                    }
+                    yield send_json_message('paragraph', paragraph_data)
+            
+            if generate_type in ['both', 'audio']:
+                yield send_json_message('log', 'Generating audio...', step='audio')
+                audio_url = audio_service.generate_audio(text)
+                
+                if audio_url:
+                    paragraph_data = {
+                        'audio_url': audio_url,
+                        'index': index
+                    }
+                    yield send_json_message('paragraph', paragraph_data)
+            
+            yield send_json_message('complete', "Generation complete!")
+            
+        except Exception as e:
+            logger.error(f"Error generating content: {str(e)}")
+            yield send_json_message('error', str(e))
+    
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
