@@ -26,8 +26,11 @@ const ParagraphNode = React.memo(({ data = {} }) => {
         isGeneratingAudio,
         isRegenerating,
         isRegeneratingAudio,
+        imageProgress,
+        audioProgress,
         globalStyle
     } = data;
+    
     return (
         <div className={`paragraph-node ${globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} />
@@ -38,37 +41,38 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                     <div className="generation-control">
                         <button 
                             className="btn btn-primary btn-sm w-100 mb-1" 
-                            onClick={() => data.onGenerateImage(data.index)}
-                            disabled={data.isGeneratingImage}>
+                            onClick={() => onGenerateImage(index)}
+                            disabled={isGeneratingImage || isRegenerating}>
                             <i className="bi bi-image"></i>
-                            {data.isGeneratingImage ? ' Generating...' : ' Generate Image'}
+                            {isGeneratingImage ? ' Generating...' : (isRegenerating ? ' Regenerating...' : ' Generate Image')}
                         </button>
-                        {data.isGeneratingImage && (
+                        {(isGeneratingImage || isRegenerating) && (
                             <div className="progress" style={{ height: '3px' }}>
                                 <div className="progress-bar progress-bar-striped progress-bar-animated" 
                                     role="progressbar" 
-                                    style={{ width: `${data.imageProgress || 0}%` }}
-                                    aria-valuenow={data.imageProgress || 0} 
+                                    style={{ width: `${imageProgress || 0}%` }}
+                                    aria-valuenow={imageProgress || 0} 
                                     aria-valuemin="0" 
                                     aria-valuemax="100">
                                 </div>
                             </div>
                         )}
                     </div>
+                    
                     <div className="generation-control mt-2">
                         <button 
                             className="btn btn-primary btn-sm w-100 mb-1" 
-                            onClick={() => data.onGenerateAudio(data.index)}
-                            disabled={data.isGeneratingAudio}>
+                            onClick={() => onGenerateAudio(index)}
+                            disabled={isGeneratingAudio || isRegeneratingAudio}>
                             <i className="bi bi-volume-up"></i>
-                            {data.isGeneratingAudio ? ' Generating...' : ' Generate Audio'}
+                            {isGeneratingAudio ? ' Generating...' : (isRegeneratingAudio ? ' Regenerating...' : ' Generate Audio')}
                         </button>
-                        {data.isGeneratingAudio && (
+                        {(isGeneratingAudio || isRegeneratingAudio) && (
                             <div className="progress" style={{ height: '3px' }}>
                                 <div className="progress-bar progress-bar-striped progress-bar-animated" 
                                     role="progressbar" 
-                                    style={{ width: `${data.audioProgress || 0}%` }}
-                                    aria-valuenow={data.audioProgress || 0} 
+                                    style={{ width: `${audioProgress || 0}%` }}
+                                    aria-valuenow={audioProgress || 0} 
                                     aria-valuemin="0" 
                                     aria-valuemax="100">
                                 </div>
@@ -77,49 +81,49 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                     </div>
                 </div>
                 
-                {data.imageUrl && (
+                {imageUrl && (
                     <>
                         <div className="node-preview mt-2">
                             <div className="image-container position-relative">
                                 <img 
-                                    src={data.imageUrl} 
+                                    src={imageUrl} 
                                     alt="Generated preview" 
                                     className="img-fluid rounded"
                                 />
                                 <div 
                                     className="expand-icon"
-                                    onClick={() => data.onExpandImage(data.imageUrl)}
+                                    onClick={() => onExpandImage(imageUrl)}
                                 >
                                     <i className="bi bi-arrows-fullscreen"></i>
                                 </div>
                                 <div className="image-prompt-overlay">
-                                    {data.imagePrompt}
+                                    {imagePrompt}
                                 </div>
                             </div>
                         </div>
                         <div className="d-flex gap-2 mt-2">
                             <button 
                                 className="btn btn-secondary btn-sm flex-grow-1"
-                                onClick={() => data.onRegenerateImage(data.index)}
-                                disabled={data.isRegenerating}>
+                                onClick={() => onRegenerateImage(index)}
+                                disabled={isRegenerating}>
                                 <i className="bi bi-arrow-clockwise"></i> Regenerate Image
                             </button>
                         </div>
                     </>
                 )}
                 
-                {data.audioUrl && (
+                {audioUrl && (
                     <>
                         <div className="audio-player mt-2">
-                            <audio controls className="w-100" key={data.audioUrl}>
-                                <source src={data.audioUrl} type="audio/wav" />
+                            <audio controls className="w-100" key={audioUrl}>
+                                <source src={audioUrl} type="audio/wav" />
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
                         <button 
                             className="btn btn-secondary btn-sm w-100 mt-2"
-                            onClick={() => data.onRegenerateAudio(data.index)}
-                            disabled={data.isRegeneratingAudio}>
+                            onClick={() => onRegenerateAudio(index)}
+                            disabled={isRegeneratingAudio}>
                             <i className="bi bi-arrow-clockwise"></i> Regenerate Audio
                         </button>
                     </>
@@ -143,10 +147,31 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const handleRegenerateImage = useCallback(async (index) => {
         try {
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: true}} : node
+                node.id === `p${index}` ? {
+                    ...node, 
+                    data: {
+                        ...node.data, 
+                        isRegenerating: true,
+                        imageProgress: 0
+                    }
+                } : node
             ));
+            
+            // Start progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + 2, 90);
+                setNodes(currentNodes => currentNodes.map(node =>
+                    node.id === `p${index}` ? {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            imageProgress: progress
+                        }
+                    } : node
+                ));
+            }, 100);
 
-            // Build context from previous paragraphs and their image prompts
             const storyContext = story.paragraphs
                 .slice(0, index)
                 .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
@@ -167,6 +192,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
 
             const data = await response.json();
             if (data.success) {
+                clearInterval(progressInterval);
                 setNodes(currentNodes => currentNodes.map(node => 
                     node.id === `p${index}` ? {
                         ...node, 
@@ -174,7 +200,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                             ...node.data,
                             imageUrl: data.image_url,
                             imagePrompt: data.image_prompt,
-                            isRegenerating: false
+                            isRegenerating: false,
+                            imageProgress: 100
                         }
                     } : node
                 ));
@@ -183,7 +210,14 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             console.error('Error regenerating image:', error);
             alert('Failed to regenerate image');
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegenerating: false}} : node
+                node.id === `p${index}` ? {
+                    ...node, 
+                    data: {
+                        ...node.data, 
+                        isRegenerating: false,
+                        imageProgress: 0
+                    }
+                } : node
             ));
         }
     }, [story?.paragraphs, selectedStyle, setNodes]);
@@ -191,8 +225,30 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const handleRegenerateAudio = useCallback(async (index) => {
         try {
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: true}} : node
+                node.id === `p${index}` ? {
+                    ...node, 
+                    data: {
+                        ...node.data, 
+                        isRegeneratingAudio: true,
+                        audioProgress: 0
+                    }
+                } : node
             ));
+
+            // Start progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + 2, 90);
+                setNodes(currentNodes => currentNodes.map(node =>
+                    node.id === `p${index}` ? {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            audioProgress: progress
+                        }
+                    } : node
+                ));
+            }, 100);
 
             const response = await fetch('/story/regenerate_audio', {
                 method: 'POST',
@@ -207,13 +263,15 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
 
             const data = await response.json();
             if (data.success) {
+                clearInterval(progressInterval);
                 setNodes(currentNodes => currentNodes.map(node => 
                     node.id === `p${index}` ? {
                         ...node, 
                         data: {
                             ...node.data,
                             audioUrl: data.audio_url,
-                            isRegeneratingAudio: false
+                            isRegeneratingAudio: false,
+                            audioProgress: 100
                         }
                     } : node
                 ));
@@ -222,7 +280,14 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             console.error('Error regenerating audio:', error);
             alert('Failed to regenerate audio');
             setNodes(currentNodes => currentNodes.map(node => 
-                node.id === `p${index}` ? {...node, data: {...node.data, isRegeneratingAudio: false}} : node
+                node.id === `p${index}` ? {
+                    ...node, 
+                    data: {
+                        ...node.data, 
+                        isRegeneratingAudio: false,
+                        audioProgress: 0
+                    }
+                } : node
             ));
         }
     }, [story?.paragraphs, setNodes]);
@@ -249,7 +314,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             // Start progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
-                progress = Math.min(progress + 2, 90); // Don't reach 100% until complete
+                progress = Math.min(progress + 2, 90);
                 setNodes(currentNodes => currentNodes.map(node =>
                     node.id === `p${index}` ? {
                         ...node,
@@ -342,7 +407,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             // Start progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
-                progress = Math.min(progress + 2, 90); // Don't reach 100% until complete
+                progress = Math.min(progress + 2, 90);
                 setNodes(currentNodes => currentNodes.map(node =>
                     node.id === `p${index}` ? {
                         ...node,
@@ -456,7 +521,9 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 isGeneratingImage: false,
                 isGeneratingAudio: false,
                 isRegenerating: false,
-                isRegeneratingAudio: false
+                isRegeneratingAudio: false,
+                imageProgress: 0,
+                audioProgress: 0
             }
         }));
 
