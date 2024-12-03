@@ -43,12 +43,13 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                             className="btn btn-primary btn-sm w-100 mb-1" 
                             onClick={() => onGenerateImage(index)}
                             disabled={isGeneratingImage || isRegenerating}>
-                            <i className="bi bi-image"></i>
+                            <i className="bi bi-image me-1"></i>
                             {isGeneratingImage ? ' Generating...' : (isRegenerating ? ' Regenerating...' : ' Generate Image')}
                         </button>
                         {(isGeneratingImage || isRegenerating) && (
-                            <div className="progress" style={{ height: '3px' }}>
-                                <div className="progress-bar progress-bar-striped progress-bar-animated" 
+                            <div className="progress mt-1" style={{ height: '4px' }}>
+                                <div 
+                                    className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
                                     role="progressbar" 
                                     style={{ width: `${imageProgress || 0}%` }}
                                     aria-valuenow={imageProgress || 0} 
@@ -64,12 +65,13 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                             className="btn btn-primary btn-sm w-100 mb-1" 
                             onClick={() => onGenerateAudio(index)}
                             disabled={isGeneratingAudio || isRegeneratingAudio}>
-                            <i className="bi bi-volume-up"></i>
+                            <i className="bi bi-volume-up me-1"></i>
                             {isGeneratingAudio ? ' Generating...' : (isRegeneratingAudio ? ' Regenerating...' : ' Generate Audio')}
                         </button>
                         {(isGeneratingAudio || isRegeneratingAudio) && (
-                            <div className="progress" style={{ height: '3px' }}>
-                                <div className="progress-bar progress-bar-striped progress-bar-animated" 
+                            <div className="progress mt-1" style={{ height: '4px' }}>
+                                <div 
+                                    className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
                                     role="progressbar" 
                                     style={{ width: `${audioProgress || 0}%` }}
                                     aria-valuenow={audioProgress || 0} 
