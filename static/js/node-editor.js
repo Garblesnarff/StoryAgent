@@ -119,6 +119,24 @@ const ParagraphNode = React.memo(({ data }) => {
                                 >
                                     <i className="bi bi-arrows-fullscreen"></i>
                                 </div>
+                                <button
+                                    className="copy-prompt-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(imagePrompt).then(() => {
+                                            const button = e.currentTarget;
+                                            button.classList.add('copied');
+                                            button.innerHTML = '<i class="bi bi-check"></i>';
+                                            setTimeout(() => {
+                                                button.classList.remove('copied');
+                                                button.innerHTML = '<i class="bi bi-clipboard"></i>';
+                                            }, 2000);
+                                        });
+                                    }}
+                                    title="Copy image prompt"
+                                >
+                                    <i className="bi bi-clipboard"></i>
+                                </button>
                                 <div className="image-prompt-overlay">
                                     {imagePrompt}
                                 </div>
