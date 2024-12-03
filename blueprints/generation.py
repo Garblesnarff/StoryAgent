@@ -1,20 +1,22 @@
-from flask import Blueprint, render_template, request, Response, stream_with_context, session, redirect, url_for, jsonify
-import sys
-import json
-from services.text_generator import TextGenerator
+from flask import Blueprint, request, jsonify, session
+from datetime import datetime
+import logging
+from database import db
+from models import TempBookData
 from services.image_generator import ImageGenerator
 from services.hume_audio_generator import HumeAudioGenerator
 from services.prompt_generator import PromptGenerator
-from database import db
-from models import TempBookData
-import logging
+from services.text_generator import TextGenerator # Added this import
+import json # Added this import
+from flask import render_template, Response, stream_with_context, redirect, url_for #Added these imports
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 generation_bp = Blueprint('generation', __name__)
-text_service = TextGenerator()
+# Initialize services
+text_service = TextGenerator() # Added this initialization
 image_service = ImageGenerator()
 audio_service = HumeAudioGenerator()
 prompt_generator = PromptGenerator()
@@ -28,6 +30,32 @@ def send_json_message(message_type, message_data, step=None):
     if step:
         message['step'] = step
     return json.dumps(message).replace('\n', ' ') + '\n'
+
+def log_generation_history(temp_id, index, generation_type, status, error_message=None, prompt=None, result_url=None, retries=0):
+    """Helper function to log generation history"""
+    try:
+        db.session.execute(
+            """
+            INSERT INTO generation_history 
+            (temp_data_id, paragraph_index, generation_type, status, error_message, prompt, result_url, retries, timestamp)
+            VALUES (:temp_id, :index, :type, :status, :error, :prompt, :url, :retries, :timestamp)
+            """,
+            {
+                'temp_id': temp_id,
+                'index': index,
+                'type': generation_type,
+                'status': status,
+                'error': error_message,
+                'prompt': prompt,
+                'url': result_url,
+                'retries': retries,
+                'timestamp': datetime.utcnow() #Added timestamp
+            }
+        )
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Error logging generation history: {str(e)}")
+        db.session.rollback()
 
 @generation_bp.route('/story/generate', methods=['GET'])
 def generate():
@@ -143,16 +171,35 @@ def generate_image():
         style = data.get('style', 'realistic')
         is_retry = data.get('is_retry', False)
         
+        # Get temp_id from session
+        story_data = session.get('story_data', {})
+        temp_id = story_data.get('temp_id')
+        
+        if not temp_id:
+            return jsonify({'error': 'No story session found'}), 404
+        
         # Generate chain of image prompts using Gemini
-        story_context = session.get('story_data', {}).get('story_context', '')
+        story_context = story_data.get('story_context', '')
         image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
         
         # Generate new image with chained prompts
         result = image_service.generate_image_chain(image_prompts, style=style)
+        
         if not result:
             error_message = "Failed to generate image after multiple attempts"
             if is_retry:
                 error_message += ". Please try again later or contact support if the issue persists."
+            
+            # Log failed attempt
+            log_generation_history(
+                temp_id=temp_id,
+                index=index,
+                generation_type='image',
+                status='failed',
+                error_message=error_message,
+                prompt=str(image_prompts),
+                retries=0
+            )
             return jsonify({'error': error_message}), 500
             
         # If result contains error information
@@ -160,38 +207,46 @@ def generate_image():
             error_message = result['error']
             if is_retry:
                 error_message += f" (Retry attempt failed after {result.get('retries', 0)} attempts)"
+            
+            # Log failed attempt with retries
+            log_generation_history(
+                temp_id=temp_id,
+                index=index,
+                generation_type='image',
+                status='failed',
+                error_message=error_message,
+                prompt=str(image_prompts),
+                retries=result.get('retries', 0)
+            )
             return jsonify({'error': error_message}), 500
             
-        # Update data in appropriate storage
+        # Update temp data storage
         if index is not None:
-            story_data = session.get('story_data', {})
-            temp_id = story_data.get('temp_id')
-            
-            if temp_id:
-                temp_data = TempBookData.query.get(temp_id)
-                if temp_data:
-                    book_data = temp_data.data
-                    if index < len(book_data['paragraphs']):
-                        book_data['paragraphs'][index]['image_url'] = result['url']
-                        book_data['paragraphs'][index]['image_prompt'] = result['prompt']
-                        temp_data.data = book_data
-                        
-                        # Log successful generation to history
-                        db.session.execute(
-                            """
-                            INSERT INTO generation_history 
-                            (temp_data_id, paragraph_index, generation_type, status, prompt, result_url, retries)
-                            VALUES (:temp_id, :index, 'image', 'success', :prompt, :url, :retries)
-                            """,
-                            {
-                                'temp_id': temp_id,
-                                'index': index,
-                                'prompt': result['prompt'],
-                                'url': result['url'],
-                                'retries': result.get('retries', 0)
-                            }
-                        )
+            temp_data = TempBookData.query.get(temp_id)
+            if temp_data:
+                book_data = temp_data.data
+                if index < len(book_data['paragraphs']):
+                    book_data['paragraphs'][index]['image_url'] = result['url']
+                    book_data['paragraphs'][index]['image_prompt'] = result['prompt']
+                    temp_data.data = book_data
+                    
+                    # Log successful generation
+                    log_generation_history(
+                        temp_id=temp_id,
+                        index=index,
+                        generation_type='image',
+                        status='success',
+                        prompt=result['prompt'],
+                        result_url=result['url'],
+                        retries=result.get('retries', 0)
+                    )
+                    
+                    try:
                         db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        logger.error(f"Error updating temp data: {str(e)}")
+                        return jsonify({'error': 'Failed to save generated image'}), 500
             
         return jsonify({
             'success': True,
@@ -201,6 +256,17 @@ def generate_image():
         
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
+        
+        # Log unexpected error
+        if temp_id:
+            log_generation_history(
+                temp_id=temp_id,
+                index=index,
+                generation_type='image',
+                status='failed',
+                error_message=str(e)
+            )
+            
         error_message = str(e)
         if is_retry:
             error_message += ". Please try again later or contact support if the issue persists."
@@ -217,6 +283,13 @@ def generate_audio():
         index = data.get('index')
         is_retry = data.get('is_retry', False)
         
+        # Get temp_id from session
+        story_data = session.get('story_data', {})
+        temp_id = story_data.get('temp_id')
+        
+        if not temp_id:
+            return jsonify({'error': 'No story session found'}), 404
+        
         # Generate audio with retry information
         try:
             audio_url = audio_service.generate_audio(text)
@@ -224,6 +297,15 @@ def generate_audio():
                 error_message = "Failed to generate audio"
                 if is_retry:
                     error_message += ". Please try again later or contact support if the issue persists."
+                
+                # Log failed attempt
+                log_generation_history(
+                    temp_id=temp_id,
+                    index=index,
+                    generation_type='audio',
+                    status='failed',
+                    error_message=error_message
+                )
                 return jsonify({'error': error_message}), 500
                 
         except Exception as audio_error:
@@ -231,52 +313,42 @@ def generate_audio():
             error_message = str(audio_error)
             
             # Log failed audio generation attempt
-            if temp_id:
-                db.session.execute(
-                    """
-                    INSERT INTO generation_history 
-                    (temp_data_id, paragraph_index, generation_type, status, error_message)
-                    VALUES (:temp_id, :index, 'audio', 'failed', :error)
-                    """,
-                    {
-                        'temp_id': temp_id,
-                        'index': index,
-                        'error': error_message
-                    }
-                )
-                db.session.commit()
+            log_generation_history(
+                temp_id=temp_id,
+                index=index,
+                generation_type='audio',
+                status='failed',
+                error_message=error_message
+            )
             
             if is_retry:
                 error_message += ". Please try again later or contact support if the issue persists."
             return jsonify({'error': error_message}), 500
             
-        # Update data in appropriate storage
+        # Update temp data storage
         if index is not None:
-            story_data = session.get('story_data', {})
-            temp_id = story_data.get('temp_id')
-            
-            if temp_id:
-                temp_data = TempBookData.query.get(temp_id)
-                if temp_data:
-                    book_data = temp_data.data
-                    if index < len(book_data['paragraphs']):
-                        book_data['paragraphs'][index]['audio_url'] = audio_url
-                        temp_data.data = book_data
-                        
-                        # Log successful audio generation to history
-                        db.session.execute(
-                            """
-                            INSERT INTO generation_history 
-                            (temp_data_id, paragraph_index, generation_type, status, result_url)
-                            VALUES (:temp_id, :index, 'audio', 'success', :url)
-                            """,
-                            {
-                                'temp_id': temp_id,
-                                'index': index,
-                                'url': audio_url
-                            }
-                        )
+            temp_data = TempBookData.query.get(temp_id)
+            if temp_data:
+                book_data = temp_data.data
+                if index < len(book_data['paragraphs']):
+                    book_data['paragraphs'][index]['audio_url'] = audio_url
+                    temp_data.data = book_data
+                    
+                    # Log successful audio generation
+                    log_generation_history(
+                        temp_id=temp_id,
+                        index=index,
+                        generation_type='audio',
+                        status='success',
+                        result_url=audio_url
+                    )
+                    
+                    try:
                         db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        logger.error(f"Error updating temp data: {str(e)}")
+                        return jsonify({'error': 'Failed to save generated audio'}), 500
             
         return jsonify({
             'success': True,
@@ -285,9 +357,18 @@ def generate_audio():
         
     except Exception as e:
         logger.error(f"Error in generate_audio route: {str(e)}")
+        
+        # Log unexpected error
+        if temp_id:
+            log_generation_history(
+                temp_id=temp_id,
+                index=index,
+                generation_type='audio',
+                status='failed',
+                error_message=str(e)
+            )
+            
         error_message = str(e)
         if is_retry:
             error_message += ". Please try again later or contact support if the issue persists."
         return jsonify({'error': error_message}), 500
-
-

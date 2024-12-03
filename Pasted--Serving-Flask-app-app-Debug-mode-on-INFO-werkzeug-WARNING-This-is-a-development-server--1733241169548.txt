@@ -1,0 +1,64 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.103:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 757-290-360
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:32] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:32] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:32] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:33] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:33] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:33] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:33] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:33] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 05:57:33] "GET /static/js/main.js HTTP/1.1" 304 -
+           INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:11:02] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:11:02] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:11:02] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:11:09] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:11:09] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:11:10] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:services.book_processor:Successfully processed 23 two-sentence chunks
+INFO:services.book_processor:Successfully processed 23 two-sentence chunks
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:42:22] "POST /story/upload HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:42:23] "POST /story/upload HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:42:26] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:42:26] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:42:26] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:42:26] "GET /static/js/story-edit.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:43:09] "GET /story/customize HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:43:09] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:43:09] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:43:09] "GET /static/dist/bundle.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:43:58] "POST /story/generate_image HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:45:53] "POST /story/update_style HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:46:36] "POST /story/generate_image HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:49:00] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:49:00] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:49:00] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:__main__:Generating story with prompt: a mysterious wave of energy crosses the entire pla...
+INFO:__main__:Generating story with prompt: a mysterious wave of energy crosses the entire pla...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Saved story data with temp_id: 936818b8-e374-477b-a9e5-e72bc5befff3
+INFO:__main__:Story generation successful, redirecting to edit page
+INFO:__main__:Saved story data with temp_id: 5fbd80c4-17fd-4391-a9ed-fd07e225215a
+INFO:__main__:Story generation successful, redirecting to edit page
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "GET /static/js/story-edit.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:30] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:38] "GET /story/customize HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:38] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:38] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:38] "GET /static/dist/bundle.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:51:47] "POST /story/update_style HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:52:29] "POST /story/generate_image HTTP/1.1" 200 -
