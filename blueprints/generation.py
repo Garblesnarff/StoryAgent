@@ -141,6 +141,7 @@ def generate_image():
         text = data['text']
         index = data.get('index')
         style = data.get('style', 'realistic')
+        is_retry = data.get('is_retry', False)
         
         # Generate chain of image prompts using Gemini
         story_context = session.get('story_data', {}).get('story_context', '')
@@ -149,7 +150,17 @@ def generate_image():
         # Generate new image with chained prompts
         result = image_service.generate_image_chain(image_prompts, style=style)
         if not result:
-            return jsonify({'error': 'Failed to generate image'}), 500
+            error_message = "Failed to generate image after multiple attempts"
+            if is_retry:
+                error_message += ". Please try again later or contact support if the issue persists."
+            return jsonify({'error': error_message}), 500
+            
+        # If result contains error information
+        if 'error' in result and result.get('status') == 'failed':
+            error_message = result['error']
+            if is_retry:
+                error_message += f" (Retry attempt failed after {result.get('retries', 0)} attempts)"
+            return jsonify({'error': error_message}), 500
             
         # Update data in appropriate storage
         if index is not None:
@@ -174,7 +185,10 @@ def generate_image():
         
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        error_message = str(e)
+        if is_retry:
+            error_message += ". Please try again later or contact support if the issue persists."
+        return jsonify({'error': error_message}), 500
 
 @generation_bp.route('/story/generate_audio', methods=['POST'])
 def generate_audio():
@@ -185,11 +199,23 @@ def generate_audio():
             
         text = data['text']
         index = data.get('index')
+        is_retry = data.get('is_retry', False)
         
-        # Generate audio
-        audio_url = audio_service.generate_audio(text)
-        if not audio_url:
-            return jsonify({'error': 'Failed to generate audio'}), 500
+        # Generate audio with retry information
+        try:
+            audio_url = audio_service.generate_audio(text)
+            if not audio_url:
+                error_message = "Failed to generate audio"
+                if is_retry:
+                    error_message += ". Please try again later or contact support if the issue persists."
+                return jsonify({'error': error_message}), 500
+                
+        except Exception as audio_error:
+            logger.error(f"Audio generation error: {str(audio_error)}")
+            error_message = str(audio_error)
+            if is_retry:
+                error_message += ". Please try again later or contact support if the issue persists."
+            return jsonify({'error': error_message}), 500
             
         # Update data in appropriate storage
         if index is not None:
@@ -211,7 +237,10 @@ def generate_audio():
         })
         
     except Exception as e:
-        logger.error(f"Error generating audio: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error in generate_audio route: {str(e)}")
+        error_message = str(e)
+        if is_retry:
+            error_message += ". Please try again later or contact support if the issue persists."
+        return jsonify({'error': error_message}), 500
 
 

@@ -34,10 +34,11 @@ class HumeAudioGenerator:
         metadata = await self.ws.recv()
         return json.loads(metadata)
 
-    async def _generate_audio_async(self, text):
+    async def _generate_audio_async(self, text, max_connection_retries=3, chunk_retries=3):
         try:
             # Initialize audio data collection
             audio_data = bytearray()
+            failed_chunks = []
             
             # Split text into smaller chunks (around 100 characters each)
             chunks = []
@@ -45,6 +46,10 @@ class HumeAudioGenerator:
             sentences = text.split('. ')
             current_chunk = []
             current_length = 0
+            
+            # Track overall progress
+            total_chunks = 0
+            processed_chunks = 0
             
             for sentence in sentences:
                 # If sentence itself is too long, split it further
@@ -76,52 +81,84 @@ class HumeAudioGenerator:
             if current_chunk:
                 chunks.append('. '.join(current_chunk))
             
-            # Process each chunk with retries
-            for chunk in chunks:
-                max_retries = 3
-                retry_count = 0
+            # Process each chunk with enhanced retry logic
+            for chunk_index, chunk in enumerate(chunks):
+                connection_retry_count = 0
+                chunk_retry_count = 0
+                success = False
                 
-                while retry_count < max_retries:
+                while not success and connection_retry_count < max_connection_retries:
                     try:
-                        # Connect for each chunk to ensure fresh connection
-                        await self._connect()
+                        # Connect for each chunk with retry logic
+                        connection_attempts = 0
+                        while connection_attempts < 3:
+                            try:
+                                await self._connect()
+                                break
+                            except Exception as conn_error:
+                                connection_attempts += 1
+                                if connection_attempts == 3:
+                                    raise Exception(f"Failed to establish connection after 3 attempts: {str(conn_error)}")
+                                await asyncio.sleep(1)
                         
-                        logger.info(f"Processing text chunk: {len(chunk)} characters")
+                        logger.info(f"Processing text chunk {chunk_index + 1}/{len(chunks)}: {len(chunk)} characters")
                         message = {
                             "type": "user_input",
                             "text": chunk
                         }
                         
                         await self.ws.send(json.dumps(message))
+                        chunk_success = False
+                        chunk_data_buffer = bytearray()
                         
-                        # Collect audio data for this chunk
-                        while True:
-                            response = await self.ws.recv()
-                            response_data = json.loads(response)
-                            
-                            if response_data["type"] == "audio_output":
-                                chunk_data = base64.b64decode(response_data["data"])
-                                audio_data.extend(chunk_data)
-                                logger.info(f"Received audio chunk: {len(chunk_data)} bytes")
-                            
-                            elif response_data["type"] == "assistant_end":
-                                logger.info("Received end of chunk signal")
-                                break
-                            
-                            elif response_data["type"] == "error":
-                                raise Exception(response_data.get('message', 'Unknown error'))
-                        
-                        # Add small delay between chunks
-                        await asyncio.sleep(0.5)
-                        break  # Success, exit retry loop
+                        # Collect audio data for this chunk with timeout
+                        try:
+                            async with asyncio.timeout(30):  # 30-second timeout per chunk
+                                while True:
+                                    response = await self.ws.recv()
+                                    response_data = json.loads(response)
+                                    
+                                    if response_data["type"] == "audio_output":
+                                        chunk_data = base64.b64decode(response_data["data"])
+                                        chunk_data_buffer.extend(chunk_data)
+                                        logger.info(f"Received audio chunk: {len(chunk_data)} bytes")
+                                    
+                                    elif response_data["type"] == "assistant_end":
+                                        logger.info(f"Successfully processed chunk {chunk_index + 1}/{len(chunks)}")
+                                        chunk_success = True
+                                        break
+                                    
+                                    elif response_data["type"] == "error":
+                                        raise Exception(response_data.get('message', 'Unknown error'))
+                                    
+                            if chunk_success:
+                                audio_data.extend(chunk_data_buffer)
+                                processed_chunks += 1
+                                success = True
+                                # Add small delay between chunks
+                                await asyncio.sleep(0.5)
+                                break  # Success, exit retry loop
+                                
+                        except asyncio.TimeoutError:
+                            logger.error(f"Timeout processing chunk {chunk_index + 1}")
+                            raise Exception("Chunk processing timeout")
                         
                     except Exception as e:
-                        logger.error(f"Error processing chunk (attempt {retry_count + 1}): {str(e)}")
-                        retry_count += 1
-                        if retry_count == max_retries:
-                            logger.error(f"Failed to process chunk after {max_retries} attempts")
-                            return None
-                        await asyncio.sleep(1)  # Wait before retry
+                        error_msg = f"Error processing chunk {chunk_index + 1} (attempt {chunk_retry_count + 1}): {str(e)}"
+                        logger.error(error_msg)
+                        chunk_retry_count += 1
+                        connection_retry_count += 1
+                        
+                        if chunk_retry_count == chunk_retries:
+                            logger.error(f"Failed to process chunk {chunk_index + 1} after {chunk_retries} attempts")
+                            failed_chunks.append({
+                                'index': chunk_index,
+                                'text': chunk,
+                                'error': str(e)
+                            })
+                            break
+                            
+                        await asyncio.sleep(2 ** chunk_retry_count)  # Exponential backoff
                     finally:
                         if hasattr(self, 'ws'):
                             await self.ws.close()

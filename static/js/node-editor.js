@@ -1,21 +1,21 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, { 
-    Controls, 
+    useNodesState, 
+    useEdgesState, 
+    addEdge, 
+    Handle, 
+    Position,
     Background,
-    useNodesState,
-    useEdgesState,
-    addEdge,
-    Handle,
-    Position
+    Controls
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-const ParagraphNode = React.memo(({ data = {} }) => {
-    const {
-        index,
-        text,
-        imageUrl,
-        audioUrl,
+const ParagraphNode = React.memo(({ data }) => {
+    const { 
+        index, 
+        text, 
+        imageUrl, 
+        audioUrl, 
         imagePrompt,
         onGenerateImage,
         onGenerateAudio,
@@ -28,15 +28,18 @@ const ParagraphNode = React.memo(({ data = {} }) => {
         isRegeneratingAudio,
         imageProgress,
         audioProgress,
-        globalStyle
+        imageError,
+        audioError
     } = data;
-    
+
     return (
-        <div className={`paragraph-node ${globalStyle || 'realistic'}-style`}>
+        <div className="paragraph-node">
             <Handle type="target" position={Position.Left} />
-            <div className="node-header">Paragraph {index + 1}</div>
-            <div className="node-content">{text}</div>
-            <div className="node-controls">
+            <div className="node-content">
+                <div className="text-content mb-2">
+                    {text}
+                </div>
+                
                 <div className="generation-controls mb-2">
                     <div className="generation-control">
                         <button 
@@ -46,6 +49,17 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                             <i className="bi bi-image me-1"></i>
                             {isGeneratingImage ? ' Generating...' : (isRegenerating ? ' Regenerating...' : ' Generate Image')}
                         </button>
+                        {imageError && (
+                            <div className="alert alert-danger p-2 mb-2">
+                                <small>{imageError}</small>
+                                <button 
+                                    className="btn btn-sm btn-outline-danger w-100 mt-1"
+                                    onClick={() => onGenerateImage(index, true)}>
+                                    <i className="bi bi-arrow-clockwise me-1"></i>
+                                    Retry
+                                </button>
+                            </div>
+                        )}
                         <div className="progress mt-1" style={{ height: '4px', opacity: (isGeneratingImage || isRegenerating) ? 1 : 0, transition: 'opacity 0.3s ease' }}>
                             <div 
                                 className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
@@ -66,6 +80,17 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                             <i className="bi bi-volume-up me-1"></i>
                             {isGeneratingAudio ? ' Generating...' : (isRegeneratingAudio ? ' Regenerating...' : ' Generate Audio')}
                         </button>
+                        {audioError && (
+                            <div className="alert alert-danger p-2 mb-2">
+                                <small>{audioError}</small>
+                                <button 
+                                    className="btn btn-sm btn-outline-danger w-100 mt-1"
+                                    onClick={() => onGenerateAudio(index, true)}>
+                                    <i className="bi bi-arrow-clockwise me-1"></i>
+                                    Retry
+                                </button>
+                            </div>
+                        )}
                         <div className="progress mt-1" style={{ height: '4px', opacity: (isGeneratingAudio || isRegeneratingAudio) ? 1 : 0, transition: 'opacity 0.3s ease' }}>
                             <div 
                                 className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
@@ -79,7 +104,7 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                     </div>
                 </div>
                 
-                {imageUrl && (
+                {imageUrl && !imageError && (
                     <>
                         <div className="node-preview mt-2">
                             <div className="image-container position-relative">
@@ -110,7 +135,7 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                     </>
                 )}
                 
-                {audioUrl && (
+                {audioUrl && !audioError && (
                     <>
                         <div className="audio-player mt-2">
                             <audio controls className="w-100" key={audioUrl}>
@@ -150,12 +175,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     data: {
                         ...node.data, 
                         isRegenerating: true,
-                        imageProgress: 0
+                        imageProgress: 0,
+                        imageError: null
                     }
                 } : node
             ));
             
-            // Start progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -189,8 +214,13 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             });
 
             const data = await response.json();
+            clearInterval(progressInterval);
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to regenerate image');
+            }
+            
             if (data.success) {
-                clearInterval(progressInterval);
                 setNodes(currentNodes => currentNodes.map(node => 
                     node.id === `p${index}` ? {
                         ...node, 
@@ -199,21 +229,24 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                             imageUrl: data.image_url,
                             imagePrompt: data.image_prompt,
                             isRegenerating: false,
-                            imageProgress: 100
+                            imageProgress: 100,
+                            imageError: null
                         }
                     } : node
                 ));
+            } else {
+                throw new Error(data.error || 'Failed to regenerate image');
             }
         } catch (error) {
             console.error('Error regenerating image:', error);
-            alert('Failed to regenerate image');
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
                     ...node, 
                     data: {
                         ...node.data, 
                         isRegenerating: false,
-                        imageProgress: 0
+                        imageProgress: 0,
+                        imageError: error.message || 'Failed to regenerate image. Please try again.'
                     }
                 } : node
             ));
@@ -228,12 +261,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     data: {
                         ...node.data, 
                         isRegeneratingAudio: true,
-                        audioProgress: 0
+                        audioProgress: 0,
+                        audioError: null
                     }
                 } : node
             ));
 
-            // Start progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -260,8 +293,13 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             });
 
             const data = await response.json();
+            clearInterval(progressInterval);
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to regenerate audio');
+            }
+            
             if (data.success) {
-                clearInterval(progressInterval);
                 setNodes(currentNodes => currentNodes.map(node => 
                     node.id === `p${index}` ? {
                         ...node, 
@@ -269,47 +307,49 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                             ...node.data,
                             audioUrl: data.audio_url,
                             isRegeneratingAudio: false,
-                            audioProgress: 100
+                            audioProgress: 100,
+                            audioError: null
                         }
                     } : node
                 ));
+            } else {
+                throw new Error(data.error || 'Failed to regenerate audio');
             }
         } catch (error) {
             console.error('Error regenerating audio:', error);
-            alert('Failed to regenerate audio');
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
                     ...node, 
                     data: {
                         ...node.data, 
                         isRegeneratingAudio: false,
-                        audioProgress: 0
+                        audioProgress: 0,
+                        audioError: error.message || 'Failed to regenerate audio. Please try again.'
                     }
                 } : node
             ));
         }
     }, [story?.paragraphs, setNodes]);
 
-    const handleGenerateImage = useCallback(async (index) => {
+    const handleGenerateImage = useCallback(async (index, isRetry = false) => {
         if (!story?.paragraphs?.[index]?.text) {
             console.error('No text found for paragraph');
             return;
         }
 
         try {
-            // Initialize generation state with progress
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
                     ...node, 
                     data: {
                         ...node.data, 
                         isGeneratingImage: true,
-                        imageProgress: 0
+                        imageProgress: 0,
+                        imageError: null
                     }
                 } : node
             ));
 
-            // Start progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -338,17 +378,19 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     index: index,
                     text: story.paragraphs[index].text.trim(),
                     story_context: storyContext,
-                    style: selectedStyle
+                    style: selectedStyle,
+                    is_retry: isRetry
                 })
             });
 
             const data = await response.json();
+            clearInterval(progressInterval);
+
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to generate image');
             }
             
             if (data.success) {
-                clearInterval(progressInterval);
                 setNodes(currentNodes => 
                     currentNodes.map(node => 
                         node.id === `p${index}` ? {
@@ -358,7 +400,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                                 imageUrl: data.image_url,
                                 imagePrompt: data.image_prompt,
                                 isGeneratingImage: false,
-                                imageProgress: 100
+                                imageProgress: 100,
+                                imageError: null
                             }
                         } : node
                     )
@@ -375,34 +418,33 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     data: {
                         ...node.data, 
                         isGeneratingImage: false,
-                        imageProgress: 0
+                        imageProgress: 0,
+                        imageError: error.message || 'Failed to generate image. Please try again.'
                     }
                 } : node
             ));
-            alert(error.message || 'Failed to generate image');
         }
     }, [story?.paragraphs, selectedStyle, setNodes]);
 
-    const handleGenerateAudio = useCallback(async (index) => {
+    const handleGenerateAudio = useCallback(async (index, isRetry = false) => {
         if (!story?.paragraphs?.[index]?.text) {
             console.error('No text found for paragraph');
             return;
         }
 
         try {
-            // Initialize generation state with progress
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
                     ...node, 
                     data: {
                         ...node.data, 
                         isGeneratingAudio: true,
-                        audioProgress: 0
+                        audioProgress: 0,
+                        audioError: null
                     }
                 } : node
             ));
 
-            // Start progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -424,17 +466,19 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 },
                 body: JSON.stringify({
                     index: index,
-                    text: story.paragraphs[index].text.trim()
+                    text: story.paragraphs[index].text.trim(),
+                    is_retry: isRetry
                 })
             });
 
             const data = await response.json();
+            clearInterval(progressInterval);
+
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to generate audio');
             }
             
             if (data.success) {
-                clearInterval(progressInterval);
                 setNodes(currentNodes => 
                     currentNodes.map(node => 
                         node.id === `p${index}` ? {
@@ -443,7 +487,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                                 ...node.data,
                                 audioUrl: data.audio_url,
                                 isGeneratingAudio: false,
-                                audioProgress: 100
+                                audioProgress: 100,
+                                audioError: null
                             }
                         } : node
                     )
@@ -460,11 +505,11 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     data: {
                         ...node.data, 
                         isGeneratingAudio: false,
-                        audioProgress: 0
+                        audioProgress: 0,
+                        audioError: error.message || 'Failed to generate audio. Please try again.'
                     }
                 } : node
             ));
-            alert(error.message || 'Failed to generate audio');
         }
     }, [story?.paragraphs, setNodes]);
 
@@ -521,7 +566,9 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 isRegenerating: false,
                 isRegeneratingAudio: false,
                 imageProgress: 0,
-                audioProgress: 0
+                audioProgress: 0,
+                imageError: null,
+                audioError: null
             }
         }));
 

@@ -29,7 +29,7 @@ class ImageGenerator:
         modifier = style_modifiers.get(style, style_modifiers['realistic'])
         return f"{modifier}: {text}"
         
-    def generate_image(self, text, style='realistic'):
+    def generate_image(self, text, style='realistic', max_retries=3, initial_delay=1):
         try:
             # Check rate limit
             current_time = datetime.now()
@@ -43,32 +43,58 @@ class ImageGenerator:
             # Create enhanced prompt with style
             enhanced_prompt = self._style_to_prompt_modifier(text, style)
             
-            # Generate image using Together AI with 16:9 aspect ratio
-            image_response = self.client.images.generate(
-                prompt=enhanced_prompt,
-                model="black-forest-labs/FLUX.1-schnell-Free",
-                width=1024,  # 16:9 ratio
-                height=576,
-                steps=4,
-                n=1,
-                response_format="b64_json"
-            )
+            # Initialize retry variables
+            retry_count = 0
+            current_delay = initial_delay
+            last_error = None
+
+            while retry_count < max_retries:
+                try:
+                    # Generate image using Together AI with 16:9 aspect ratio
+                    image_response = self.client.images.generate(
+                        prompt=enhanced_prompt,
+                        model="black-forest-labs/FLUX.1-schnell-Free",
+                        width=1024,  # 16:9 ratio
+                        height=576,
+                        steps=4,
+                        n=1,
+                        response_format="b64_json"
+                    )
+                    
+                    if image_response and hasattr(image_response, 'data') and image_response.data:
+                        image_b64 = image_response.data[0].b64_json
+                        
+                        # Add timestamp to queue
+                        self.image_generation_queue.append(datetime.now())
+                        
+                        return {
+                            'url': f"data:image/png;base64,{image_b64}",
+                            'prompt': enhanced_prompt,
+                            'retries': retry_count
+                        }
+                    raise Exception("Invalid response format from image generation API")
+                    
+                except Exception as e:
+                    last_error = e
+                    retry_count += 1
+                    
+                    if retry_count < max_retries:
+                        logger.warning(f"Image generation attempt {retry_count} failed: {str(e)}. Retrying in {current_delay} seconds...")
+                        time.sleep(current_delay)
+                        current_delay *= 2  # Exponential backoff
+                    else:
+                        logger.error(f"All image generation attempts failed after {max_retries} retries. Last error: {str(e)}")
             
-            if image_response and hasattr(image_response, 'data') and image_response.data:
-                image_b64 = image_response.data[0].b64_json
-                
-                # Add timestamp to queue
-                self.image_generation_queue.append(datetime.now())
-                
-                return {
-                    'url': f"data:image/png;base64,{image_b64}",
-                    'prompt': enhanced_prompt
-                }
-            return None
+            # If we get here, all retries failed
+            raise last_error
             
         except Exception as e:
-            print(f"Error generating image: {str(e)}")
-            return None
+            logger.error(f"Error generating image: {str(e)}")
+            return {
+                'error': str(e),
+                'retries': retry_count,
+                'status': 'failed'
+            }
 
 
     def generate_image_chain(self, prompts: List[str], style: str = 'realistic') -> Optional[Dict[str, str]]:
