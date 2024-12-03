@@ -34,12 +34,15 @@ def send_json_message(message_type, message_data, step=None):
 def log_generation_history(temp_id, index, generation_type, status, error_message=None, prompt=None, result_url=None, retries=0):
     """Helper function to log generation history"""
     try:
-        db.session.execute(
-            """
+        from sqlalchemy import text
+        query = text("""
             INSERT INTO generation_history 
             (temp_data_id, paragraph_index, generation_type, status, error_message, prompt, result_url, retries, timestamp)
             VALUES (:temp_id, :index, :type, :status, :error, :prompt, :url, :retries, :timestamp)
-            """,
+        """)
+        
+        db.session.execute(
+            query,
             {
                 'temp_id': temp_id,
                 'index': index,
@@ -49,7 +52,7 @@ def log_generation_history(temp_id, index, generation_type, status, error_messag
                 'prompt': prompt,
                 'url': result_url,
                 'retries': retries,
-                'timestamp': datetime.utcnow() #Added timestamp
+                'timestamp': datetime.utcnow()
             }
         )
         db.session.commit()

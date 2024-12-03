@@ -1,0 +1,37 @@
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 136-382-192
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:20] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:20] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:20] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:20] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:20] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:21] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 15:59:22] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:__main__:Generating story with prompt: a space disaster survival story, set in 1489 A.D...
+INFO:__main__:Generating story with prompt: a space disaster survival story, set in 1489 A.D...
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Saved story data with temp_id: f801d31d-3c69-4a76-8eef-188e44de2edb
+INFO:__main__:Story generation successful, redirecting to edit page
+INFO:__main__:Saved story data with temp_id: ab9ab938-3c98-492a-8b19-d8d13059f599
+INFO:__main__:Story generation successful, redirecting to edit page
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:20] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:20] "POST /generate_story HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:20] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:20] "GET /story/edit HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:20] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:21] "GET /static/js/story-edit.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:21] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:24] "GET /story/customize HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:24] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:24] "GET /static/dist/bundle.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:24] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:13:29] "POST /story/update_style HTTP/1.1" 200 -
+ERROR:blueprints.generation:Error logging generation history: Textual SQL expression '\n            INSERT INTO ...' should be explicitly declared as text('\n            INSERT INTO ...')
+INFO:werkzeug:172.31.196.103 - - [03/Dec/2024 18:14:16] "POST /story/generate_image HTTP/1.1" 200 -
