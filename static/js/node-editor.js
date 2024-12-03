@@ -46,18 +46,16 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                             <i className="bi bi-image me-1"></i>
                             {isGeneratingImage ? ' Generating...' : (isRegenerating ? ' Regenerating...' : ' Generate Image')}
                         </button>
-                        {(isGeneratingImage || isRegenerating) && (
-                            <div className="progress mt-1" style={{ height: '4px' }}>
-                                <div 
-                                    className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                                    role="progressbar" 
-                                    style={{ width: `${imageProgress || 0}%` }}
-                                    aria-valuenow={imageProgress || 0} 
-                                    aria-valuemin="0" 
-                                    aria-valuemax="100">
-                                </div>
+                        <div className="progress mt-1" style={{ height: '4px', opacity: (isGeneratingImage || isRegenerating) ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+                            <div 
+                                className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                role="progressbar" 
+                                style={{ width: `${imageProgress || 0}%` }}
+                                aria-valuenow={imageProgress || 0} 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
                             </div>
-                        )}
+                        </div>
                     </div>
                     
                     <div className="generation-control mt-2">
@@ -68,18 +66,16 @@ const ParagraphNode = React.memo(({ data = {} }) => {
                             <i className="bi bi-volume-up me-1"></i>
                             {isGeneratingAudio ? ' Generating...' : (isRegeneratingAudio ? ' Regenerating...' : ' Generate Audio')}
                         </button>
-                        {(isGeneratingAudio || isRegeneratingAudio) && (
-                            <div className="progress mt-1" style={{ height: '4px' }}>
-                                <div 
-                                    className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                                    role="progressbar" 
-                                    style={{ width: `${audioProgress || 0}%` }}
-                                    aria-valuenow={audioProgress || 0} 
-                                    aria-valuemin="0" 
-                                    aria-valuemax="100">
-                                </div>
+                        <div className="progress mt-1" style={{ height: '4px', opacity: (isGeneratingAudio || isRegeneratingAudio) ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+                            <div 
+                                className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                role="progressbar" 
+                                style={{ width: `${audioProgress || 0}%` }}
+                                aria-valuenow={audioProgress || 0} 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
                 
