@@ -37,7 +37,7 @@ def log_generation_history(temp_id, index, generation_type, status, error_messag
         from sqlalchemy import text
         query = text("""
             INSERT INTO generation_history 
-            (temp_data_id, paragraph_index, generation_type, status, error_message, prompt, result_url, retries, timestamp)
+            (temp_data_id, paragraph_index, generation_type, status, error_message, prompt, result_url, retries, created_at)
             VALUES (:temp_id, :index, :type, :status, :error, :prompt, :url, :retries, :timestamp)
         """)
         
