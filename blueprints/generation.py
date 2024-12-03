@@ -175,6 +175,22 @@ def generate_image():
                         book_data['paragraphs'][index]['image_url'] = result['url']
                         book_data['paragraphs'][index]['image_prompt'] = result['prompt']
                         temp_data.data = book_data
+                        
+                        # Log successful generation to history
+                        db.session.execute(
+                            """
+                            INSERT INTO generation_history 
+                            (temp_data_id, paragraph_index, generation_type, status, prompt, result_url, retries)
+                            VALUES (:temp_id, :index, 'image', 'success', :prompt, :url, :retries)
+                            """,
+                            {
+                                'temp_id': temp_id,
+                                'index': index,
+                                'prompt': result['prompt'],
+                                'url': result['url'],
+                                'retries': result.get('retries', 0)
+                            }
+                        )
                         db.session.commit()
             
         return jsonify({
@@ -213,6 +229,23 @@ def generate_audio():
         except Exception as audio_error:
             logger.error(f"Audio generation error: {str(audio_error)}")
             error_message = str(audio_error)
+            
+            # Log failed audio generation attempt
+            if temp_id:
+                db.session.execute(
+                    """
+                    INSERT INTO generation_history 
+                    (temp_data_id, paragraph_index, generation_type, status, error_message)
+                    VALUES (:temp_id, :index, 'audio', 'failed', :error)
+                    """,
+                    {
+                        'temp_id': temp_id,
+                        'index': index,
+                        'error': error_message
+                    }
+                )
+                db.session.commit()
+            
             if is_retry:
                 error_message += ". Please try again later or contact support if the issue persists."
             return jsonify({'error': error_message}), 500
@@ -229,6 +262,20 @@ def generate_audio():
                     if index < len(book_data['paragraphs']):
                         book_data['paragraphs'][index]['audio_url'] = audio_url
                         temp_data.data = book_data
+                        
+                        # Log successful audio generation to history
+                        db.session.execute(
+                            """
+                            INSERT INTO generation_history 
+                            (temp_data_id, paragraph_index, generation_type, status, result_url)
+                            VALUES (:temp_id, :index, 'audio', 'success', :url)
+                            """,
+                            {
+                                'temp_id': temp_id,
+                                'index': index,
+                                'url': audio_url
+                            }
+                        )
                         db.session.commit()
             
         return jsonify({
