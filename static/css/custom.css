@@ -357,16 +357,24 @@
 }
 
 /* Specific style variations */
-.paragraph-node.realistic-style {
+.paragraph-node.realistic {
     background: linear-gradient(45deg, var(--bs-dark), #2c3e50);
+    border: 2px solid #4a5568;
 }
 
-.paragraph-node.artistic-style {
+.paragraph-node.cartoon {
+    background: linear-gradient(45deg, #4299e1, #63b3ed);
+    border: 2px solid #90cdf4;
+}
+
+.paragraph-node.artistic {
     background: linear-gradient(45deg, #805ad5, #d53f8c);
+    border: 2px solid #b794f4;
 }
 
-.paragraph-node.fantasy-style {
+.paragraph-node.fantasy {
     background: linear-gradient(45deg, #38b2ac, #4299e1);
+    border: 2px solid #4fd1c5;
 }
 
 /* Modal styles */

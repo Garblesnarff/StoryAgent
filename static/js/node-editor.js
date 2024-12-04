@@ -573,13 +573,36 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         const newStyle = event.target.value;
         setSelectedStyle(newStyle);
         
-        setNodes(currentNodes => currentNodes.map(node => ({
-            ...node,
-            data: {
-                ...node.data,
-                globalStyle: newStyle
+        // Update nodes with new style and apply visual changes
+        setNodes(currentNodes => currentNodes.map(node => {
+            const newNode = {
+                ...node,
+                data: {
+                    ...node.data,
+                    globalStyle: newStyle
+                }
+            };
+            
+            // Update node style based on selected style
+            switch (newStyle) {
+                case 'realistic':
+                    newNode.className = 'paragraph-node realistic';
+                    break;
+                case 'cartoon':
+                    newNode.className = 'paragraph-node cartoon';
+                    break;
+                case 'artistic':
+                    newNode.className = 'paragraph-node artistic';
+                    break;
+                case 'fantasy':
+                    newNode.className = 'paragraph-node fantasy';
+                    break;
+                default:
+                    newNode.className = 'paragraph-node';
             }
-        })));
+            
+            return newNode;
+        }));
         
         const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
             index,
