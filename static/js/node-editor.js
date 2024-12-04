@@ -144,7 +144,13 @@ const ParagraphNode = React.memo(({ data }) => {
                                                     <i class="bi bi-clipboard-check me-2"></i>
                                                     Prompt copied to clipboard!
                                                 `;
-                                                document.body.appendChild(toast);
+                                                // Add to root element instead of body
+                                                const rootElement = document.querySelector('.node-editor-root');
+                                                if (rootElement) {
+                                                    rootElement.appendChild(toast);
+                                                } else {
+                                                    document.body.appendChild(toast);
+                                                }
                                                 
                                                 // Force reflow for animation
                                                 void toast.offsetHeight;
