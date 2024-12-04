@@ -368,13 +368,15 @@
 }
 
 .paragraph-node.artistic {
-    background: linear-gradient(45deg, #805ad5, #d53f8c);
+    background: linear-gradient(45deg, #6b46c1, #9f7aea);
     border: 2px solid #b794f4;
+    color: white;
 }
 
 .paragraph-node.fantasy {
-    background: linear-gradient(45deg, #38b2ac, #4299e1);
-    border: 2px solid #4fd1c5;
+    background: linear-gradient(45deg, #2f855a, #48bb78);
+    border: 2px solid #9ae6b4;
+    color: white;
 }
 
 /* Modal styles */
