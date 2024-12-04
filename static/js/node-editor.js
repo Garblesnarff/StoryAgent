@@ -125,13 +125,33 @@ const ParagraphNode = React.memo(({ data }) => {
                                         e.stopPropagation();
                                         navigator.clipboard.writeText(imagePrompt).then(() => {
                                             const button = e.currentTarget;
-                                            button.classList.add('copied');
-                                            const icon = button.querySelector('i');
-                                            icon.className = 'bi bi-check';
-                                            setTimeout(() => {
-                                                button.classList.remove('copied');
-                                                icon.className = 'bi bi-clipboard';
-                                            }, 2000);
+                                            const icon = button?.querySelector('i');
+                                            
+                                            if (button && icon) {
+                                                button.classList.add('copied');
+                                                icon.className = 'bi bi-check';
+                                                
+                                                // Create and show toast notification
+                                                const toast = document.createElement('div');
+                                                toast.className = 'toast-notification';
+                                                toast.textContent = 'Prompt copied to clipboard!';
+                                                document.body.appendChild(toast);
+                                                
+                                                // Trigger reflow to enable animation
+                                                toast.offsetHeight;
+                                                toast.classList.add('show');
+                                                
+                                                setTimeout(() => {
+                                                    button.classList.remove('copied');
+                                                    icon.className = 'bi bi-clipboard';
+                                                    
+                                                    // Hide and remove toast
+                                                    toast.classList.remove('show');
+                                                    setTimeout(() => {
+                                                        document.body.removeChild(toast);
+                                                    }, 300);
+                                                }, 2000);
+                                            }
                                         });
                                     }}
                                     title="Copy image prompt"
