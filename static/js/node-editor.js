@@ -131,15 +131,26 @@ const ParagraphNode = React.memo(({ data }) => {
                                                 button.classList.add('copied');
                                                 icon.className = 'bi bi-check';
                                                 
+                                                // Remove existing toast if present
+                                                const existingToast = document.querySelector('.toast-notification');
+                                                if (existingToast) {
+                                                    existingToast.remove();
+                                                }
+                                                
                                                 // Create and show toast notification
                                                 const toast = document.createElement('div');
                                                 toast.className = 'toast-notification';
-                                                toast.textContent = 'Prompt copied to clipboard!';
+                                                toast.innerHTML = `
+                                                    <i class="bi bi-clipboard-check me-2"></i>
+                                                    Prompt copied to clipboard!
+                                                `;
                                                 document.body.appendChild(toast);
                                                 
-                                                // Trigger reflow to enable animation
-                                                toast.offsetHeight;
-                                                toast.classList.add('show');
+                                                // Force reflow for animation
+                                                void toast.offsetHeight;
+                                                requestAnimationFrame(() => {
+                                                    toast.classList.add('show');
+                                                });
                                                 
                                                 setTimeout(() => {
                                                     button.classList.remove('copied');
