@@ -120,16 +120,17 @@ const ParagraphNode = React.memo(({ data }) => {
                                     <i className="bi bi-arrows-fullscreen"></i>
                                 </div>
                                 <div 
-                                    className="copy-prompt-button"
+                                    className="copy-prompt-icon"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigator.clipboard.writeText(imagePrompt).then(() => {
                                             const button = e.currentTarget;
                                             button.classList.add('copied');
-                                            button.innerHTML = '<i class="bi bi-check"></i>';
+                                            const icon = button.querySelector('i');
+                                            icon.className = 'bi bi-check';
                                             setTimeout(() => {
                                                 button.classList.remove('copied');
-                                                button.innerHTML = '<i class="bi bi-clipboard"></i>';
+                                                icon.className = 'bi bi-clipboard';
                                             }, 2000);
                                         });
                                     }}

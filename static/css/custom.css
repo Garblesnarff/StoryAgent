@@ -243,7 +243,7 @@
     border-radius: 4px;
 }
 
-.copy-prompt-button {
+.copy-prompt-icon {
     position: absolute;
     top: 8px;
     left: 8px;
@@ -256,23 +256,21 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 20;
+    z-index: 15;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 0;
-    outline: none;
 }
 
-.copy-prompt-button:hover {
+.copy-prompt-icon:hover {
     transform: scale(1.1);
     background: rgba(0, 0, 0, 0.9);
 }
 
-.copy-prompt-button.copied {
+.copy-prompt-icon.copied {
     background: rgba(40, 167, 69, 0.7);
 }
 
-.copy-prompt-button i {
+.copy-prompt-icon i {
     font-size: 1rem;
 }
 
