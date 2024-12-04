@@ -259,6 +259,11 @@
     z-index: 15;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.3);
+    opacity: 0;
+}
+
+.image-container:hover .copy-prompt-icon {
+    opacity: 1;
 }
 
 .copy-prompt-icon:hover {
@@ -357,23 +362,23 @@
 }
 
 /* Specific style variations */
-.paragraph-node.realistic {
+.paragraph-node.realistic-style {
     background: linear-gradient(45deg, var(--bs-dark), #2c3e50);
     border: 2px solid #4a5568;
 }
 
-.paragraph-node.cartoon {
+.paragraph-node.cartoon-style {
     background: linear-gradient(45deg, #4299e1, #63b3ed);
     border: 2px solid #90cdf4;
 }
 
-.paragraph-node.artistic {
+.paragraph-node.artistic-style {
     background: linear-gradient(45deg, #6b46c1, #9f7aea);
     border: 2px solid #b794f4;
     color: white;
 }
 
-.paragraph-node.fantasy {
+.paragraph-node.fantasy-style {
     background: linear-gradient(45deg, #2f855a, #48bb78);
     border: 2px solid #9ae6b4;
     color: white;

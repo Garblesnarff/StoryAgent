@@ -33,7 +33,7 @@ const ParagraphNode = React.memo(({ data }) => {
     } = data;
 
     return (
-        <div className="paragraph-node">
+        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
             <Handle type="target" position={Position.Left} />
             <div className="node-content">
                 <div className="text-content mb-2">
