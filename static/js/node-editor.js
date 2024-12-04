@@ -119,7 +119,7 @@ const ParagraphNode = React.memo(({ data }) => {
                                 >
                                     <i className="bi bi-arrows-fullscreen"></i>
                                 </div>
-                                <button
+                                <div 
                                     className="copy-prompt-button"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -136,7 +136,7 @@ const ParagraphNode = React.memo(({ data }) => {
                                     title="Copy image prompt"
                                 >
                                     <i className="bi bi-clipboard"></i>
-                                </button>
+                                </div>
                                 <div className="image-prompt-overlay">
                                     {imagePrompt}
                                 </div>

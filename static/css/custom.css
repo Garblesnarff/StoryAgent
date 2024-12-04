@@ -243,7 +243,6 @@
     border-radius: 4px;
 }
 
-.expand-icon {
 .copy-prompt-button {
     position: absolute;
     top: 8px;
@@ -257,9 +256,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 15;
+    z-index: 20;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0;
+    outline: none;
 }
 
 .copy-prompt-button:hover {
@@ -270,6 +271,12 @@
 .copy-prompt-button.copied {
     background: rgba(40, 167, 69, 0.7);
 }
+
+.copy-prompt-button i {
+    font-size: 1rem;
+}
+
+.expand-icon {
     position: absolute;
     top: 8px;
     right: 8px;
