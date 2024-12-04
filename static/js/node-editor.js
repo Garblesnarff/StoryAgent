@@ -32,8 +32,9 @@ const ParagraphNode = React.memo(({ data }) => {
         audioError
     } = data;
 
+    const nodeClass = `paragraph-node ${data.globalStyle || 'realistic'}-style`;
     return (
-        <div className={`paragraph-node ${data.globalStyle || 'realistic'}-style`}>
+        <div className={nodeClass}>
             <Handle type="target" position={Position.Left} />
             <div className="node-content">
                 <div className="text-content mb-2">
@@ -124,39 +125,34 @@ const ParagraphNode = React.memo(({ data }) => {
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigator.clipboard.writeText(imagePrompt).then(() => {
-                                            const button = e.currentTarget;
-                                            const icon = button?.querySelector('i');
+                                            // Create and show toast notification
+                                            const toast = document.createElement('div');
+                                            toast.className = 'toast-notification';
+                                            toast.innerHTML = `
+                                                <i class="bi bi-clipboard-check me-2"></i>
+                                                Prompt copied to clipboard!
+                                            `;
+                                            document.body.appendChild(toast);
                                             
-                                            if (button && icon) {
-                                                button.classList.add('copied');
-                                                icon.className = 'bi bi-check';
-                                                
-                                                // Remove existing toast if present
-                                                const existingToast = document.querySelector('.toast-notification');
-                                                if (existingToast) {
-                                                    existingToast.remove();
-                                                }
-                                                
-                                                // Create and show toast notification
-                                                const toast = document.createElement('div');
-                                                toast.className = 'toast-notification';
-                                                toast.innerHTML = `
-                                                    <i class="bi bi-clipboard-check me-2"></i>
-                                                    Prompt copied to clipboard!
-                                                `;
-                                                document.body.appendChild(toast);
-                                                
-                                                // Force reflow for animation
-                                                void toast.offsetHeight;
-                                                requestAnimationFrame(() => {
-                                                    toast.classList.add('show');
-                                                });
+                                            // Force reflow for animation
+                                            void toast.offsetHeight;
+                                            
+                                            // Add show class in next frame
+                                            requestAnimationFrame(() => {
+                                                toast.classList.add('show');
+                                            });
+                                            
+                                            // Handle icon change
+                                            const button = e.currentTarget;
+                                            if (button) {
+                                                button.innerHTML = '<i class="bi bi-check"></i>';
+                                                button.style.background = 'rgba(40, 167, 69, 0.8)';
                                                 
                                                 setTimeout(() => {
-                                                    button.classList.remove('copied');
-                                                    icon.className = 'bi bi-clipboard';
+                                                    button.innerHTML = '<i class="bi bi-clipboard"></i>';
+                                                    button.style.background = '';
                                                     
-                                                    // Hide and remove toast
+                                                    // Remove toast
                                                     toast.classList.remove('show');
                                                     setTimeout(() => {
                                                         toast.remove();
@@ -567,16 +563,16 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         const newStyle = event.target.value;
         setSelectedStyle(newStyle);
         
-        // Update nodes with new style and apply visual changes
+        // Update nodes with new style
         setNodes(currentNodes => currentNodes.map(node => ({
             ...node,
             data: {
                 ...node.data,
                 globalStyle: newStyle
-            },
-            className: `paragraph-node ${newStyle}-style`
+            }
         })));
         
+        // Update backend about style changes
         const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
             index,
             image_style: newStyle
