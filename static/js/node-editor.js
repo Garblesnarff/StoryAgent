@@ -144,13 +144,7 @@ const ParagraphNode = React.memo(({ data }) => {
                                                     <i class="bi bi-clipboard-check me-2"></i>
                                                     Prompt copied to clipboard!
                                                 `;
-                                                // Add to root element instead of body
-                                                const rootElement = document.querySelector('.node-editor-root');
-                                                if (rootElement) {
-                                                    rootElement.appendChild(toast);
-                                                } else {
-                                                    document.body.appendChild(toast);
-                                                }
+                                                document.body.appendChild(toast);
                                                 
                                                 // Force reflow for animation
                                                 void toast.offsetHeight;
@@ -165,7 +159,7 @@ const ParagraphNode = React.memo(({ data }) => {
                                                     // Hide and remove toast
                                                     toast.classList.remove('show');
                                                     setTimeout(() => {
-                                                        document.body.removeChild(toast);
+                                                        toast.remove();
                                                     }, 300);
                                                 }, 2000);
                                             }
@@ -574,35 +568,14 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         setSelectedStyle(newStyle);
         
         // Update nodes with new style and apply visual changes
-        setNodes(currentNodes => currentNodes.map(node => {
-            const newNode = {
-                ...node,
-                data: {
-                    ...node.data,
-                    globalStyle: newStyle
-                }
-            };
-            
-            // Update node style based on selected style
-            switch (newStyle) {
-                case 'realistic':
-                    newNode.className = 'paragraph-node realistic';
-                    break;
-                case 'cartoon':
-                    newNode.className = 'paragraph-node cartoon';
-                    break;
-                case 'artistic':
-                    newNode.className = 'paragraph-node artistic';
-                    break;
-                case 'fantasy':
-                    newNode.className = 'paragraph-node fantasy';
-                    break;
-                default:
-                    newNode.className = 'paragraph-node';
-            }
-            
-            return newNode;
-        }));
+        setNodes(currentNodes => currentNodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                globalStyle: newStyle
+            },
+            className: `paragraph-node ${newStyle}-style`
+        })));
         
         const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
             index,
