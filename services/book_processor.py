@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple, Optional
 import PyPDF2
 import ebooklib
+import logging
 from ebooklib import epub
 from bs4 import BeautifulSoup
 import google.generativeai as genai
@@ -25,7 +26,7 @@ class BookProcessor:
         
         # Configure Gemini
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
+        self.model = genai.GenerativeModel('gemini-1.0-pro')
         
     def process_file(self, file) -> Dict[str, any]:
         """Process uploaded file based on its type."""
@@ -60,12 +61,18 @@ class BookProcessor:
                 else:  # html
                     paragraphs = self.process_html(temp_path)
                     
+                # Get title from first chunk if it exists
+                title = "Untitled Story"
+                if paragraphs and paragraphs[0].get('is_title'):
+                    title = paragraphs[0]['text'].replace('Title: ', '')
+                    
                 # Store processed data in temporary storage
                 temp_id = str(uuid.uuid4())
                 temp_data = TempBookData(
                     id=temp_id,
                     data={
                         'source_file': filename,
+                        'title': title,
                         'paragraphs': paragraphs
                     }
                 )
@@ -158,16 +165,121 @@ class BookProcessor:
         text = text.replace('--', '—')
         return text.strip()
 
-    def _is_story_content(self, text: str) -> bool:
-        """Check if text is story content rather than metadata or other non-story text."""
-        # Check minimum length and sentence structure
-        if len(text.split()) < 10:  # Skip very short segments
+    def _extract_title(self, text: str) -> str:
+        """Extract title from the beginning of the text."""
+        # Look for common title patterns
+        title_patterns = [
+            r'^(?:Title:|Book:)?\s*([^\n\.]+?)(?:\n|$)',  # Basic title at start
+            r'(?:^|\n)(?:Chapter 1|Prologue).*?\n(.*?)(?:\n|$)',  # Title before first chapter
+            r'(?:^|\n)([A-Z][^a-z\n]{3,}[A-Z\s]*?)(?:\n|$)'  # ALL CAPS title pattern
+        ]
+        
+        for pattern in title_patterns:
+            match = re.search(pattern, text.strip(), re.MULTILINE)
+            if match:
+                title = match.group(1).strip()
+                # Validate title
+                if len(title) > 3 and len(title.split()) <= 15:  # Reasonable title length
+                    return title
+        
+        return "Untitled Story"  # Default if no valid title found
+
+    def _split_into_sentences(self, text: str) -> List[str]:
+        """Split text into sentences with improved accuracy."""
+        # Handle common abbreviations to avoid false splits
+        abbreviations = r'Mr\.|Mrs\.|Dr\.|Ph\.D\.|etc\.|i\.e\.|e\.g\.'
+        text = re.sub(f'({abbreviations})', r'\1<POINT>', text)
+        
+        # Split on sentence boundaries
+        sentence_endings = r'(?<=[.!?])\s+(?=[A-Z])'
+        sentences = re.split(sentence_endings, text)
+        
+        # Restore points and clean sentences
+        sentences = [s.replace('<POINT>', '.').strip() for s in sentences]
+        
+        # Filter out invalid sentences
+        return [s for s in sentences if self._is_valid_sentence(s)]
+
+    def _is_valid_sentence(self, text: str) -> bool:
+        """Enhanced sentence validation."""
+        if not text or len(text) < 10:  # Too short
             return False
             
-        # Ensure text has proper sentence structure
-        if not re.search(r'[A-Z][^.!?]+[.!?]', text):
+        # Must start with capital letter and end with punctuation
+        if not re.match(r'^[A-Z].*[.!?]$', text.strip()):
+            return False
+            
+        # Must have reasonable word count
+        word_count = len(text.split())
+        if word_count < 3 or word_count > 50:  # Adjust thresholds as needed
+            return False
+            
+        # Check for balanced quotes and parentheses
+        if text.count('"') % 2 != 0 or text.count('(') != text.count(')'):
             return False
             
         return True
+
+    def _create_chunks(self, sentences: List[str], chunk_size: int = 2) -> List[Dict[str, str]]:
+        """Create chunks of specified size from sentences."""
+        chunks = []
+        
+        for i in range(0, len(sentences), chunk_size):
+            chunk_sentences = sentences[i:i + chunk_size]
+            if len(chunk_sentences) == chunk_size or (i + chunk_size >= len(sentences)):
+                chunk_text = ' '.join(chunk_sentences)
+                chunks.append({
+                    'text': chunk_text,
+                    'image_url': None,
+                    'audio_url': None
+                })
+        
+        return chunks
+
+    def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process text with improved chunking and title extraction."""
+        try:
+            # Clean the text initially
+            text = self._clean_text(text)
+            
+            # Extract title first
+            title = self._extract_title(text)
+            
+            # Use Gemini to extract only story content
+            prompt = f'''
+            Extract and return ONLY the actual story narrative from this text.
+            Exclude the title, table of contents, and any metadata.
+            Return only the cleaned narrative text.
+
+            Text to process:
+            {text[:8000]}
+            '''
+            
+            response = self.model.generate_content(prompt)
+            story_text = response.text
+            
+            # Clean up the extracted text
+            story_text = re.sub(r'^\d+\.\s+', '', story_text, flags=re.MULTILINE)
+            story_text = re.sub(r'(?i)(^|\n)(Start|End)\s+of.*?\n', '\n', story_text)
+            
+            # Split into sentences and create chunks
+            sentences = self._split_into_sentences(story_text)
+            chunks = self._create_chunks(sentences)
+            
+            # Add title as first chunk if valid
+            if title != "Untitled Story":
+                chunks.insert(0, {
+                    'text': f"Title: {title}",
+                    'image_url': None,
+                    'audio_url': None,
+                    'is_title': True  # Mark as title chunk
+                })
+            
+            logger.info(f"Processed text into {len(chunks)} chunks (including title)")
+            return chunks[:self.max_paragraphs]
+            
+        except Exception as e:
+            logger.error(f"Error processing text: {str(e)}")
+            raise
 
 
