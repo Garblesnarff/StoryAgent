@@ -55,16 +55,11 @@ class BookProcessor:
             
             try:
                 if ext == 'pdf':
-                    paragraphs = self.process_pdf(temp_path)
+                    title, paragraphs = self.process_pdf(temp_path)
                 elif ext == 'epub':
-                    paragraphs = self.process_epub(temp_path)
+                    title, paragraphs = self.process_epub(temp_path)
                 else:  # html
-                    paragraphs = self.process_html(temp_path)
-                    
-                # Get title from first chunk if it exists
-                title = "Untitled Story"
-                if paragraphs and paragraphs[0].get('is_title'):
-                    title = paragraphs[0]['text'].replace('Title: ', '')
+                    title, paragraphs = self.process_html(temp_path)
                     
                 # Store processed data in temporary storage
                 temp_id = str(uuid.uuid4())
@@ -82,6 +77,7 @@ class BookProcessor:
                 return {
                     'temp_id': temp_id,
                     'source_file': filename,
+                    'title': title,
                     'paragraphs': paragraphs
                 }
                 
@@ -94,7 +90,7 @@ class BookProcessor:
             logger.error(f"Error processing file: {str(e)}")
             raise
 
-    def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
+    def process_pdf(self, file_path: str) -> Tuple[str, List[Dict[str, str]]]:
         """Extract and process text from PDF files."""
         try:
             raw_text = self._extract_pdf_text(file_path)
@@ -103,7 +99,7 @@ class BookProcessor:
             logger.error(f"Error processing PDF: {str(e)}")
             raise
 
-    def process_epub(self, file_path: str) -> List[Dict[str, str]]:
+    def process_epub(self, file_path: str) -> Tuple[str, List[Dict[str, str]]]:
         """Extract and process text from EPUB files."""
         try:
             raw_text = self._extract_epub_text(file_path)
@@ -112,7 +108,7 @@ class BookProcessor:
             logger.error(f"Error processing EPUB: {str(e)}")
             raise
 
-    def process_html(self, file_path: str) -> List[Dict[str, str]]:
+    def process_html(self, file_path: str) -> Tuple[str, List[Dict[str, str]]]:
         """Extract and process text from HTML files."""
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
@@ -236,7 +232,7 @@ class BookProcessor:
         
         return chunks
 
-    def _process_text(self, text: str) -> List[Dict[str, str]]:
+    def _process_text(self, text: str) -> Tuple[str, List[Dict[str, str]]]:
         """Process text with improved chunking and title extraction."""
         try:
             # Clean the text initially
@@ -276,7 +272,7 @@ class BookProcessor:
                 })
             
             logger.info(f"Processed text into {len(chunks)} chunks (including title)")
-            return chunks[:self.max_paragraphs]
+            return title, chunks[:self.max_paragraphs]
             
         except Exception as e:
             logger.error(f"Error processing text: {str(e)}")
