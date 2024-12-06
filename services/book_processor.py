@@ -135,13 +135,24 @@ class BookProcessor:
         return chunks
 
     def _extract_story_content(self, text: str) -> str:
-        """Extract story content."""
+        """Extract story content while removing table of contents and chapter headers."""
         try:
-            clean_text = text
-            clean_text = re.sub(r'^\s*(?:Chapter|CHAPTER)\s+\d+', '', clean_text, flags=re.MULTILINE)
-            clean_text = re.sub(r'(?i)^\s*(introduction|preface|contents|index).*?(?=\n\n)', '', clean_text, flags=re.MULTILINE)
-            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*', '', clean_text, flags=re.DOTALL)
+            # Remove table of contents
+            clean_text = re.sub(r'(?i)^(?:table of )?contents\s*(?:\n|$).*?(?=\n\s*\n|\Z)', '', text, flags=re.DOTALL|re.MULTILINE)
+            
+            # Remove chapter headers and numbers
+            clean_text = re.sub(r'(?i)^\s*(?:chapter|section|part|volume)\s+[IVXLCDM\d]+\.?\s*.*$', '', clean_text, flags=re.MULTILINE)
+            
+            # Remove common book sections
+            clean_text = re.sub(r'(?i)^\s*(introduction|preface|foreword|appendix|index|bibliography).*?(?=\n\s*\n|\Z)', '', clean_text, flags=re.DOTALL|re.MULTILINE)
+            
+            # Remove Project Gutenberg headers and footers
+            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*.*?\n', '', clean_text, flags=re.DOTALL)
             clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
+            
+            # Remove consecutive blank lines
+            clean_text = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_text)
+            
             return clean_text.strip()
         except Exception:
             logger.error("Story content extraction failed")
@@ -208,24 +219,34 @@ class BookProcessor:
                 # Separate title from content chunks
                 content_chunks = chunks[1:] if chunks and chunks[0].get('is_title') else chunks
                 
+                # Create a dedicated title section
+                title_section = {
+                    'title': 'Book Title',
+                    'chunks': [{
+                        'text': title,
+                        'image_url': None,
+                        'audio_url': None,
+                        'is_title': True
+                    }],
+                    'index': 0,
+                    'processed': True
+                }
+                
+                # Create content section
+                content_section = {
+                    'title': 'Story Content',
+                    'chunks': content_chunks,
+                    'index': 1,
+                    'processed': False
+                }
+                
                 story_data = {
                     'source_file': filename,
                     'title': title,
                     'total_chunks': len(content_chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
-                    'title_chunk': {
-                        'text': f"Title: {title}",
-                        'image_url': None,
-                        'audio_url': None,
-                        'is_title': True
-                    },
-                    'sections': [{
-                        'title': title,
-                        'chunks': content_chunks,
-                        'index': 0,
-                        'processed': False
-                    }]
+                    'sections': [title_section, content_section]
                 }
 
                 try:
@@ -263,39 +284,42 @@ class BookProcessor:
             return None
 
         book_data = temp_data.data
-        title_chunk = book_data.get('title_chunk')
         sections = book_data.get('sections', [])
         
-        if not sections:
-            logger.error(f"No sections found in temp data for ID: {temp_id}")
+        if not sections or len(sections) < 2:
+            logger.error(f"Invalid sections data for ID: {temp_id}")
             return None
             
-        # Get the first section's chunks
-        first_section = sections[0]
-        content_chunks = first_section.get('chunks', [])
+        # Always include title section
+        title_section = sections[0]
+        title_chunks = title_section.get('chunks', [])
+        
+        # Get content chunks from second section
+        content_section = sections[1]
+        content_chunks = content_section.get('chunks', [])
 
-        total_chunks = len(content_chunks)
+        total_content_chunks = len(content_chunks)
         start_idx = (page - 1) * chunks_per_page
-        end_idx = min(start_idx + chunks_per_page, total_chunks)
+        end_idx = min(start_idx + chunks_per_page, total_content_chunks)
 
-        if start_idx >= total_chunks:
+        if start_idx >= total_content_chunks:
             logger.warning(f"Requested page {page} exceeds available chunks")
             return None
 
-        # Get chunks for current page
+        # Get content chunks for current page
         current_chunks = content_chunks[start_idx:end_idx]
         
-        # Add title chunk to first page only
-        if page == 1 and title_chunk:
-            current_chunks = [title_chunk] + current_chunks
+        # Always include title chunks at the beginning of first page
+        if page == 1:
+            current_chunks = title_chunks + current_chunks
         
-        logger.info(f"Serving page {page}/{(total_chunks + chunks_per_page - 1) // chunks_per_page}")
+        logger.info(f"Serving page {page}/{(total_content_chunks + chunks_per_page - 1) // chunks_per_page}")
         
         return {
             'chunks': current_chunks,
             'current_page': page,
-            'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
-            'has_next': end_idx < total_chunks,
+            'total_pages': (total_content_chunks + chunks_per_page - 1) // chunks_per_page,
+            'has_next': end_idx < total_content_chunks,
             'title': book_data.get('title')
         }
 
