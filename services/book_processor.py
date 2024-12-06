@@ -125,23 +125,27 @@ class BookProcessor:
         return chunks
 
     def _extract_story_content(self, text: str) -> str:
-        """Extract story content while removing table of contents and chapter headers."""
+        """Extract story content while removing metadata and formatting artifacts."""
         try:
-            # Remove table of contents
-            clean_text = re.sub(r'(?i)^(?:table of )?contents\s*(?:\n|$).*?(?=\n\s*\n|\Z)', '', text, flags=re.DOTALL|re.MULTILINE)
+            # Remove Project Gutenberg headers more aggressively
+            clean_text = re.sub(r'(?i).*?Project Gutenberg.*?eBook.*?\n\n', '', text, flags=re.DOTALL)
+            clean_text = re.sub(r'(?i)^\s*The Project Gutenberg.*?$.*?\n\n', '', clean_text, flags=re.MULTILINE|re.DOTALL)
             
-            # Remove chapter headers and numbers
+            # Remove license and legal text
+            clean_text = re.sub(r'(?i).*?This eBook is for the use of anyone anywhere.*?\n\n', '', clean_text, flags=re.DOTALL)
+            clean_text = re.sub(r'(?i).*?Title:.*?Author:.*?Release date:.*?\n\n', '', clean_text, flags=re.DOTALL)
+            
+            # Remove any remaining Gutenberg footers
+            clean_text = re.sub(r'(?i)\n\s*\*\*\* END OF.*?$', '', clean_text, flags=re.DOTALL)
+            clean_text = re.sub(r'(?i)End of.*?Project Gutenberg.*$', '', clean_text, flags=re.DOTALL)
+            
+            # Remove common metadata sections
+            clean_text = re.sub(r'(?i)^\s*(contents|introduction|preface|foreword|appendix|index|bibliography).*?(?=\n\s*\n|\Z)', '', clean_text, flags=re.DOTALL|re.MULTILINE)
             clean_text = re.sub(r'(?i)^\s*(?:chapter|section|part|volume)\s+[IVXLCDM\d]+\.?\s*.*$', '', clean_text, flags=re.MULTILINE)
             
-            # Remove common book sections
-            clean_text = re.sub(r'(?i)^\s*(introduction|preface|foreword|appendix|index|bibliography).*?(?=\n\s*\n|\Z)', '', clean_text, flags=re.DOTALL|re.MULTILINE)
-            
-            # Remove Project Gutenberg headers and footers
-            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*.*?\n', '', clean_text, flags=re.DOTALL)
-            clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
-            
-            # Remove consecutive blank lines
-            clean_text = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_text)
+            # Clean up formatting
+            clean_text = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_text)  # Remove excess newlines
+            clean_text = re.sub(r'^\s*[\[\(].*?[\]\)]\s*$\n?', '', clean_text, flags=re.MULTILINE)  # Remove bracketed text
             
             return clean_text.strip()
         except Exception:

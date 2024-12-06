@@ -96,12 +96,29 @@ def edit():
             temp_data.data['sections'][0] = first_section
             db.session.commit()
 
+        # Get current page from query parameters, default to 1
+        page = request.args.get('page', 1, type=int)
+        chunks_per_page = 10
+        
+        # Get all chunks
+        all_chunks = first_section.get('chunks', [])
+        total_chunks = len(all_chunks)
+        
+        # Calculate pagination
+        start_idx = (page - 1) * chunks_per_page
+        end_idx = start_idx + chunks_per_page
+        current_chunks = all_chunks[start_idx:end_idx]
+        
         # Create story data structure
         story_data = {
             'temp_id': temp_id,
             'title': sections[0].get('title', 'Untitled Story'),
-            'paragraphs': first_section.get('chunks', []),
-            'total_sections': len(sections)
+            'paragraphs': current_chunks,
+            'total_sections': len(sections),
+            'current_page': page,
+            'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
+            'has_next': end_idx < total_chunks,
+            'has_prev': page > 1
         }
 
         logger.info(f"Story data prepared: {story_data}")
