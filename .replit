@@ -19,6 +19,10 @@ args = "Build"
 task = "workflow.run"
 args = "Flask Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build and Server"
+
 [[workflows.workflow]]
 name = "Build"
 author = "agent"
@@ -46,6 +50,21 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 app.py"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Build and Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build && python3 app.py"
 waitForPort = 5000
 
 [deployment]

@@ -5,7 +5,10 @@ from datetime import datetime
 from database import db
 import logging
 
-app = Flask(__name__)
+app = Flask(__name__, 
+            static_url_path='', 
+            static_folder='static',
+            template_folder='templates')
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)
 
@@ -18,6 +21,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 app.config['MAX_RESPONSE_LENGTH'] = MAX_RESPONSE_LENGTH
 app.config['CORS_HEADERS'] = 'Content-Type'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # Enable CORS
 from flask_cors import CORS
