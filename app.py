@@ -5,10 +5,7 @@ from datetime import datetime
 from database import db
 import logging
 
-app = Flask(__name__, 
-            static_url_path='', 
-            static_folder='static',
-            template_folder='templates')
+app = Flask(__name__)
 app.config.from_object('config.Config')
 app.secret_key = secrets.token_hex(16)
 
@@ -21,7 +18,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 app.config['MAX_RESPONSE_LENGTH'] = MAX_RESPONSE_LENGTH
 app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # Enable CORS
 from flask_cors import CORS
@@ -166,5 +162,20 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
+    # Try different ports if default is in use
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    retries = 3
+    
+    for i in range(retries):
+        try:
+            app.run(host='0.0.0.0', port=port, debug=True)
+            break
+        except OSError as e:
+            if 'Address already in use' in str(e):
+                logger.warning(f"Port {port} is in use, trying port {port + 1}")
+                port += 1
+                if i == retries - 1:
+                    logger.error(f"Could not find an available port after {retries} attempts")
+                    raise
+            else:
+                raise
