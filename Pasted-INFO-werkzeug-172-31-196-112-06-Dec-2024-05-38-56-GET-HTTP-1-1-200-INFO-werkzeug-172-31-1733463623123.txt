@@ -1,0 +1,23 @@
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET /static/css/custom.css HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:38:56] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:services.book_processor:Successfully stored temp data with ID: ff4ee19e-c590-438a-b96d-ad9e4d9a4feb
+INFO:services.book_processor:Processed text into 3168 chunks (including title)
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 218222 bytes but the header required 26 extra bytes. The final size was 218248 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:39:41] "POST /story/upload HTTP/1.1" 200 -
+INFO:services.book_processor:Successfully stored temp data with ID: f3afd919-acf3-47d5-a0ec-83026a793f76
+INFO:services.book_processor:Processed text into 3168 chunks (including title)
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 218228 bytes but the header required 26 extra bytes. The final size was 218254 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:39:42] "POST /story/upload HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:39:45] "GET /story/edit HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:39:45] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:39:45] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:39:45] "GET /static/css/custom.css HTTP/1.1" 304 -

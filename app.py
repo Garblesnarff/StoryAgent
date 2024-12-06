@@ -102,11 +102,11 @@ def generate_story():
             logger.error(f"Database error: {str(db_error)}")
             return jsonify({'error': 'Failed to save story data'}), 500
         
-        # Store story data in session
+        # Store only essential metadata in session
         session['story_data'] = {
             'temp_id': temp_data.id,
-            'story_context': '\n\n'.join(story_paragraphs),
-            'paragraphs': story_data['paragraphs']
+            'current_page': 1,
+            'total_pages': len(story_paragraphs) // 10 + (1 if len(story_paragraphs) % 10 > 0 else 0)
         }
         session.modified = True
         

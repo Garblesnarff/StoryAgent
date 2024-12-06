@@ -274,29 +274,24 @@ class BookProcessor:
                     db.session.rollback()
                     raise
                 
-                # Limit initial response size
-                limited_chunks = []
-                total_size = 0
-                max_size = 500 * 1024  # 500KB limit for initial response
+                # Limit initial response size and chunk data
+                max_initial_chunks = 50  # Limit initial chunks
+                initial_chunks = chunks[:max_initial_chunks]
                 
-                for chunk in chunks:
-                    chunk_size = len(str(chunk).encode('utf-8'))
-                    if total_size + chunk_size > max_size:
-                        break
-                    limited_chunks.append(chunk)
-                    total_size += chunk_size
-
-                logger.info(f"Processed text into {len(chunks)} chunks (including title)")
-                
+                # Store only metadata and chunk references in session
                 response_data = {
                     'temp_id': temp_id,
                     'source_file': filename,
                     'title': title,
-                    'paragraphs': limited_chunks,
+                    'paragraphs': initial_chunks,
                     'total_chunks': len(chunks),
-                    'first_chunk_processed': True,
-                    'has_more': len(limited_chunks) < len(chunks)
+                    'current_page': 1,
+                    'chunks_per_page': max_initial_chunks,
+                    'has_more': len(chunks) > max_initial_chunks
                 }
+
+                logger.info(f"Processed text into {len(chunks)} chunks (including title)")
+                logger.info(f"Returning initial {len(initial_chunks)} chunks")
                 
                 return response_data
 
