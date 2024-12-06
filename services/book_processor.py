@@ -252,9 +252,9 @@ class BookProcessor:
                     )
                     db.session.add(temp_data)
                     db.session.commit()
-                    logger.info(f"Processed '{title}': {len(chunks)} chunks")
+                    logger.info(f"Book processing complete - ID: {temp_id}, Title: {title}, Chunks: {len(chunks)}")
                 except Exception as db_error:
-                    logger.error("Database error storing book data")
+                    logger.error(f"Database error storing book - ID: {temp_id}")
                     db.session.rollback()
                     raise
                 
@@ -293,7 +293,9 @@ class BookProcessor:
             return None
 
         current_chunks = chunks[start_idx:end_idx]
-        logger.info(f"Serving page {page}/{(total_chunks + chunks_per_page - 1) // chunks_per_page}")
+        
+        # Only log metadata, not content
+        logger.info(f"Book ID {temp_id}: Serving page {page} of {(total_chunks + chunks_per_page - 1) // chunks_per_page}")
         
         return {
             'chunks': current_chunks,
