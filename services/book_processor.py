@@ -276,14 +276,14 @@ class BookProcessor:
 
                 # Create temp storage entry with story data
                 temp_id = str(uuid.uuid4())
-                # Store all chunks in database
+                # Store all chunks in database without logging content
                 story_data = {
                     'source_file': filename,
                     'title': title,
                     'total_chunks': len(chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
-                    'chunks': chunks  # Store all chunks in database
+                    'chunks': chunks
                 }
                 
                 try:
@@ -293,15 +293,11 @@ class BookProcessor:
                     )
                     db.session.add(temp_data)
                     db.session.commit()
-                    logger.info(f"Successfully stored temp data with ID: {temp_id}")
+                    logger.info(f"Stored book '{title}' with {len(chunks)} chunks (ID: {temp_id})")
                 except Exception as db_error:
-                    logger.error(f"Failed to store temp data: {str(db_error)}")
+                    logger.error(f"Database error storing book: {str(db_error)}")
                     db.session.rollback()
                     raise
-                
-                # Limit initial response size and chunk data
-                max_initial_chunks = 50  # Limit initial chunks
-                initial_chunks = chunks[:max_initial_chunks]
                 
                 # Return only metadata for session storage
                 response_data = {
@@ -310,10 +306,8 @@ class BookProcessor:
                     'title': title,
                     'total_chunks': len(chunks),
                     'current_page': 1,
-                    'chunks_per_page': max_initial_chunks
+                    'chunks_per_page': 50
                 }
-
-                logger.info(f"Processed text: {len(chunks)} total chunks")
                 return response_data
 
             finally:
@@ -343,7 +337,7 @@ class BookProcessor:
 
         # Get chunks for current page
         current_chunks = chunks[start_idx:end_idx]
-        logger.info(f"Serving page {page}: chunks {start_idx}-{end_idx} of {total_chunks}")
+        logger.info(f"Book '{book_data.get('title')}': Serving page {page} ({start_idx}-{end_idx} of {total_chunks} chunks)")
         
         return {
             'chunks': current_chunks,
