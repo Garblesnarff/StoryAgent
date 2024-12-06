@@ -30,21 +30,49 @@ class BookProcessor:
         return text.strip()
         
     def _extract_title(self, text: str) -> str:
-        """Extract title from the beginning of the text."""
+        """Extract main title from the text while avoiding chapter titles."""
+        # Remove table of contents section
+        text = re.sub(r'(?i)^\s*(?:table of )?contents\s*(?:\n|$).*?(?=\n\s*\n|\Z)', '', text, flags=re.DOTALL|re.MULTILINE)
+        
+        # Patterns for actual book titles, ordered by reliability
         title_patterns = [
-            r'^(?:Title:|Book:)?\s*([^\n\.]+?)(?:\n|$)',
-            r'(?:^|\n)(?:Chapter 1|Prologue).*?\n(.*?)(?:\n|$)',
-            r'(?:^|\n)([A-Z][^a-z\n]{3,}[A-Z\s]*?)(?:\n|$)'
+            # Explicit title markers
+            r'(?i)^[\s\*]*(?:Title|Book Title):\s*([^\n\.]+)(?:\n|$)',
+            # Standalone capitalized text at start
+            r'^\s*([A-Z][^a-z\n]{2,}(?:[A-Z\s\d&,\'-]){3,})(?:\n|$)',
+            # First line if properly formatted
+            r'^\s*([^\n]{5,100})(?:\n|$)'
         ]
         
         for pattern in title_patterns:
             match = re.search(pattern, text.strip(), re.MULTILINE)
             if match:
                 title = match.group(1).strip()
-                if len(title) > 3 and len(title.split()) <= 15:
+                # Validate title format
+                if self._is_valid_title(title):
                     return title
         
         return "Untitled Story"
+        
+    def _is_valid_title(self, title: str) -> bool:
+        """Validate if extracted text is likely a proper title."""
+        # Remove common invalid patterns
+        if re.search(r'(?i)(chapter|section|part|volume|book)\s+\d+', title):
+            return False
+            
+        # Check length and word count
+        if len(title) < 3 or len(title) > 100:
+            return False
+            
+        words = title.split()
+        if len(words) < 1 or len(words) > 15:
+            return False
+            
+        # Check for proper capitalization
+        if not any(c.isupper() for c in title):
+            return False
+            
+        return True
         
     def _split_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences with improved accuracy."""
@@ -177,15 +205,24 @@ class BookProcessor:
                     })
 
                 temp_id = str(uuid.uuid4())
+                # Separate title from content chunks
+                content_chunks = chunks[1:] if chunks and chunks[0].get('is_title') else chunks
+                
                 story_data = {
                     'source_file': filename,
                     'title': title,
-                    'total_chunks': len(chunks),
+                    'total_chunks': len(content_chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
+                    'title_chunk': {
+                        'text': f"Title: {title}",
+                        'image_url': None,
+                        'audio_url': None,
+                        'is_title': True
+                    },
                     'sections': [{
                         'title': title,
-                        'chunks': chunks,
+                        'chunks': content_chunks,
                         'index': 0,
                         'processed': False
                     }]
@@ -226,6 +263,7 @@ class BookProcessor:
             return None
 
         book_data = temp_data.data
+        title_chunk = book_data.get('title_chunk')
         sections = book_data.get('sections', [])
         
         if not sections:
@@ -234,9 +272,9 @@ class BookProcessor:
             
         # Get the first section's chunks
         first_section = sections[0]
-        chunks = first_section.get('chunks', [])
+        content_chunks = first_section.get('chunks', [])
 
-        total_chunks = len(chunks)
+        total_chunks = len(content_chunks)
         start_idx = (page - 1) * chunks_per_page
         end_idx = min(start_idx + chunks_per_page, total_chunks)
 
@@ -244,14 +282,21 @@ class BookProcessor:
             logger.warning(f"Requested page {page} exceeds available chunks")
             return None
 
-        current_chunks = chunks[start_idx:end_idx]
+        # Get chunks for current page
+        current_chunks = content_chunks[start_idx:end_idx]
+        
+        # Add title chunk to first page only
+        if page == 1 and title_chunk:
+            current_chunks = [title_chunk] + current_chunks
+        
         logger.info(f"Serving page {page}/{(total_chunks + chunks_per_page - 1) // chunks_per_page}")
         
         return {
             'chunks': current_chunks,
             'current_page': page,
             'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
-            'has_next': end_idx < total_chunks
+            'has_next': end_idx < total_chunks,
+            'title': book_data.get('title')
         }
 
     def _extract_pdf_text(self, pdf_path: str) -> str:
