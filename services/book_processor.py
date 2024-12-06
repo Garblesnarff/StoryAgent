@@ -247,7 +247,13 @@ class BookProcessor:
                     'total_chunks': len(chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
-                    'chunks': chunks
+                    'chunks': chunks,
+                    'sections': [  # Added sections structure
+                        {
+                            'chunks': chunks,
+                            'index': 0
+                        }
+                    ]
                 }
                 
                 try:
@@ -257,10 +263,9 @@ class BookProcessor:
                     )
                     db.session.add(temp_data)
                     db.session.commit()
-                    logger.info(f"Successfully stored temp data with ID: {temp_id}")
-                    logger.info(f"Processed text into {len(chunks)} chunks (including title)")
+                    logger.info(f"Stored book data - ID: {temp_id}, Title: {title}, Chunks: {len(chunks)}")
                 except Exception as db_error:
-                    logger.error(f"Database error storing temp data - ID: {temp_id}")
+                    logger.error(f"Database error - ID: {temp_id}")
                     db.session.rollback()
                     raise
                 
@@ -284,25 +289,26 @@ class BookProcessor:
     def get_next_section(self, temp_id: str, page: int = 1, chunks_per_page: int = 50) -> Optional[Dict]:
         """Get chunks for the specified page with pagination."""
         temp_data = TempBookData.query.get(temp_id)
-        if not temp_data:
+        if not temp_data or not temp_data.data:
             logger.error(f"No temp data found for ID: {temp_id}")
             return None
 
         book_data = temp_data.data
-        total_chunks = book_data.get('total_chunks', 0)
         chunks = book_data.get('chunks', [])
+        if not chunks:
+            logger.error(f"No chunks found in temp data for ID: {temp_id}")
+            return None
 
+        total_chunks = len(chunks)
         start_idx = (page - 1) * chunks_per_page
         end_idx = min(start_idx + chunks_per_page, total_chunks)
 
         if start_idx >= total_chunks:
+            logger.warning(f"Requested page {page} exceeds available chunks for ID: {temp_id}")
             return None
 
         current_chunks = chunks[start_idx:end_idx]
-        
-        # Only log metadata, not content
-        logger.info(f"Book ID {temp_id}: Serving page {page} of {(total_chunks + chunks_per_page - 1) // chunks_per_page}")
-        logger.info(f"Returning initial {len(current_chunks)} chunks")
+        logger.info(f"Serving page {page}/{(total_chunks + chunks_per_page - 1) // chunks_per_page} for book {temp_id}")
         
         return {
             'chunks': current_chunks,
