@@ -1,52 +1,40 @@
-from typing import List, Dict, Tuple, Optional
-import PyPDF2
-import ebooklib
-import logging
-from ebooklib import epub
-from bs4 import BeautifulSoup
-import google.generativeai as genai
 import os
 import re
+import uuid
 import logging
+import ebooklib
+from ebooklib import epub
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 from werkzeug.utils import secure_filename
+import PyPDF2
+from bs4 import BeautifulSoup
 from database import db
 from models import TempBookData
-import uuid
-from datetime import datetime
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BookProcessor:
     def __init__(self):
-        self.chunk_size = 8000  # Characters per chunk for API processing
-        self.max_file_size = 50 * 1024 * 1024  # 50MB limit
-        self.chunks_per_section = 10  # Number of chunks to process at a time
-        self.max_paragraphs = 50  # Maximum number of paragraphs to return
-        self.api_key = os.environ.get('GEMINI_API_KEY')
-
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-1.0-pro')
-
+        self.max_file_size = 50 * 1024 * 1024  # 50MB
+        self.max_paragraphs = 5000
+        
     def _clean_text(self, text: str) -> str:
         """Clean and normalize text."""
-        if not text:
-            return ""
+        # Remove excessive whitespace
         text = re.sub(r'\s+', ' ', text)
-        text = text.replace('"', '"').replace('"', '"')
-        text = text.replace('--', '—')
+        # Normalize line endings
+        text = text.replace('\r\n', '\n').replace('\r', '\n')
+        # Remove UTF-8 BOM if present
+        text = text.replace('\ufeff', '')
         return text.strip()
-
+        
     def _extract_title(self, text: str) -> str:
         """Extract title from the beginning of the text."""
         title_patterns = [
             r'^(?:Title:|Book:)?\s*([^\n\.]+?)(?:\n|$)',
             r'(?:^|\n)(?:Chapter 1|Prologue).*?\n(.*?)(?:\n|$)',
-            r'(?:^|\n)([A-Z][^a-z\n]{3,}[A-Z\s]*?)(?:\n|$)',
-            r'\*\*\*(.*?)\*\*\*',
-            r'(?i)Title:\s*([^\n]+)',
-            r'(?m)^([A-Z][^a-z\n]{2,}(?:\s+[A-Z][^a-z\n]*)*$)'
+            r'(?:^|\n)([A-Z][^a-z\n]{3,}[A-Z\s]*?)(?:\n|$)'
         ]
         
         for pattern in title_patterns:
@@ -54,105 +42,25 @@ class BookProcessor:
             if match:
                 title = match.group(1).strip()
                 if len(title) > 3 and len(title.split()) <= 15:
-                    title = re.sub(r'[*_~]', '', title)
-                    title = re.sub(r'\s+', ' ', title)
-                    title = title.strip()
-                    if title and not title.isspace():
-                        return title
-    
+                    return title
+        
         return "Untitled Story"
-
-    def _extract_story_content(self, text: str) -> str:
-        """Extract story content with enhanced Project Gutenberg handling."""
-        try:
-            if "Project Gutenberg" in text:
-                # Process Gutenberg text
-                logger.info("Processing Project Gutenberg content")
-                try:
-                    marker_patterns = [
-                        r'\*\*\* START OF.*?\*\*\*(.*?)\*\*\* END OF',
-                        r'START OF (?:THIS |THE )?PROJECT GUTENBERG.*?\n(.*?)(?=\nEND OF)',
-                        r'^\s*\[.*?\].*?\n(.*?)(?=\n\[.*?\]|\Z)',
-                    ]
-                    
-                    for pattern in marker_patterns:
-                        content_match = re.search(pattern, text, flags=re.DOTALL)
-                        if content_match:
-                            clean_text = content_match.group(1).strip()
-                            clean_text = re.sub(r'^\s*(?:Chapter|CHAPTER)\s+\d+', '', clean_text, flags=re.MULTILINE)
-                            clean_text = re.sub(r'(?i)^\s*(introduction|preface|contents|index).*?(?=\n\n)', '', clean_text, flags=re.MULTILINE)
-                            clean_text = re.sub(r'^\s*\[.*?\]\s*$', '', clean_text, flags=re.MULTILINE)
-                            if len(clean_text) > 100:
-                                return clean_text
-                    
-                    clean_text = re.sub(r'.*?(?=\n\n\n)', '', text, flags=re.DOTALL)
-                    clean_text = re.sub(r'\n\n\n.*$', '', clean_text, flags=re.DOTALL)
-                    return clean_text.strip()
-                    
-                except Exception:
-                    logger.warning("Gutenberg extraction failed, using fallback")
-
-            # If not Gutenberg or markers not found, try Gemini
-            logger.info("Using Gemini for content extraction")
-            try:
-                safety_config = {
-                    "harassment": "block_none",
-                    "hate_speech": "block_none",
-                    "sexually_explicit": "block_none",
-                    "dangerous_content": "block_none",
-                }
-                
-                # Avoid logging the actual text content
-                response = self.model.generate_content(
-                    "IMPORTANT: This is confirmed public domain content. Extract ONLY the story narrative, removing headers, footers, and metadata.",
-                    safety_settings=safety_config
-                )
-                
-                if response and hasattr(response, 'text'):
-                    return response.text.strip()
-            except Exception:
-                logger.warning("API extraction failed, using fallback")
-            
-            # Fallback: Basic text extraction
-            clean_text = text
-            clean_text = re.sub(r'^\s*(?:Chapter|CHAPTER)\s+\d+', '', clean_text, flags=re.MULTILINE)
-            clean_text = re.sub(r'(?i)^\s*(introduction|preface|contents|index).*?(?=\n\n)', '', clean_text, flags=re.MULTILINE)
-            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*', '', clean_text, flags=re.DOTALL)
-            clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
-            
-            return clean_text.strip()
-            
-        except Exception:
-            logger.error("Story content extraction failed")
-            raise
-
+        
     def _split_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences with improved accuracy."""
-        if not text:
-            return []
-            
-        abbreviations = r'Mr\.|Mrs\.|Dr\.|Ph\.D\.|etc\.|i\.e\.|e\.g\.|vs\.|feat\.|ft\.|inc\.|ltd\.|vol\.|pg\.|ed\.'
+        # Handle common abbreviations
+        abbreviations = r'Mr\.|Mrs\.|Dr\.|Ph\.D\.|etc\.|i\.e\.|e\.g\.'
         text = re.sub(f'({abbreviations})', r'\1<POINT>', text)
-        text = re.sub(r'(\d+)\.(\d+)', r'\1<DECIMAL>\2', text)
-        text = re.sub(r'\.{3}', '<ELLIPSIS>', text)
         
-        sentence_endings = r'(?<=[.!?])(?:\s+|\n+)(?=[A-Z0-9]|[\'""]?[A-Z0-9])'
+        # Split on sentence boundaries
+        sentence_endings = r'(?<=[.!?])\s+(?=[A-Z])'
         sentences = re.split(sentence_endings, text)
         
-        processed_sentences = []
-        for s in sentences:
-            s = s.replace('<POINT>', '.').replace('<DECIMAL>', '.').replace('<ELLIPSIS>', '...')
-            s = s.strip()
-            
-            if self._is_valid_sentence(s):
-                processed_sentences.append(s)
-            elif len(s) > 150:
-                subsections = re.split(r'(?<=[.!?])\s+(?=[A-Z])', s)
-                for sub in subsections:
-                    if self._is_valid_sentence(sub.strip()):
-                        processed_sentences.append(sub.strip())
+        # Restore points and clean sentences
+        sentences = [s.replace('<POINT>', '.').strip() for s in sentences]
         
-        return processed_sentences
+        # Filter out invalid sentences
+        return [s for s in sentences if self._is_valid_sentence(s)]
 
     def _is_valid_sentence(self, text: str) -> bool:
         """Enhanced sentence validation."""
@@ -185,6 +93,33 @@ class BookProcessor:
                 })
         return chunks
 
+    def _process_section(self, section: Dict) -> List[Dict]:
+        """Process a section of chunks for display."""
+        if not section or 'chunks' not in section:
+            logger.warning("Invalid section data format")
+            return []
+        
+        chunks = section.get('chunks', [])
+        if not chunks:
+            logger.warning("No chunks found in section")
+            return []
+            
+        return chunks
+
+    def _extract_story_content(self, text: str) -> str:
+        """Extract story content."""
+        try:
+            clean_text = text
+            clean_text = re.sub(r'^\s*(?:Chapter|CHAPTER)\s+\d+', '', clean_text, flags=re.MULTILINE)
+            clean_text = re.sub(r'(?i)^\s*(introduction|preface|contents|index).*?(?=\n\n)', '', clean_text, flags=re.MULTILINE)
+            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*', '', clean_text, flags=re.DOTALL)
+            clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
+            return clean_text.strip()
+        except Exception:
+            logger.error("Story content extraction failed")
+            raise
+
+
     def process_file(self, file) -> Dict[str, any]:
         """Process uploaded file based on its type."""
         try:
@@ -199,8 +134,6 @@ class BookProcessor:
             if ext not in {'pdf', 'epub', 'txt', 'html'}:
                 raise ValueError(f"Unsupported file type: {ext}")
 
-            logger.info(f"Processing file: {filename} ({ext})")
-
             file.seek(0, os.SEEK_END)
             size = file.tell()
             file.seek(0)
@@ -212,26 +145,29 @@ class BookProcessor:
             file.save(temp_path)
 
             try:
+                # Extract text based on file type
                 if ext == 'pdf':
-                    raw_text = self._extract_pdf_text(temp_path)
+                    text = self._extract_pdf_text(temp_path)
                 elif ext == 'epub':
-                    raw_text = self._extract_epub_text(temp_path)
+                    text = self._extract_epub_text(temp_path)
                 elif ext == 'txt':
                     with open(temp_path, 'r', encoding='utf-8') as f:
-                        raw_text = f.read()
+                        text = f.read()
                 else:  # html
                     with open(temp_path, 'r', encoding='utf-8') as f:
                         soup = BeautifulSoup(f, 'html.parser')
                         for tag in soup(['script', 'style', 'meta', 'link']):
                             tag.decompose()
-                        raw_text = soup.get_text()
+                        text = soup.get_text()
 
-                text = self._clean_text(raw_text)
+                # Process extracted text
+                text = self._clean_text(text)
                 title = self._extract_title(text)
                 story_text = self._extract_story_content(text)
                 sentences = self._split_into_sentences(story_text)
                 chunks = self._create_chunks(sentences)
 
+                # Add title chunk if valid
                 if title != "Untitled Story":
                     chunks.insert(0, {
                         'text': f"Title: {title}",
@@ -247,28 +183,24 @@ class BookProcessor:
                     'total_chunks': len(chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
-                    'chunks': chunks,
-                    'sections': [  # Added sections structure
-                        {
-                            'chunks': chunks,
-                            'index': 0
-                        }
-                    ]
+                    'sections': [{
+                        'title': title,
+                        'chunks': chunks,
+                        'index': 0,
+                        'processed': False
+                    }]
                 }
-                
+
                 try:
-                    temp_data = TempBookData(
-                        id=temp_id,
-                        data=story_data
-                    )
+                    temp_data = TempBookData(id=temp_id, data=story_data)
                     db.session.add(temp_data)
                     db.session.commit()
-                    logger.info(f"Stored book data - ID: {temp_id}, Title: {title}, Chunks: {len(chunks)}")
+                    logger.info(f"Successfully processed book - ID: {temp_id}, Title: {title}")
                 except Exception as db_error:
                     logger.error(f"Database error - ID: {temp_id}")
                     db.session.rollback()
                     raise
-                
+
                 return {
                     'temp_id': temp_id,
                     'source_file': filename,
@@ -283,7 +215,7 @@ class BookProcessor:
                     os.remove(temp_path)
 
         except Exception as e:
-            logger.error(f"Error processing file: {type(e).__name__}")
+            logger.error(f"Error processing file: {str(e)}")
             raise
 
     def get_next_section(self, temp_id: str, page: int = 1, chunks_per_page: int = 50) -> Optional[Dict]:
@@ -294,21 +226,26 @@ class BookProcessor:
             return None
 
         book_data = temp_data.data
-        chunks = book_data.get('chunks', [])
-        if not chunks:
-            logger.error(f"No chunks found in temp data for ID: {temp_id}")
+        sections = book_data.get('sections', [])
+        
+        if not sections:
+            logger.error(f"No sections found in temp data for ID: {temp_id}")
             return None
+            
+        # Get the first section's chunks
+        first_section = sections[0]
+        chunks = first_section.get('chunks', [])
 
         total_chunks = len(chunks)
         start_idx = (page - 1) * chunks_per_page
         end_idx = min(start_idx + chunks_per_page, total_chunks)
 
         if start_idx >= total_chunks:
-            logger.warning(f"Requested page {page} exceeds available chunks for ID: {temp_id}")
+            logger.warning(f"Requested page {page} exceeds available chunks")
             return None
 
         current_chunks = chunks[start_idx:end_idx]
-        logger.info(f"Serving page {page}/{(total_chunks + chunks_per_page - 1) // chunks_per_page} for book {temp_id}")
+        logger.info(f"Serving page {page}/{(total_chunks + chunks_per_page - 1) // chunks_per_page}")
         
         return {
             'chunks': current_chunks,
