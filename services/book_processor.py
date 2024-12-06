@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BookProcessor:
-    def __init__(self, chunk_size=10, max_file_size=50*1024*1024):
+    def __init__(self, chunk_size=2, max_file_size=50*1024*1024):
         self.chunk_size = chunk_size
         self.max_file_size = max_file_size
 
@@ -76,7 +76,7 @@ class BookProcessor:
             
         # Must have reasonable word count
         word_count = len(text.split())
-        if word_count < 3 or word_count > 50:  # Adjust thresholds as needed
+        if word_count < 3 or word_count > 50:
             return False
             
         # Check for balanced quotes and parentheses
@@ -85,43 +85,31 @@ class BookProcessor:
             
         return True
 
-    def _process_section(self, section: Dict) -> List[Dict]:
-        """Process a section of text into chunks."""
-        try:
-            # Get chunks from section
-            chunks = section.get('chunks', [])
-            if not chunks:
-                logger.error("No chunks found in section")
-                return []
-
-            # Process each chunk if needed
-            processed_chunks = []
-            for chunk in chunks:
-                if isinstance(chunk, dict) and 'text' in chunk:
-                    processed_chunks.append({
-                        'text': self._clean_text(chunk['text']),
-                        'image_url': chunk.get('image_url'),
-                        'audio_url': chunk.get('audio_url'),
-                        'is_title': chunk.get('is_title', False)
-                    })
-
-            return processed_chunks
-        except Exception as e:
-            logger.error(f"Error processing section: {str(e)}")
-            return []
-
-    def _create_chunks(self, sentences: List[str], chunk_size: int = 2) -> List[Dict[str, str]]:
-        """Create chunks of specified size from sentences."""
+    def _create_chunks(self, sentences: List[str]) -> List[Dict[str, str]]:
+        """Create chunks from sentences."""
         chunks = []
-        for i in range(0, len(sentences), chunk_size):
-            chunk_sentences = sentences[i:i + chunk_size]
-            if len(chunk_sentences) == chunk_size or (i + chunk_size >= len(sentences)):
-                chunk_text = ' '.join(chunk_sentences)
+        current_chunk = []
+        
+        for sentence in sentences:
+            current_chunk.append(sentence)
+            if len(current_chunk) >= self.chunk_size:
+                chunk_text = ' '.join(current_chunk)
                 chunks.append({
                     'text': chunk_text,
                     'image_url': None,
                     'audio_url': None
                 })
+                current_chunk = []
+        
+        # Handle remaining sentences
+        if current_chunk:
+            chunk_text = ' '.join(current_chunk)
+            chunks.append({
+                'text': chunk_text,
+                'image_url': None,
+                'audio_url': None
+            })
+            
         return chunks
 
     def _extract_story_content(self, text: str) -> str:
@@ -196,22 +184,31 @@ class BookProcessor:
                 text = self._clean_text(text)
                 title = self._extract_title(text)
                 story_text = self._extract_story_content(text)
-                sentences = self._split_into_sentences(story_text)
-                chunks = self._create_chunks(sentences, chunk_size=2)
 
-                # Store title and content chunks
+                # Process text into chunks directly
+                sentences = self._split_into_sentences(story_text)
+                chunks = self._create_chunks(sentences)
+                processed_chunks = []
+                for chunk in chunks:
+                    processed_chunks.append({
+                        'text': chunk['text'],
+                        'image_url': None,
+                        'audio_url': None,
+                        'image_style': 'realistic'
+                    })
+
+                # Store processed content
                 temp_id = str(uuid.uuid4())
                 story_data = {
                     'source_file': filename,
                     'title': title,
-                    'total_chunks': len(chunks),
-                    'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
                     'sections': [{
-                        'title': 'Story Content',
-                        'chunks': chunks,
+                        'title': title,
+                        'text': story_text,
+                        'chunks': processed_chunks,
                         'index': 0,
-                        'processed': False
+                        'processed': True
                     }]
                 }
 
@@ -229,9 +226,7 @@ class BookProcessor:
                     'temp_id': temp_id,
                     'source_file': filename,
                     'title': title,
-                    'total_chunks': len(chunks),
-                    'current_page': 1,
-                    'chunks_per_page': 10
+                    'paragraphs': processed_chunks
                 }
 
             finally:
@@ -276,6 +271,7 @@ class BookProcessor:
             'current_page': page,
             'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
             'has_next': end_idx < total_chunks,
+            'has_prev': page > 1,
             'title': book_data.get('title')
         }
 
@@ -309,3 +305,42 @@ class BookProcessor:
         except Exception as e:
             logger.error("EPUB extraction failed")
             raise
+
+    def _process_section(self, section: Dict) -> List[Dict]:
+        """Process a section of text into chunks with proper validation."""
+        try:
+            # Validate section data
+            if not isinstance(section, dict):
+                logger.error("Invalid section format")
+                return []
+                
+            text = section.get('text', '')
+            if not text:
+                logger.error("No text found in section")
+                return []
+
+            # Clean and process text
+            cleaned_text = self._clean_text(text)
+            sentences = self._split_into_sentences(cleaned_text)
+            chunks = self._create_chunks(sentences)
+
+            # Ensure each chunk has required fields
+            processed_chunks = []
+            for chunk in chunks:
+                if isinstance(chunk, dict) and 'text' in chunk:
+                    processed_chunks.append({
+                        'text': chunk['text'],
+                        'image_url': chunk.get('image_url'),
+                        'audio_url': chunk.get('audio_url'),
+                        'image_style': 'realistic'
+                    })
+
+            return processed_chunks
+
+        except Exception as e:
+            logger.error(f"Error processing section: {str(e)}")
+            return []
+
+    def process_section(self, section: Dict) -> List[Dict]:
+        """Public method to process a section of text into chunks."""
+        return self._process_section(section)
