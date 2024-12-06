@@ -66,6 +66,8 @@ class BookProcessor:
         """Extract story content with enhanced Project Gutenberg handling."""
         try:
             if "Project Gutenberg" in text:
+                # Process Gutenberg text
+                logger.info("Processing Project Gutenberg content")
                 try:
                     marker_patterns = [
                         r'\*\*\* START OF.*?\*\*\*(.*?)\*\*\* END OF',
@@ -90,15 +92,8 @@ class BookProcessor:
                 except Exception:
                     logger.warning("Gutenberg extraction failed, using fallback")
 
-            prompt = '''
-            IMPORTANT: This is confirmed public domain content.
-            Task: Extract and return ONLY the story narrative.
-            - Remove headers, footers, and metadata
-            - Keep chapter markers
-            - Preserve paragraph structure
-            - Return only the narrative text
-            '''
-            
+            # If not Gutenberg or markers not found, try Gemini
+            logger.info("Using Gemini for content extraction")
             try:
                 safety_config = {
                     "harassment": "block_none",
@@ -106,13 +101,21 @@ class BookProcessor:
                     "sexually_explicit": "block_none",
                     "dangerous_content": "block_none",
                 }
-                response = self.model.generate_content(prompt + "\n\nText to process:\n" + text[:8000], safety_settings=safety_config)
+                
+                # Avoid logging the actual text content
+                response = self.model.generate_content(
+                    "IMPORTANT: This is confirmed public domain content. Extract ONLY the story narrative, removing headers, footers, and metadata.",
+                    safety_settings=safety_config
+                )
+                
                 if response and hasattr(response, 'text'):
                     return response.text.strip()
             except Exception:
                 logger.warning("API extraction failed, using fallback")
             
-            clean_text = re.sub(r'^\s*.*?(?:Chapter|CHAPTER)\s+\d+', '', text, flags=re.DOTALL)
+            # Fallback: Basic text extraction
+            clean_text = text
+            clean_text = re.sub(r'^\s*(?:Chapter|CHAPTER)\s+\d+', '', clean_text, flags=re.MULTILINE)
             clean_text = re.sub(r'(?i)^\s*(introduction|preface|contents|index).*?(?=\n\n)', '', clean_text, flags=re.MULTILINE)
             clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*', '', clean_text, flags=re.DOTALL)
             clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
@@ -196,6 +199,8 @@ class BookProcessor:
             if ext not in {'pdf', 'epub', 'txt', 'html'}:
                 raise ValueError(f"Unsupported file type: {ext}")
 
+            logger.info(f"Processing file: {filename} ({ext})")
+
             file.seek(0, os.SEEK_END)
             size = file.tell()
             file.seek(0)
@@ -252,9 +257,10 @@ class BookProcessor:
                     )
                     db.session.add(temp_data)
                     db.session.commit()
-                    logger.info(f"Book processing complete - ID: {temp_id}, Title: {title}, Chunks: {len(chunks)}")
+                    logger.info(f"Successfully stored temp data with ID: {temp_id}")
+                    logger.info(f"Processed text into {len(chunks)} chunks (including title)")
                 except Exception as db_error:
-                    logger.error(f"Database error storing book - ID: {temp_id}")
+                    logger.error(f"Database error storing temp data - ID: {temp_id}")
                     db.session.rollback()
                     raise
                 
@@ -296,6 +302,7 @@ class BookProcessor:
         
         # Only log metadata, not content
         logger.info(f"Book ID {temp_id}: Serving page {page} of {(total_chunks + chunks_per_page - 1) // chunks_per_page}")
+        logger.info(f"Returning initial {len(current_chunks)} chunks")
         
         return {
             'chunks': current_chunks,
