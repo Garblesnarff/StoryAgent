@@ -12,9 +12,16 @@ app.secret_key = secrets.token_hex(16)
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max file size
+MAX_RESPONSE_LENGTH = 1 * 1024 * 1024  # 1MB max response size
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+app.config['MAX_RESPONSE_LENGTH'] = MAX_RESPONSE_LENGTH
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+# Enable CORS
+from flask_cors import CORS
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -155,4 +162,20 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Try different ports if default is in use
+    port = int(os.environ.get('PORT', 5000))
+    retries = 3
+    
+    for i in range(retries):
+        try:
+            app.run(host='0.0.0.0', port=port, debug=True)
+            break
+        except OSError as e:
+            if 'Address already in use' in str(e):
+                logger.warning(f"Port {port} is in use, trying port {port + 1}")
+                port += 1
+                if i == retries - 1:
+                    logger.error(f"Could not find an available port after {retries} attempts")
+                    raise
+            else:
+                raise

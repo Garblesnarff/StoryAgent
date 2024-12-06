@@ -1,0 +1,19 @@
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:26:46] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:26:47] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:services.book_processor:Processed text into 3 chunks (including title)
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:29:41] "POST /story/upload HTTP/1.1" 200 -
+INFO:services.book_processor:Processed text into 6 chunks (including title)
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:29:42] "POST /story/upload HTTP/1.1" 200 -
+ERROR:blueprints.story:No temp data found for ID: 75b55bc3-56a2-4371-8fa0-05615fd5e16f
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:29:44] "GET /story/edit HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:29:44] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:29:46] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:29:46] "GET /static/js/main.js HTTP/1.1" 304 -
+ERROR:services.book_processor:Error processing text: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+ERROR:services.book_processor:Error processing file: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+ERROR:blueprints.story:Error processing upload: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:30:18] "POST /story/upload HTTP/1.1" 500 -
+ERROR:services.book_processor:Error processing text: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+ERROR:services.book_processor:Error processing file: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+ERROR:blueprints.story:Error processing upload: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:30:26] "POST /story/upload HTTP/1.1" 500 -

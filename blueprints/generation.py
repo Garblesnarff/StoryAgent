@@ -118,6 +118,29 @@ def regenerate_image():
         logger.error(f"Error regenerating image: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@generation_bp.route('/story/next_section', methods=['POST'])
+def get_next_section():
+    try:
+        if 'story_data' not in session:
+            return jsonify({'error': 'No story data found'}), 404
+
+        temp_id = session['story_data'].get('temp_id')
+        if not temp_id:
+            return jsonify({'error': 'Invalid story data'}), 400
+
+        next_chunks = book_processor.get_next_section(temp_id)
+        if not next_chunks:
+            return jsonify({'complete': True}), 200
+
+        return jsonify({
+            'success': True,
+            'chunks': next_chunks
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting next section: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @generation_bp.route('/story/regenerate_audio', methods=['POST'])
 def regenerate_audio():
     try:
