@@ -313,9 +313,7 @@ class BookProcessor:
                     'chunks_per_page': max_initial_chunks
                 }
 
-                logger.info(f"Processed text into {len(chunks)} chunks (including title)")
-                logger.info(f"Returning initial {len(initial_chunks)} chunks")
-                
+                logger.info(f"Processed text: {len(chunks)} total chunks")
                 return response_data
 
             finally:
@@ -345,6 +343,7 @@ class BookProcessor:
 
         # Get chunks for current page
         current_chunks = chunks[start_idx:end_idx]
+        logger.info(f"Serving page {page}: chunks {start_idx}-{end_idx} of {total_chunks}")
         
         return {
             'chunks': current_chunks,
@@ -352,8 +351,6 @@ class BookProcessor:
             'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
             'has_next': end_idx < total_chunks
         }
-
-        logger.info(f"Returning chunks {start_idx} to {end_idx} of {total_chunks}")
 
     def _extract_pdf_text(self, pdf_path: str) -> str:
         """Extract text from PDF file."""
