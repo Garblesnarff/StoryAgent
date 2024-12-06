@@ -41,27 +41,29 @@ class BookProcessor:
 
     def _extract_title(self, text: str) -> str:
         """Extract title from the beginning of the text."""
-        # Look for Project Gutenberg title first
-        gutenberg_match = re.search(r'Title:\s*([^\n]+)', text)
-        if gutenberg_match:
-            title = gutenberg_match.group(1).strip()
-            if len(title) > 3 and len(title.split()) <= 15:
-                return title
-
-        # Look for common title patterns as fallback
+        # Look for common title patterns
         title_patterns = [
             r'^(?:Title:|Book:)?\s*([^\n\.]+?)(?:\n|$)',  # Basic title at start
             r'(?:^|\n)(?:Chapter 1|Prologue).*?\n(.*?)(?:\n|$)',  # Title before first chapter
-            r'(?:^|\n)([A-Z][^a-z\n]{3,}[A-Z\s]*?)(?:\n|$)'  # ALL CAPS title pattern
+            r'(?:^|\n)([A-Z][^a-z\n]{3,}[A-Z\s]*?)(?:\n|$)',  # ALL CAPS title pattern
+            r'\*\*\*(.*?)\*\*\*',  # Text between asterisks
+            r'(?i)Title:\s*([^\n]+)',  # Case-insensitive "Title:" prefix
+            r'(?m)^([A-Z][^a-z\n]{2,}(?:\s+[A-Z][^a-z\n]*)*$)'  # Full uppercase lines
         ]
-
+        
         for pattern in title_patterns:
             match = re.search(pattern, text.strip(), re.MULTILINE)
             if match:
                 title = match.group(1).strip()
+                # Validate title
                 if len(title) > 3 and len(title.split()) <= 15:  # Reasonable title length
-                    return title
-
+                    # Clean up common artifacts
+                    title = re.sub(r'[*_~]', '', title)  # Remove decorative characters
+                    title = re.sub(r'\s+', ' ', title)   # Normalize whitespace
+                    title = title.strip()
+                    if title and not title.isspace():
+                        return title
+    
         return "Untitled Story"  # Default if no valid title found
 
     def _extract_story_content(self, text: str) -> str:
@@ -139,19 +141,40 @@ class BookProcessor:
 
     def _split_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences with improved accuracy."""
-        # Handle common abbreviations to avoid false splits
-        abbreviations = r'Mr\.|Mrs\.|Dr\.|Ph\.D\.|etc\.|i\.e\.|e\.g\.'
+        if not text:
+            return []
+            
+        # Handle common abbreviations and special cases
+        abbreviations = r'Mr\.|Mrs\.|Dr\.|Ph\.D\.|etc\.|i\.e\.|e\.g\.|vs\.|feat\.|ft\.|inc\.|ltd\.|vol\.|pg\.|ed\.'
         text = re.sub(f'({abbreviations})', r'\1<POINT>', text)
-
-        # Split on sentence boundaries
-        sentence_endings = r'(?<=[.!?])\s+(?=[A-Z])'
+        
+        # Protect decimal numbers and ellipsis
+        text = re.sub(r'(\d+)\.(\d+)', r'\1<DECIMAL>\2', text)
+        text = re.sub(r'\.{3}', '<ELLIPSIS>', text)
+        
+        # Split on sentence boundaries with improved pattern
+        sentence_endings = r'(?<=[.!?])(?:\s+|\n+)(?=[A-Z0-9]|[\'""]?[A-Z0-9])'
         sentences = re.split(sentence_endings, text)
-
-        # Restore points and clean sentences
-        sentences = [s.replace('<POINT>', '.').strip() for s in sentences]
-
-        # Filter out invalid sentences
-        return [s for s in sentences if self._is_valid_sentence(s)]
+        
+        # Process and clean sentences
+        processed_sentences = []
+        for s in sentences:
+            # Restore special markers
+            s = s.replace('<POINT>', '.').replace('<DECIMAL>', '.').replace('<ELLIPSIS>', '...')
+            s = s.strip()
+            
+            # Validate and add sentence
+            if self._is_valid_sentence(s):
+                processed_sentences.append(s)
+                
+            # Handle potentially merged sentences
+            elif len(s) > 150:  # Long text might contain multiple sentences
+                subsections = re.split(r'(?<=[.!?])\s+(?=[A-Z])', s)
+                for sub in subsections:
+                    if self._is_valid_sentence(sub.strip()):
+                        processed_sentences.append(sub.strip())
+        
+        return processed_sentences
 
     def _is_valid_sentence(self, text: str) -> bool:
         """Enhanced sentence validation."""
