@@ -276,14 +276,14 @@ class BookProcessor:
 
                 # Create temp storage entry with story data
                 temp_id = str(uuid.uuid4())
-                # Store only metadata in session
+                # Store all chunks in database
                 story_data = {
                     'source_file': filename,
                     'title': title,
                     'total_chunks': len(chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
-                    'chunks': chunks[:50]  # Store only first 50 chunks initially
+                    'chunks': chunks  # Store all chunks in database
                 }
                 
                 try:
@@ -303,16 +303,14 @@ class BookProcessor:
                 max_initial_chunks = 50  # Limit initial chunks
                 initial_chunks = chunks[:max_initial_chunks]
                 
-                # Store only metadata and chunk references in session
+                # Return only metadata for session storage
                 response_data = {
                     'temp_id': temp_id,
                     'source_file': filename,
                     'title': title,
-                    'paragraphs': initial_chunks,
                     'total_chunks': len(chunks),
                     'current_page': 1,
-                    'chunks_per_page': max_initial_chunks,
-                    'has_more': len(chunks) > max_initial_chunks
+                    'chunks_per_page': max_initial_chunks
                 }
 
                 logger.info(f"Processed text into {len(chunks)} chunks (including title)")
