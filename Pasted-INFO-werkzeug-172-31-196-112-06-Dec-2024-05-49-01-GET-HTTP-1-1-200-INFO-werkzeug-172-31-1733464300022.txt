@@ -1,0 +1,21 @@
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:49:01] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:49:01] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:49:01] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:49:02] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:49:02] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:services.book_processor:Successfully stored temp data with ID: b59e9284-20b8-42a2-bdee-1fac5d744003
+INFO:services.book_processor:Processed text into 3148 chunks (including title)
+INFO:services.book_processor:Returning initial 50 chunks
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 6414 bytes but the header required 26 extra bytes. The final size was 6440 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:51:20] "POST /story/upload HTTP/1.1" 200 -
+INFO:services.book_processor:Successfully stored temp data with ID: 97f5d01c-27af-4fb0-86a4-2646e49de4dc
+INFO:services.book_processor:Processed text into 3148 chunks (including title)
+INFO:services.book_processor:Returning initial 50 chunks
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 6411 bytes but the header required 26 extra bytes. The final size was 6437 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:51:21] "POST /story/upload HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:51:24] "GET /story/edit HTTP/1.1" 302 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:51:24] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:51:25] "GET /static/css/custom.css HTTP/1.1" 304 -
+INFO:werkzeug:172.31.196.112 - - [06/Dec/2024 05:51:25] "GET /static/js/main.js HTTP/1.1" 304 -

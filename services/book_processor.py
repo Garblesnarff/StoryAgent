@@ -276,12 +276,14 @@ class BookProcessor:
 
                 # Create temp storage entry with story data
                 temp_id = str(uuid.uuid4())
+                # Store only metadata in session
                 story_data = {
                     'source_file': filename,
                     'title': title,
-                    'chunks': chunks,
+                    'total_chunks': len(chunks),
                     'current_chunk': 0,
-                    'created_at': str(datetime.utcnow())
+                    'created_at': str(datetime.utcnow()),
+                    'chunks': chunks[:50]  # Store only first 50 chunks initially
                 }
                 
                 try:
@@ -326,29 +328,34 @@ class BookProcessor:
             logger.error(f"Error processing file: {str(e)}")
             raise
 
-    def get_next_section(self, temp_id: str) -> Optional[List[Dict[str, str]]]:
-        """Get chunks for the next unprocessed section."""
+    def get_next_section(self, temp_id: str, page: int = 1, chunks_per_page: int = 50) -> Optional[Dict]:
+        """Get chunks for the specified page with pagination."""
         temp_data = TempBookData.query.get(temp_id)
         if not temp_data:
             logger.error(f"No temp data found for ID: {temp_id}")
             return None
 
         book_data = temp_data.data
-        current_chunk = book_data.get('current_chunk', 0)
+        total_chunks = book_data.get('total_chunks', 0)
         chunks = book_data.get('chunks', [])
 
-        if current_chunk >= len(chunks):
+        start_idx = (page - 1) * chunks_per_page
+        end_idx = min(start_idx + chunks_per_page, total_chunks)
+
+        if start_idx >= total_chunks:
             return None
 
-        chunk = chunks[current_chunk]
+        # Get chunks for current page
+        current_chunks = chunks[start_idx:end_idx]
         
-        # Update progress
-        book_data['current_chunk'] = current_chunk + 1
-        temp_data.data = book_data
-        db.session.commit()
+        return {
+            'chunks': current_chunks,
+            'current_page': page,
+            'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
+            'has_next': end_idx < total_chunks
+        }
 
-        logger.info(f"Processing chunk {current_chunk} of {len(chunks)}")
-        return [chunk]
+        logger.info(f"Returning chunks {start_idx} to {end_idx} of {total_chunks}")
 
     def _extract_pdf_text(self, pdf_path: str) -> str:
         """Extract text from PDF file."""
