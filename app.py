@@ -162,20 +162,5 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Try different ports if default is in use
     port = int(os.environ.get('PORT', 5000))
-    retries = 3
-    
-    for i in range(retries):
-        try:
-            app.run(host='0.0.0.0', port=port, debug=True)
-            break
-        except OSError as e:
-            if 'Address already in use' in str(e):
-                logger.warning(f"Port {port} is in use, trying port {port + 1}")
-                port += 1
-                if i == retries - 1:
-                    logger.error(f"Could not find an available port after {retries} attempts")
-                    raise
-            else:
-                raise
+    app.run(host='0.0.0.0', port=port, debug=True)
