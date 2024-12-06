@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BookProcessor:
-    def __init__(self, chunk_size=2, max_file_size=50*1024*1024):
+    def __init__(self, chunk_size=10, max_file_size=50*1024*1024):
         self.chunk_size = chunk_size
         self.max_file_size = max_file_size
 
@@ -76,7 +76,7 @@ class BookProcessor:
             
         # Must have reasonable word count
         word_count = len(text.split())
-        if word_count < 3 or word_count > 50:
+        if word_count < 3 or word_count > 50:  # Adjust thresholds as needed
             return False
             
         # Check for balanced quotes and parentheses
@@ -85,55 +85,63 @@ class BookProcessor:
             
         return True
 
-    def _create_chunks(self, sentences: List[str]) -> List[Dict[str, str]]:
-        """Create chunks from sentences."""
+    def _process_section(self, section: Dict) -> List[Dict]:
+        """Process a section of text into chunks."""
+        try:
+            # Get chunks from section
+            chunks = section.get('chunks', [])
+            if not chunks:
+                logger.error("No chunks found in section")
+                return []
+
+            # Process each chunk if needed
+            processed_chunks = []
+            for chunk in chunks:
+                if isinstance(chunk, dict) and 'text' in chunk:
+                    processed_chunks.append({
+                        'text': self._clean_text(chunk['text']),
+                        'image_url': chunk.get('image_url'),
+                        'audio_url': chunk.get('audio_url'),
+                        'is_title': chunk.get('is_title', False)
+                    })
+
+            return processed_chunks
+        except Exception as e:
+            logger.error(f"Error processing section: {str(e)}")
+            return []
+
+    def _create_chunks(self, sentences: List[str], chunk_size: int = 2) -> List[Dict[str, str]]:
+        """Create chunks of specified size from sentences."""
         chunks = []
-        current_chunk = []
-        
-        for sentence in sentences:
-            current_chunk.append(sentence)
-            if len(current_chunk) >= self.chunk_size:
-                chunk_text = ' '.join(current_chunk)
+        for i in range(0, len(sentences), chunk_size):
+            chunk_sentences = sentences[i:i + chunk_size]
+            if len(chunk_sentences) == chunk_size or (i + chunk_size >= len(sentences)):
+                chunk_text = ' '.join(chunk_sentences)
                 chunks.append({
                     'text': chunk_text,
                     'image_url': None,
                     'audio_url': None
                 })
-                current_chunk = []
-        
-        # Handle remaining sentences
-        if current_chunk:
-            chunk_text = ' '.join(current_chunk)
-            chunks.append({
-                'text': chunk_text,
-                'image_url': None,
-                'audio_url': None
-            })
-            
         return chunks
 
     def _extract_story_content(self, text: str) -> str:
-        """Extract story content while removing metadata and formatting artifacts."""
+        """Extract story content while removing table of contents and chapter headers."""
         try:
-            # Remove Project Gutenberg headers more aggressively
-            clean_text = re.sub(r'(?i).*?Project Gutenberg.*?eBook.*?\n\n', '', text, flags=re.DOTALL)
-            clean_text = re.sub(r'(?i)^\s*The Project Gutenberg.*?$.*?\n\n', '', clean_text, flags=re.MULTILINE|re.DOTALL)
+            # Remove table of contents
+            clean_text = re.sub(r'(?i)^(?:table of )?contents\s*(?:\n|$).*?(?=\n\s*\n|\Z)', '', text, flags=re.DOTALL|re.MULTILINE)
             
-            # Remove license and legal text
-            clean_text = re.sub(r'(?i).*?This eBook is for the use of anyone anywhere.*?\n\n', '', clean_text, flags=re.DOTALL)
-            clean_text = re.sub(r'(?i).*?Title:.*?Author:.*?Release date:.*?\n\n', '', clean_text, flags=re.DOTALL)
-            
-            # Remove any remaining Gutenberg footers
-            clean_text = re.sub(r'(?i)\n\s*\*\*\* END OF.*?$', '', clean_text, flags=re.DOTALL)
-            clean_text = re.sub(r'(?i)End of.*?Project Gutenberg.*$', '', clean_text, flags=re.DOTALL)
-            
-            # Remove common metadata sections
-            clean_text = re.sub(r'(?i)^\s*(contents|introduction|preface|foreword|appendix|index|bibliography).*?(?=\n\s*\n|\Z)', '', clean_text, flags=re.DOTALL|re.MULTILINE)
+            # Remove chapter headers and numbers
             clean_text = re.sub(r'(?i)^\s*(?:chapter|section|part|volume)\s+[IVXLCDM\d]+\.?\s*.*$', '', clean_text, flags=re.MULTILINE)
             
-            # Clean up formatting
-            clean_text = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_text)  # Remove excess newlines
-            clean_text = re.sub(r'^\s*[\[\(].*?[\]\)]\s*$\n?', '', clean_text, flags=re.MULTILINE)  # Remove bracketed text
+            # Remove common book sections
+            clean_text = re.sub(r'(?i)^\s*(introduction|preface|foreword|appendix|index|bibliography).*?(?=\n\s*\n|\Z)', '', clean_text, flags=re.DOTALL|re.MULTILINE)
+            
+            # Remove Project Gutenberg headers and footers
+            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*.*?\n', '', clean_text, flags=re.DOTALL)
+            clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
+            
+            # Remove consecutive blank lines
+            clean_text = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_text)
             
             return clean_text.strip()
         except Exception:
@@ -184,31 +192,22 @@ class BookProcessor:
                 text = self._clean_text(text)
                 title = self._extract_title(text)
                 story_text = self._extract_story_content(text)
-
-                # Process text into chunks directly
                 sentences = self._split_into_sentences(story_text)
-                chunks = self._create_chunks(sentences)
-                processed_chunks = []
-                for chunk in chunks:
-                    processed_chunks.append({
-                        'text': chunk['text'],
-                        'image_url': None,
-                        'audio_url': None,
-                        'image_style': 'realistic'
-                    })
+                chunks = self._create_chunks(sentences, chunk_size=2)
 
-                # Store processed content
+                # Store title and content chunks
                 temp_id = str(uuid.uuid4())
                 story_data = {
                     'source_file': filename,
                     'title': title,
+                    'total_chunks': len(chunks),
+                    'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
                     'sections': [{
-                        'title': title,
-                        'text': story_text,
-                        'chunks': processed_chunks,
+                        'title': 'Story Content',
+                        'chunks': chunks,
                         'index': 0,
-                        'processed': True
+                        'processed': False
                     }]
                 }
 
@@ -226,7 +225,9 @@ class BookProcessor:
                     'temp_id': temp_id,
                     'source_file': filename,
                     'title': title,
-                    'paragraphs': processed_chunks
+                    'total_chunks': len(chunks),
+                    'current_page': 1,
+                    'chunks_per_page': 10
                 }
 
             finally:
@@ -271,7 +272,6 @@ class BookProcessor:
             'current_page': page,
             'total_pages': (total_chunks + chunks_per_page - 1) // chunks_per_page,
             'has_next': end_idx < total_chunks,
-            'has_prev': page > 1,
             'title': book_data.get('title')
         }
 
@@ -305,42 +305,3 @@ class BookProcessor:
         except Exception as e:
             logger.error("EPUB extraction failed")
             raise
-
-    def _process_section(self, section: Dict) -> List[Dict]:
-        """Process a section of text into chunks with proper validation."""
-        try:
-            # Validate section data
-            if not isinstance(section, dict):
-                logger.error("Invalid section format")
-                return []
-                
-            text = section.get('text', '')
-            if not text:
-                logger.error("No text found in section")
-                return []
-
-            # Clean and process text
-            cleaned_text = self._clean_text(text)
-            sentences = self._split_into_sentences(cleaned_text)
-            chunks = self._create_chunks(sentences)
-
-            # Ensure each chunk has required fields
-            processed_chunks = []
-            for chunk in chunks:
-                if isinstance(chunk, dict) and 'text' in chunk:
-                    processed_chunks.append({
-                        'text': chunk['text'],
-                        'image_url': chunk.get('image_url'),
-                        'audio_url': chunk.get('audio_url'),
-                        'image_style': 'realistic'
-                    })
-
-            return processed_chunks
-
-        except Exception as e:
-            logger.error(f"Error processing section: {str(e)}")
-            return []
-
-    def process_section(self, section: Dict) -> List[Dict]:
-        """Public method to process a section of text into chunks."""
-        return self._process_section(section)
