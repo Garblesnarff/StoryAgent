@@ -162,20 +162,23 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Try different ports if default is in use
-    port = int(os.environ.get('PORT', 5000))
+    # Get configuration
+    port = app.config['PORT']
+    host = app.config['HOST']
     retries = 3
     
     for i in range(retries):
         try:
-            app.run(host='0.0.0.0', port=port, debug=True)
+            logger.info(f"Starting Flask server on {host}:{port}")
+            app.run(host=host, port=port, debug=True)
             break
         except OSError as e:
             if 'Address already in use' in str(e):
-                logger.warning(f"Port {port} is in use, trying port {port + 1}")
                 port += 1
+                logger.warning(f"Port {port-1} is in use, trying port {port}")
                 if i == retries - 1:
                     logger.error(f"Could not find an available port after {retries} attempts")
                     raise
             else:
+                logger.error(f"Error starting server: {str(e)}")
                 raise
