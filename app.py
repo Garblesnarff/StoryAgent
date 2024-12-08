@@ -32,14 +32,28 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize database
-db.init_app(app)
+try:
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+    logger.info("Database initialized successfully")
+except Exception as e:
+    logger.error(f"Database initialization error: {str(e)}")
+    raise
 
 # Initialize services
 from services.text_generator import TextGenerator
 from services.book_processor import BookProcessor
 from models import TempBookData
+from services.text import (
+    TextExtractor, TextCleaner, TextChunker,
+    TitleExtractor, ValidationService
+)
+from services.book_processor import BookProcessor
+
+# Initialize services
 text_service = TextGenerator()
-book_processor = BookProcessor()
+book_processor = BookProcessor(upload_dir='uploads')
 
 # Register blueprints
 from blueprints.story import story_bp

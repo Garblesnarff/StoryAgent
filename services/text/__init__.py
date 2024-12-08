@@ -13,14 +13,21 @@ Example usage:
 """
 
 import logging
+import os
 from datetime import datetime
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Import service classes
 from .text_extractor import TextExtractor
 from .text_cleaner import TextCleaner
 from .text_chunker import TextChunker
 from .title_extractor import TitleExtractor
 from .validation_service import ValidationService
 
-logger = logging.getLogger(__name__)
+# Ensure required directories exist
+os.makedirs('uploads', exist_ok=True)
 
 __all__ = [
     'TextExtractor',
