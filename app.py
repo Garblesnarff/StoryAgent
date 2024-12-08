@@ -4,6 +4,7 @@ import secrets
 from datetime import datetime
 from database import db
 import logging
+from config import Config
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -167,7 +168,7 @@ def check_story_data():
 if __name__ == '__main__':
     try:
         logger.info("Starting Flask server...")
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host=Config.HOST, port=Config.PORT, debug=True)
     except Exception as e:
         logger.error(f"Failed to start server: {str(e)}")
         raise

@@ -1,225 +1,58 @@
 import os
-import re
 import uuid
 import logging
-import ebooklib
-from ebooklib import epub
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from werkzeug.utils import secure_filename
-import PyPDF2
-from bs4 import BeautifulSoup
 from database import db
 from models import TempBookData
+from services.text.text_extractor import TextExtractor
+from services.text.text_cleaner import TextCleaner
+from services.text.text_chunker import TextChunker
+from services.text.title_extractor import TitleExtractor
+from services.text.validation_service import ValidationService
 
 logger = logging.getLogger(__name__)
 
 class BookProcessor:
+    """Orchestrates the book processing workflow using specialized services."""
+    
     def __init__(self):
-        self.max_file_size = 50 * 1024 * 1024  # 50MB
-        self.max_paragraphs = 5000
-        
-    def _clean_text(self, text: str) -> str:
-        """Clean and normalize text."""
-        # Remove excessive whitespace
-        text = re.sub(r'\s+', ' ', text)
-        # Normalize line endings
-        text = text.replace('\r\n', '\n').replace('\r', '\n')
-        # Remove UTF-8 BOM if present
-        text = text.replace('\ufeff', '')
-        return text.strip()
-        
-    def _extract_title(self, text: str) -> str:
-        """Extract main title from the text while avoiding chapter titles."""
-        # Remove table of contents section
-        text = re.sub(r'(?i)^\s*(?:table of )?contents\s*(?:\n|$).*?(?=\n\s*\n|\Z)', '', text, flags=re.DOTALL|re.MULTILINE)
-        
-        # Patterns for actual book titles, ordered by reliability
-        title_patterns = [
-            # Explicit title markers
-            r'(?i)^[\s\*]*(?:Title|Book Title):\s*([^\n\.]+)(?:\n|$)',
-            # Standalone capitalized text at start
-            r'^\s*([A-Z][^a-z\n]{2,}(?:[A-Z\s\d&,\'-]){3,})(?:\n|$)',
-            # First line if properly formatted
-            r'^\s*([^\n]{5,100})(?:\n|$)'
-        ]
-        
-        for pattern in title_patterns:
-            match = re.search(pattern, text.strip(), re.MULTILINE)
-            if match:
-                title = match.group(1).strip()
-                # Validate title format
-                if self._is_valid_title(title):
-                    return title
-        
-        return "Untitled Story"
-        
-    def _is_valid_title(self, title: str) -> bool:
-        """Validate if extracted text is likely a proper title."""
-        # Remove common invalid patterns
-        if re.search(r'(?i)(chapter|section|part|volume|book)\s+\d+', title):
-            return False
-            
-        # Check length and word count
-        if len(title) < 3 or len(title) > 100:
-            return False
-            
-        words = title.split()
-        if len(words) < 1 or len(words) > 15:
-            return False
-            
-        # Check for proper capitalization
-        if not any(c.isupper() for c in title):
-            return False
-            
-        return True
-        
-    def _split_into_sentences(self, text: str) -> List[str]:
-        """Split text into sentences with improved accuracy."""
-        # Handle common abbreviations
-        abbreviations = r'Mr\.|Mrs\.|Dr\.|Ph\.D\.|etc\.|i\.e\.|e\.g\.'
-        text = re.sub(f'({abbreviations})', r'\1<POINT>', text)
-        
-        # Split on sentence boundaries
-        sentence_endings = r'(?<=[.!?])\s+(?=[A-Z])'
-        sentences = re.split(sentence_endings, text)
-        
-        # Restore points and clean sentences
-        sentences = [s.replace('<POINT>', '.').strip() for s in sentences]
-        
-        # Filter out invalid sentences
-        return [s for s in sentences if self._is_valid_sentence(s)]
-
-    def _is_valid_sentence(self, text: str) -> bool:
-        """Enhanced sentence validation."""
-        if not text or len(text) < 10:
-            return False
-
-        if not re.match(r'^[A-Z].*[.!?]$', text.strip()):
-            return False
-
-        word_count = len(text.split())
-        if word_count < 3 or word_count > 50:
-            return False
-
-        if text.count('"') % 2 != 0 or text.count('(') != text.count(')'):
-            return False
-
-        return True
-
-    def _create_chunks(self, sentences: List[str], chunk_size: int = 2) -> List[Dict[str, str]]:
-        """Create chunks of specified size from sentences."""
-        chunks = []
-        for i in range(0, len(sentences), chunk_size):
-            chunk_sentences = sentences[i:i + chunk_size]
-            if len(chunk_sentences) == chunk_size or (i + chunk_size >= len(sentences)):
-                chunk_text = ' '.join(chunk_sentences)
-                chunks.append({
-                    'text': chunk_text,
-                    'image_url': None,
-                    'audio_url': None
-                })
-        return chunks
-
-    def _process_section(self, section: Dict) -> List[Dict]:
-        """Process a section of chunks for display."""
-        if not section or 'chunks' not in section:
-            logger.warning("Invalid section data format")
-            return []
-        
-        chunks = section.get('chunks', [])
-        if not chunks:
-            logger.warning("No chunks found in section")
-            return []
-            
-        return chunks
-
-    def _extract_story_content(self, text: str) -> str:
-        """Extract story content while removing table of contents and chapter headers."""
-        try:
-            # Remove table of contents
-            clean_text = re.sub(r'(?i)^(?:table of )?contents\s*(?:\n|$).*?(?=\n\s*\n|\Z)', '', text, flags=re.DOTALL|re.MULTILINE)
-            
-            # Remove chapter headers and numbers
-            clean_text = re.sub(r'(?i)^\s*(?:chapter|section|part|volume)\s+[IVXLCDM\d]+\.?\s*.*$', '', clean_text, flags=re.MULTILINE)
-            
-            # Remove common book sections
-            clean_text = re.sub(r'(?i)^\s*(introduction|preface|foreword|appendix|index|bibliography).*?(?=\n\s*\n|\Z)', '', clean_text, flags=re.DOTALL|re.MULTILINE)
-            
-            # Remove Project Gutenberg headers and footers
-            clean_text = re.sub(r'^\s*.*?\*\*\* START OF.*?\*\*\*.*?\n', '', clean_text, flags=re.DOTALL)
-            clean_text = re.sub(r'\*\*\* END OF.*$', '', clean_text, flags=re.DOTALL)
-            
-            # Remove consecutive blank lines
-            clean_text = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_text)
-            
-            return clean_text.strip()
-        except Exception:
-            logger.error("Story content extraction failed")
-            raise
-
+        self.text_extractor = TextExtractor()
+        self.text_cleaner = TextCleaner()
+        self.text_chunker = TextChunker()
+        self.title_extractor = TitleExtractor()
+        self.validation_service = ValidationService()
 
     def process_file(self, file) -> Dict[str, any]:
-        """Process uploaded file based on its type."""
+        """Process uploaded file using specialized services."""
         try:
-            if not file:
-                raise ValueError("No file provided")
+            # Validate file
+            is_valid, message, filename = self.validation_service.validate_file(file)
+            if not is_valid:
+                raise ValueError(message)
 
-            filename = secure_filename(file.filename)
-            if not filename or '.' not in filename:
-                raise ValueError("Invalid filename")
-
-            ext = filename.rsplit('.', 1)[1].lower()
-            if ext not in {'pdf', 'epub', 'txt', 'html'}:
-                raise ValueError(f"Unsupported file type: {ext}")
-
-            file.seek(0, os.SEEK_END)
-            size = file.tell()
-            file.seek(0)
-            if size > self.max_file_size:
-                raise ValueError(f"File too large. Maximum size is {self.max_file_size/(1024*1024)}MB")
-
+            # Save file temporarily
             temp_path = os.path.join('uploads', filename)
             os.makedirs('uploads', exist_ok=True)
             file.save(temp_path)
 
             try:
                 # Extract text based on file type
-                if ext == 'pdf':
-                    text = self._extract_pdf_text(temp_path)
-                elif ext == 'epub':
-                    text = self._extract_epub_text(temp_path)
-                elif ext == 'txt':
-                    with open(temp_path, 'r', encoding='utf-8') as f:
-                        text = f.read()
-                else:  # html
-                    with open(temp_path, 'r', encoding='utf-8') as f:
-                        soup = BeautifulSoup(f, 'html.parser')
-                        for tag in soup(['script', 'style', 'meta', 'link']):
-                            tag.decompose()
-                        text = soup.get_text()
+                ext = filename.rsplit('.', 1)[1].lower()
+                text = self.text_extractor.extract_text(temp_path, ext)
 
-                # Process extracted text
-                text = self._clean_text(text)
-                title = self._extract_title(text)
-                story_text = self._extract_story_content(text)
-                sentences = self._split_into_sentences(story_text)
-                chunks = self._create_chunks(sentences)
-
-                # Add title chunk if valid
-                if title != "Untitled Story":
-                    chunks.insert(0, {
-                        'text': f"Title: {title}",
-                        'image_url': None,
-                        'audio_url': None,
-                        'is_title': True
-                    })
-
-                temp_id = str(uuid.uuid4())
-                # Separate title from content chunks
-                content_chunks = chunks[1:] if chunks and chunks[0].get('is_title') else chunks
+                # Clean and process text
+                text = self.text_cleaner.clean_text(text)
+                title = self.title_extractor.extract_title(text)
+                story_text = self.text_cleaner.extract_story_content(text)
                 
-                # Create a dedicated title section
+                # Create chunks
+                sentences = self.text_chunker.split_into_sentences(story_text)
+                chunks = self.text_chunker.create_chunks(sentences)
+
+                # Create sections
+                temp_id = str(uuid.uuid4())
                 title_section = {
                     'title': 'Book Title',
                     'chunks': [{
@@ -232,22 +65,27 @@ class BookProcessor:
                     'processed': True
                 }
                 
-                # Create content section
                 content_section = {
                     'title': 'Story Content',
-                    'chunks': content_chunks,
+                    'chunks': chunks,
                     'index': 1,
                     'processed': False
                 }
                 
+                # Prepare story data
                 story_data = {
                     'source_file': filename,
                     'title': title,
-                    'total_chunks': len(content_chunks),
+                    'total_chunks': len(chunks),
                     'current_chunk': 0,
                     'created_at': str(datetime.utcnow()),
                     'sections': [title_section, content_section]
                 }
+
+                # Validate and save temporary data
+                is_valid, validation_message = self.validation_service.validate_temp_data(story_data)
+                if not is_valid:
+                    raise ValueError(validation_message)
 
                 try:
                     temp_data = TempBookData(id=temp_id, data=story_data)
@@ -322,34 +160,3 @@ class BookProcessor:
             'has_next': end_idx < total_content_chunks,
             'title': book_data.get('title')
         }
-
-    def _extract_pdf_text(self, pdf_path: str) -> str:
-        """Extract text from PDF file."""
-        text = []
-        try:
-            with open(pdf_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                for page in reader.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text.append(page_text)
-            return "\n".join(text)
-        except Exception as e:
-            logger.error("PDF extraction failed")
-            raise
-
-    def _extract_epub_text(self, epub_path: str) -> str:
-        """Extract text from EPUB file."""
-        text = []
-        try:
-            book = epub.read_epub(epub_path)
-            for item in book.get_items():
-                if item.get_type() == ebooklib.ITEM_DOCUMENT:
-                    content = item.get_content()
-                    soup = BeautifulSoup(content, 'html.parser')
-                    if soup.get_text():
-                        text.append(soup.get_text())
-            return "\n".join(text)
-        except Exception as e:
-            logger.error("EPUB extraction failed")
-            raise
