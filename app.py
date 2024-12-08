@@ -1,87 +1,20 @@
-import os
-from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
-import secrets
-from datetime import datetime
-from database import db
-import logging
-from config import Config
+"""
+Flask App Module
+---------------
+This module provides the Flask application instance for use by other modules.
+The actual server configuration and startup is handled by main.py.
+"""
 
-app = Flask(__name__)
-app.config.from_object('config.Config')
-app.secret_key = secrets.token_hex(16)
+from main import create_app
 
-# Configure upload settings
-UPLOAD_FOLDER = 'uploads'
-MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max file size
-MAX_RESPONSE_LENGTH = 1 * 1024 * 1024  # 1MB max response size
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
-app.config['MAX_RESPONSE_LENGTH'] = MAX_RESPONSE_LENGTH
-app.config['CORS_HEADERS'] = 'Content-Type'
+# Create the Flask application instance
+app = create_app()
 
-# Enable CORS
-from flask_cors import CORS
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Initialize database
-try:
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-    logger.info("Database initialized successfully")
-except Exception as e:
-    logger.error(f"Database initialization error: {str(e)}")
-    raise
-
-# Initialize services
-from services.text_generator import TextGenerator
-from services.book_processor import BookProcessor
-from models import TempBookData
-from services.text import (
-    TextExtractor, TextCleaner, TextChunker,
-    TitleExtractor, ValidationService
-)
-from services.book_processor import BookProcessor
-
-# Initialize services
-text_service = TextGenerator()
-book_processor = BookProcessor(upload_dir='uploads')
-
-# Register blueprints
-from blueprints.story import story_bp
-from blueprints.generation import generation_bp
-
-app.register_blueprint(story_bp)
-app.register_blueprint(generation_bp)
-
-with app.app_context():
-    import models
-    db.create_all()
-
-@app.route('/')
-def index():
-    # Clear any existing story data when returning to home
-    if 'story_data' in session:
-        session.pop('story_data', None)
-    return render_template('index.html')
-
-@app.route('/generate_story', methods=['POST'])
-def generate_story():
-    try:
-        # Validate form data
-        required_fields = ['prompt', 'genre', 'mood', 'target_audience']
-        for field in required_fields:
-            if not request.form.get(field):
-                logger.error(f"Missing required field: {field}")
-                return jsonify({'error': f'Missing required field: {field}'}), 400
+# This file only provides the app instance for other modules to import
+# Server startup and configuration is handled by main.py
+if __name__ == '__main__':
+    print("Please use 'python main.py' to start the server.")
+    sys.exit(1)
 
         prompt = request.form.get('prompt')
         genre = request.form.get('genre')
@@ -179,7 +112,12 @@ def check_story_data():
         flash('Please generate a story first', 'warning')
         return redirect(url_for('index'))
 
+# This file only contains Flask app configuration and routes
+# Server startup is handled by main.py
 if __name__ == '__main__':
-    logger.error("Direct execution of app.py is not supported. Please use main.py to start the server.")
+    logger.error("Direct execution of app.py is not supported. Use main.py to start the server.")
     import sys
     sys.exit(1)
+    
+# Clear any existing server status
+app.config['SERVER_START_TIME'] = None
