@@ -180,9 +180,4 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    try:
-        logger.info("Starting Flask server...")
-        app.run(host=Config.HOST, port=Config.PORT, debug=True)
-    except Exception as e:
-        logger.error(f"Failed to start server: {str(e)}")
-        raise
+    logger.warning("Please use main.py to start the server instead of app.py")

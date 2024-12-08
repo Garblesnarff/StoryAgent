@@ -63,7 +63,7 @@ class TextChunker:
             protected_text = self._protect_abbreviations(text)
             
             # Split on sentence boundaries with improved regex
-            sentence_pattern = r'(?<=[.!?])\s+(?=[A-Z])|(?<=[.!?])(?=\s*["""\'']?\s*[A-Z])'
+            sentence_pattern = r'(?<=[.!?])\s+(?=[A-Z])|(?<=[.!?])(?=\s*["\'\"]?\s*[A-Z])'
             sentences = re.split(sentence_pattern, protected_text)
             
             # Restore abbreviations and clean sentences

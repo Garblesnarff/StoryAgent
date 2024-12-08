@@ -5,6 +5,7 @@ class Config:
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY') or 'a_secret_key'
     PORT = int(os.environ.get('PORT', 5001))  # Default to 5001 to avoid common conflicts
     HOST = '0.0.0.0'  # Allow external access
+    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
     
     # Database Configuration
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
