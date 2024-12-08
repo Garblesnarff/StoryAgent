@@ -24,7 +24,10 @@ from flask_cors import CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize database
@@ -162,23 +165,9 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Get configuration
-    port = app.config['PORT']
-    host = app.config['HOST']
-    retries = 3
-    
-    for i in range(retries):
-        try:
-            logger.info(f"Starting Flask server on {host}:{port}")
-            app.run(host=host, port=port, debug=True)
-            break
-        except OSError as e:
-            if 'Address already in use' in str(e):
-                port += 1
-                logger.warning(f"Port {port-1} is in use, trying port {port}")
-                if i == retries - 1:
-                    logger.error(f"Could not find an available port after {retries} attempts")
-                    raise
-            else:
-                logger.error(f"Error starting server: {str(e)}")
-                raise
+    try:
+        logger.info("Starting Flask server...")
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    except Exception as e:
+        logger.error(f"Failed to start server: {str(e)}")
+        raise

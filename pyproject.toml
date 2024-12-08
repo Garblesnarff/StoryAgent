@@ -34,4 +34,5 @@ dependencies = [
     "langchain-community>=0.3.4",
     "langchain-google-genai>=2.0.5",
     "flask-cors>=5.0.0",
+    "uuid>=1.30",
 ]
