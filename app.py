@@ -180,4 +180,6 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    logger.warning("Please use main.py to start the server instead of app.py")
+    logger.error("Direct execution of app.py is not supported. Please use main.py to start the server.")
+    import sys
+    sys.exit(1)

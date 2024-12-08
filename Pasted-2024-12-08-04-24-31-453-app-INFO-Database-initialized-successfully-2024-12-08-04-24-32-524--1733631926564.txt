@@ -1,0 +1,28 @@
+2024-12-08 04:24:31,453 - app - INFO - Database initialized successfully
+2024-12-08 04:24:32,524 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2024-12-08 04:24:32,528 - httpx - DEBUG - load_verify_locations cafile='/etc/ssl/certs/ca-certificates.crt'
+2024-12-08 04:24:32,559 - services.book_processor - INFO - BookProcessor initialized with services in directory: uploads
+2024-12-08 04:24:33,475 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2024-12-08 04:24:33,476 - httpx - DEBUG - load_verify_locations cafile='/etc/ssl/certs/ca-certificates.crt'
+2024-12-08 04:24:33,504 - services.book_processor - INFO - BookProcessor initialized with services in directory: uploads
+2024-12-08 04:24:34,315 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2024-12-08 04:24:34,315 - httpx - DEBUG - load_verify_locations cafile='/etc/ssl/certs/ca-certificates.crt'
+2024-12-08 04:24:35,738 - __main__ - INFO - Starting Flask server on 0.0.0.0:5001...
+ * Serving Flask app 'app'
+ * Debug mode: off
+2024-12-08 04:24:35,743 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://172.31.196.120:5001
+2024-12-08 04:24:35,743 - werkzeug - INFO - Press CTRL+C to quit
+2024-12-08 04:24:35,744 - werkzeug - INFO -  * Restarting with stat
+2024-12-08 04:24:37,196 - app - INFO - Database initialized successfully
+2024-12-08 04:24:37,885 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2024-12-08 04:24:37,886 - httpx - DEBUG - load_verify_locations cafile='/etc/ssl/certs/ca-certificates.crt'
+2024-12-08 04:24:37,912 - services.book_processor - INFO - BookProcessor initialized with services in directory: uploads
+2024-12-08 04:24:38,413 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2024-12-08 04:24:38,414 - httpx - DEBUG - load_verify_locations cafile='/etc/ssl/certs/ca-certificates.crt'
+2024-12-08 04:24:38,447 - services.book_processor - INFO - BookProcessor initialized with services in directory: uploads
+2024-12-08 04:24:39,157 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2024-12-08 04:24:39,158 - httpx - DEBUG - load_verify_locations cafile='/etc/ssl/certs/ca-certificates.crt'
+2024-12-08 04:24:39,579 - __main__ - INFO - Cleaning up server resources...
