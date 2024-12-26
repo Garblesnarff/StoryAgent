@@ -118,6 +118,56 @@ def regenerate_image():
         logger.error(f"Error regenerating image: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@generation_bp.route('/story/generate_audio', methods=['POST'])
+def generate_audio():
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        text = data['text']
+        index = data.get('index')
+        is_retry = data.get('is_retry', False)
+        
+        # Get temp_id from session
+        story_data = session.get('story_data', {})
+        temp_id = story_data.get('temp_id')
+        
+        if not temp_id:
+            return jsonify({'error': 'No story session found'}), 404
+            
+        # Generate audio
+        audio_service = HumeAudioGenerator()
+        audio_url = audio_service.generate_audio(text)
+        
+        if not audio_url:
+            error_message = "Failed to generate audio"
+            if is_retry:
+                error_message += ". Please try again later."
+            return jsonify({'error': error_message}), 500
+                
+        # Update temp data storage
+        if index is not None:
+            temp_data = TempBookData.query.get(temp_id)
+            if temp_data:
+                book_data = temp_data.data
+                if index < len(book_data['paragraphs']):
+                    book_data['paragraphs'][index]['audio_url'] = audio_url
+                    temp_data.data = book_data
+                    db.session.commit()
+            
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in generate_audio route: {str(e)}")
+        error_message = str(e)
+        if is_retry:
+            error_message += ". Please try again later."
+        return jsonify({'error': error_message}), 500
+
 @generation_bp.route('/story/regenerate_audio', methods=['POST'])
 def regenerate_audio():
     try:
