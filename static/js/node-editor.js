@@ -478,6 +478,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             return;
         }
 
+        let progressInterval;
         try {
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
@@ -492,7 +493,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             ));
 
             let progress = 0;
-            const progressInterval = setInterval(() => {
+            progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
                 setNodes(currentNodes => currentNodes.map(node =>
                     node.id === `p${index}` ? {
