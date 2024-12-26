@@ -32,16 +32,11 @@ class PromptGenerator:
     def _format_image_prompt(self, story_context, paragraph_text):
         """Format prompt for image generation"""
         return f"""
-        Given the following story context and paragraph, create a detailed image generation prompt.
-        Focus on visual elements, mood, and atmosphere.
-        
-        Story Context:
-        {story_context}
-        
-        Current Paragraph:
+        Create a detailed image generation prompt based on the following paragraph.
+        Focus on visual elements and concrete details. Do not use overly abstract or flowery language.
+
+        Paragraph:
         {paragraph_text}
-        
-        Generate a detailed, visual prompt for image generation:
         """
 
     def generate_image_prompt(self, story_context, paragraph_text, use_chain=True):
@@ -57,21 +52,21 @@ class PromptGenerator:
                 prompts = []
                 base_prompt = self._format_image_prompt(story_context, paragraph_text)
                 current_prompt = base_prompt
-                num_steps = 3
+                num_steps = 2  # Reduced from 3
 
                 for step in range(num_steps):
                     response = self.model.generate_content(current_prompt)
                     refined_prompt = response.text.strip()
                     prompts.append(refined_prompt)
-                    
+
                     if step < num_steps - 1:
                         current_prompt = f"""
-                        Refine and enhance the following image prompt to be more detailed and visually descriptive:
+                        Refine the following image prompt to be more concise and focused on concrete visual details:
                         {refined_prompt}
                         """
 
                 success = True
-                return prompts
+                return prompts[-1:]
             else:
                 # Single-step prompt generation
                 formatted_prompt = self._format_image_prompt(story_context, paragraph_text)
@@ -83,7 +78,7 @@ class PromptGenerator:
             error_msg = str(e)
             logger.error(f"Error generating prompt: {error_msg}")
             return [paragraph_text]  # Fallback to paragraph text
-        
+
         finally:
             generation_time = time.time() - start_time
             self._record_metrics(
