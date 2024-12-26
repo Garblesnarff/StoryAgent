@@ -389,29 +389,4 @@ def generate_audio():
         if is_retry:
             error_message += ". Please try again later or contact support if the issue persists."
         return jsonify({'error': error_message}), 500
-@generation_bp.route('/story/generate_audio', methods=['POST'])
-def generate_audio():
-    try:
-        data = request.get_json()
-        text = data.get('text')
-        index = data.get('index')
-        is_retry = data.get('is_retry', False)
-        
-        if not text:
-            return jsonify({'error': 'No text provided'}), 400
-            
-        generator = HumeAudioGenerator()
-        audio_url = generator.generate_audio(text)
-        
-        if audio_url:
-            return jsonify({
-                'success': True,
-                'audio_url': audio_url
-            })
-        else:
-            error_message = 'Failed to generate audio'
-            return jsonify({'error': error_message}), 500
-            
-    except Exception as e:
-        logger.error(f"Error generating audio: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+
