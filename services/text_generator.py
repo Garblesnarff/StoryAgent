@@ -1,3 +1,4 @@
+
 import groq
 import os
 import json
@@ -25,10 +26,50 @@ class TextGenerator:
             db.session.commit()
         except Exception as e:
             logger.error(f"Error recording metrics: {str(e)}")
+
     def __init__(self):
         # Initialize Groq client
         self.client = groq.Groq(api_key=os.environ.get('GROQ_API_KEY'))
     
+    def _make_api_call(self, formatted_prompt, system_content):
+        """Make an API call to the Groq chat completions endpoint.
+        
+        Args:
+            formatted_prompt (str): The formatted prompt to send to the API
+            system_content (str): The system role content for context
+            
+        Returns:
+            dict: Contains 'story' (str) if successful, None if failed
+                 and 'error' (str) with error message if failed
+        """
+        try:
+            response = self.client.chat.completions.create(
+                model="llama-3.1-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_content
+                    },
+                    {
+                        "role": "user",
+                        "content": formatted_prompt
+                    }
+                ],
+                temperature=0.7,
+            )
+            
+            if not response or not response.choices:
+                return {"story": None, "error": "No response from story generation API"}
+                
+            story = response.choices[0].message.content
+            if not story:
+                return {"story": None, "error": "Empty response from story generation API"}
+                
+            return {"story": story, "error": None}
+            
+        except Exception as e:
+            return {"story": None, "error": str(e)}
+
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
         # Remove any leading numbers with dots, parentheses, or brackets
@@ -58,13 +99,24 @@ class TextGenerator:
         return not bool(re.search(marker_pattern, text))
 
     def generate_story(self, prompt, genre, mood, target_audience, paragraphs):
+        """Generate a story based on given parameters.
+        
+        Args:
+            prompt (str): The story prompt
+            genre (str): The story genre
+            mood (str): The desired mood
+            target_audience (str): The target audience
+            paragraphs (int): Number of paragraphs to generate
+            
+        Returns:
+            list: List of cleaned story paragraphs if successful, None if failed
+        """
         start_time = time.time()
         success = False
         error_msg = None
         prompt_length = len(prompt) + len(genre) + len(mood) + len(target_audience)
         
         try:
-            # Format the story prompt directly
             formatted_prompt = f"""
             Write a {genre} story with a {mood} mood targeting {target_audience}.
             The story should be based on the following prompt:
@@ -75,31 +127,18 @@ class TextGenerator:
             Focus on creating vivid imagery and engaging narrative flow.
             """
             
-            # Generate story text with improved prompt
-            response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
-                messages=[
-                    {
-                        "role": "system", 
-                        "content": (
-                            f"You are a creative storyteller specializing in {genre} stories "
-                            f"with a {mood} mood for a {target_audience} audience."
-                        )
-                    },
-                    {
-                        "role": "user", 
-                        "content": formatted_prompt
-                    }
-                ],
-                temperature=0.7,
+            system_content = (
+                f"You are a creative storyteller specializing in {genre} stories "
+                f"with a {mood} mood for a {target_audience} audience."
             )
             
-            if not response or not response.choices:
-                raise Exception("No response from story generation API")
+            result = self._make_api_call(formatted_prompt, system_content)
+            
+            if result["error"]:
+                error_msg = result["error"]
+                return None
                 
-            story = response.choices[0].message.content
-            if not story:
-                raise Exception("Empty response from story generation API")
+            story = result["story"]
             
             # Split into paragraphs and clean each one
             paragraphs_raw = [p for p in story.split('\n\n') if p.strip()]
