@@ -4,44 +4,20 @@
 <div class="content-wrapper">
     <h1 class="display-4 mb-5 text-center">Edit Your Story</h1>
     
-    {% if story.title %}
-    <h2 class="text-center mb-4">{{ story.title }}</h2>
-    {% endif %}
-    
     <div class="story-editor mb-5">
-        {% if story.paragraphs %}
-            {% for paragraph in story.paragraphs %}
-            <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
-                <div class="card">
-                    <div class="card-body">
-                        {% if paragraph.is_title %}
-                            <h3 class="mb-3">Title</h3>
-                        {% elif paragraph.is_header %}
-                            <h4 class="mb-3">Section Header</h4>
-                        {% endif %}
-                        <textarea class="form-control paragraph-text mb-3" rows="4">{{ paragraph.text }}</textarea>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary save-paragraph">Save Changes</button>
-                        </div>
+        {% for paragraph in story.paragraphs %}
+        <div class="paragraph-container mb-4" data-index="{{ loop.index0 }}">
+            <div class="card">
+                <div class="card-body">
+                    <textarea class="form-control paragraph-text mb-3" rows="4">{{ paragraph.text }}</textarea>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary save-paragraph">Save Changes</button>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="alert alert-info">
-                No content available. Try uploading a file again.
-            </div>
-        {% endif %}
+        </div>
+        {% endfor %}
     </div>
-    
-    {% if story.total_sections > 1 %}
-    <div class="d-flex justify-content-center mb-4">
-        <button id="load-next-section" class="btn btn-success">
-            Load Next Section
-            <span class="badge bg-light text-dark ms-2">{{ story.total_sections - 1 }} remaining</span>
-        </button>
-    </div>
-    {% endif %}
     
     <div class="d-flex justify-content-center gap-3">
         <a href="/" class="btn btn-secondary">Back to Prompt</a>

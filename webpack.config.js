@@ -1,31 +1,11 @@
 const path = require('path');
 
 module.exports = {
-    mode: 'production',
+    mode: 'development',
     entry: './static/js/customize.js',
     output: {
         path: path.resolve(__dirname, 'static/dist'),
-        filename: '[name].[contenthash].js',
-        chunkFilename: '[name].[contenthash].js',
-        clean: true
-    },
-    optimization: {
-        splitChunks: {
-            chunks: 'all',
-            minSize: 20000,
-            maxSize: 244000,
-            cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'all',
-                }
-            }
-        }
-    },
-    performance: {
-        maxEntrypointSize: 512000,
-        maxAssetSize: 512000
+        filename: 'bundle.js'
     },
     module: {
         rules: [
@@ -35,8 +15,7 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-react'],
-                        cacheDirectory: true
+                        presets: ['@babel/preset-react']
                     }
                 }
             },

@@ -68,48 +68,22 @@ def edit():
     try:
         if 'story_data' not in session:
             return redirect(url_for('index'))
-
+            
+        # Get full data from temp storage
         temp_id = session['story_data'].get('temp_id')
         if not temp_id:
             logger.error("No temp_id found in session")
             return redirect(url_for('index'))
-
+            
         temp_data = TempBookData.query.get(temp_id)
         if not temp_data:
             logger.error(f"No temp data found for ID: {temp_id}")
             return redirect(url_for('index'))
-
-        logger.info(f"Temp data: {temp_data.data}")
-
-        # Get first section's content
-        sections = temp_data.data.get('sections', [])
-        if not sections:
-            logger.error("No sections found in temp data")
-            return redirect(url_for('index'))
-
-        # Process first section if not already processed
-        first_section = sections[0]
-        if not first_section.get('processed'):
-            first_section_chunks = book_processor._process_section(first_section)
-            first_section['chunks'] = first_section_chunks
-            first_section['processed'] = True
-            temp_data.data['sections'][0] = first_section
-            db.session.commit()
-
-        # Create story data structure
-        story_data = {
-            'temp_id': temp_id,
-            'title': sections[0].get('title', 'Untitled Story'),
-            'paragraphs': first_section.get('chunks', []),
-            'total_sections': len(sections)
-        }
-
-        logger.info(f"Story data prepared: {story_data}")
-
-        return render_template('story/edit.html', story=story_data)
-
+            
+        return render_template('story/edit.html', story=temp_data.data)
+        
     except Exception as e:
-        logger.error(f"Error in edit route: {str(e)}", exc_info=True)
+        logger.error(f"Error in edit route: {str(e)}")
         return redirect(url_for('index'))
 
 @story_bp.route('/story/customize', methods=['GET'])
