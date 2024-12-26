@@ -1,3 +1,4 @@
+
 import websockets
 import json
 import asyncio
@@ -28,80 +29,89 @@ class HumeAudioGenerator:
         ]
 
         self.ws_url = f"{base_url}?{'&'.join(params)}"
+        self.ws = None
 
     async def _connect(self):
-        self.ws = await websockets.connect(self.ws_url)
-        metadata = await self.ws.recv()
-        return json.loads(metadata)
+        """
+        Establishes a WebSocket connection to the Hume API.
+        
+        Returns:
+            websockets.WebSocketClientProtocol: The established WebSocket connection
+            
+        Raises:
+            websockets.exceptions.WebSocketException: If connection fails
+        """
+        try:
+            ws = await websockets.connect(self.ws_url)
+            metadata = await ws.recv()
+            logger.info("Successfully established WebSocket connection")
+            return ws
+        except Exception as e:
+            logger.error(f"Failed to establish WebSocket connection: {str(e)}")
+            raise
 
     async def _generate_audio_async(self, text, max_connection_retries=3, chunk_retries=3):
-        try:
-            # Initialize audio data collection
-            audio_data = bytearray()
-            failed_chunks = []
+        """
+        Asynchronously generates audio from text using Hume API with improved error handling.
+        
+        Args:
+            text (str): Input text to convert to audio
+            max_connection_retries (int): Maximum connection retry attempts
+            chunk_retries (int): Maximum chunk processing retry attempts
             
-            # Split text into smaller chunks (around 100 characters each)
-            chunks = []
-            max_chunk_size = 100  # Reduced from 200 to 100
-            sentences = text.split('. ')
-            current_chunk = []
-            current_length = 0
-            
-            # Track overall progress
-            total_chunks = 0
-            processed_chunks = 0
-            
-            for sentence in sentences:
-                # If sentence itself is too long, split it further
-                if len(sentence) > max_chunk_size:
-                    words = sentence.split()
-                    temp_chunk = []
-                    temp_length = 0
-                    
-                    for word in words:
-                        if temp_length + len(word) > max_chunk_size and temp_chunk:
-                            chunks.append(' '.join(temp_chunk) + '.')
-                            temp_chunk = [word]
-                            temp_length = len(word)
-                        else:
-                            temp_chunk.append(word)
-                            temp_length += len(word) + 1
-                    
-                    if temp_chunk:
+        Returns:
+            str: Path to generated audio file or None if generation fails
+        """
+        audio_data = bytearray()
+        failed_chunks = []
+        
+        # Prepare text chunks
+        chunks = []
+        max_chunk_size = 100
+        sentences = text.split('. ')
+        current_chunk = []
+        current_length = 0
+        
+        # Text chunking logic
+        for sentence in sentences:
+            if len(sentence) > max_chunk_size:
+                words = sentence.split()
+                temp_chunk = []
+                temp_length = 0
+                
+                for word in words:
+                    if temp_length + len(word) > max_chunk_size and temp_chunk:
                         chunks.append(' '.join(temp_chunk) + '.')
-                else:
-                    if current_length + len(sentence) > max_chunk_size and current_chunk:
-                        chunks.append('. '.join(current_chunk) + '.')
-                        current_chunk = [sentence]
-                        current_length = len(sentence)
+                        temp_chunk = [word]
+                        temp_length = len(word)
                     else:
-                        current_chunk.append(sentence)
-                        current_length += len(sentence)
+                        temp_chunk.append(word)
+                        temp_length += len(word) + 1
+                
+                if temp_chunk:
+                    chunks.append(' '.join(temp_chunk) + '.')
+            else:
+                if current_length + len(sentence) > max_chunk_size and current_chunk:
+                    chunks.append('. '.join(current_chunk) + '.')
+                    current_chunk = [sentence]
+                    current_length = len(sentence)
+                else:
+                    current_chunk.append(sentence)
+                    current_length += len(sentence)
+        
+        if current_chunk:
+            chunks.append('. '.join(current_chunk))
+
+        # Process chunks
+        try:
+            self.ws = await self._connect()
             
-            if current_chunk:
-                chunks.append('. '.join(current_chunk))
-            
-            # Process each chunk with enhanced retry logic
             for chunk_index, chunk in enumerate(chunks):
-                connection_retry_count = 0
                 chunk_retry_count = 0
                 success = False
                 
-                while not success and connection_retry_count < max_connection_retries:
+                while not success and chunk_retry_count < chunk_retries:
                     try:
-                        # Connect for each chunk with retry logic
-                        connection_attempts = 0
-                        while connection_attempts < 3:
-                            try:
-                                await self._connect()
-                                break
-                            except Exception as conn_error:
-                                connection_attempts += 1
-                                if connection_attempts == 3:
-                                    raise Exception(f"Failed to establish connection after 3 attempts: {str(conn_error)}")
-                                await asyncio.sleep(1)
-                        
-                        logger.info(f"Processing text chunk {chunk_index + 1}/{len(chunks)}: {len(chunk)} characters")
                         message = {
                             "type": "user_input",
                             "text": chunk
@@ -111,60 +121,47 @@ class HumeAudioGenerator:
                         chunk_success = False
                         chunk_data_buffer = bytearray()
                         
-                        # Collect audio data for this chunk with timeout
-                        try:
-                            async with asyncio.timeout(30):  # 30-second timeout per chunk
-                                while True:
-                                    response = await self.ws.recv()
-                                    response_data = json.loads(response)
-                                    
-                                    if response_data["type"] == "audio_output":
-                                        chunk_data = base64.b64decode(response_data["data"])
-                                        chunk_data_buffer.extend(chunk_data)
-                                        logger.info(f"Received audio chunk: {len(chunk_data)} bytes")
-                                    
-                                    elif response_data["type"] == "assistant_end":
-                                        logger.info(f"Successfully processed chunk {chunk_index + 1}/{len(chunks)}")
-                                        chunk_success = True
-                                        break
-                                    
-                                    elif response_data["type"] == "error":
-                                        raise Exception(response_data.get('message', 'Unknown error'))
-                                    
-                            if chunk_success:
-                                audio_data.extend(chunk_data_buffer)
-                                processed_chunks += 1
-                                success = True
-                                # Add small delay between chunks
-                                await asyncio.sleep(0.5)
-                                break  # Success, exit retry loop
+                        async with asyncio.timeout(30):
+                            while True:
+                                response = await self.ws.recv()
+                                response_data = json.loads(response)
                                 
-                        except asyncio.TimeoutError:
-                            logger.error(f"Timeout processing chunk {chunk_index + 1}")
-                            raise Exception("Chunk processing timeout")
+                                if response_data["type"] == "audio_output":
+                                    chunk_data = base64.b64decode(response_data["data"])
+                                    chunk_data_buffer.extend(chunk_data)
+                                    logger.info(f"Received audio chunk: {len(chunk_data)} bytes")
+                                
+                                elif response_data["type"] == "assistant_end":
+                                    logger.info(f"Successfully processed chunk {chunk_index + 1}/{len(chunks)}")
+                                    chunk_success = True
+                                    break
+                                
+                                elif response_data["type"] == "error":
+                                    raise Exception(response_data.get('message', 'Unknown error from Hume API'))
                         
-                    except Exception as e:
-                        error_msg = f"Error processing chunk {chunk_index + 1} (attempt {chunk_retry_count + 1}): {str(e)}"
-                        logger.error(error_msg)
-                        chunk_retry_count += 1
-                        connection_retry_count += 1
-                        
-                        if chunk_retry_count == chunk_retries:
-                            logger.error(f"Failed to process chunk {chunk_index + 1} after {chunk_retries} attempts")
-                            failed_chunks.append({
-                                'index': chunk_index,
-                                'text': chunk,
-                                'error': str(e)
-                            })
+                        if chunk_success:
+                            audio_data.extend(chunk_data_buffer)
+                            success = True
+                            await asyncio.sleep(0.5)
                             break
                             
-                        await asyncio.sleep(2 ** chunk_retry_count)  # Exponential backoff
-                    finally:
-                        if hasattr(self, 'ws'):
-                            await self.ws.close()
-                            logger.info("WebSocket connection closed")
+                    except asyncio.TimeoutError:
+                        logger.error(f"Timeout processing chunk {chunk_index + 1}")
+                        chunk_retry_count += 1
+                        await asyncio.sleep(2 ** chunk_retry_count)
+                    except Exception as e:
+                        logger.error(f"Error processing chunk {chunk_index + 1} (attempt {chunk_retry_count + 1}): {str(e)}")
+                        chunk_retry_count += 1
+                        await asyncio.sleep(2 ** chunk_retry_count)
+                
+                if not success:
+                    failed_chunks.append({
+                        'index': chunk_index,
+                        'text': chunk,
+                        'error': 'Maximum retry attempts reached'
+                    })
 
-            # Save complete audio file
+            # Save audio file if we have data
             if audio_data:
                 filename = f"paragraph_audio_{int(time.time())}.wav"
                 filepath = os.path.join(self.audio_dir, filename)
@@ -182,10 +179,26 @@ class HumeAudioGenerator:
             return None
             
         except Exception as e:
-            logger.error(f"Error generating audio with Hume: {str(e)}")
+            logger.error(f"Error in audio generation: {str(e)}")
             return None
+        finally:
+            if self.ws:
+                try:
+                    await self.ws.close()
+                    logger.info("WebSocket connection closed")
+                except Exception as e:
+                    logger.error(f"Error closing WebSocket connection: {str(e)}")
 
     def generate_audio(self, text):
+        """
+        Synchronous wrapper for audio generation.
+        
+        Args:
+            text (str): Input text to convert to audio
+            
+        Returns:
+            str: Path to generated audio file or None if generation fails
+        """
         try:
             return asyncio.run(self._generate_audio_async(text))
         except Exception as e:
