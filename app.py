@@ -23,12 +23,25 @@ logger = logging.getLogger(__name__)
 # Initialize database
 db.init_app(app)
 
-# Initialize services
+# Initialize services with proper error handling
 from services.text_generator import TextGenerator
 from services.book_processor import BookProcessor
 from models import TempBookData
-text_service = TextGenerator()
-book_processor = BookProcessor()
+
+text_service = None
+book_processor = None
+
+try:
+    text_service = TextGenerator()
+    logger.info("Text generator service initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize text generator service: {str(e)}")
+
+try:
+    book_processor = BookProcessor()
+    logger.info("Book processor service initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize book processor service: {str(e)}")
 
 # Register blueprints
 from blueprints.story import story_bp
@@ -37,9 +50,14 @@ from blueprints.generation import generation_bp
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
 
+# Initialize database tables
 with app.app_context():
-    import models
-    db.create_all()
+    try:
+        import models
+        db.create_all()
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {str(e)}")
 
 @app.route('/')
 def index():
@@ -51,6 +69,9 @@ def index():
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
     try:
+        if not text_service:
+            raise ValueError("Text generation service is not available")
+
         # Validate form data
         required_fields = ['prompt', 'genre', 'mood', 'target_audience']
         for field in required_fields:
@@ -63,16 +84,16 @@ def generate_story():
         mood = request.form.get('mood')
         target_audience = request.form.get('target_audience')
         num_paragraphs = int(request.form.get('paragraphs', 5))
-        
+
         logger.info(f"Generating story with prompt: {prompt[:50]}...")
         # Generate story paragraphs
         story_paragraphs = text_service.generate_story(
             prompt, genre, mood, target_audience, num_paragraphs)
-            
+
         if not story_paragraphs:
             logger.error("Failed to generate story paragraphs")
             return jsonify({'error': 'Failed to generate story'}), 500
-            
+
         # Create story data structure
         story_data = {
             'prompt': prompt,
@@ -82,10 +103,10 @@ def generate_story():
             'created_at': str(datetime.now()),
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None, 'image_style': 'realistic'} for p in story_paragraphs]
         }
-        
+
         # Create a new TempBookData entry with UUID
         temp_data = TempBookData(data=story_data)
-        
+
         try:
             db.session.add(temp_data)
             db.session.commit()
@@ -94,7 +115,7 @@ def generate_story():
             db.session.rollback()
             logger.error(f"Database error: {str(db_error)}")
             return jsonify({'error': 'Failed to save story data'}), 500
-        
+
         # Store story data in session
         session['story_data'] = {
             'temp_id': temp_data.id,
@@ -102,10 +123,10 @@ def generate_story():
             'paragraphs': story_data['paragraphs']
         }
         session.modified = True
-        
+
         logger.info("Story generation successful, redirecting to edit page")
         return jsonify({'success': True, 'redirect': '/story/edit'})
-        
+
     except Exception as e:
         logger.error(f"Error generating story: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -114,7 +135,7 @@ def generate_story():
 def save_story():
     if 'story_data' not in session:
         return jsonify({'error': 'No story data found'}), 404
-        
+
     try:
         # TODO: Implement story saving logic to database
         return jsonify({'success': True})
@@ -147,7 +168,7 @@ def check_story_data():
        request.path == '/generate_story' or \
        request.path == '/story/upload':  # Add upload route to exclusions
         return
-        
+
     # Check if story data exists for protected routes
     if 'story_data' not in session and \
        (request.path.startswith('/story/') or request.path.startswith('/save')):
