@@ -121,8 +121,8 @@ def generate_story():
         # Store story data in session
         session['story_data'] = {
             'temp_id': temp_data.id,
-            'story_context': '\n\n'.join(story_paragraphs),
-            'paragraphs': story_data['paragraphs']
+            #'story_context': '\n\n'.join(story_paragraphs), #Removed to reduce session size
+            #'paragraphs': story_data['paragraphs'] #Removed to reduce session size
         }
         session.modified = True
 
@@ -143,6 +143,41 @@ def save_story():
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Error saving story: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/story/upload', methods=['POST'])
+def upload_story():
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not book_processor:
+            return jsonify({'error': 'Book processing service is not available'}), 500
+
+        # Process the uploaded file
+        result = book_processor.process_file(file)
+
+        if 'error' in result:
+            return jsonify({'error': result['error']}), 400
+
+        # Store only the ID in session, not the full data
+        session['story_data'] = {
+            'temp_id': result['temp_id']
+        }
+        session.modified = True
+
+        return jsonify({
+            'success': True,
+            'message': 'File processed successfully',
+            'temp_id': result['temp_id']
+        })
+
+    except Exception as e:
+        logger.error(f"Error processing upload: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)

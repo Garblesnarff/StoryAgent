@@ -1,0 +1,23 @@
+ "POST /story/upload HTTP/1.1" 400 -
+2025-01-01 15:20:53,864 - services.book_processor - INFO - Initial text length: 437370 characters
+2025-01-01 15:20:53,865 - services.book_processor - INFO - Detected chapter boundaries: 1079 to 437370
+2025-01-01 15:20:53,865 - services.book_processor - INFO - Extracted first chapter: 436291 characters
+2025-01-01 15:20:53,892 - services.book_processor - INFO - Extracted 2850 total sentences
+2025-01-01 15:20:53,895 - services.book_processor - INFO - Successfully processed 1425 two-sentence chunks from first chapter
+2025-01-01 15:20:54,092 - services.book_processor - INFO - Initial text length: 437370 characters
+2025-01-01 15:20:54,093 - services.book_processor - INFO - Detected chapter boundaries: 1079 to 437370
+2025-01-01 15:20:54,093 - services.book_processor - INFO - Extracted first chapter: 436291 characters
+2025-01-01 15:20:54,119 - services.book_processor - INFO - Extracted 2850 total sentences
+2025-01-01 15:20:54,124 - services.book_processor - INFO - Successfully processed 1425 two-sentence chunks from first chapter
+2025-01-01 15:20:54,497 - services.book_processor - INFO - Saved processed book data with ID: cde6eb52-20c7-4045-a9dc-c9afd4a0139a
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 220602 bytes but the header required 26 extra bytes. The final size was 220628 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+2025-01-01 15:20:54,537 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:20:54] "POST /story/upload HTTP/1.1" 200 -
+2025-01-01 15:20:55,016 - services.book_processor - INFO - Saved processed book data with ID: 3e285297-ca7e-4dad-af26-46b18f206a50
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 220603 bytes but the header required 26 extra bytes. The final size was 220629 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+2025-01-01 15:20:55,055 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:20:55] "POST /story/upload HTTP/1.1" 200 -
+2025-01-01 15:20:58,317 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:20:58] "GET /story/edit HTTP/1.1" 302 -
+2025-01-01 15:20:58,431 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:20:58] "GET / HTTP/1.1" 200 -
+2025-01-01 15:20:58,695 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:20:58] "GET /static/css/custom.css HTTP/1.1" 304 -
+2025-01-01 15:20:58,804 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:20:58] "GET /static/js/main.js HTTP/1.1" 304 -
