@@ -121,8 +121,6 @@ def generate_story():
         # Store story data in session
         session['story_data'] = {
             'temp_id': temp_data.id,
-            #'story_context': '\n\n'.join(story_paragraphs), #Removed to reduce session size
-            #'paragraphs': story_data['paragraphs'] #Removed to reduce session size
         }
         session.modified = True
 
@@ -169,25 +167,16 @@ def upload_story():
             logger.error(f"Error in book processing: {result['error']}")
             return jsonify({'error': result['error']}), 400
 
-        if not result.get('temp_id'):
-            logger.error("No temp_id returned from book processing")
-            return jsonify({'error': 'Failed to process file'}), 500
-
         # Store minimal data in session
         session['story_data'] = {
-            'temp_id': result['temp_id'],
-            'total_chunks': result.get('total_chunks', 0),
-            'current_position': result.get('current_position', 0)
+            'temp_id': result['temp_id']
         }
         session.modified = True
 
-        logger.info(f"Successfully processed initial batch, temp_id: {result['temp_id']}")
+        logger.info(f"Successfully processed file, temp_id: {result['temp_id']}")
         return jsonify({
             'success': True,
-            'message': 'File processed successfully',
-            'temp_id': result['temp_id'],
-            'total_chunks': result.get('total_chunks', 0),
-            'current_position': result.get('current_position', 0)
+            'message': 'File processed successfully'
         })
 
     except Exception as e:

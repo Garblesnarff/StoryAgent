@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Server returned an invalid response');
             }
 
-            if (!response.ok) {
+            if (!response.ok || !data.success) {
                 throw new Error(data.error || 'Upload failed');
             }
 
@@ -123,11 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Text extraction phase
             uploadStatus.innerHTML = '<strong><span class="phase-icon">📑</span>Phase 3/3:</strong> Extracting text...';
             await animateProgress(progressBar, 66, 100);
-
-            // Verify we have the required data
-            if (!data.success || !data.temp_id) {
-                throw new Error(data.error || 'Invalid response from server');
-            }
 
             // Success - redirect to editor
             uploadStatus.innerHTML = '<strong><span class="phase-icon">✨</span>Complete!</strong> Redirecting to editor...';
