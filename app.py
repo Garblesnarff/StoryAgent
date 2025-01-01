@@ -194,6 +194,55 @@ def upload_story():
         logger.error(f"Error processing upload: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/story/load_more', methods=['POST'])
+def load_more_chunks():
+    try:
+        if 'story_data' not in session:
+            logger.error("No story data found in session")
+            return jsonify({'error': 'No story data found'}), 404
+
+        temp_id = session['story_data'].get('temp_id')
+        if not temp_id:
+            logger.error("No temp_id found in session")
+            return jsonify({'error': 'Invalid session data'}), 400
+
+        current_position = session['story_data'].get('current_position', 0)
+        total_chunks = session['story_data'].get('total_chunks', 0)
+
+        if current_position >= total_chunks:
+            logger.error("No more chunks available")
+            return jsonify({'error': 'No more chunks available'}), 400
+
+        # Get stored data
+        temp_data = TempBookData.query.get(temp_id)
+        if not temp_data:
+            logger.error(f"No data found for temp_id: {temp_id}")
+            return jsonify({'error': 'Data not found'}), 404
+
+        # Calculate next batch
+        next_batch_size = min(10, total_chunks - current_position)
+        new_position = current_position + next_batch_size
+
+        # Get next batch of paragraphs
+        next_paragraphs = temp_data.data.get('paragraphs')[current_position:new_position]
+
+        # Update session
+        session['story_data']['current_position'] = new_position
+        session.modified = True
+
+        logger.info(f"Loaded more chunks for temp_id {temp_id}, position {current_position} to {new_position}")
+        return jsonify({
+            'success': True,
+            'paragraphs': next_paragraphs,
+            'start_index': current_position,
+            'current_position': new_position,
+            'total_chunks': total_chunks
+        })
+
+    except Exception as e:
+        logger.error(f"Error loading more chunks: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({'error': 'The requested page was not found'}), 404
@@ -217,7 +266,8 @@ def check_story_data():
     if request.path.startswith('/static') or \
        request.path == '/' or \
        request.path == '/generate_story' or \
-       request.path == '/story/upload':
+       request.path == '/story/upload' or \
+       request.path == '/story/load_more':
         return
 
     # Check if story data exists for protected routes

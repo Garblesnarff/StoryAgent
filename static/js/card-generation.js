@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 0;
     let totalPages = 0;
     let session = { story_data: { paragraphs: [] } };
-    
+
     // Initialize tooltips for all elements
     function initTooltips(container = document) {
         const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
-    
+
     function createPageElement(paragraph, index) {
         if (!paragraph) return null;
         const pageDiv = document.createElement('div');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.dataset.index = index;
         pageDiv.style.opacity = '1';
         pageDiv.style.display = 'block';
-        
+
         pageDiv.innerHTML = `
             <div class="card h-100">
                 ${paragraph.image_url ? `
@@ -50,30 +50,30 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="alert alert-danger mt-2 d-none" role="alert"></div>
         `;
-        
+
         // Initialize tooltips for the new page
         initTooltips(pageDiv);
-        
+
         // Add event listeners for regeneration buttons
         const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
         regenerateImageBtn?.addEventListener('click', async () => {
             await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
         });
-        
+
         return pageDiv;
     }
-    
+
     async function handleRegeneration(type, button, pageDiv, paragraph, index) {
         const spinner = button.querySelector('.spinner-border');
         const buttonText = button.querySelector('.button-text');
         const alert = pageDiv.querySelector('.alert');
-        
+
         try {
             button.disabled = true;
             spinner.classList.remove('d-none');
             buttonText.textContent = `Regenerating ${type}...`;
             alert.classList.add('d-none');
-            
+
             const response = await fetch(`/story/regenerate_${type}`, {
                 method: 'POST',
                 headers: {
@@ -85,11 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     style: paragraph.image_style || 'realistic'
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error(`Failed to regenerate ${type}`);
             }
-            
+
             const data = await response.json();
             if (data.success) {
                 if (type === 'image') {
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 throw new Error(data.error || `Failed to regenerate ${type}`);
             }
-            
+
         } catch (error) {
             console.error('Error:', error);
             alert.textContent = `Failed to regenerate ${type}. Please try again.`;
@@ -123,15 +123,69 @@ document.addEventListener('DOMContentLoaded', () => {
             buttonText.textContent = `Regenerate ${type.charAt(0).toUpperCase() + type.slice(1)}`;
         }
     }
-    
+
+    // Add load more functionality
+    const loadMoreBtn = document.getElementById('load-more');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', async () => {
+            const spinner = loadMoreBtn.querySelector('.spinner-border');
+            const buttonText = loadMoreBtn.querySelector('.button-text');
+
+            try {
+                buttonText.textContent = 'Loading...';
+                spinner.classList.remove('d-none');
+                loadMoreBtn.disabled = true;
+
+                const response = await fetch('/story/load_more', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load more chunks');
+                }
+
+                const paragraphCards = document.getElementById('paragraph-cards');
+
+                // Add new pages
+                data.paragraphs.forEach((paragraph, i) => {
+                    const pageElement = createPageElement(paragraph, data.start_index + i);
+                    if (pageElement) {
+                        paragraphCards.appendChild(pageElement);
+                    }
+                });
+
+                // Update navigation
+                updateNavigation();
+
+                // Hide load more button if we've reached the end
+                if (data.current_position >= data.total_chunks) {
+                    loadMoreBtn.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                buttonText.textContent = 'Error Loading More';
+            } finally {
+                buttonText.textContent = 'Load More';
+                spinner.classList.add('d-none');
+                loadMoreBtn.disabled = false;
+            }
+        });
+    }
+
     function updateNavigation() {
         const pages = document.querySelectorAll('.book-page');
         totalPages = pages.length;
         const prevButton = document.querySelector('.book-nav.prev');
         const nextButton = document.querySelector('.book-nav.next');
-        
+
         if (!prevButton || !nextButton) return;
-        
+
         if (totalPages > 1) {
             prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
             nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
@@ -139,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prevButton.style.display = 'none';
             nextButton.style.display = 'none';
         }
-        
+
         pages.forEach((page, index) => {
             if (index === currentPage) {
                 page.style.display = 'block';
@@ -148,24 +202,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     const nextButton = document.querySelector('.book-nav.next');
     const prevButton = document.querySelector('.book-nav.prev');
-    
+
     nextButton?.addEventListener('click', () => {
         if (currentPage < totalPages - 1) {
             currentPage++;
             updateNavigation();
         }
     });
-    
+
     prevButton?.addEventListener('click', () => {
         if (currentPage > 0) {
             currentPage--;
             updateNavigation();
         }
     });
-    
+
     async function generateCards() {
         try {
             if (storyOutput) {
@@ -176,26 +230,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/story/generate_cards', {
                 method: 'POST'
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to generate cards');
             }
-            
+
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
-            
+
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
-                
+
                 buffer += decoder.decode(value, {stream: true});
                 const lines = buffer.split('\n');
-                
+
                 for (let i = 0; i < lines.length - 1; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
-                    
+
                     try {
                         const data = JSON.parse(line);
                         switch (data.type) {
@@ -207,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (paragraphCards && data.data) {
                                     const index = data.data.index;
                                     let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
-                                    
+
                                     if (!pageElement) {
                                         pageElement = createPageElement(data.data, index);
                                         if (pageElement) {
@@ -221,14 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                             pageElement.innerHTML = newPage.innerHTML;
                                             // Initialize tooltips for updated content
                                             initTooltips(pageElement);
-                                            
+
                                             // Reattach event listeners
                                             const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
-                                            regenerateImageBtn?.addEventListener('click', () => 
+                                            regenerateImageBtn?.addEventListener('click', () =>
                                                 handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
                                         }
                                     }
-                                    
+
                                     updateNavigation();
                                 }
                                 break;
@@ -249,10 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error.message || 'An unknown error occurred');
         }
     }
-    
+
     // Initialize tooltips for initial content
     initTooltips();
-    
+
     if (document.getElementById('paragraph-cards')) {
         generateCards();
     }
