@@ -1,0 +1,40 @@
+- WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.36:5000
+2025-01-01 15:23:44,121 - werkzeug - INFO - Press CTRL+C to quit
+2025-01-01 15:23:44,122 - werkzeug - INFO -  * Restarting with stat
+2025-01-01 15:23:45,996 - services.book_processor - INFO - Successfully initialized Gemini API
+2025-01-01 15:23:45,996 - __main__ - INFO - Services initialized successfully
+2025-01-01 15:23:46,230 - services.book_processor - INFO - Successfully initialized Gemini API
+2025-01-01 15:23:46,241 - __main__ - INFO - Blueprints registered successfully
+2025-01-01 15:23:47,438 - __main__ - INFO - Database tables created successfully
+2025-01-01 15:23:47,439 - __main__ - INFO - Starting Flask application...
+2025-01-01 15:23:47,450 - werkzeug - WARNING -  * Debugger is active!
+2025-01-01 15:23:47,452 - werkzeug - INFO -  * Debugger PIN: 744-377-806
+2025-01-01 15:23:47,514 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:47] "GET / HTTP/1.1" 200 -
+2025-01-01 15:23:47,530 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:47] "GET /static/css/custom.css HTTP/1.1" 200 -
+2025-01-01 15:23:47,536 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:47] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-01-01 15:23:47,763 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:47] "GET / HTTP/1.1" 200 -
+2025-01-01 15:23:48,154 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:48] "GET /static/css/custom.css HTTP/1.1" 304 -
+2025-01-01 15:23:48,367 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:48] "GET / HTTP/1.1" 200 -
+2025-01-01 15:23:49,337 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:49] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-01-01 15:23:49,341 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:49] "GET /static/css/custom.css HTTP/1.1" 304 -
+2025-01-01 15:23:50,162 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:50] "GET /static/js/main.js HTTP/1.1" 304 -
+2025-01-01 15:23:50,277 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:23:50] "GET /static/js/main.js HTTP/1.1" 304 -
+2025-01-01 15:25:58,393 - services.book_processor - INFO - Initial text length: 437370 characters
+2025-01-01 15:25:58,394 - services.book_processor - INFO - Detected chapter boundaries: 1079 to 437370
+2025-01-01 15:25:58,394 - services.book_processor - INFO - Extracted first chapter: 436291 characters
+2025-01-01 15:25:58,424 - services.book_processor - INFO - Extracted 2850 total sentences
+2025-01-01 15:25:58,429 - services.book_processor - INFO - Successfully processed 1425 two-sentence chunks from first chapter
+2025-01-01 15:25:58,637 - services.book_processor - INFO - Initial text length: 437370 characters
+2025-01-01 15:25:58,638 - services.book_processor - INFO - Detected chapter boundaries: 1079 to 437370
+2025-01-01 15:25:58,638 - services.book_processor - INFO - Extracted first chapter: 436291 characters
+2025-01-01 15:25:58,670 - services.book_processor - INFO - Extracted 2850 total sentences
+2025-01-01 15:25:58,674 - services.book_processor - INFO - Successfully processed 1425 two-sentence chunks from first chapter
+2025-01-01 15:25:58,974 - services.book_processor - INFO - Saved processed book data with ID: 285a3603-e94a-451c-a81b-a922a0a2aa0e
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 220602 bytes but the header required 26 extra bytes. The final size was 220628 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+2025-01-01 15:25:59,022 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:25:59] "POST /story/upload HTTP/1.1" 200 -
+2025-01-01 15:25:59,571 - services.book_processor - INFO - Saved processed book data with ID: ed1cd644-666b-42ec-bc08-c6f9a94e2aa2
+2025-01-01 15:25:59,610 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:25:59] "POST /story/upload HTTP/1.1" 200 -
