@@ -4,6 +4,7 @@ import secrets
 from datetime import datetime
 from database import db
 import logging
+import traceback
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -17,38 +18,39 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize database
 db.init_app(app)
 
 # Initialize services with proper error handling
-from services.text_generator import TextGenerator
-from services.book_processor import BookProcessor
-from models import TempBookData
-
-text_service = None
-book_processor = None
-
 try:
+    from services.text_generator import TextGenerator
+    from services.book_processor import BookProcessor
+    from models import TempBookData
+
     text_service = TextGenerator()
-    logger.info("Text generator service initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize text generator service: {str(e)}")
-
-try:
     book_processor = BookProcessor()
-    logger.info("Book processor service initialized successfully")
+    logger.info("Services initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize book processor service: {str(e)}")
+    logger.error(f"Service initialization error: {str(e)}\n{traceback.format_exc()}")
+    text_service = None
+    book_processor = None
 
 # Register blueprints
-from blueprints.story import story_bp
-from blueprints.generation import generation_bp
+try:
+    from blueprints.story import story_bp
+    from blueprints.generation import generation_bp
 
-app.register_blueprint(story_bp)
-app.register_blueprint(generation_bp)
+    app.register_blueprint(story_bp)
+    app.register_blueprint(generation_bp)
+    logger.info("Blueprints registered successfully")
+except Exception as e:
+    logger.error(f"Blueprint registration error: {str(e)}\n{traceback.format_exc()}")
 
 # Initialize database tables
 with app.app_context():
@@ -57,7 +59,7 @@ with app.app_context():
         db.create_all()
         logger.info("Database tables created successfully")
     except Exception as e:
-        logger.error(f"Error creating database tables: {str(e)}")
+        logger.error(f"Database initialization error: {str(e)}\n{traceback.format_exc()}")
 
 @app.route('/')
 def index():
@@ -101,7 +103,7 @@ def generate_story():
             'mood': mood,
             'target_audience': target_audience,
             'created_at': str(datetime.now()),
-            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None, 'image_style': 'realistic'} for p in story_paragraphs]
+            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
         }
 
         # Create a new TempBookData entry with UUID
@@ -128,7 +130,7 @@ def generate_story():
         return jsonify({'success': True, 'redirect': '/story/edit'})
 
     except Exception as e:
-        logger.error(f"Error generating story: {str(e)}")
+        logger.error(f"Error generating story: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/save_story', methods=['POST'])
@@ -166,7 +168,7 @@ def check_story_data():
     if request.path.startswith('/static') or \
        request.path == '/' or \
        request.path == '/generate_story' or \
-       request.path == '/story/upload':  # Add upload route to exclusions
+       request.path == '/story/upload':
         return
 
     # Check if story data exists for protected routes
@@ -176,4 +178,5 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
+    logger.info("Starting Flask application...")
     app.run(host='0.0.0.0', port=5000, debug=True)
