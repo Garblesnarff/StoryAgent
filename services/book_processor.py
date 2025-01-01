@@ -286,30 +286,24 @@ class BookProcessor:
             first_chapter = text[start_idx:end_idx]
             logger.info(f"Extracted first chapter: {len(first_chapter)} characters")
 
-            # Split into sentences and create chunks
+            # Split into sentences
             sentences = self._split_into_sentences(first_chapter)
             logger.info(f"Extracted {len(sentences)} total sentences")
 
             # Group into 2-sentence chunks for the entire chapter
             story_chunks = []
-            for i in range(0, len(sentences), 2):
-                try:
-                    # Create chunk from pair of sentences or single sentence if at end
-                    if i + 1 < len(sentences):
-                        chunk_text = f"{sentences[i]} {sentences[i+1]}"
-                    else:
-                        chunk_text = sentences[i]
+            chunk_size = 2  # Keep the exact same 2-sentence chunk format
 
-                    # Add valid chunks to result
-                    if chunk_text and len(chunk_text.split()) > 5:  # Basic validation
+            for i in range(0, len(sentences), chunk_size):
+                chunk_sentences = sentences[i:i + chunk_size]
+                if chunk_sentences:  # Ensure we have sentences
+                    chunk_text = ' '.join(chunk_sentences)
+                    if chunk_text and len(chunk_text.split()) >= 5:  # Basic validation
                         story_chunks.append({
                             'text': chunk_text,
                             'image_url': None,
                             'audio_url': None
                         })
-                except Exception as chunk_error:
-                    logger.error(f"Error creating chunk {i//2}: {str(chunk_error)}")
-                    continue
 
             logger.info(f"Successfully processed {len(story_chunks)} two-sentence chunks from first chapter")
             return story_chunks

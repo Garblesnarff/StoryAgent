@@ -149,27 +149,37 @@ def save_story():
 def upload_story():
     try:
         if 'file' not in request.files:
+            logger.error("No file found in request")
             return jsonify({'error': 'No file provided'}), 400
 
         file = request.files['file']
         if file.filename == '':
+            logger.error("Empty filename provided")
             return jsonify({'error': 'No file selected'}), 400
 
         if not book_processor:
+            logger.error("Book processor service not initialized")
             return jsonify({'error': 'Book processing service is not available'}), 500
 
         # Process the uploaded file
+        logger.info(f"Processing uploaded file: {file.filename}")
         result = book_processor.process_file(file)
 
-        if 'error' in result:
+        if result.get('error'):
+            logger.error(f"Error in book processing: {result['error']}")
             return jsonify({'error': result['error']}), 400
 
-        # Store only the ID in session, not the full data
+        if not result.get('temp_id'):
+            logger.error("No temp_id returned from book processing")
+            return jsonify({'error': 'Failed to process file'}), 500
+
+        # Store only the ID in session
         session['story_data'] = {
             'temp_id': result['temp_id']
         }
         session.modified = True
 
+        logger.info(f"Successfully processed file, temp_id: {result['temp_id']}")
         return jsonify({
             'success': True,
             'message': 'File processed successfully',

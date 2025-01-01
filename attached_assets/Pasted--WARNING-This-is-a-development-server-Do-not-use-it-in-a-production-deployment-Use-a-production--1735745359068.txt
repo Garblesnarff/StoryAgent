@@ -1,0 +1,41 @@
+- WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.196.36:5000
+2025-01-01 15:28:16,157 - werkzeug - INFO - Press CTRL+C to quit
+2025-01-01 15:28:16,158 - werkzeug - INFO -  * Restarting with stat
+2025-01-01 15:28:18,226 - services.book_processor - INFO - Successfully initialized Gemini API
+2025-01-01 15:28:18,226 - __main__ - INFO - Services initialized successfully
+2025-01-01 15:28:18,453 - services.book_processor - INFO - Successfully initialized Gemini API
+2025-01-01 15:28:18,465 - __main__ - INFO - Blueprints registered successfully
+2025-01-01 15:28:19,607 - __main__ - INFO - Database tables created successfully
+2025-01-01 15:28:19,608 - __main__ - INFO - Starting Flask application...
+2025-01-01 15:28:19,618 - werkzeug - WARNING -  * Debugger is active!
+2025-01-01 15:28:19,619 - werkzeug - INFO -  * Debugger PIN: 646-802-100
+2025-01-01 15:28:19,670 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:19] "GET / HTTP/1.1" 200 -
+2025-01-01 15:28:19,674 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:19] "GET / HTTP/1.1" 200 -
+2025-01-01 15:28:19,687 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:19] "GET /static/css/custom.css HTTP/1.1" 200 -
+2025-01-01 15:28:19,701 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:19] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-01-01 15:28:19,943 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:19] "GET /static/css/custom.css HTTP/1.1" 304 -
+2025-01-01 15:28:20,750 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:20] "GET /static/js/main.js HTTP/1.1" 304 -
+2025-01-01 15:28:22,341 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:22] "GET / HTTP/1.1" 200 -
+2025-01-01 15:28:22,591 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:22] "GET /static/css/custom.css HTTP/1.1" 304 -
+2025-01-01 15:28:23,063 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:23] "GET /static/js/main.js HTTP/1.1" 304 -
+2025-01-01 15:28:46,456 - services.book_processor - INFO - Initial text length: 437370 characters
+2025-01-01 15:28:46,459 - services.book_processor - INFO - Detected chapter boundaries: 1079 to 437370
+2025-01-01 15:28:46,459 - services.book_processor - INFO - Extracted first chapter: 436291 characters
+2025-01-01 15:28:46,505 - services.book_processor - INFO - Extracted 2850 total sentences
+2025-01-01 15:28:46,511 - services.book_processor - INFO - Successfully processed 1425 two-sentence chunks from first chapter
+2025-01-01 15:28:46,608 - services.book_processor - INFO - Initial text length: 437370 characters
+2025-01-01 15:28:46,609 - services.book_processor - INFO - Detected chapter boundaries: 1079 to 437370
+2025-01-01 15:28:46,609 - services.book_processor - INFO - Extracted first chapter: 436291 characters
+2025-01-01 15:28:46,636 - services.book_processor - INFO - Extracted 2850 total sentences
+2025-01-01 15:28:46,641 - services.book_processor - INFO - Successfully processed 1425 two-sentence chunks from first chapter
+2025-01-01 15:28:47,107 - services.book_processor - INFO - Saved processed book data with ID: 601dcb92-a693-41ad-a71a-db785a390654
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 220603 bytes but the header required 26 extra bytes. The final size was 220629 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+2025-01-01 15:28:47,147 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:47] "POST /story/upload HTTP/1.1" 200 -
+2025-01-01 15:28:47,480 - services.book_processor - INFO - Saved processed book data with ID: 8d1de386-1792-49b1-9807-4b79380d9d85
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:227: UserWarning: The 'session' cookie is too large: the value was 220604 bytes but the header required 26 extra bytes. The final size was 220630 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+2025-01-01 15:28:47,535 - werkzeug - INFO - 172.31.196.36 - - [01/Jan/2025 15:28:47] "POST /story/upload HTTP/1.1" 200 -
