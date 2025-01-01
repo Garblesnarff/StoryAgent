@@ -98,9 +98,8 @@ class BookProcessor:
 
                 return {
                     'temp_id': temp_id,
+                    'source_file': filename,
                     'paragraphs': initial_batch,  # Return only initial batch
-                    'total_chunks': total_chunks,
-                    'current_position': self.chunks_per_batch
                 }
 
             finally:
@@ -123,7 +122,7 @@ class BookProcessor:
             text = self._clean_text(text)
             logger.info(f"Initial text length: {len(text)} characters")
 
-            # Detect chapter boundaries
+            # Extract first chapter
             start_idx, end_idx = self._detect_chapter_boundaries(text)
             first_chapter = text[start_idx:end_idx]
             logger.info(f"Extracted first chapter: {len(first_chapter)} characters")
@@ -132,9 +131,9 @@ class BookProcessor:
             sentences = self._split_into_sentences(first_chapter)
             logger.info(f"Extracted {len(sentences)} total sentences")
 
-            # Group into 2-sentence chunks for the entire chapter
+            # Group into 2-sentence chunks
             story_chunks = []
-            chunk_size = 2  # Keep the exact same 2-sentence chunk format that was working
+            chunk_size = 2  # Keep exact same 2-sentence chunk format
 
             for i in range(0, len(sentences), chunk_size):
                 chunk_sentences = sentences[i:i + chunk_size]

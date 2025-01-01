@@ -89,71 +89,20 @@ def upload_story():
         # Store data in session
         session['story_data'] = {
             'temp_id': result['temp_id'],
-            'current_position': result['current_position']
+            'source_file': result['source_file'],
+            'paragraphs': result.get('paragraphs', [])
         }
-        session.modified = True
 
         logger.info(f"Successfully processed file, temp_id: {result['temp_id']}")
         return jsonify({
-            'success': True,
-            'message': 'File processed successfully'
+            'status': 'complete',
+            'message': 'Processing complete',
+            'progress': 100,
+            'redirect': '/story/edit'
         })
 
     except Exception as e:
         logger.error(f"Error processing upload: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/story/load_more', methods=['POST'])
-def load_more_chunks():
-    """Load the next batch of chunks."""
-    try:
-        if 'story_data' not in session:
-            logger.error("No story data found in session")
-            return jsonify({'error': 'No story data found'}), 404
-
-        temp_id = session['story_data'].get('temp_id')
-        if not temp_id:
-            logger.error("No temp_id found in session")
-            return jsonify({'error': 'Invalid session data'}), 400
-
-        # Get stored data
-        temp_data = TempBookData.query.get(temp_id)
-        if not temp_data:
-            logger.error(f"No data found for temp_id: {temp_id}")
-            return jsonify({'error': 'Data not found'}), 404
-
-        current_position = session['story_data'].get('current_position', 0)
-        total_chunks = len(temp_data.data['paragraphs'])
-
-        if current_position >= total_chunks:
-            logger.info("No more chunks available")
-            return jsonify({
-                'success': True,
-                'message': 'No more chunks available',
-                'current_position': current_position,
-                'total_chunks': total_chunks
-            })
-
-        # Get next batch of paragraphs
-        next_batch_size = min(10, total_chunks - current_position)
-        next_position = current_position + next_batch_size
-        next_paragraphs = temp_data.data['paragraphs'][current_position:next_position]
-
-        # Update session
-        session['story_data']['current_position'] = next_position
-        session.modified = True
-
-        logger.info(f"Loaded chunks {current_position} to {next_position} of {total_chunks}")
-        return jsonify({
-            'success': True,
-            'paragraphs': next_paragraphs,
-            'start_index': current_position,
-            'current_position': next_position,
-            'total_chunks': total_chunks
-        })
-
-    except Exception as e:
-        logger.error(f"Error loading more chunks: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.before_request
@@ -161,8 +110,7 @@ def check_story_data():
     if request.path.startswith('/static') or \
        request.path == '/' or \
        request.path == '/generate_story' or \
-       request.path == '/story/upload' or \
-       request.path == '/story/load_more':
+       request.path == '/story/upload':
         return
 
     if 'story_data' not in session and \
@@ -184,4 +132,4 @@ def request_entity_too_large(e):
 
 if __name__ == '__main__':
     logger.info("Starting Flask application...")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
