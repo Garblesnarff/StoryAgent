@@ -27,25 +27,20 @@ logger = logging.getLogger(__name__)
 # Initialize database
 db.init_app(app)
 
-# Initialize services with proper error handling
+# Initialize services
 try:
-    from services.text_generator import TextGenerator
     from services.book_processor import BookProcessor
     from models import TempBookData
-
-    text_service = TextGenerator()
     book_processor = BookProcessor()
     logger.info("Services initialized successfully")
 except Exception as e:
     logger.error(f"Service initialization error: {str(e)}\n{traceback.format_exc()}")
-    text_service = None
     book_processor = None
 
 # Register blueprints
 try:
     from blueprints.story import story_bp
     from blueprints.generation import generation_bp
-
     app.register_blueprint(story_bp)
     app.register_blueprint(generation_bp)
     logger.info("Blueprints registered successfully")
@@ -63,85 +58,9 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    # Clear any existing story data when returning to home
     if 'story_data' in session:
         session.pop('story_data', None)
     return render_template('index.html')
-
-@app.route('/generate_story', methods=['POST'])
-def generate_story():
-    try:
-        if not text_service:
-            raise ValueError("Text generation service is not available")
-
-        # Validate form data
-        required_fields = ['prompt', 'genre', 'mood', 'target_audience']
-        for field in required_fields:
-            if not request.form.get(field):
-                logger.error(f"Missing required field: {field}")
-                return jsonify({'error': f'Missing required field: {field}'}), 400
-
-        prompt = request.form.get('prompt')
-        genre = request.form.get('genre')
-        mood = request.form.get('mood')
-        target_audience = request.form.get('target_audience')
-        num_paragraphs = int(request.form.get('paragraphs', 5))
-
-        logger.info(f"Generating story with prompt: {prompt[:50]}...")
-        # Generate story paragraphs
-        story_paragraphs = text_service.generate_story(
-            prompt, genre, mood, target_audience, num_paragraphs)
-
-        if not story_paragraphs:
-            logger.error("Failed to generate story paragraphs")
-            return jsonify({'error': 'Failed to generate story'}), 500
-
-        # Create story data structure
-        story_data = {
-            'prompt': prompt,
-            'genre': genre,
-            'mood': mood,
-            'target_audience': target_audience,
-            'created_at': str(datetime.now()),
-            'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None} for p in story_paragraphs]
-        }
-
-        # Create a new TempBookData entry with UUID
-        temp_data = TempBookData(data=story_data)
-
-        try:
-            db.session.add(temp_data)
-            db.session.commit()
-            logger.info(f"Saved story data with temp_id: {temp_data.id}")
-        except Exception as db_error:
-            db.session.rollback()
-            logger.error(f"Database error: {str(db_error)}")
-            return jsonify({'error': 'Failed to save story data'}), 500
-
-        # Store story data in session
-        session['story_data'] = {
-            'temp_id': temp_data.id,
-        }
-        session.modified = True
-
-        logger.info("Story generation successful, redirecting to edit page")
-        return jsonify({'success': True, 'redirect': '/story/edit'})
-
-    except Exception as e:
-        logger.error(f"Error generating story: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/save_story', methods=['POST'])
-def save_story():
-    if 'story_data' not in session:
-        return jsonify({'error': 'No story data found'}), 404
-
-    try:
-        # TODO: Implement story saving logic to database
-        return jsonify({'success': True})
-    except Exception as e:
-        logger.error(f"Error saving story: {str(e)}")
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/story/upload', methods=['POST'])
 def upload_story():
@@ -167,9 +86,10 @@ def upload_story():
             logger.error(f"Error in book processing: {result['error']}")
             return jsonify({'error': result['error']}), 400
 
-        # Store minimal data in session
+        # Store data in session
         session['story_data'] = {
-            'temp_id': result['temp_id']
+            'temp_id': result['temp_id'],
+            'current_position': result['current_position']
         }
         session.modified = True
 
@@ -185,6 +105,7 @@ def upload_story():
 
 @app.route('/story/load_more', methods=['POST'])
 def load_more_chunks():
+    """Load the next batch of chunks."""
     try:
         if 'story_data' not in session:
             logger.error("No story data found in session")
@@ -195,42 +116,59 @@ def load_more_chunks():
             logger.error("No temp_id found in session")
             return jsonify({'error': 'Invalid session data'}), 400
 
-        current_position = session['story_data'].get('current_position', 0)
-        total_chunks = session['story_data'].get('total_chunks', 0)
-
-        if current_position >= total_chunks:
-            logger.error("No more chunks available")
-            return jsonify({'error': 'No more chunks available'}), 400
-
         # Get stored data
         temp_data = TempBookData.query.get(temp_id)
         if not temp_data:
             logger.error(f"No data found for temp_id: {temp_id}")
             return jsonify({'error': 'Data not found'}), 404
 
-        # Calculate next batch
-        next_batch_size = min(10, total_chunks - current_position)
-        new_position = current_position + next_batch_size
+        current_position = session['story_data'].get('current_position', 0)
+        total_chunks = len(temp_data.data['paragraphs'])
+
+        if current_position >= total_chunks:
+            logger.info("No more chunks available")
+            return jsonify({
+                'success': True,
+                'message': 'No more chunks available',
+                'current_position': current_position,
+                'total_chunks': total_chunks
+            })
 
         # Get next batch of paragraphs
-        next_paragraphs = temp_data.data.get('paragraphs')[current_position:new_position]
+        next_batch_size = min(10, total_chunks - current_position)
+        next_position = current_position + next_batch_size
+        next_paragraphs = temp_data.data['paragraphs'][current_position:next_position]
 
         # Update session
-        session['story_data']['current_position'] = new_position
+        session['story_data']['current_position'] = next_position
         session.modified = True
 
-        logger.info(f"Loaded more chunks for temp_id {temp_id}, position {current_position} to {new_position}")
+        logger.info(f"Loaded chunks {current_position} to {next_position} of {total_chunks}")
         return jsonify({
             'success': True,
             'paragraphs': next_paragraphs,
             'start_index': current_position,
-            'current_position': new_position,
+            'current_position': next_position,
             'total_chunks': total_chunks
         })
 
     except Exception as e:
-        logger.error(f"Error loading more chunks: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"Error loading more chunks: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.before_request
+def check_story_data():
+    if request.path.startswith('/static') or \
+       request.path == '/' or \
+       request.path == '/generate_story' or \
+       request.path == '/story/upload' or \
+       request.path == '/story/load_more':
+        return
+
+    if 'story_data' not in session and \
+       (request.path.startswith('/story/') or request.path.startswith('/save')):
+        flash('Please generate a story first', 'warning')
+        return redirect(url_for('index'))
 
 @app.errorhandler(404)
 def not_found(e):
@@ -240,31 +178,10 @@ def not_found(e):
 def server_error(e):
     return jsonify({'error': 'An internal server error occurred'}), 500
 
-@app.errorhandler(403)
-def forbidden(e):
-    flash('Please start by creating a new story on the home page', 'warning')
-    return redirect(url_for('index'))
-
 @app.errorhandler(413)
 def request_entity_too_large(e):
     return jsonify({'error': 'File too large. Maximum size is 50MB.'}), 413
 
-@app.before_request
-def check_story_data():
-    # Skip checks for static files and allowed routes
-    if request.path.startswith('/static') or \
-       request.path == '/' or \
-       request.path == '/generate_story' or \
-       request.path == '/story/upload' or \
-       request.path == '/story/load_more':
-        return
-
-    # Check if story data exists for protected routes
-    if 'story_data' not in session and \
-       (request.path.startswith('/story/') or request.path.startswith('/save')):
-        flash('Please generate a story first', 'warning')
-        return redirect(url_for('index'))
-
 if __name__ == '__main__':
     logger.info("Starting Flask application...")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

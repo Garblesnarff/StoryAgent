@@ -22,7 +22,7 @@ class BookProcessor:
         self.max_file_size = 50 * 1024 * 1024  # 50MB limit
         self.upload_folder = os.path.join(os.getcwd(), 'uploads')
         os.makedirs(self.upload_folder, exist_ok=True)
-        self.chunks_per_batch = 10  # Keep the same batch size that was working
+        self.chunks_per_batch = 10  # Process 10 chunks at a time
 
         self.api_key = os.environ.get('GEMINI_API_KEY')
         self.model = None
@@ -76,9 +76,9 @@ class BookProcessor:
                     logger.warning(f"No valid paragraphs extracted from {filename}")
                     return {'error': 'No valid content found in file'}
 
-                # Store only initial batch of paragraphs
+                # Store initial batch of paragraphs
                 initial_batch = paragraphs[:self.chunks_per_batch]
-                all_chunks_count = len(paragraphs)
+                total_chunks = len(paragraphs)
 
                 # Store processed data with metadata
                 temp_id = str(uuid.uuid4())
@@ -86,8 +86,8 @@ class BookProcessor:
                     id=temp_id,
                     data={
                         'source_file': filename,
-                        'paragraphs': initial_batch,
-                        'total_chunks': all_chunks_count,
+                        'paragraphs': paragraphs,  # Store all paragraphs for later loading
+                        'total_chunks': total_chunks,
                         'current_position': self.chunks_per_batch
                     }
                 )
@@ -98,9 +98,8 @@ class BookProcessor:
 
                 return {
                     'temp_id': temp_id,
-                    'source_file': filename,
-                    'paragraphs': initial_batch,
-                    'total_chunks': all_chunks_count,
+                    'paragraphs': initial_batch,  # Return only initial batch
+                    'total_chunks': total_chunks,
                     'current_position': self.chunks_per_batch
                 }
 
