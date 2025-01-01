@@ -22,6 +22,7 @@ class BookProcessor:
         self.max_file_size = 50 * 1024 * 1024  # 50MB limit
         self.upload_folder = os.path.join(os.getcwd(), 'uploads')
         os.makedirs(self.upload_folder, exist_ok=True)
+        self.chunks_per_batch = 10  # Keep the same batch size that was working
 
         self.api_key = os.environ.get('GEMINI_API_KEY')
         self.model = None
@@ -75,24 +76,32 @@ class BookProcessor:
                     logger.warning(f"No valid paragraphs extracted from {filename}")
                     return {'error': 'No valid content found in file'}
 
-                # Store processed data
+                # Store only initial batch of paragraphs
+                initial_batch = paragraphs[:self.chunks_per_batch]
+                all_chunks_count = len(paragraphs)
+
+                # Store processed data with metadata
                 temp_id = str(uuid.uuid4())
                 temp_data = TempBookData(
                     id=temp_id,
                     data={
                         'source_file': filename,
-                        'paragraphs': paragraphs
+                        'paragraphs': initial_batch,
+                        'total_chunks': all_chunks_count,
+                        'current_position': self.chunks_per_batch
                     }
                 )
 
                 db.session.add(temp_data)
                 db.session.commit()
-                logger.info(f"Saved processed book data with ID: {temp_id}")
+                logger.info(f"Saved initial batch of processed book data with ID: {temp_id}")
 
                 return {
                     'temp_id': temp_id,
                     'source_file': filename,
-                    'paragraphs': paragraphs
+                    'paragraphs': initial_batch,
+                    'total_chunks': all_chunks_count,
+                    'current_position': self.chunks_per_batch
                 }
 
             finally:
@@ -104,68 +113,47 @@ class BookProcessor:
             logger.error(f"Error processing file: {str(e)}")
             return {'error': str(e)}
 
-    def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
-        """Extract and process text from PDF files."""
+    def _process_text(self, text: str) -> List[Dict[str, str]]:
+        """Process text into story chunks."""
         try:
-            raw_text = self._extract_pdf_text(file_path)
-            return self._process_text(raw_text)
+            if not text:
+                logger.error("No text provided for processing")
+                return []
+
+            # Clean the text initially
+            text = self._clean_text(text)
+            logger.info(f"Initial text length: {len(text)} characters")
+
+            # Detect chapter boundaries
+            start_idx, end_idx = self._detect_chapter_boundaries(text)
+            first_chapter = text[start_idx:end_idx]
+            logger.info(f"Extracted first chapter: {len(first_chapter)} characters")
+
+            # Split into sentences
+            sentences = self._split_into_sentences(first_chapter)
+            logger.info(f"Extracted {len(sentences)} total sentences")
+
+            # Group into 2-sentence chunks for the entire chapter
+            story_chunks = []
+            chunk_size = 2  # Keep the exact same 2-sentence chunk format that was working
+
+            for i in range(0, len(sentences), chunk_size):
+                chunk_sentences = sentences[i:i + chunk_size]
+                if chunk_sentences:  # Ensure we have sentences
+                    chunk_text = ' '.join(chunk_sentences)
+                    if chunk_text and len(chunk_text.split()) >= 5:  # Basic validation
+                        story_chunks.append({
+                            'text': chunk_text,
+                            'image_url': None,
+                            'audio_url': None
+                        })
+
+            logger.info(f"Successfully processed {len(story_chunks)} two-sentence chunks from first chapter")
+            return story_chunks
+
         except Exception as e:
-            logger.error(f"Error processing PDF: {str(e)}")
+            logger.error(f"Error processing text: {str(e)}")
             return []
-
-    def process_epub(self, file_path: str) -> List[Dict[str, str]]:
-        """Extract and process text from EPUB files."""
-        try:
-            raw_text = self._extract_epub_text(file_path)
-            return self._process_text(raw_text)
-        except Exception as e:
-            logger.error(f"Error processing EPUB: {str(e)}")
-            return []
-
-    def process_html(self, file_path: str) -> List[Dict[str, str]]:
-        """Extract and process text from HTML files."""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                soup = BeautifulSoup(file, 'html.parser')
-                # Remove scripts, styles, and other non-content elements
-                for tag in soup(['script', 'style', 'meta', 'link']):
-                    tag.decompose()
-                raw_text = soup.get_text()
-                return self._process_text(raw_text)
-        except Exception as e:
-            logger.error(f"Error processing HTML: {str(e)}")
-            return []
-
-    def _extract_pdf_text(self, pdf_path: str) -> str:
-        """Extract text from PDF file."""
-        text = []
-        try:
-            with open(pdf_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                for page in reader.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text.append(page_text)
-            return "\n".join(text)
-        except Exception as e:
-            logger.error(f"Error extracting PDF text: {str(e)}")
-            return ""
-
-    def _extract_epub_text(self, epub_path: str) -> str:
-        """Extract text from EPUB file."""
-        text = []
-        try:
-            book = epub.read_epub(epub_path)
-            for item in book.get_items():
-                if item.get_type() == ebooklib.ITEM_DOCUMENT:
-                    content = item.get_content()
-                    soup = BeautifulSoup(content, 'html.parser')
-                    if soup.get_text():
-                        text.append(soup.get_text())
-            return "\n".join(text)
-        except Exception as e:
-            logger.error(f"Error extracting EPUB text: {str(e)}")
-            return ""
 
     def _detect_chapter_boundaries(self, text: str) -> Tuple[int, int]:
         """
@@ -270,44 +258,65 @@ class BookProcessor:
 
         return sentences
 
-    def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process text into story chunks."""
+    def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
+        """Extract and process text from PDF files."""
         try:
-            if not text:
-                logger.error("No text provided for processing")
-                return []
-
-            # Clean the text initially
-            text = self._clean_text(text)
-            logger.info(f"Initial text length: {len(text)} characters")
-
-            # Detect chapter boundaries
-            start_idx, end_idx = self._detect_chapter_boundaries(text)
-            first_chapter = text[start_idx:end_idx]
-            logger.info(f"Extracted first chapter: {len(first_chapter)} characters")
-
-            # Split into sentences
-            sentences = self._split_into_sentences(first_chapter)
-            logger.info(f"Extracted {len(sentences)} total sentences")
-
-            # Group into 2-sentence chunks for the entire chapter
-            story_chunks = []
-            chunk_size = 2  # Keep the exact same 2-sentence chunk format
-
-            for i in range(0, len(sentences), chunk_size):
-                chunk_sentences = sentences[i:i + chunk_size]
-                if chunk_sentences:  # Ensure we have sentences
-                    chunk_text = ' '.join(chunk_sentences)
-                    if chunk_text and len(chunk_text.split()) >= 5:  # Basic validation
-                        story_chunks.append({
-                            'text': chunk_text,
-                            'image_url': None,
-                            'audio_url': None
-                        })
-
-            logger.info(f"Successfully processed {len(story_chunks)} two-sentence chunks from first chapter")
-            return story_chunks
-
+            raw_text = self._extract_pdf_text(file_path)
+            return self._process_text(raw_text)
         except Exception as e:
-            logger.error(f"Error processing text: {str(e)}")
+            logger.error(f"Error processing PDF: {str(e)}")
             return []
+
+    def process_epub(self, file_path: str) -> List[Dict[str, str]]:
+        """Extract and process text from EPUB files."""
+        try:
+            raw_text = self._extract_epub_text(file_path)
+            return self._process_text(raw_text)
+        except Exception as e:
+            logger.error(f"Error processing EPUB: {str(e)}")
+            return []
+
+    def process_html(self, file_path: str) -> List[Dict[str, str]]:
+        """Extract and process text from HTML files."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                soup = BeautifulSoup(file, 'html.parser')
+                # Remove scripts, styles, and other non-content elements
+                for tag in soup(['script', 'style', 'meta', 'link']):
+                    tag.decompose()
+                raw_text = soup.get_text()
+                return self._process_text(raw_text)
+        except Exception as e:
+            logger.error(f"Error processing HTML: {str(e)}")
+            return []
+
+    def _extract_pdf_text(self, pdf_path: str) -> str:
+        """Extract text from PDF file."""
+        text = []
+        try:
+            with open(pdf_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                for page in reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text.append(page_text)
+            return "\n".join(text)
+        except Exception as e:
+            logger.error(f"Error extracting PDF text: {str(e)}")
+            return ""
+
+    def _extract_epub_text(self, epub_path: str) -> str:
+        """Extract text from EPUB file."""
+        text = []
+        try:
+            book = epub.read_epub(epub_path)
+            for item in book.get_items():
+                if item.get_type() == ebooklib.ITEM_DOCUMENT:
+                    content = item.get_content()
+                    soup = BeautifulSoup(content, 'html.parser')
+                    if soup.get_text():
+                        text.append(soup.get_text())
+            return "\n".join(text)
+        except Exception as e:
+            logger.error(f"Error extracting EPUB text: {str(e)}")
+            return ""

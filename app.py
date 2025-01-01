@@ -173,17 +173,21 @@ def upload_story():
             logger.error("No temp_id returned from book processing")
             return jsonify({'error': 'Failed to process file'}), 500
 
-        # Store only the ID in session
+        # Store minimal data in session
         session['story_data'] = {
-            'temp_id': result['temp_id']
+            'temp_id': result['temp_id'],
+            'total_chunks': result.get('total_chunks', 0),
+            'current_position': result.get('current_position', 0)
         }
         session.modified = True
 
-        logger.info(f"Successfully processed file, temp_id: {result['temp_id']}")
+        logger.info(f"Successfully processed initial batch, temp_id: {result['temp_id']}")
         return jsonify({
             'success': True,
             'message': 'File processed successfully',
-            'temp_id': result['temp_id']
+            'temp_id': result['temp_id'],
+            'total_chunks': result.get('total_chunks', 0),
+            'current_position': result.get('current_position', 0)
         })
 
     except Exception as e:

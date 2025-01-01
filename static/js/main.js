@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 data = await response.json();
             } catch (parseError) {
+                console.error('Parse error:', parseError);
                 throw new Error('Server returned an invalid response');
             }
 
@@ -123,15 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadStatus.innerHTML = '<strong><span class="phase-icon">📑</span>Phase 3/3:</strong> Extracting text...';
             await animateProgress(progressBar, 66, 100);
 
-            // Success - redirect to editor
-            if (data.success) {
-                uploadStatus.innerHTML = '<strong><span class="phase-icon">✨</span>Complete!</strong> Redirecting to editor...';
-                // Add small delay before redirect for better UX
-                await new Promise(resolve => setTimeout(resolve, 500));
-                window.location.href = '/story/edit';
-            } else {
-                throw new Error(data.error || 'Failed to process file');
+            // Verify we have the required data
+            if (!data.success || !data.temp_id) {
+                throw new Error(data.error || 'Invalid response from server');
             }
+
+            // Success - redirect to editor
+            uploadStatus.innerHTML = '<strong><span class="phase-icon">✨</span>Complete!</strong> Redirecting to editor...';
+            await new Promise(resolve => setTimeout(resolve, 500));
+            window.location.href = '/story/edit';
 
         } catch (error) {
             console.error('Error:', error);
