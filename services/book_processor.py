@@ -18,71 +18,78 @@ logger = logging.getLogger(__name__)
 
 class BookProcessor:
     def __init__(self):
-        self.chunk_size = 8000  # Characters per chunk for API processing
+        self.chunk_size = 2  # Two sentences per chunk
+        self.chunks_per_page = 10  # Number of chunks per page
         self.max_file_size = 50 * 1024 * 1024  # 50MB limit
-        self.max_paragraphs = 10  # Maximum number of paragraphs to process
         self.api_key = os.environ.get('GEMINI_API_KEY')
-        
+
         # Configure Gemini
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
-        
+
     def process_file(self, file) -> Dict[str, any]:
         """Process uploaded file based on its type."""
         try:
             if not file:
                 raise ValueError("No file provided")
-                
+
             filename = secure_filename(file.filename)
             if not filename or '.' not in filename:
                 raise ValueError("Invalid filename")
-                
+
             ext = filename.rsplit('.', 1)[1].lower()
             if ext not in {'pdf', 'epub', 'html'}:
                 raise ValueError(f"Unsupported file type: {ext}")
-                
+
             # Check file size
             file.seek(0, os.SEEK_END)
             size = file.tell()
             file.seek(0)
             if size > self.max_file_size:
                 raise ValueError(f"File too large. Maximum size is {self.max_file_size/(1024*1024)}MB")
-            
+
             # Create temporary file
             temp_path = os.path.join('uploads', filename)
             file.save(temp_path)
-            
+
             try:
                 if ext == 'pdf':
-                    paragraphs = self.process_pdf(temp_path)
+                    chunks = self.process_pdf(temp_path)
                 elif ext == 'epub':
-                    paragraphs = self.process_epub(temp_path)
+                    chunks = self.process_epub(temp_path)
                 else:  # html
-                    paragraphs = self.process_html(temp_path)
-                    
+                    chunks = self.process_html(temp_path)
+
                 # Store processed data in temporary storage
                 temp_id = str(uuid.uuid4())
                 temp_data = TempBookData(
                     id=temp_id,
                     data={
                         'source_file': filename,
-                        'paragraphs': paragraphs
+                        'paragraphs': chunks,
+                        'chunk_size': self.chunk_size,
+                        'chunks_per_page': self.chunks_per_page,
+                        'total_chunks': len(chunks)
                     }
                 )
                 db.session.add(temp_data)
                 db.session.commit()
-                
+
+                # Return first page of data
                 return {
                     'temp_id': temp_id,
                     'source_file': filename,
-                    'paragraphs': paragraphs
+                    'paragraphs': chunks[:self.chunks_per_page],
+                    'total_chunks': len(chunks),
+                    'current_page': 1,
+                    'total_pages': (len(chunks) + self.chunks_per_page - 1) // self.chunks_per_page
                 }
-                
+
             finally:
                 # Clean up temp file
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-                    
+
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}")
             raise
@@ -163,18 +170,18 @@ class BookProcessor:
         # Check minimum length and sentence structure
         if len(text.split()) < 10:  # Skip very short segments
             return False
-            
+
         # Ensure text has proper sentence structure
         if not re.search(r'[A-Z][^.!?]+[.!?]', text):
             return False
-            
+
         return True
 
     def _process_text(self, text: str) -> List[Dict[str, str]]:
         try:
             # Clean the text initially
             text = self._clean_text(text)
-            
+
             # Use Gemini to extract only story content
             prompt = f'''
             Extract and return ONLY the actual story narrative from this text.
@@ -186,27 +193,22 @@ class BookProcessor:
             Text to process:
             {text[:8000]}
             '''
-            
+
             # Get story content from Gemini
             response = self.model.generate_content(prompt)
             story_text = response.text
-            
+
             # Post-process to remove any remaining metadata markers
-            # Remove lines starting with asterisks
             story_text = '\n'.join([line for line in story_text.split('\n') 
-                                  if not line.strip().startswith('**')])
-            
-            # Remove numbered processing steps
+                                if not line.strip().startswith('**')])
             story_text = re.sub(r'^\d+\.\s+', '', story_text, flags=re.MULTILINE)
-            
-            # Remove "Start of..." or "End of..." markers
             story_text = re.sub(r'(?i)(^|\n)(Start|End)\s+of.*?\n', '\n', story_text)
-            
+
             # Split into sentences
             sentence_pattern = r'(?<=[.!?])\s+'
             sentences = re.split(sentence_pattern, story_text)
             sentences = [s.strip() for s in sentences if s.strip()]
-            
+
             # Group into 2-sentence chunks
             chunks = []
             for i in range(0, len(sentences), 2):
@@ -224,10 +226,10 @@ class BookProcessor:
                         'image_url': None,
                         'audio_url': None
                     })
-            
+
             logger.info(f"Successfully processed {len(chunks)} two-sentence chunks")
-            return chunks[:self.max_paragraphs]
-                
+            return chunks
+
         except Exception as e:
             logger.error(f"Error processing text: {str(e)}")
             raise

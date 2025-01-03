@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyOutput = document.getElementById('story-output');
-    let currentPage = 0;
-    let totalPages = 0;
+    let currentPage = 1;
+    let totalPages = 1;
     let session = { story_data: { paragraphs: [] } };
-    
+
     // Initialize tooltips for all elements
     function initTooltips(container = document) {
         const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -11,7 +11,38 @@ document.addEventListener('DOMContentLoaded', () => {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
-    
+
+    async function loadPage(pageNumber) {
+        try {
+            const response = await fetch(`/story/page/${pageNumber}`);
+            if (!response.ok) {
+                throw new Error('Failed to load page');
+            }
+
+            const data = await response.json();
+            currentPage = data.current_page;
+            totalPages = data.total_pages;
+
+            const paragraphCards = document.getElementById('paragraph-cards');
+            if (paragraphCards) {
+                paragraphCards.innerHTML = '';
+                data.chunks.forEach((chunk, index) => {
+                    const pageElement = createPageElement(chunk, index);
+                    if (pageElement) {
+                        paragraphCards.appendChild(pageElement);
+                        pageElement.offsetHeight;
+                        pageElement.classList.add('visible');
+                    }
+                });
+            }
+
+            updateNavigation();
+
+        } catch (error) {
+            console.error('Error loading page:', error);
+        }
+    }
+
     function createPageElement(paragraph, index) {
         if (!paragraph) return null;
         const pageDiv = document.createElement('div');
@@ -19,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pageDiv.dataset.index = index;
         pageDiv.style.opacity = '1';
         pageDiv.style.display = 'block';
-        
+
         pageDiv.innerHTML = `
             <div class="card h-100">
                 ${paragraph.image_url ? `
@@ -50,19 +81,50 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="alert alert-danger mt-2 d-none" role="alert"></div>
         `;
-        
+
         // Initialize tooltips for the new page
         initTooltips(pageDiv);
-        
+
         // Add event listeners for regeneration buttons
         const regenerateImageBtn = pageDiv.querySelector('.regenerate-image');
         regenerateImageBtn?.addEventListener('click', async () => {
             await handleRegeneration('image', regenerateImageBtn, pageDiv, paragraph, index);
         });
-        
+
         return pageDiv;
     }
-    
+
+    function updateNavigation() {
+        const prevButton = document.querySelector('.book-nav.prev');
+        const nextButton = document.querySelector('.book-nav.next');
+
+        if (!prevButton || !nextButton) return;
+
+        prevButton.style.display = currentPage > 1 ? 'flex' : 'none';
+        nextButton.style.display = currentPage < totalPages ? 'flex' : 'none';
+
+        // Update page indicator if it exists
+        const pageIndicator = document.querySelector('.page-indicator');
+        if (pageIndicator) {
+            pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+    }
+
+    const nextButton = document.querySelector('.book-nav.next');
+    const prevButton = document.querySelector('.book-nav.prev');
+
+    nextButton?.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            loadPage(currentPage + 1);
+        }
+    });
+
+    prevButton?.addEventListener('click', () => {
+        if (currentPage > 1) {
+            loadPage(currentPage - 1);
+        }
+    });
+
     async function handleRegeneration(type, button, pageDiv, paragraph, index) {
         const spinner = button.querySelector('.spinner-border');
         const buttonText = button.querySelector('.button-text');
@@ -124,136 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function updateNavigation() {
-        const pages = document.querySelectorAll('.book-page');
-        totalPages = pages.length;
-        const prevButton = document.querySelector('.book-nav.prev');
-        const nextButton = document.querySelector('.book-nav.next');
-        
-        if (!prevButton || !nextButton) return;
-        
-        if (totalPages > 1) {
-            prevButton.style.display = currentPage > 0 ? 'flex' : 'none';
-            nextButton.style.display = currentPage < totalPages - 1 ? 'flex' : 'none';
-        } else {
-            prevButton.style.display = 'none';
-            nextButton.style.display = 'none';
-        }
-        
-        pages.forEach((page, index) => {
-            if (index === currentPage) {
-                page.style.display = 'block';
-            } else {
-                page.style.display = 'none';
-            }
-        });
-    }
-    
-    const nextButton = document.querySelector('.book-nav.next');
-    const prevButton = document.querySelector('.book-nav.prev');
-    
-    nextButton?.addEventListener('click', () => {
-        if (currentPage < totalPages - 1) {
-            currentPage++;
-            updateNavigation();
-        }
-    });
-    
-    prevButton?.addEventListener('click', () => {
-        if (currentPage > 0) {
-            currentPage--;
-            updateNavigation();
-        }
-    });
-    
-    async function generateCards() {
-        try {
-            if (storyOutput) {
-                storyOutput.style.display = 'block';
-                storyOutput.classList.add('visible');
-            }
 
-            const response = await fetch('/story/generate_cards', {
-                method: 'POST'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to generate cards');
-            }
-            
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, {stream: true});
-                const lines = buffer.split('\n');
-                
-                for (let i = 0; i < lines.length - 1; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
-                        switch (data.type) {
-                            case 'log':
-                                console.log(data.message);
-                                break;
-                            case 'paragraph':
-                                const paragraphCards = document.getElementById('paragraph-cards');
-                                if (paragraphCards && data.data) {
-                                    const index = data.data.index;
-                                    let pageElement = document.querySelector(`.book-page[data-index="${index}"]`);
-                                    
-                                    if (!pageElement) {
-                                        pageElement = createPageElement(data.data, index);
-                                        if (pageElement) {
-                                            paragraphCards.appendChild(pageElement);
-                                            pageElement.offsetHeight;
-                                            pageElement.classList.add('visible');
-                                        }
-                                    } else {
-                                        const newPage = createPageElement(data.data, index);
-                                        if (newPage) {
-                                            pageElement.innerHTML = newPage.innerHTML;
-                                            // Initialize tooltips for updated content
-                                            initTooltips(pageElement);
-                                            
-                                            // Reattach event listeners
-                                            const regenerateImageBtn = pageElement.querySelector('.regenerate-image');
-                                            regenerateImageBtn?.addEventListener('click', () => 
-                                                handleRegeneration('image', regenerateImageBtn, pageElement, data.data, index));
-                                        }
-                                    }
-                                    
-                                    updateNavigation();
-                                }
-                                break;
-                            case 'error':
-                                console.error('Error:', data.message);
-                                break;
-                            case 'complete':
-                                console.log(data.message);
-                                break;
-                        }
-                    } catch (error) {
-                        console.error('Error parsing message:', line, error);
-                    }
-                }
-                buffer = lines[lines.length - 1];
-            }
-        } catch (error) {
-            console.error('Error:', error.message || 'An unknown error occurred');
-        }
-    }
-    
     // Initialize tooltips for initial content
     initTooltips();
-    
+
     if (document.getElementById('paragraph-cards')) {
-        generateCards();
+        loadPage(1);  // Load first page on initial load
     }
 });
