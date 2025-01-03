@@ -1,5 +1,4 @@
-import logging
-from typing import List, Dict, Tuple
+from typing import List, Dict
 import PyPDF2
 import ebooklib
 from ebooklib import epub
@@ -7,6 +6,7 @@ from bs4 import BeautifulSoup
 import google.generativeai as genai
 import os
 import re
+import logging
 from werkzeug.utils import secure_filename
 from database import db
 from models import TempBookData
@@ -20,50 +20,38 @@ class BookProcessor:
     def __init__(self):
         self.chunk_size = 8000  # Characters per chunk for API processing
         self.max_file_size = 50 * 1024 * 1024  # 50MB limit
-        self.upload_folder = os.path.join(os.getcwd(), 'uploads')
-        os.makedirs(self.upload_folder, exist_ok=True)
-        self.chunks_per_batch = 10  # Process 10 chunks at a time
-
+        self.max_paragraphs = 10  # Maximum number of paragraphs to process
         self.api_key = os.environ.get('GEMINI_API_KEY')
-        self.model = None
-
-        try:
-            if not self.api_key:
-                logger.warning("GEMINI_API_KEY not found in environment variables")
-                return
-
-            # Configure Gemini
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-pro')
-            logger.info("Successfully initialized Gemini API")
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini API: {str(e)}")
-
+        
+        # Configure Gemini
+        genai.configure(api_key=self.api_key)
+        self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
+        
     def process_file(self, file) -> Dict[str, any]:
-        """Process uploaded file and extract story chunks."""
+        """Process uploaded file based on its type."""
         try:
             if not file:
                 raise ValueError("No file provided")
-
+                
             filename = secure_filename(file.filename)
             if not filename or '.' not in filename:
                 raise ValueError("Invalid filename")
-
+                
             ext = filename.rsplit('.', 1)[1].lower()
             if ext not in {'pdf', 'epub', 'html'}:
                 raise ValueError(f"Unsupported file type: {ext}")
-
+                
             # Check file size
             file.seek(0, os.SEEK_END)
             size = file.tell()
             file.seek(0)
             if size > self.max_file_size:
                 raise ValueError(f"File too large. Maximum size is {self.max_file_size/(1024*1024)}MB")
-
+            
             # Create temporary file
-            temp_path = os.path.join(self.upload_folder, filename)
+            temp_path = os.path.join('uploads', filename)
             file.save(temp_path)
-
+            
             try:
                 if ext == 'pdf':
                     paragraphs = self.process_pdf(temp_path)
@@ -71,190 +59,33 @@ class BookProcessor:
                     paragraphs = self.process_epub(temp_path)
                 else:  # html
                     paragraphs = self.process_html(temp_path)
-
-                if not paragraphs:
-                    logger.warning(f"No valid paragraphs extracted from {filename}")
-                    return {'error': 'No valid content found in file'}
-
-                # Store initial batch of paragraphs
-                initial_batch = paragraphs[:self.chunks_per_batch]
-                total_chunks = len(paragraphs)
-
-                # Store processed data with metadata
+                    
+                # Store processed data in temporary storage
                 temp_id = str(uuid.uuid4())
                 temp_data = TempBookData(
                     id=temp_id,
                     data={
                         'source_file': filename,
-                        'paragraphs': paragraphs,  # Store all paragraphs for later loading
-                        'total_chunks': total_chunks,
-                        'current_position': self.chunks_per_batch
+                        'paragraphs': paragraphs
                     }
                 )
-
                 db.session.add(temp_data)
                 db.session.commit()
-                logger.info(f"Saved initial batch of processed book data with ID: {temp_id}")
-
+                
                 return {
                     'temp_id': temp_id,
                     'source_file': filename,
-                    'paragraphs': initial_batch,  # Return only initial batch
+                    'paragraphs': paragraphs
                 }
-
+                
             finally:
                 # Clean up temp file
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-
+                    
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}")
-            return {'error': str(e)}
-
-    def _process_text(self, text: str) -> List[Dict[str, str]]:
-        """Process text into story chunks."""
-        try:
-            if not text:
-                logger.error("No text provided for processing")
-                return []
-
-            # Clean the text initially
-            text = self._clean_text(text)
-            logger.info(f"Initial text length: {len(text)} characters")
-
-            # Extract first chapter
-            start_idx, end_idx = self._detect_chapter_boundaries(text)
-            first_chapter = text[start_idx:end_idx]
-            logger.info(f"Extracted first chapter: {len(first_chapter)} characters")
-
-            # Split into sentences
-            sentences = self._split_into_sentences(first_chapter)
-            logger.info(f"Extracted {len(sentences)} total sentences")
-
-            # Group into 2-sentence chunks
-            story_chunks = []
-            chunk_size = 2  # Keep exact same 2-sentence chunk format
-
-            for i in range(0, len(sentences), chunk_size):
-                chunk_sentences = sentences[i:i + chunk_size]
-                if chunk_sentences:  # Ensure we have sentences
-                    chunk_text = ' '.join(chunk_sentences)
-                    if chunk_text and len(chunk_text.split()) >= 5:  # Basic validation
-                        story_chunks.append({
-                            'text': chunk_text,
-                            'image_url': None,
-                            'audio_url': None
-                        })
-
-            logger.info(f"Successfully processed {len(story_chunks)} two-sentence chunks from first chapter")
-            return story_chunks
-
-        except Exception as e:
-            logger.error(f"Error processing text: {str(e)}")
-            return []
-
-    def _detect_chapter_boundaries(self, text: str) -> Tuple[int, int]:
-        """
-        Detect the start and end indices of the first chapter in the text.
-        Returns tuple of (start_index, end_index)
-        """
-        text_length = len(text)
-
-        try:
-            if not text:
-                logger.error("Empty text provided")
-                return 0, 0
-
-            # Get a large enough sample to detect chapter boundaries
-            sample_size = min(text_length, 50000)  # Increased sample size for better detection
-            text_sample = text[:sample_size]
-
-            # Try to identify chapter boundaries without API if possible
-            chapter_start = 0
-            chapter_end = text_length
-
-            # Look for common chapter indicators
-            chapter_patterns = [
-                r'Chapter [0-9]+',
-                r'CHAPTER [0-9]+',
-                r'Chapter One',
-                r'CHAPTER ONE'
-            ]
-
-            for pattern in chapter_patterns:
-                match = re.search(pattern, text_sample)
-                if match:
-                    chapter_start = match.start()
-                    break
-
-            if chapter_start == 0:
-                # If no chapter markers found, try to find the start of narrative content
-                content_markers = [
-                    r'\n\n[A-Z][^.!?]+[.!?]',  # Look for paragraph starting with capital letter
-                    r'\n\s*[A-Z][^.!?]+[.!?]'  # Alternative paragraph format
-                ]
-                for marker in content_markers:
-                    match = re.search(marker, text_sample)
-                    if match:
-                        chapter_start = match.start()
-                        break
-
-            # Try to find the end of the first chapter
-            next_chapter_patterns = [
-                r'\nChapter [0-9]+',
-                r'\nCHAPTER [0-9]+',
-                r'\nChapter Two',
-                r'\nCHAPTER TWO'
-            ]
-
-            for pattern in next_chapter_patterns:
-                match = re.search(pattern, text[chapter_start:])
-                if match:
-                    chapter_end = chapter_start + match.start()
-                    break
-
-            logger.info(f"Detected chapter boundaries: {chapter_start} to {chapter_end}")
-            return chapter_start, chapter_end
-
-        except Exception as e:
-            logger.error(f"Error detecting chapter boundaries: {str(e)}")
-            return 0, text_length
-
-    def _clean_text(self, text: str) -> str:
-        """Clean and normalize text."""
-        if not text:
-            return ""
-
-        # Basic text cleaning
-        text = re.sub(r'\s+', ' ', text)
-        text = text.replace('"', '"').replace('"', '"')
-        text = text.replace('--', '—')
-        # Remove page numbers
-        text = re.sub(r'\n\s*\d+\s*\n', '\n', text)
-        return text.strip()
-
-    def _split_into_sentences(self, text: str) -> List[str]:
-        """Split text into sentences with improved handling of edge cases."""
-        if not text:
-            return []
-
-        # Clean text first
-        text = self._clean_text(text)
-
-        # Split into sentences
-        sentences = []
-        # Split on sentence endings followed by capital letters
-        raw_sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', text)
-
-        for raw_sentence in raw_sentences:
-            # Clean and validate each sentence
-            cleaned = raw_sentence.strip()
-            if cleaned and len(cleaned.split()) > 3:  # Ensure minimum word count
-                if not cleaned[-1] in '.!?':  # Add period if missing sentence ending
-                    cleaned += '.'
-                sentences.append(cleaned)
-
-        return sentences
+            raise
 
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from PDF files."""
@@ -263,7 +94,7 @@ class BookProcessor:
             return self._process_text(raw_text)
         except Exception as e:
             logger.error(f"Error processing PDF: {str(e)}")
-            return []
+            raise
 
     def process_epub(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from EPUB files."""
@@ -272,7 +103,7 @@ class BookProcessor:
             return self._process_text(raw_text)
         except Exception as e:
             logger.error(f"Error processing EPUB: {str(e)}")
-            return []
+            raise
 
     def process_html(self, file_path: str) -> List[Dict[str, str]]:
         """Extract and process text from HTML files."""
@@ -286,7 +117,7 @@ class BookProcessor:
                 return self._process_text(raw_text)
         except Exception as e:
             logger.error(f"Error processing HTML: {str(e)}")
-            return []
+            raise
 
     def _extract_pdf_text(self, pdf_path: str) -> str:
         """Extract text from PDF file."""
@@ -301,7 +132,7 @@ class BookProcessor:
             return "\n".join(text)
         except Exception as e:
             logger.error(f"Error extracting PDF text: {str(e)}")
-            return ""
+            raise
 
     def _extract_epub_text(self, epub_path: str) -> str:
         """Extract text from EPUB file."""
@@ -317,4 +148,86 @@ class BookProcessor:
             return "\n".join(text)
         except Exception as e:
             logger.error(f"Error extracting EPUB text: {str(e)}")
-            return ""
+            raise
+
+    def _clean_text(self, text: str) -> str:
+        """Clean and normalize text."""
+        # Remove common metadata sections and formatting
+        text = re.sub(r'\s+', ' ', text)
+        text = text.replace('"', '"').replace('"', '"')
+        text = text.replace('--', '—')
+        return text.strip()
+
+    def _is_story_content(self, text: str) -> bool:
+        """Check if text is story content rather than metadata or other non-story text."""
+        # Check minimum length and sentence structure
+        if len(text.split()) < 10:  # Skip very short segments
+            return False
+            
+        # Ensure text has proper sentence structure
+        if not re.search(r'[A-Z][^.!?]+[.!?]', text):
+            return False
+            
+        return True
+
+    def _process_text(self, text: str) -> List[Dict[str, str]]:
+        try:
+            # Clean the text initially
+            text = self._clean_text(text)
+            
+            # Use Gemini to extract only story content
+            prompt = f'''
+            Extract and return ONLY the actual story narrative from this text.
+            - Do not include any analysis, processing steps, or metadata
+            - Do not include any markers or labels
+            - Start directly with the story content
+            - Return only the cleaned narrative text
+
+            Text to process:
+            {text[:8000]}
+            '''
+            
+            # Get story content from Gemini
+            response = self.model.generate_content(prompt)
+            story_text = response.text
+            
+            # Post-process to remove any remaining metadata markers
+            # Remove lines starting with asterisks
+            story_text = '\n'.join([line for line in story_text.split('\n') 
+                                  if not line.strip().startswith('**')])
+            
+            # Remove numbered processing steps
+            story_text = re.sub(r'^\d+\.\s+', '', story_text, flags=re.MULTILINE)
+            
+            # Remove "Start of..." or "End of..." markers
+            story_text = re.sub(r'(?i)(^|\n)(Start|End)\s+of.*?\n', '\n', story_text)
+            
+            # Split into sentences
+            sentence_pattern = r'(?<=[.!?])\s+'
+            sentences = re.split(sentence_pattern, story_text)
+            sentences = [s.strip() for s in sentences if s.strip()]
+            
+            # Group into 2-sentence chunks
+            chunks = []
+            for i in range(0, len(sentences), 2):
+                if i + 1 < len(sentences):
+                    chunk_text = f"{sentences[i]} {sentences[i+1]}"
+                    if self._is_story_content(chunk_text):
+                        chunks.append({
+                            'text': chunk_text,
+                            'image_url': None,
+                            'audio_url': None
+                        })
+                elif sentences[i] and self._is_story_content(sentences[i]):
+                    chunks.append({
+                        'text': sentences[i],
+                        'image_url': None,
+                        'audio_url': None
+                    })
+            
+            logger.info(f"Successfully processed {len(chunks)} two-sentence chunks")
+            return chunks[:self.max_paragraphs]
+                
+        except Exception as e:
+            logger.error(f"Error processing text: {str(e)}")
+            raise
