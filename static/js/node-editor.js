@@ -487,17 +487,29 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         } catch (error) {
             console.error('Error generating image:', error);
             clearInterval(progressInterval);
+            const errorMessage = error.response?.data?.error || error.message || 'Failed to generate image. Please try again.';
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
                     ...node, 
                     data: {
-                        ...node.data, 
+                        ...node.data,
                         isGeneratingImage: false,
                         imageProgress: 0,
-                        imageError: error.message || 'Failed to generate image. Please try again.'
+                        imageError: errorMessage
                     }
                 } : node
             ));
+            
+            // Show error toast
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification error';
+            toast.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${errorMessage}`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
         }
     }, [story?.paragraphs, selectedStyle, setNodes]);
 
