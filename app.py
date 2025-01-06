@@ -98,8 +98,9 @@ def generate_story():
         # Store story data in session
         session['story_data'] = {
             'temp_id': temp_data.id,
-            'story_context': '\n\n'.join(story_paragraphs),
-            'paragraphs': story_data['paragraphs']
+            'current_page': 1,
+            'total_chunks': len(story_paragraphs),
+            'total_pages': math.ceil(len(story_paragraphs) / 10)
         }
         session.modified = True
         

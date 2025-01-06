@@ -155,6 +155,21 @@ def customize_story():
         flash('An error occurred while loading the customization page.', 'error')
         return redirect(url_for('index'))
 
+@story_bp.route('/story/get_chunks/<int:page>', methods=['GET'])
+def get_chunks(page):
+    temp_id = session['story_data']['temp_id']
+    temp_data = TempBookData.query.get(temp_id)
+
+    start_idx = (page - 1) * 10
+    end_idx = start_idx + 10
+
+    page_chunks = temp_data.data['paragraphs'][start_idx:end_idx]
+    return jsonify({
+        'chunks': page_chunks,
+        'current_page': page,
+        'total_pages': session['story_data']['total_pages']
+    })
+
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
     try:

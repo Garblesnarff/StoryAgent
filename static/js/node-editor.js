@@ -10,6 +10,13 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
+const fetchPage = async (page) => {
+    const response = await fetch(`/story/get_chunks/${page}`);
+    const data = await response.json();
+    setNodes(createNodesFromChunks(data.chunks));
+    setCurrentPage(data.current_page);
+};
+
 const ParagraphNode = React.memo(({ data }) => {
     const { 
         index, 

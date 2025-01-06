@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 class TempBookData(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    data = db.Column(db.JSON)
+    data = db.Column(db.JSON) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property
@@ -39,3 +39,16 @@ class TempBookData(db.Model):
             'total_chunks': self.total_chunks,
             'chunks_per_page': self.chunks_per_page
         }
+
+    @classmethod
+    def create_from_data(cls, book_data: Dict[str, Any]) -> 'TempBookData':
+        """Create a new TempBookData instance with initialized data structure"""
+        data = {
+            'source_file': book_data.get('source_file', ''),
+            'paragraphs': book_data.get('paragraphs', []),
+            'chunk_size': 2,
+            'chunks_per_page': 10,
+            'total_chunks': len(book_data.get('paragraphs', [])),
+            'current_page': 1
+        }
+        return cls(data=data)
