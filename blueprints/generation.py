@@ -267,12 +267,6 @@ def regenerate_audio():
 @generation_bp.route('/story/generate_image', methods=['POST'])
 def generate_image():
     try:
-        # First check if we have a valid story session
-        story_data = session.get('story_data')
-        if not story_data:
-            logger.error("No story data found in session")
-            return jsonify({'error': 'No active story session. Please reload the page.'}), 400
-
         data = request.get_json()
         if not data or 'text' not in data:
             return jsonify({'error': 'No text provided'}), 400
@@ -281,21 +275,23 @@ def generate_image():
         index = data.get('index')
         style = data.get('style', 'realistic')
         is_retry = data.get('is_retry', False)
+        story_context = data.get('story_context', '')
+
+        # Generate chain of image prompts
+        image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
         
-        # Get temp_id from story data
+        # Generate new image
+        result = image_service.generate_image_chain(image_prompts, style=style)
+        
+        if not result:
+            error_message = "Failed to generate image"
+            if is_retry:
+                error_message += ". Please try again later."
+            return jsonify({'error': error_message}), 500
+
+        # Get temp_id from session if available
+        story_data = session.get('story_data', {})
         temp_id = story_data.get('temp_id')
-        if not temp_id:
-            # If no temp_id, try to create a new temporary record
-            try:
-                temp_data = TempBookData(data=story_data)
-                db.session.add(temp_data)
-                db.session.commit()
-                temp_id = temp_data.id
-                story_data['temp_id'] = temp_id
-                session['story_data'] = story_data
-            except Exception as e:
-                logger.error(f"Failed to create temporary record: {str(e)}")
-                return jsonify({'error': 'Failed to initialize story session'}), 500
         
         # Generate chain of image prompts using Gemini
         story_context = story_data.get('story_context', '')
