@@ -175,12 +175,13 @@ def get_chunks(page):
         if not page_data:
             return jsonify({'error': 'Invalid page number'}), 400
 
+        # Structure the data consistently 
         return jsonify({
-            'chunks': page_data['paragraphs'],
+            'paragraphs': page_data['chunks'],  # Match expected structure
             'current_page': page_data['current_page'],
             'total_pages': page_data['total_pages'],
-            'total_chunks': page_data['total_paragraphs'],
-            'chunks_per_page': page_data['items_per_page']
+            'total_chunks': page_data['total_chunks'],
+            'chunks_per_page': page_data['chunks_per_page']
         })
 
     except Exception as e:
