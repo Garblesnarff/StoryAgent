@@ -177,11 +177,11 @@ def get_chunks(page):
 
         # Structure the data consistently 
         return jsonify({
-            'paragraphs': page_data['chunks'],
+            'paragraphs': page_data['paragraphs'],
             'current_page': page_data['current_page'],
             'total_pages': page_data['total_pages'],
-            'total_paragraphs': page_data['total_chunks'],
-            'paragraphs_per_page': page_data['chunks_per_page']
+            'total_chunks': page_data['total_paragraphs'],
+            'paragraphs_per_page': page_data['items_per_page']
         })
 
     except Exception as e:
