@@ -599,7 +599,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             return;
         }
         loadPage(1); //Initial Page Load
-    }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes, loadPage]);
+    }, [story?.paragraphs]); // Only depend on story paragraphs changing
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
@@ -646,6 +646,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     defaultViewport={{ x: 0, y: 0, zoom: 1 }}
                     connectOnClick={true}
                     draggable={true}
+                    nodesDraggable={true}
                     defaultEdgeOptions={{ type: 'smoothstep' }}
                     zoomOnDoubleClick={false}
                 >
