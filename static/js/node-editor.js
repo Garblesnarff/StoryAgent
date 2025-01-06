@@ -599,7 +599,54 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             return;
         }
         loadPage(1); //Initial Page Load
-    }, [story?.paragraphs]); // Only depend on story paragraphs changing
+    }, [story?.paragraphs, setNodes]); // Include setNodes in dependencies
+
+    // Make loadPage accessible to parent components
+    useEffect(() => {
+        window.nodeEditor = {
+            loadPage: async (pageNum) => {
+                try {
+                    const response = await fetch(`/story/get_chunks/${pageNum}`);
+                    if (!response.ok) throw new Error('Failed to load page');
+                    
+                    const data = await response.json();
+                    const paragraphNodes = data.chunks.map((chunk, index) => ({
+                        id: `p${index}`,
+                        type: 'paragraph',
+                        position: { 
+                            x: (index % 2) * 300 + 50,
+                            y: Math.floor(index / 2) * 250 + 50
+                        },
+                        data: {
+                            index: index + ((pageNum - 1) * 10),
+                            text: chunk.text,
+                            globalStyle: selectedStyle,
+                            imageUrl: chunk.image_url,
+                            imagePrompt: chunk.image_prompt,
+                            audioUrl: chunk.audio_url,
+                            onGenerateImage: handleGenerateImage,
+                            onGenerateAudio: handleGenerateAudio,
+                            onRegenerateImage: handleRegenerateImage,
+                            onRegenerateAudio: handleRegenerateAudio,
+                            onExpandImage: setExpandedImage,
+                            isGeneratingImage: false,
+                            isGeneratingAudio: false,
+                            isRegenerating: false,
+                            isRegeneratingAudio: false,
+                            imageProgress: 0,
+                            audioProgress: 0,
+                            imageError: null,
+                            audioError: null
+                        }
+                    }));
+                    setNodes(paragraphNodes);
+                    setEdges([]);
+                } catch (error) {
+                    console.error('Error loading page:', error);
+                }
+            }
+        };
+    }, [setNodes, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setExpandedImage]);
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
