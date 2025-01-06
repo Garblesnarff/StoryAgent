@@ -10,13 +10,6 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-const fetchPage = async (page) => {
-    const response = await fetch(`/story/get_chunks/${page}`);
-    const data = await response.json();
-    setNodes(createNodesFromChunks(data.chunks));
-    setCurrentPage(data.current_page);
-};
-
 const ParagraphNode = React.memo(({ data }) => {
     const { 
         index, 
@@ -46,8 +39,7 @@ const ParagraphNode = React.memo(({ data }) => {
             <div className="node-content">
                 <div className="text-content mb-2">
                     {text}
-                </div>
-                
+                </div>                
                 <div className="generation-controls mb-2">
                     <div className="generation-control">
                         <button 
@@ -78,8 +70,7 @@ const ParagraphNode = React.memo(({ data }) => {
                                 aria-valuemax="100">
                             </div>
                         </div>
-                    </div>
-                    
+                    </div>                    
                     <div className="generation-control mt-2">
                         <button 
                             className="btn btn-primary btn-sm w-100 mb-1" 
@@ -110,8 +101,7 @@ const ParagraphNode = React.memo(({ data }) => {
                             </div>
                         </div>
                     </div>
-                </div>
-                
+                </div>                
                 {imageUrl && !imageError && (
                     <>
                         <div className="node-preview mt-2">
@@ -132,34 +122,24 @@ const ParagraphNode = React.memo(({ data }) => {
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigator.clipboard.writeText(imagePrompt).then(() => {
-                                            // Create and show toast notification
                                             const toast = document.createElement('div');
                                             toast.className = 'toast-notification';
                                             toast.innerHTML = `
                                                 <i class="bi bi-clipboard-check me-2"></i>
                                                 Prompt copied to clipboard!
                                             `;
-                                            document.body.appendChild(toast);
-                                            
-                                            // Force reflow for animation
-                                            void toast.offsetHeight;
-                                            
-                                            // Add show class in next frame
+                                            document.body.appendChild(toast);                                            
+                                            void toast.offsetHeight;                                            
                                             requestAnimationFrame(() => {
                                                 toast.classList.add('show');
-                                            });
-                                            
-                                            // Handle icon change
+                                            });                                            
                                             const button = e.currentTarget;
                                             if (button) {
                                                 button.innerHTML = '<i class="bi bi-check"></i>';
-                                                button.style.background = 'rgba(40, 167, 69, 0.8)';
-                                                
+                                                button.style.background = 'rgba(40, 167, 69, 0.8)';                                                
                                                 setTimeout(() => {
                                                     button.innerHTML = '<i class="bi bi-clipboard"></i>';
-                                                    button.style.background = '';
-                                                    
-                                                    // Remove toast
+                                                    button.style.background = '';                                                    
                                                     toast.classList.remove('show');
                                                     setTimeout(() => {
                                                         toast.remove();
@@ -186,8 +166,7 @@ const ParagraphNode = React.memo(({ data }) => {
                             </button>
                         </div>
                     </>
-                )}
-                
+                )}                
                 {audioUrl && !audioError && (
                     <>
                         <div className="audio-player mt-2">
@@ -219,6 +198,59 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedStyle, setSelectedStyle] = useState('realistic');
     const [expandedImage, setExpandedImage] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+
+    const loadPage = async (pageNumber) => {
+        try {
+            const response = await fetch(`/story/get_chunks/${pageNumber}`);
+            if (!response.ok) {
+                throw new Error('Failed to load page');
+            }
+
+            const data = await response.json();
+            setCurrentPage(data.current_page);
+            setTotalPages(data.total_pages);
+
+            const paragraphNodes = data.chunks.map((chunk, index) => ({
+                id: `p${index}`,
+                type: 'paragraph',
+                position: { 
+                    x: (index % 2) * 300 + 50,
+                    y: Math.floor(index / 2) * 250 + 50
+                },
+                sourcePosition: 'right',
+                targetPosition: 'left',
+                connectable: true,
+                data: {
+                    index: index + ((pageNumber - 1) * 10), 
+                    text: chunk.text,
+                    globalStyle: selectedStyle,
+                    imageUrl: chunk.image_url,
+                    imagePrompt: chunk.image_prompt,
+                    audioUrl: chunk.audio_url,
+                    onGenerateImage: handleGenerateImage,
+                    onGenerateAudio: handleGenerateAudio,
+                    onRegenerateImage: handleRegenerateImage,
+                    onRegenerateAudio: handleRegenerateAudio,
+                    onExpandImage: setExpandedImage,
+                    isGeneratingImage: false,
+                    isGeneratingAudio: false,
+                    isRegenerating: false,
+                    isRegeneratingAudio: false,
+                    imageProgress: 0,
+                    audioProgress: 0,
+                    imageError: null,
+                    audioError: null
+                }
+            }));
+
+            setNodes(paragraphNodes);
+            setEdges([]); 
+        } catch (error) {
+            console.error('Error loading page:', error);
+        }
+    };
 
     const handleRegenerateImage = useCallback(async (index) => {
         try {
@@ -232,8 +264,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         imageError: null
                     }
                 } : node
-            ));
-            
+            ));            
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -246,13 +277,11 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         }
                     } : node
                 ));
-            }, 100);
-
+            }, 100);            
             const storyContext = story.paragraphs
                 .slice(0, index)
                 .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
-                .join('\n\n');
-
+                .join('\n\n');            
             const response = await fetch('/story/regenerate_image', {
                 method: 'POST',
                 headers: {
@@ -264,15 +293,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     story_context: storyContext,
                     style: selectedStyle
                 })
-            });
-
+            });            
             const data = await response.json();
-            clearInterval(progressInterval);
-
+            clearInterval(progressInterval);            
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to regenerate image');
-            }
-            
+            }            
             if (data.success) {
                 setNodes(currentNodes => currentNodes.map(node => 
                     node.id === `p${index}` ? {
@@ -318,8 +344,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         audioError: null
                     }
                 } : node
-            ));
-
+            ));            
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -332,8 +357,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         }
                     } : node
                 ));
-            }, 100);
-
+            }, 100);            
             const response = await fetch('/story/regenerate_audio', {
                 method: 'POST',
                 headers: {
@@ -343,15 +367,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     index: index,
                     text: story.paragraphs[index].text.trim()
                 })
-            });
-
+            });            
             const data = await response.json();
-            clearInterval(progressInterval);
-
+            clearInterval(progressInterval);            
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to regenerate audio');
-            }
-            
+            }            
             if (data.success) {
                 setNodes(currentNodes => currentNodes.map(node => 
                     node.id === `p${index}` ? {
@@ -388,8 +409,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         if (!story?.paragraphs?.[index]?.text) {
             console.error('No text found for paragraph');
             return;
-        }
-
+        }        
         try {
             setNodes(currentNodes => currentNodes.map(node => 
                 node.id === `p${index}` ? {
@@ -401,8 +421,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         imageError: null
                     }
                 } : node
-            ));
-
+            ));            
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -415,13 +434,11 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         }
                     } : node
                 ));
-            }, 100);
-
+            }, 100);            
             const storyContext = story.paragraphs
                 .slice(0, index)
                 .map(p => `Text: ${p.text}\n${p.image_prompt ? `Previous Image Prompt: ${p.image_prompt}\n` : ''}`)
-                .join('\n\n');
-
+                .join('\n\n');            
             const response = await fetch('/story/generate_image', {
                 method: 'POST',
                 headers: {
@@ -434,15 +451,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     style: selectedStyle,
                     is_retry: isRetry
                 })
-            });
-
+            });            
             const data = await response.json();
-            clearInterval(progressInterval);
-
+            clearInterval(progressInterval);            
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to generate image');
-            }
-            
+            }            
             if (data.success) {
                 setNodes(currentNodes => 
                     currentNodes.map(node => 
@@ -483,8 +497,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
         if (!story?.paragraphs?.[index]?.text) {
             console.error('No text found for paragraph');
             return;
-        }
-
+        }        
         let progressInterval;
         try {
             setNodes(currentNodes => currentNodes.map(node => 
@@ -497,8 +510,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         audioError: null
                     }
                 } : node
-            ));
-
+            ));            
             let progress = 0;
             progressInterval = setInterval(() => {
                 progress = Math.min(progress + 2, 90);
@@ -511,8 +523,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                         }
                     } : node
                 ));
-            }, 100);
-
+            }, 100);            
             const response = await fetch('/story/generate_audio', {
                 method: 'POST',
                 headers: {
@@ -523,15 +534,12 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     text: story.paragraphs[index].text.trim(),
                     is_retry: isRetry
                 })
-            });
-
+            });            
             const data = await response.json();
-            clearInterval(progressInterval);
-
+            clearInterval(progressInterval);            
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to generate audio');
-            }
-            
+            }            
             if (data.success) {
                 setNodes(currentNodes => 
                     currentNodes.map(node => 
@@ -569,23 +577,18 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
 
     const handleStyleChange = useCallback((event) => {
         const newStyle = event.target.value;
-        setSelectedStyle(newStyle);
-        
-        // Update nodes with new style
+        setSelectedStyle(newStyle);        
         setNodes(currentNodes => currentNodes.map(node => ({
             ...node,
             data: {
                 ...node.data,
                 globalStyle: newStyle
             }
-        })));
-        
-        // Update backend about style changes
+        })));        
         const updatedParagraphs = story?.paragraphs?.map((p, index) => ({
             index,
             image_style: newStyle
-        })) || [];
-        
+        })) || [];        
         onStyleUpdate(updatedParagraphs);
     }, [setNodes, story?.paragraphs, onStyleUpdate]);
 
@@ -594,51 +597,15 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             console.error('No story paragraphs found');
             return;
         }
-
-        const paragraphNodes = story.paragraphs.map((para, index) => ({
-            id: `p${index}`,
-            type: 'paragraph',
-            position: { 
-                x: (index % 2) * 300 + 50,
-                y: Math.floor(index / 2) * 250 + 50
-            },
-            sourcePosition: 'right',
-            targetPosition: 'left',
-            connectable: true,
-            data: {
-                index,
-                text: para.text,
-                globalStyle: selectedStyle,
-                imageUrl: para.image_url,
-                imagePrompt: para.image_prompt,
-                audioUrl: para.audio_url,
-                onGenerateImage: handleGenerateImage,
-                onGenerateAudio: handleGenerateAudio,
-                onRegenerateImage: handleRegenerateImage,
-                onRegenerateAudio: handleRegenerateAudio,
-                onExpandImage: setExpandedImage,
-                isGeneratingImage: false,
-                isGeneratingAudio: false,
-                isRegenerating: false,
-                isRegeneratingAudio: false,
-                imageProgress: 0,
-                audioProgress: 0,
-                imageError: null,
-                audioError: null
-            }
-        }));
-
-        setNodes(paragraphNodes);
-    }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes]);
+        loadPage(1); //Initial Page Load
+    }, [story?.paragraphs, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setNodes, loadPage]);
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
-        const handler = (e) => handleStyleChange(e);
-        
+        const handler = (e) => handleStyleChange(e);        
         radioButtons.forEach(radio => {
             radio.addEventListener('change', handler);
-        });
-
+        });        
         return () => {
             radioButtons.forEach(radio => {
                 radio.removeEventListener('change', handler);
@@ -647,8 +614,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     }, [handleStyleChange]);
 
     const onConnect = useCallback((params) => {
-        if (params.source === params.target) return;
-        
+        if (params.source === params.target) return;        
         const edge = {
             ...params,
             type: 'smoothstep',
@@ -657,14 +623,30 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 stroke: 'var(--bs-primary)',
                 strokeWidth: 2,
             }
-        };
-        
+        };        
         setEdges(currentEdges => addEdge(edge, currentEdges));
     }, [setEdges]);
 
     return (
         <>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
+                <div className="navigation-controls position-absolute top-0 end-0 m-3 d-flex gap-2">
+                    <button 
+                        className="btn btn-secondary"
+                        onClick={() => loadPage(currentPage - 1)}
+                        disabled={currentPage <= 1}>
+                        <i className="bi bi-chevron-left"></i> Previous
+                    </button>
+                    <span className="btn btn-light disabled">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button 
+                        className="btn btn-secondary"
+                        onClick={() => loadPage(currentPage + 1)}
+                        disabled={currentPage >= totalPages}>
+                        Next <i className="bi bi-chevron-right"></i>
+                    </button>
+                </div>
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
@@ -682,8 +664,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     <Background />
                     <Controls />
                 </ReactFlow>
-            </div>
-            
+            </div>            
             {expandedImage && (
                 <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
                     <div className="preview-modal" onClick={e => e.stopPropagation()}>

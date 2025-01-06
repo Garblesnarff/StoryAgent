@@ -4,9 +4,18 @@ import secrets
 from datetime import datetime
 from database import db
 import logging
+import math
 
 app = Flask(__name__)
+
+# Load configuration
 app.config.from_object('config.Config')
+
+# Configure database
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Configure secret key
 app.secret_key = secrets.token_hex(16)
 
 # Configure upload settings
@@ -17,7 +26,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize database
@@ -37,13 +49,19 @@ from blueprints.generation import generation_bp
 app.register_blueprint(story_bp)
 app.register_blueprint(generation_bp)
 
+# Create database tables
 with app.app_context():
-    import models
-    db.create_all()
+    try:
+        import models
+        db.create_all()
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {str(e)}")
+        raise
 
+#Clear any existing story data when returning to home
 @app.route('/')
 def index():
-    # Clear any existing story data when returning to home
     if 'story_data' in session:
         session.pop('story_data', None)
     return render_template('index.html')
@@ -63,16 +81,16 @@ def generate_story():
         mood = request.form.get('mood')
         target_audience = request.form.get('target_audience')
         num_paragraphs = int(request.form.get('paragraphs', 5))
-        
+
         logger.info(f"Generating story with prompt: {prompt[:50]}...")
         # Generate story paragraphs
         story_paragraphs = text_service.generate_story(
             prompt, genre, mood, target_audience, num_paragraphs)
-            
+
         if not story_paragraphs:
             logger.error("Failed to generate story paragraphs")
             return jsonify({'error': 'Failed to generate story'}), 500
-            
+
         # Create story data structure
         story_data = {
             'prompt': prompt,
@@ -82,10 +100,10 @@ def generate_story():
             'created_at': str(datetime.now()),
             'paragraphs': [{'text': p, 'image_url': None, 'audio_url': None, 'image_style': 'realistic'} for p in story_paragraphs]
         }
-        
+
         # Create a new TempBookData entry with UUID
         temp_data = TempBookData(data=story_data)
-        
+
         try:
             db.session.add(temp_data)
             db.session.commit()
@@ -94,7 +112,7 @@ def generate_story():
             db.session.rollback()
             logger.error(f"Database error: {str(db_error)}")
             return jsonify({'error': 'Failed to save story data'}), 500
-        
+
         # Store story data in session
         session['story_data'] = {
             'temp_id': temp_data.id,
@@ -103,10 +121,10 @@ def generate_story():
             'total_pages': math.ceil(len(story_paragraphs) / 10)
         }
         session.modified = True
-        
+
         logger.info("Story generation successful, redirecting to edit page")
         return jsonify({'success': True, 'redirect': '/story/edit'})
-        
+
     except Exception as e:
         logger.error(f"Error generating story: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -115,7 +133,7 @@ def generate_story():
 def save_story():
     if 'story_data' not in session:
         return jsonify({'error': 'No story data found'}), 404
-        
+
     try:
         # TODO: Implement story saving logic to database
         return jsonify({'success': True})
@@ -148,7 +166,7 @@ def check_story_data():
        request.path == '/generate_story' or \
        request.path == '/story/upload':  # Add upload route to exclusions
         return
-        
+
     # Check if story data exists for protected routes
     if 'story_data' not in session and \
        (request.path.startswith('/story/') or request.path.startswith('/save')):
