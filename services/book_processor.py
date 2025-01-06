@@ -181,51 +181,41 @@ class BookProcessor:
         try:
             # Clean the text initially
             text = self._clean_text(text)
-
-            # Use Gemini to extract only story content
-            prompt = f'''
-            Extract and return ONLY the actual story narrative from this text.
-            - Do not include any analysis, processing steps, or metadata
-            - Do not include any markers or labels
-            - Start directly with the story content
-            - Return only the cleaned narrative text
-
-            Text to process:
-            {text[:8000]}
-            '''
-
-            # Get story content from Gemini
-            response = self.model.generate_content(prompt)
-            story_text = response.text
-
-            # Post-process to remove any remaining metadata markers
-            story_text = '\n'.join([line for line in story_text.split('\n') 
-                                if not line.strip().startswith('**')])
-            story_text = re.sub(r'^\d+\.\s+', '', story_text, flags=re.MULTILINE)
-            story_text = re.sub(r'(?i)(^|\n)(Start|End)\s+of.*?\n', '\n', story_text)
-
-            # Split into sentences
-            sentence_pattern = r'(?<=[.!?])\s+'
-            sentences = re.split(sentence_pattern, story_text)
-            sentences = [s.strip() for s in sentences if s.strip()]
-
-            # Group into 2-sentence chunks
+            
+            # Split text into sections (letters/chapters)
+            section_pattern = r'(?:LETTER|CHAPTER)\s+[IVX0-9]+'
+            sections = re.split(f'({section_pattern})', text)
+            
             chunks = []
-            for i in range(0, len(sentences), 2):
-                if i + 1 < len(sentences):
-                    chunk_text = f"{sentences[i]} {sentences[i+1]}"
-                    if self._is_story_content(chunk_text):
-                        chunks.append({
-                            'text': chunk_text,
-                            'image_url': None,
-                            'audio_url': None
-                        })
-                elif sentences[i] and self._is_story_content(sentences[i]):
-                    chunks.append({
-                        'text': sentences[i],
-                        'image_url': None,
-                        'audio_url': None
-                    })
+            current_section = None
+            
+            for i in range(len(sections)):
+                if i % 2 == 0:  # Content
+                    if not sections[i].strip():
+                        continue
+                        
+                    # Split content into sentences
+                    content = sections[i].strip()
+                    sentences = re.split(r'(?<=[.!?])\s+', content)
+                    sentences = [s.strip() for s in sentences if s.strip()]
+                    
+                    # Group sentences into chunks
+                    for j in range(0, len(sentences), 2):
+                        if j + 1 < len(sentences):
+                            chunk_text = f"{sentences[j]} {sentences[j+1]}"
+                        else:
+                            chunk_text = sentences[j]
+                            
+                        if self._is_story_content(chunk_text):
+                            chunks.append({
+                                'text': chunk_text,
+                                'image_url': None,
+                                'audio_url': None,
+                                'section': current_section
+                            })
+                            
+                else:  # Section header
+                    current_section = sections[i].strip()
 
             logger.info(f"Successfully processed {len(chunks)} two-sentence chunks")
             return chunks
