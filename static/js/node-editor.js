@@ -200,9 +200,13 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     const [expandedImage, setExpandedImage] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const loadPage = async (pageNumber) => {
         try {
+            setIsLoading(true);
+            setError(null);
             const response = await fetch(`/story/get_chunks/${pageNumber}`);
             if (!response.ok) {
                 throw new Error('Failed to load page');
@@ -249,6 +253,9 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             setEdges([]); 
         } catch (error) {
             console.error('Error loading page:', error);
+            setError(error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -599,54 +606,20 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             return;
         }
         loadPage(1); //Initial Page Load
-    }, [story?.paragraphs, setNodes]); // Include setNodes in dependencies
+    }, [story?.paragraphs]); // Include setNodes in dependencies
 
-    // Make loadPage accessible to parent components
-    useEffect(() => {
-        window.nodeEditor = {
-            loadPage: async (pageNum) => {
-                try {
-                    const response = await fetch(`/story/get_chunks/${pageNum}`);
-                    if (!response.ok) throw new Error('Failed to load page');
-                    
-                    const data = await response.json();
-                    const paragraphNodes = data.chunks.map((chunk, index) => ({
-                        id: `p${index}`,
-                        type: 'paragraph',
-                        position: { 
-                            x: (index % 2) * 300 + 50,
-                            y: Math.floor(index / 2) * 250 + 50
-                        },
-                        data: {
-                            index: index + ((pageNum - 1) * 10),
-                            text: chunk.text,
-                            globalStyle: selectedStyle,
-                            imageUrl: chunk.image_url,
-                            imagePrompt: chunk.image_prompt,
-                            audioUrl: chunk.audio_url,
-                            onGenerateImage: handleGenerateImage,
-                            onGenerateAudio: handleGenerateAudio,
-                            onRegenerateImage: handleRegenerateImage,
-                            onRegenerateAudio: handleRegenerateAudio,
-                            onExpandImage: setExpandedImage,
-                            isGeneratingImage: false,
-                            isGeneratingAudio: false,
-                            isRegenerating: false,
-                            isRegeneratingAudio: false,
-                            imageProgress: 0,
-                            audioProgress: 0,
-                            imageError: null,
-                            audioError: null
-                        }
-                    }));
-                    setNodes(paragraphNodes);
-                    setEdges([]);
-                } catch (error) {
-                    console.error('Error loading page:', error);
-                }
-            }
-        };
-    }, [setNodes, selectedStyle, handleGenerateImage, handleGenerateAudio, handleRegenerateImage, handleRegenerateAudio, setExpandedImage]);
+
+    const handleNextPage = useCallback(() => {
+        if (currentPage < totalPages) {
+            loadPage(currentPage + 1);
+        }
+    }, [currentPage, totalPages]);
+
+    const handlePrevPage = useCallback(() => {
+        if (currentPage > 1) {
+            loadPage(currentPage - 1);
+        }
+    }, [currentPage]);
 
     useEffect(() => {
         const radioButtons = document.querySelectorAll('input[name="imageStyle"]');
@@ -677,8 +650,37 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
 
     return (
         <>
+            <div className="navigation-controls mb-3">
+                <div className="d-flex justify-content-between align-items-center">
+                    <button 
+                        className="btn btn-primary" 
+                        onClick={handlePrevPage}
+                        disabled={currentPage <= 1 || isLoading}>
+                        <i className="bi bi-chevron-left"></i> Previous Chapter
+                    </button>
+                    <span className="mx-3">
+                        {isLoading ? (
+                            <div className="spinner-border spinner-border-sm" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        ) : (
+                            `Chapter ${currentPage} of ${totalPages}`
+                        )}
+                    </span>
+                    <button 
+                        className="btn btn-primary" 
+                        onClick={handleNextPage}
+                        disabled={currentPage >= totalPages || isLoading}>
+                        Next Chapter <i className="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                {error && (
+                    <div className="alert alert-danger mt-2" role="alert">
+                        {error}
+                    </div>
+                )}
+            </div>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
@@ -700,7 +702,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     <Background />
                     <Controls />
                 </ReactFlow>
-            </div>            
+            </div>
+
             {expandedImage && (
                 <div className="modal-backdrop" onClick={() => setExpandedImage(null)}>
                     <div className="preview-modal" onClick={e => e.stopPropagation()}>

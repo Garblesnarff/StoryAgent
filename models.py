@@ -29,6 +29,29 @@ class TempBookData(db.Model):
     data = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def get_page(self, page_number, items_per_page=10):
+        """Get a specific page of paragraphs from the book data"""
+        if not self.data or 'paragraphs' not in self.data:
+            return None
+
+        paragraphs = self.data['paragraphs']
+        total_paragraphs = len(paragraphs)
+        total_pages = (total_paragraphs + items_per_page - 1) // items_per_page
+
+        if page_number < 1 or page_number > total_pages:
+            return None
+
+        start_idx = (page_number - 1) * items_per_page
+        end_idx = min(start_idx + items_per_page, total_paragraphs)
+
+        return {
+            'paragraphs': paragraphs[start_idx:end_idx],
+            'current_page': page_number,
+            'total_pages': total_pages,
+            'total_paragraphs': total_paragraphs,
+            'items_per_page': items_per_page
+        }
+
 class StyleCustomization(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     story_id = db.Column(db.Integer, db.ForeignKey('story.id'), nullable=False)

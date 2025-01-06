@@ -160,27 +160,31 @@ def customize_story():
 @story_bp.route('/story/get_chunks/<int:page>', methods=['GET'])
 def get_chunks(page):
     try:
-        temp_id = session['story_data']['temp_id']
+        if 'story_data' not in session:
+            return jsonify({'error': 'No story data found'}), 404
+
+        temp_id = session.get('story_data', {}).get('temp_id')
+        if not temp_id:
+            return jsonify({'error': 'No temp data found'}), 404
+
         temp_data = TempBookData.query.get(temp_id)
-        
         if not temp_data:
             return jsonify({'error': 'No data found'}), 404
 
-        total_paragraphs = len(temp_data.data['paragraphs'])
-        total_pages = (total_paragraphs + 9) // 10
-        
-        start_idx = (page - 1) * 10
-        end_idx = min(start_idx + 10, total_paragraphs)
+        page_data = temp_data.get_page(page)
+        if not page_data:
+            return jsonify({'error': 'Invalid page number'}), 400
 
-        page_chunks = temp_data.data['paragraphs'][start_idx:end_idx]
-        
         return jsonify({
-            'chunks': page_chunks,
-            'current_page': page,
-            'total_pages': total_pages
+            'chunks': page_data['paragraphs'],
+            'current_page': page_data['current_page'],
+            'total_pages': page_data['total_pages'],
+            'total_chunks': page_data['total_paragraphs'],
+            'chunks_per_page': page_data['items_per_page']
         })
+
     except Exception as e:
-        logger.error(f"Error getting chunks: {str(e)}")
+        logger.error(f"Error getting chunks for page {page}: {str(e)}")
         return jsonify({'error': 'Failed to load page'}), 500
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
