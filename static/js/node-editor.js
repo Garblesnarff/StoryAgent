@@ -216,7 +216,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             setCurrentPage(data.current_page);
             setTotalPages(data.total_pages);
 
-            const paragraphNodes = data.chunks.map((chunk, index) => ({
+            const paragraphNodes = data.paragraphs.map((chunk, index) => ({
                 id: `p${index}`,
                 type: 'paragraph',
                 position: { 
