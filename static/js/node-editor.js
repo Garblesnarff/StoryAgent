@@ -630,23 +630,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
     return (
         <>
             <div style={{ width: '100%', height: '600px' }} className="node-editor-root">
-                <div className="navigation-controls position-absolute top-0 end-0 m-3 d-flex gap-2">
-                    <button 
-                        className="btn btn-secondary"
-                        onClick={() => loadPage(currentPage - 1)}
-                        disabled={currentPage <= 1}>
-                        <i className="bi bi-chevron-left"></i> Previous
-                    </button>
-                    <span className="btn btn-light disabled">
-                        Page {currentPage} of {totalPages}
-                    </span>
-                    <button 
-                        className="btn btn-secondary"
-                        onClick={() => loadPage(currentPage + 1)}
-                        disabled={currentPage >= totalPages}>
-                        Next <i className="bi bi-chevron-right"></i>
-                    </button>
-                </div>
+                
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}

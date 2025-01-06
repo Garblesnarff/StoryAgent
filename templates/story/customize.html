@@ -27,8 +27,19 @@
         
         <div id="node-editor" class="node-editor-container" data-story='{{ story|tojson|safe }}'></div>
         
-        <div class="d-flex justify-content-center gap-3 mt-4">
+        <div class="d-flex justify-content-center align-items-center gap-3 mt-4">
             <a href="/story/edit" class="btn btn-secondary">Back to Edit</a>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="loadPage(currentPage - 1)" id="prevPage" disabled>
+                    <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <span class="btn btn-light disabled" id="pageIndicator">
+                    Page 1 of 1
+                </span>
+                <button class="btn btn-secondary" onclick="loadPage(currentPage + 1)" id="nextPage" disabled>
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
             <button id="save-customization" class="btn btn-primary">Generate Cards</button>
         </div>
     </div>

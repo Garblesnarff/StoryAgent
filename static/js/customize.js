@@ -28,7 +28,41 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+let currentPage = 1;
+let totalPages = 1;
+
+const updatePageControls = () => {
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const indicator = document.getElementById('pageIndicator');
+    
+    if (prevBtn && nextBtn && indicator) {
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+        indicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    }
+};
+
+const loadPage = async (pageNum) => {
+    try {
+        const response = await fetch(`/story/get_chunks/${pageNum}`);
+        if (!response.ok) throw new Error('Failed to load page');
+        
+        const data = await response.json();
+        currentPage = data.current_page;
+        totalPages = data.total_pages;
+        
+        // Update node editor
+        window.nodeEditor?.loadPage(pageNum);
+        updatePageControls();
+    } catch (error) {
+        console.error('Error loading page:', error);
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize page controls
+    updatePageControls();
     const container = document.getElementById('node-editor');
     if (!container) {
         console.error('Node editor container not found');
