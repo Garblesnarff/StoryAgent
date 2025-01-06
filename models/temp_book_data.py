@@ -32,11 +32,12 @@ class TempBookData(db.Model):
         end_idx = start_idx + self.chunks_per_page
         total_pages = (self.total_chunks + self.chunks_per_page - 1) // self.chunks_per_page
 
+        chunks = self.data['paragraphs'][start_idx:end_idx]
         return {
-            'chunks': self.data['paragraphs'][start_idx:end_idx],
+            'chunks': chunks,
             'total_pages': total_pages,
             'current_page': page_number,
-            'total_chunks': self.total_chunks,
+            'total_chunks': len(chunks),
             'chunks_per_page': self.chunks_per_page
         }
 
