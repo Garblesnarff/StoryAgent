@@ -458,21 +458,22 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                 throw new Error(data.error || 'Failed to generate image');
             }            
             if (data.success) {
-                setNodes(currentNodes => 
-                    currentNodes.map(node => 
-                        node.id === `p${index}` ? {
-                            ...node, 
-                            data: {
-                                ...node.data,
-                                imageUrl: data.image_url,
-                                imagePrompt: data.image_prompt,
-                                isGeneratingImage: false,
-                                imageProgress: 100,
-                                imageError: null
-                            }
-                        } : node
-                    )
-                );
+                const updatedNodes = [...nodes];
+                const nodeIndex = updatedNodes.findIndex(n => n.id === `p${index}`);
+                if (nodeIndex !== -1) {
+                    updatedNodes[nodeIndex] = {
+                        ...updatedNodes[nodeIndex],
+                        data: {
+                            ...updatedNodes[nodeIndex].data,
+                            imageUrl: data.image_url,
+                            imagePrompt: data.image_prompt,
+                            isGeneratingImage: false,
+                            imageProgress: 100,
+                            imageError: null
+                        }
+                    };
+                    setNodes(updatedNodes);
+                }
             } else {
                 throw new Error(data.error || 'Failed to generate image');
             }
@@ -644,6 +645,9 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     maxZoom={4}
                     defaultViewport={{ x: 0, y: 0, zoom: 1 }}
                     connectOnClick={true}
+                    draggable={true}
+                    defaultEdgeOptions={{ type: 'smoothstep' }}
+                    zoomOnDoubleClick={false}
                 >
                     <Background />
                     <Controls />
