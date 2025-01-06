@@ -44,10 +44,12 @@ def upload_file():
             result = book_processor.process_file(file)
 
             # Store necessary data in session
+            paragraphs = result.get('paragraphs', [])
             session['story_data'] = {
                 'temp_id': result['temp_id'],
                 'source_file': result['source_file'],
-                'paragraphs': result.get('paragraphs', [])
+                'paragraphs': paragraphs,
+                'total_pages': (len(paragraphs) + 9) // 10  # Calculate total pages (10 items per page)
             }
 
             return jsonify({
@@ -157,18 +159,29 @@ def customize_story():
 
 @story_bp.route('/story/get_chunks/<int:page>', methods=['GET'])
 def get_chunks(page):
-    temp_id = session['story_data']['temp_id']
-    temp_data = TempBookData.query.get(temp_id)
+    try:
+        temp_id = session['story_data']['temp_id']
+        temp_data = TempBookData.query.get(temp_id)
+        
+        if not temp_data:
+            return jsonify({'error': 'No data found'}), 404
 
-    start_idx = (page - 1) * 10
-    end_idx = start_idx + 10
+        total_paragraphs = len(temp_data.data['paragraphs'])
+        total_pages = (total_paragraphs + 9) // 10
+        
+        start_idx = (page - 1) * 10
+        end_idx = min(start_idx + 10, total_paragraphs)
 
-    page_chunks = temp_data.data['paragraphs'][start_idx:end_idx]
-    return jsonify({
-        'chunks': page_chunks,
-        'current_page': page,
-        'total_pages': session['story_data']['total_pages']
-    })
+        page_chunks = temp_data.data['paragraphs'][start_idx:end_idx]
+        
+        return jsonify({
+            'chunks': page_chunks,
+            'current_page': page,
+            'total_pages': total_pages
+        })
+    except Exception as e:
+        logger.error(f"Error getting chunks: {str(e)}")
+        return jsonify({'error': 'Failed to load page'}), 500
 
 @story_bp.route('/story/update_paragraph', methods=['POST'])
 def update_paragraph():
