@@ -29,7 +29,8 @@ const ParagraphNode = React.memo(({ data }) => {
         imageProgress,
         audioProgress,
         imageError,
-        audioError
+        audioError,
+        onDelete
     } = data;
 
     const nodeClass = `paragraph-node ${data.globalStyle || 'realistic'}-style`;
@@ -183,6 +184,7 @@ const ParagraphNode = React.memo(({ data }) => {
                         </button>
                     </>
                 )}
+                <button onClick={() => onDelete(index)}>Delete</button>
             </div>
             <Handle type="source" position={Position.Right} />
         </div>
@@ -245,7 +247,8 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     imageProgress: 0,
                     audioProgress: 0,
                     imageError: null,
-                    audioError: null
+                    audioError: null,
+                    onDelete: handleDelete
                 }
             }));
 
@@ -258,6 +261,10 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
             setIsLoading(false);
         }
     };
+
+    const handleDelete = useCallback((index) => {
+        setNodes(prevNodes => prevNodes.filter(node => node.data.index !== index));
+    }, []);
 
     const handleRegenerateImage = useCallback(async (index) => {
         try {
@@ -499,7 +506,7 @@ const NodeEditor = ({ story, onStyleUpdate }) => {
                     }
                 } : node
             ));
-            
+
             // Show error toast
             const toast = document.createElement('div');
             toast.className = 'toast-notification error';
