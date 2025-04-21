@@ -33,4 +33,5 @@ dependencies = [
     "langchain-core>=0.3.19",
     "langchain-community>=0.3.4",
     "langchain-google-genai>=2.0.5",
+    "pillow>=10.0.0",
 ]

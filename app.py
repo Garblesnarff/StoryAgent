@@ -1,4 +1,8 @@
-import os
+# Load environment variables FIRST
+from dotenv import load_dotenv 
+load_dotenv() 
+
+import os # Now import os and others
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
 import secrets
 from datetime import datetime
@@ -15,8 +19,7 @@ app.config.from_object('config.Config')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configure secret key
-app.secret_key = secrets.token_hex(16)
+# Secret key is loaded from config.Config via os.environ.get('FLASK_SECRET_KEY')
 
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
@@ -174,4 +177,4 @@ def check_story_data():
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5169, debug=True) # Changed port to 5169

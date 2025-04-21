@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 generation_bp = Blueprint('generation', __name__)
-# Initialize services
+# Initialize services (ImageGenerator removed from here)
 text_service = TextGenerator()
-image_service = ImageGenerator()
+# image_service = ImageGenerator() # Moved inside routes
 audio_service = HumeAudioGenerator()
 prompt_generator = PromptGenerator()
 
@@ -67,23 +67,33 @@ def generate():
         return redirect(url_for('index'))
     return render_template('story/generate.html', story=session['story_data'])
 
+import os # Make sure os is imported
+
 @generation_bp.route('/story/regenerate_image', methods=['POST'])
 def regenerate_image():
     try:
+        # Fetch API key and instantiate ImageGenerator inside route
+        api_key = os.getenv('GEMINI_API_KEY')
+        logger.info(f"Regenerate Image: Retrieved GEMINI_API_KEY: {'*****' if api_key else 'None'}") # Log the key presence
+        if not api_key:
+            logger.error("GEMINI_API_KEY not found in environment for regenerate_image.")
+            return jsonify({'error': 'Image generation service not configured.'}), 500
+        image_service = ImageGenerator(api_key=api_key)
+
         data = request.get_json()
         if not data or 'text' not in data:
             return jsonify({'error': 'No text provided'}), 400
             
         text = data['text']
         index = data.get('index')
-        style = data.get('style', 'realistic')
-        
+        style = data.get('style', 'realistic') # Style is likely not used by current Gemini model call
+
         # Generate chain of image prompts using Gemini
         story_context = session.get('story_data', {}).get('story_context', '')
         image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
-        
-        # Generate new image with chained prompts
-        result = image_service.generate_image_chain(image_prompts, style=style)
+
+        # Generate new image with chained prompts (removed style argument)
+        result = image_service.generate_image_chain(image_prompts)
         if not result:
             return jsonify({'error': 'Failed to generate image'}), 500
             
@@ -266,23 +276,32 @@ def regenerate_audio():
 
 @generation_bp.route('/story/generate_image', methods=['POST'])
 def generate_image():
+    temp_id = None # Initialize temp_id to prevent UnboundLocalError
     try:
+        # Fetch API key and instantiate ImageGenerator inside route
+        api_key = os.getenv('GEMINI_API_KEY')
+        logger.info(f"Generate Image: Retrieved GEMINI_API_KEY: {'*****' if api_key else 'None'}") # Log the key presence
+        if not api_key:
+            logger.error("GEMINI_API_KEY not found in environment for generate_image.")
+            return jsonify({'error': 'Image generation service not configured.'}), 500
+        image_service = ImageGenerator(api_key=api_key)
+
         data = request.get_json()
         if not data or 'text' not in data:
             return jsonify({'error': 'No text provided'}), 400
             
         text = data['text']
         index = data.get('index')
-        style = data.get('style', 'realistic')
+        style = data.get('style', 'realistic') # Style is likely not used by current Gemini model call
         is_retry = data.get('is_retry', False)
         story_context = data.get('story_context', '')
 
         # Generate chain of image prompts
         image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
-        
-        # Generate new image
-        result = image_service.generate_image_chain(image_prompts, style=style)
-        
+
+        # Generate new image (style argument already removed in previous steps, ensuring consistency)
+        result = image_service.generate_image_chain(image_prompts)
+
         if not result:
             error_message = "Failed to generate image"
             if is_retry:
@@ -293,13 +312,9 @@ def generate_image():
         story_data = session.get('story_data', {})
         temp_id = story_data.get('temp_id')
         
-        # Generate chain of image prompts using Gemini
-        story_context = story_data.get('story_context', '')
-        image_prompts = prompt_generator.generate_image_prompt(story_context, text, use_chain=True)
+        # Removed duplicated block that re-generated prompts and called generate_image_chain again
         
-        # Generate new image with chained prompts
-        result = image_service.generate_image_chain(image_prompts, style=style)
-        
+        # This block handles the result from the single call above
         if not result:
             error_message = "Failed to generate image after multiple attempts"
             if is_retry:

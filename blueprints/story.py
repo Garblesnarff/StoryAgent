@@ -16,10 +16,13 @@ logger = logging.getLogger(__name__)
 
 story_bp = Blueprint('story', __name__)
 text_service = TextGenerator()
-image_service = ImageGenerator()
+# image_service = ImageGenerator() # Removed module-level instantiation
 audio_service = HumeAudioGenerator()
 book_processor = BookProcessor()
-regeneration_service = RegenerationService(image_service, audio_service)
+# TODO: RegenerationService likely needs refactoring if it requires image_service at init.
+# Removing module-level instantiation for now as image_service is not available here.
+# If RegenerationService is needed, instantiate it within the relevant routes.
+# regeneration_service = RegenerationService(audio_service=audio_service) # Removed problematic instantiation
 
 ALLOWED_EXTENSIONS = {'pdf', 'epub', 'html'}
 UPLOAD_FOLDER = 'uploads'
@@ -103,9 +106,14 @@ def edit():
             logger.error(f"No temp data found for ID: {temp_id}")
             return redirect(url_for('index'))
 
-        # Get first page of data
-        page_data = temp_data.get_page(1)
-        return render_template('story/edit.html', story=page_data)
+        # Get full story data
+        story_data = temp_data.data
+        if not story_data:
+             logger.error(f"No actual data found in TempBookData ID: {temp_id}")
+             flash('Could not load story content. Please try generating again.', 'error')
+             return redirect(url_for('index'))
+        # Pass the full data to the template. JS might still be needed for pagination if large.
+        return render_template('story/edit.html', story=story_data)
 
     except Exception as e:
         logger.error(f"Error in edit route: {str(e)}")
@@ -115,28 +123,30 @@ def edit():
 def customize_story():
     try:
         # Check if story data exists in session
-        if 'story_data' not in session:
-            logger.warning("No story data in session, redirecting to home with flash message")
-            flash('Please generate a story first before customizing', 'warning')
+        if 'story_data' not in session or 'temp_id' not in session['story_data']:
+            logger.warning("No story data or temp_id in session, redirecting to home with flash message")
+            flash('Please generate or upload a story first before customizing', 'warning')
             return redirect(url_for('index'))
 
-        story_data = session['story_data']
+        temp_id = session['story_data']['temp_id']
+        temp_data = TempBookData.query.get(temp_id)
 
-        # Validate story data structure
+        if not temp_data or not temp_data.data:
+            logger.error(f"Could not find valid temp data for ID: {temp_id}")
+            flash('Could not load story data. Please try generating again.', 'error')
+            session.pop('story_data', None) # Clear potentially invalid session data
+            return redirect(url_for('index'))
+
+        story_data = temp_data.data # Use the data loaded from the database
+
+        # Validate story data structure (now checking the loaded data)
         if not isinstance(story_data, dict) or 'paragraphs' not in story_data:
-            logger.error("Invalid story data structure")
-            flash('Invalid story data. Please generate a new story.', 'error')
+            logger.error(f"Invalid story data structure in TempBookData ID: {temp_id}")
+            flash('Invalid story data format. Please generate a new story.', 'error')
             return redirect(url_for('index'))
 
-        # Get data from temp storage if available
-        temp_id = story_data.get('temp_id')
-        if temp_id:
-            temp_data = TempBookData.query.get(temp_id)
-            if temp_data:
-                story_data = temp_data.data
-
-        # Ensure paragraphs exist and are properly formatted
-        if not story_data.get('paragraphs'):
+        # Ensure paragraphs exist and are properly formatted (already checked above)
+        if not story_data.get('paragraphs'): # This check might be redundant now but safe to keep
             logger.error("No paragraphs found in story data")
             flash('No story content found. Please generate a new story.', 'error')
             return redirect(url_for('index'))
@@ -146,10 +156,11 @@ def customize_story():
             if 'image_style' not in paragraph:
                 paragraph['image_style'] = 'realistic'
 
-        # Update session with initialized data
-        session['story_data'] = story_data
-        session.modified = True
+        # DO NOT save the full data back into the session, it breaks other routes.
+        # session['story_data'] = story_data
+        # session.modified = True
 
+        # Pass the loaded data directly to the template
         return render_template('story/customize.html', story=story_data)
 
     except Exception as e:
@@ -175,13 +186,13 @@ def get_chunks(page):
         if not page_data:
             return jsonify({'error': 'Invalid page number'}), 400
 
-        # Structure the data consistently 
+        # Structure the data consistently, using the keys returned by get_page
         return jsonify({
-            'paragraphs': page_data['chunks'],
+            'chunks': page_data['chunks'], # Correct key
             'current_page': page_data['current_page'],
             'total_pages': page_data['total_pages'],
-            'total_paragraphs': len(page_data['chunks']),
-            'paragraphs_per_page': page_data['chunks_per_page']
+            'total_chunks_on_page': page_data['total_chunks'], # Renamed for clarity
+            'chunks_per_page': page_data['chunks_per_page']
         })
 
     except Exception as e:
@@ -222,10 +233,33 @@ def update_paragraph():
         # Generate new media if requested
         if data.get('generate_media', False):
             try:
-                image_url = image_service.generate_image(text)
-                audio_url = audio_service.generate_audio(text)
+                # Instantiate ImageGenerator here with API key
+                api_key = os.getenv('GEMINI_API_KEY')
+                if not api_key:
+                    logger.error("GEMINI_API_KEY not found for media generation in update_paragraph.")
+                    # Return success for text update, but include media error
+                    return jsonify({
+                        'success': True,
+                        'text': text,
+                        'error': 'Media generation service not configured.'
+                    })
+                image_service_instance = ImageGenerator(api_key=api_key) # Create instance
 
-                # Update media URLs in temp data
+                image_result = image_service_instance.generate_image(text) # Use instance
+                image_url = image_result.get('url') if image_result and image_result.get('status') == 'success' else None
+                # Handle potential image generation failure
+                if not image_url:
+                     logger.error(f"Failed to generate image in update_paragraph: {image_result.get('error', 'Unknown error')}")
+                     # Optionally return error or just skip image update
+
+                audio_url = audio_service.generate_audio(text) # Assuming audio service doesn't need key passed here
+
+                # Update media URLs in temp data (only if generated successfully)
+                if image_url:
+                    story_data['paragraphs'][index]['image_url'] = image_url
+                if audio_url: # Assuming audio_url is None on failure
+                    story_data['paragraphs'][index]['audio_url'] = audio_url
+                # Save changes regardless of media success? Or only if both succeed? Saving now.
                 story_data['paragraphs'][index]['image_url'] = image_url
                 story_data['paragraphs'][index]['audio_url'] = audio_url
                 temp_data.data = story_data

@@ -44,7 +44,7 @@ class TextGenerator:
         """
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
@@ -66,9 +66,16 @@ class TextGenerator:
                 return {"story": None, "error": "Empty response from story generation API"}
                 
             return {"story": story, "error": None}
-            
+
+        except groq.APIError as e:
+            # Log more details from Groq API errors
+            error_details = f"Groq API Error: Status={e.status_code}, Response={getattr(e, 'response', 'N/A')}, Body={getattr(e, 'body', 'N/A')}"
+            logger.error(error_details)
+            return {"story": None, "error": f"API Error: {str(e)}"}
         except Exception as e:
-            return {"story": None, "error": str(e)}
+            # Catch other potential errors
+            logger.error(f"Unexpected error during API call: {str(e)}", exc_info=True)
+            return {"story": None, "error": f"Unexpected error: {str(e)}"}
 
     def clean_paragraph(self, text):
         """Clean paragraph text of any markers, numbers, or labels"""
