@@ -29,10 +29,10 @@ class ImageGenerator:
             # DO NOT explicitly configure here - relies on env var being set before Client() is called
             # genai.configure(api_key=api_key) # REMOVED - Incorrect based on docs and error
 
-            # Initialize the client exactly as per the documentation
-            # This should implicitly pick up the API key from the environment
-            self.client = genai.Client()
-            logger.info("Gemini Client configured and initialized successfully.")
+            # Initialize the client exactly as per the documentation,
+            # explicitly passing the api_key as suggested by the error message.
+            self.client = genai.Client(api_key=api_key)
+            logger.info("Gemini Client initialized successfully with explicit API key.")
         except ValueError as ve: # Catch the specific error for missing API key
             logger.error(f"Configuration error: {ve}")
             self.client = None
